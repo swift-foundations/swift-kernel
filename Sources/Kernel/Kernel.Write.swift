@@ -160,6 +160,46 @@ extension Kernel.Write.Error: CustomStringConvertible {
 
 #endif
 
+// MARK: - Span Adapters
+
+extension Kernel.Write {
+    /// Writes bytes from a span to a file descriptor.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The file descriptor to write to.
+    ///   - span: The span containing bytes to write.
+    /// - Returns: Number of bytes written.
+    /// - Throws: `Kernel.Write.Error` on failure.
+    @inlinable
+    public static func write(
+        _ descriptor: Kernel.Descriptor,
+        from span: Span<UInt8>
+    ) throws(Error) -> Int {
+        try span.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) throws(Error) -> Int in
+            try write(descriptor, from: buffer)
+        }
+    }
+
+    /// Writes bytes from a span to a file descriptor at a specific offset.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The file descriptor to write to.
+    ///   - span: The span containing bytes to write.
+    ///   - offset: The file offset to write at.
+    /// - Returns: Number of bytes written.
+    /// - Throws: `Kernel.Write.Error` on failure.
+    @inlinable
+    public static func pwrite(
+        _ descriptor: Kernel.Descriptor,
+        from span: Span<UInt8>,
+        at offset: Int64
+    ) throws(Error) -> Int {
+        try span.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) throws(Error) -> Int in
+            try pwrite(descriptor, from: buffer, at: offset)
+        }
+    }
+}
+
 // MARK: - Windows Implementation
 
 #if os(Windows)

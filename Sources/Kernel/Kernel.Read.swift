@@ -153,6 +153,46 @@ extension Kernel.Read.Error: CustomStringConvertible {
 
 #endif
 
+// MARK: - Span Adapters
+
+extension Kernel.Read {
+    /// Reads bytes from a file descriptor into a mutable span.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The file descriptor to read from.
+    ///   - span: The mutable span to read into.
+    /// - Returns: Number of bytes read. Returns 0 on EOF.
+    /// - Throws: `Kernel.Read.Error` on failure.
+    @inlinable
+    public static func read(
+        _ descriptor: Kernel.Descriptor,
+        into span: inout MutableSpan<UInt8>
+    ) throws(Error) -> Int {
+        try span.withUnsafeMutableBytes { (buffer: UnsafeMutableRawBufferPointer) throws(Error) -> Int in
+            try read(descriptor, into: buffer)
+        }
+    }
+
+    /// Reads bytes from a file descriptor at a specific offset into a mutable span.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The file descriptor to read from.
+    ///   - span: The mutable span to read into.
+    ///   - offset: The file offset to read from.
+    /// - Returns: Number of bytes read. Returns 0 on EOF.
+    /// - Throws: `Kernel.Read.Error` on failure.
+    @inlinable
+    public static func pread(
+        _ descriptor: Kernel.Descriptor,
+        into span: inout MutableSpan<UInt8>,
+        at offset: Int64
+    ) throws(Error) -> Int {
+        try span.withUnsafeMutableBytes { (buffer: UnsafeMutableRawBufferPointer) throws(Error) -> Int in
+            try pread(descriptor, into: buffer, at: offset)
+        }
+    }
+}
+
 // MARK: - Windows Implementation
 
 #if os(Windows)
