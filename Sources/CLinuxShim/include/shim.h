@@ -8,6 +8,7 @@
 
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <sys/statfs.h>
 
 // O_DIRECT is not in SwiftGlibc's fcntl overlay
 #ifndef O_DIRECT
