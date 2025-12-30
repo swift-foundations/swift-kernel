@@ -593,21 +593,4 @@ extension Kernel.Stat.Kind {
     }
 }
 
-// MARK: - Seek Origin
-
-extension Kernel {
-    /// Seek origin for file offset operations.
-    public enum Seek {
-        public enum Origin: Sendable {
-            /// Seek from the beginning of the file.
-            case start
-
-            /// Seek from the current file offset.
-            case current
-
-            /// Seek from the end of the file.
-            case end
-        }
-    }
-}
 #endif

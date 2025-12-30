@@ -20,6 +20,7 @@ let package = Package(
         // swift-system for internal use only (Errno, FilePath bridging)
         // NOT re-exported from Kernel's public API
         .package(url: "https://github.com/apple/swift-system", from: "1.4.0"),
+        .package(url: "https://github.com/swift-standards/swift-standards", from: "0.1.0"),
     ],
     targets: [
         .target(
@@ -30,7 +31,10 @@ let package = Package(
         ),
         .testTarget(
             name: "Kernel Tests",
-            dependencies: ["Kernel"]
+            dependencies: [
+                "Kernel",
+                .product(name: "StandardsTestSupport", package: "swift-standards"),
+            ]
         ),
     ]
 )
