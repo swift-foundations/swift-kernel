@@ -308,6 +308,212 @@ extension Kernel.Syscalls.Test.EdgeCase {
     }
 }
 
+// MARK: - Lock/Unlock Unit Tests
+
+extension Kernel.Syscalls.Test.Unit {
+    @Test("lock and unlock whole file")
+    func lockUnlockWholeFile() throws {
+        let path = FilePath("/tmp/kernel-test-lock-\(ProcessInfo.processInfo.processIdentifier).txt")
+
+        let fd = try Kernel.Syscalls.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: 0o644
+        )
+
+        defer {
+            try? Kernel.Syscalls.close(fd)
+            try? Kernel.Syscalls.unlink(path: path)
+        }
+
+        // Acquire exclusive lock
+        let acquired = try Kernel.Syscalls.lock(fd, range: .file, exclusive: true, wait: true)
+        #expect(acquired == true)
+
+        // Unlock
+        try Kernel.Syscalls.unlock(fd, range: .file)
+    }
+
+    @Test("lock byte range")
+    func lockByteRange() throws {
+        let path = FilePath("/tmp/kernel-test-lock-range-\(ProcessInfo.processInfo.processIdentifier).txt")
+
+        let fd = try Kernel.Syscalls.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: 0o644
+        )
+
+        defer {
+            try? Kernel.Syscalls.close(fd)
+            try? Kernel.Syscalls.unlink(path: path)
+        }
+
+        // Write some data
+        let data: [UInt8] = Array(repeating: 0, count: 100)
+        _ = try data.withUnsafeBytes { try Kernel.Syscalls.write(fd, from: $0) }
+
+        // Lock bytes 10-50
+        let acquired = try Kernel.Syscalls.lock(
+            fd,
+            range: .bytes(start: 10, length: 40),
+            exclusive: true,
+            wait: true
+        )
+        #expect(acquired == true)
+
+        // Unlock
+        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 10, length: 40))
+    }
+
+    @Test("shared lock allows multiple readers")
+    func sharedLock() throws {
+        let path = FilePath("/tmp/kernel-test-shared-\(ProcessInfo.processInfo.processIdentifier).txt")
+
+        let fd1 = try Kernel.Syscalls.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: 0o644
+        )
+
+        let fd2 = try Kernel.Syscalls.open(
+            path: path,
+            mode: [.read],
+            options: [],
+            permissions: 0
+        )
+
+        defer {
+            try? Kernel.Syscalls.close(fd1)
+            try? Kernel.Syscalls.close(fd2)
+            try? Kernel.Syscalls.unlink(path: path)
+        }
+
+        // First shared lock
+        let acquired1 = try Kernel.Syscalls.lock(fd1, range: .file, exclusive: false, wait: true)
+        #expect(acquired1 == true)
+
+        // Second shared lock should also succeed
+        let acquired2 = try Kernel.Syscalls.lock(fd2, range: .file, exclusive: false, wait: true)
+        #expect(acquired2 == true)
+
+        // Unlock both
+        try Kernel.Syscalls.unlock(fd1, range: .file)
+        try Kernel.Syscalls.unlock(fd2, range: .file)
+    }
+
+    @Test("lock on different byte ranges")
+    func lockDifferentRanges() throws {
+        // Note: POSIX fcntl locks are per-process, not per-fd.
+        // Two fds in the same process to the same file share locks.
+        // Testing cross-process contention requires spawning processes.
+        // This test verifies non-overlapping ranges work correctly.
+        let path = FilePath("/tmp/kernel-test-ranges-\(ProcessInfo.processInfo.processIdentifier).txt")
+
+        let fd = try Kernel.Syscalls.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: 0o644
+        )
+
+        defer {
+            try? Kernel.Syscalls.close(fd)
+            try? Kernel.Syscalls.unlink(path: path)
+        }
+
+        // Write some data
+        let data: [UInt8] = Array(repeating: 0, count: 200)
+        _ = try data.withUnsafeBytes { try Kernel.Syscalls.write(fd, from: $0) }
+
+        // Lock first range
+        let acquired1 = try Kernel.Syscalls.lock(
+            fd,
+            range: .bytes(start: 0, length: 50),
+            exclusive: true,
+            wait: true
+        )
+        #expect(acquired1 == true)
+
+        // Lock second non-overlapping range
+        let acquired2 = try Kernel.Syscalls.lock(
+            fd,
+            range: .bytes(start: 100, length: 50),
+            exclusive: true,
+            wait: true
+        )
+        #expect(acquired2 == true)
+
+        // Unlock both
+        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 0, length: 50))
+        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 100, length: 50))
+    }
+}
+
+// MARK: - Statfs Unit Tests
+
+extension Kernel.Syscalls.Test.Unit {
+    @Test("statfs returns filesystem info")
+    func statfsPath() throws {
+        let path = FilePath("/tmp")
+
+        let fs = try Kernel.Syscalls.statfs(path: path)
+
+        // Basic sanity checks
+        #expect(fs.blockSize > 0)
+        #expect(fs.blocks > 0)
+    }
+
+    @Test("fstatfs returns filesystem info")
+    func fstatfsDescriptor() throws {
+        let path = FilePath("/tmp/kernel-test-fstatfs-\(ProcessInfo.processInfo.processIdentifier).txt")
+
+        let fd = try Kernel.Syscalls.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: 0o644
+        )
+
+        defer {
+            try? Kernel.Syscalls.close(fd)
+            try? Kernel.Syscalls.unlink(path: path)
+        }
+
+        let fs = try Kernel.Syscalls.fstatfs(fd)
+
+        #expect(fs.blockSize > 0)
+        #expect(fs.blocks > 0)
+    }
+
+    @Test("statfs and fstatfs match for same filesystem")
+    func statfsMatchesFstatfs() throws {
+        let path = FilePath("/tmp/kernel-test-statfs-match-\(ProcessInfo.processInfo.processIdentifier).txt")
+
+        let fd = try Kernel.Syscalls.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: 0o644
+        )
+
+        defer {
+            try? Kernel.Syscalls.close(fd)
+            try? Kernel.Syscalls.unlink(path: path)
+        }
+
+        let statfs = try Kernel.Syscalls.statfs(path: FilePath("/tmp"))
+        let fstatfs = try Kernel.Syscalls.fstatfs(fd)
+
+        // Same filesystem should have same type and block size
+        #expect(statfs.type == fstatfs.type)
+        #expect(statfs.blockSize == fstatfs.blockSize)
+    }
+}
+
 // MARK: - Helper for cleanup
 
 import Foundation

@@ -461,6 +461,142 @@ extension Kernel.Syscalls {
         }
         return Kernel.Stat(posix: sb)
     }
+
+    // MARK: - Locking Operations
+
+    /// Acquires a lock on a byte range.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The file descriptor.
+    ///   - range: The byte range to lock.
+    ///   - exclusive: `true` for exclusive (write) lock, `false` for shared (read) lock.
+    ///   - wait: `true` to block until lock is acquired, `false` to return immediately.
+    /// - Returns: `true` if lock was acquired, `false` if `wait` is `false` and lock is held.
+    /// - Throws: `Kernel.Error` on failure.
+    ///
+    /// ## Contract
+    /// - `wait == false`: Returns `false` on contention (no throw). Returns `true` on success.
+    /// - `wait == true`: Never returns `false`. Either succeeds or throws.
+    @inlinable
+    public static func lock(
+        _ descriptor: Kernel.Descriptor,
+        range: Kernel.Lock.Range,
+        exclusive: Bool,
+        wait: Bool
+    ) throws(Kernel.Error) -> Bool {
+        var fl = flock()
+        fl.l_type = exclusive ? Int16(F_WRLCK) : Int16(F_RDLCK)
+        fl.l_whence = Int16(SEEK_SET)
+
+        switch range {
+        case .file:
+            // l_start = 0, l_len = 0 means "lock entire file to EOF"
+            fl.l_start = 0
+            fl.l_len = 0
+        case .bytes(let start, let length):
+            fl.l_start = off_t(start)
+            fl.l_len = off_t(length)
+        }
+
+        let command = wait ? F_SETLKW : F_SETLK
+        let result = fcntl(descriptor, command, &fl)
+
+        if result == -1 {
+            let err = errno
+            // EAGAIN or EACCES means the lock is held (non-blocking case)
+            if !wait && (err == EAGAIN || err == EACCES) {
+                return false
+            }
+            throw Kernel.Error.posix(err)
+        }
+        return true
+    }
+
+    /// Releases a lock on a byte range.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The file descriptor.
+    ///   - range: The byte range to unlock.
+    /// - Throws: `Kernel.Error` on failure.
+    @inlinable
+    public static func unlock(
+        _ descriptor: Kernel.Descriptor,
+        range: Kernel.Lock.Range
+    ) throws(Kernel.Error) {
+        var fl = flock()
+        fl.l_type = Int16(F_UNLCK)
+        fl.l_whence = Int16(SEEK_SET)
+
+        switch range {
+        case .file:
+            fl.l_start = 0
+            fl.l_len = 0
+        case .bytes(let start, let length):
+            fl.l_start = off_t(start)
+            fl.l_len = off_t(length)
+        }
+
+        let result = fcntl(descriptor, F_SETLK, &fl)
+        guard result != -1 else {
+            throw Kernel.Error.currentPosixError()
+        }
+    }
+
+    // MARK: - Filesystem Statistics
+
+    /// Gets filesystem statistics for a path.
+    ///
+    /// - Parameter path: The file path.
+    /// - Returns: Filesystem statistics.
+    /// - Throws: `Kernel.Error` on failure.
+    @inlinable
+    public static func statfs(
+        path: FilePath
+    ) throws(Kernel.Error) -> Kernel.Statfs {
+        do {
+            return try path.withPlatformString { cString in
+                try statfs(unsafePath: cString)
+            }
+        } catch let error as Kernel.Error {
+            throw error
+        } catch {
+            throw .platform(code: -1, message: "Unexpected error: \(error)")
+        }
+    }
+
+    /// Gets filesystem statistics for a path.
+    ///
+    /// - Parameter unsafePath: A null-terminated C string path.
+    /// - Returns: Filesystem statistics.
+    /// - Throws: `Kernel.Error` on failure.
+    @inlinable
+    public static func statfs(
+        unsafePath: UnsafePointer<CChar>
+    ) throws(Kernel.Error) -> Kernel.Statfs {
+        var buf = PlatformStatfs()
+        let result = _cStatfs(unsafePath, &buf)
+        guard result == 0 else {
+            throw Kernel.Error.currentPosixError()
+        }
+        return Kernel.Statfs(posix: buf)
+    }
+
+    /// Gets filesystem statistics for an open file descriptor.
+    ///
+    /// - Parameter descriptor: The file descriptor.
+    /// - Returns: Filesystem statistics.
+    /// - Throws: `Kernel.Error` on failure.
+    @inlinable
+    public static func fstatfs(
+        _ descriptor: Kernel.Descriptor
+    ) throws(Kernel.Error) -> Kernel.Statfs {
+        var buf = PlatformStatfs()
+        let result = _cFstatfs(descriptor, &buf)
+        guard result == 0 else {
+            throw Kernel.Error.currentPosixError()
+        }
+        return Kernel.Statfs(posix: buf)
+    }
 }
 
 // MARK: - Stat Helpers
@@ -472,6 +608,9 @@ extension Kernel.Syscalls {
 internal typealias PlatformStat = Darwin.stat
 
 @usableFromInline
+internal typealias PlatformStatfs = Darwin.statfs
+
+@usableFromInline
 internal func _cStat(_ path: UnsafePointer<CChar>, _ sb: inout PlatformStat) -> Int32 {
     stat(path, &sb)
 }
@@ -484,12 +623,26 @@ internal func _cLstat(_ path: UnsafePointer<CChar>, _ sb: inout PlatformStat) ->
 @usableFromInline
 internal func _cFstat(_ fd: Int32, _ sb: inout PlatformStat) -> Int32 {
     fstat(fd, &sb)
+}
+
+@usableFromInline
+internal func _cStatfs(_ path: UnsafePointer<CChar>, _ buf: inout PlatformStatfs) -> Int32 {
+    // Use unqualified call to avoid name collision with statfs type
+    statfs(path, &buf)
+}
+
+@usableFromInline
+internal func _cFstatfs(_ fd: Int32, _ buf: inout PlatformStatfs) -> Int32 {
+    fstatfs(fd, &buf)
 }
 #elseif canImport(Glibc)
 @usableFromInline
 internal typealias PlatformStat = Glibc.stat
 
 @usableFromInline
+internal typealias PlatformStatfs = Glibc.statfs
+
+@usableFromInline
 internal func _cStat(_ path: UnsafePointer<CChar>, _ sb: inout PlatformStat) -> Int32 {
     stat(path, &sb)
 }
@@ -502,12 +655,26 @@ internal func _cLstat(_ path: UnsafePointer<CChar>, _ sb: inout PlatformStat) ->
 @usableFromInline
 internal func _cFstat(_ fd: Int32, _ sb: inout PlatformStat) -> Int32 {
     fstat(fd, &sb)
+}
+
+@usableFromInline
+internal func _cStatfs(_ path: UnsafePointer<CChar>, _ buf: inout PlatformStatfs) -> Int32 {
+    // Use unqualified call to avoid name collision with statfs type
+    statfs(path, &buf)
+}
+
+@usableFromInline
+internal func _cFstatfs(_ fd: Int32, _ buf: inout PlatformStatfs) -> Int32 {
+    fstatfs(fd, &buf)
 }
 #elseif canImport(Musl)
 @usableFromInline
 internal typealias PlatformStat = Musl.stat
 
 @usableFromInline
+internal typealias PlatformStatfs = Musl.statfs
+
+@usableFromInline
 internal func _cStat(_ path: UnsafePointer<CChar>, _ sb: inout PlatformStat) -> Int32 {
     stat(path, &sb)
 }
@@ -520,6 +687,17 @@ internal func _cLstat(_ path: UnsafePointer<CChar>, _ sb: inout PlatformStat) ->
 @usableFromInline
 internal func _cFstat(_ fd: Int32, _ sb: inout PlatformStat) -> Int32 {
     fstat(fd, &sb)
+}
+
+@usableFromInline
+internal func _cStatfs(_ path: UnsafePointer<CChar>, _ buf: inout PlatformStatfs) -> Int32 {
+    // Use unqualified call to avoid name collision with statfs type
+    statfs(path, &buf)
+}
+
+@usableFromInline
+internal func _cFstatfs(_ fd: Int32, _ buf: inout PlatformStatfs) -> Int32 {
+    fstatfs(fd, &buf)
 }
 #endif
 
@@ -590,6 +768,41 @@ extension Kernel.Stat.Kind {
         default:
             self = .unknown
         }
+    }
+}
+
+// MARK: - Statfs Conversion
+
+extension Kernel.Statfs {
+    /// Creates a Statfs from a POSIX statfs structure.
+    @inlinable
+    init(posix buf: PlatformStatfs) {
+        #if canImport(Darwin)
+        // Darwin uses f_type for filesystem type
+        self.type = UInt64(buf.f_type)
+        self.blockSize = UInt64(buf.f_bsize)
+        self.blocks = UInt64(buf.f_blocks)
+        self.freeBlocks = UInt64(buf.f_bfree)
+        self.availableBlocks = UInt64(buf.f_bavail)
+        self.files = UInt64(buf.f_files)
+        self.freeFiles = UInt64(buf.f_ffree)
+        // Darwin fsid is a struct with val[2]
+        self.fsid = UInt64(buf.f_fsid.val.0) | (UInt64(buf.f_fsid.val.1) << 32)
+        // Darwin doesn't have f_namelen, use a reasonable default
+        self.nameMax = 255
+        #else
+        // Linux (Glibc/Musl) uses f_type for filesystem type
+        self.type = UInt64(buf.f_type)
+        self.blockSize = UInt64(buf.f_bsize)
+        self.blocks = UInt64(buf.f_blocks)
+        self.freeBlocks = UInt64(buf.f_bfree)
+        self.availableBlocks = UInt64(buf.f_bavail)
+        self.files = UInt64(buf.f_files)
+        self.freeFiles = UInt64(buf.f_ffree)
+        // Linux fsid is a struct with __val[2]
+        self.fsid = UInt64(bitPattern: Int64(buf.f_fsid.__val.0)) | (UInt64(bitPattern: Int64(buf.f_fsid.__val.1)) << 32)
+        self.nameMax = UInt64(buf.f_namelen)
+        #endif
     }
 }
 
