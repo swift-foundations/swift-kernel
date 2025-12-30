@@ -99,28 +99,28 @@
             }
 
             /// The associated file is available for read operations.
-            public static let `in` = Events(rawValue: UInt32(EPOLLIN))
+            public static let `in` = Events(rawValue: EPOLLIN.rawValue)
 
             /// The associated file is available for write operations.
-            public static let out = Events(rawValue: UInt32(EPOLLOUT))
+            public static let out = Events(rawValue: EPOLLOUT.rawValue)
 
             /// Stream socket peer closed connection, or shut down writing half.
-            public static let rdhup = Events(rawValue: UInt32(EPOLLRDHUP))
+            public static let rdhup = Events(rawValue: EPOLLRDHUP.rawValue)
 
             /// Urgent data available for read.
-            public static let pri = Events(rawValue: UInt32(EPOLLPRI))
+            public static let pri = Events(rawValue: EPOLLPRI.rawValue)
 
             /// Error condition happened.
-            public static let err = Events(rawValue: UInt32(EPOLLERR))
+            public static let err = Events(rawValue: EPOLLERR.rawValue)
 
             /// Hang up happened.
-            public static let hup = Events(rawValue: UInt32(EPOLLHUP))
+            public static let hup = Events(rawValue: EPOLLHUP.rawValue)
 
             /// Edge-triggered behavior.
-            public static let et = Events(rawValue: UInt32(EPOLLET))
+            public static let et = Events(rawValue: EPOLLET.rawValue)
 
             /// One-shot behavior: disable after one event delivery.
-            public static let oneshot = Events(rawValue: UInt32(EPOLLONESHOT))
+            public static let oneshot = Events(rawValue: EPOLLONESHOT.rawValue)
 
             /// Combines multiple event flags.
             @inlinable
