@@ -13,7 +13,7 @@ extension Kernel {
     /// Unified error type for all kernel syscalls.
     ///
     /// Maps platform errno (POSIX) and DWORD error codes (Windows) to semantic cases.
-    /// All `Kernel.Syscalls.*` functions throw this type.
+    /// Used by all Kernel syscall operations.
     ///
     /// ## Design Principles
     /// - **Semantic, not platform-specific**: Cases represent user-actionable conditions.

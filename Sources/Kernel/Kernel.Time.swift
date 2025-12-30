@@ -96,3 +96,55 @@ extension Kernel.Time: Comparable {
         return lhs.nanoseconds < rhs.nanoseconds
     }
 }
+
+// MARK: - Duration Conversions
+
+extension Kernel.Time {
+    /// Converts a Duration to milliseconds for epoll/poll.
+    ///
+    /// - Parameter duration: The duration to convert, or `nil` for infinite wait.
+    /// - Returns: Milliseconds as `CInt`. Returns `-1` for infinite (nil).
+    ///   Saturates at `CInt.max` for very large durations.
+    ///
+    /// This is a pure conversion function with no policy decisions.
+    /// The caller decides what "infinite" means and when to use it.
+    @inlinable
+    public static func milliseconds(from duration: Duration?) -> CInt {
+        guard let duration else { return -1 }
+        let (seconds, attoseconds) = duration.components
+        let ms = seconds * 1000 + attoseconds / 1_000_000_000_000_000
+        return ms > Int64(CInt.max) ? CInt.max : CInt(ms)
+    }
+}
+
+#if !os(Windows)
+#if canImport(Darwin)
+public import Darwin
+#elseif canImport(Glibc)
+public import Glibc
+#elseif canImport(Musl)
+public import Musl
+#endif
+
+extension Kernel.Time {
+    /// Converts a Duration to a POSIX timespec for kqueue/nanosleep.
+    ///
+    /// - Parameter duration: The duration to convert, or `nil` for infinite wait.
+    /// - Returns: A `timespec` struct, or `nil` for infinite wait.
+    ///
+    /// This is a pure conversion function with no policy decisions.
+    @inlinable
+    public static func timespec(from duration: Duration?) -> timespec? {
+        guard let duration else { return nil }
+        let (seconds, attoseconds) = duration.components
+        let nanoseconds = attoseconds / 1_000_000_000
+        #if canImport(Darwin)
+        return Darwin.timespec(tv_sec: Int(seconds), tv_nsec: Int(nanoseconds))
+        #elseif canImport(Glibc)
+        return Glibc.timespec(tv_sec: Int(seconds), tv_nsec: Int(nanoseconds))
+        #elseif canImport(Musl)
+        return Musl.timespec(tv_sec: Int(seconds), tv_nsec: Int(nanoseconds))
+        #endif
+    }
+}
+#endif

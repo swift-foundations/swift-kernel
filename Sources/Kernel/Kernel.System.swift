@@ -14,6 +14,36 @@ extension Kernel {
     public enum System {}
 }
 
+// MARK: - Alignment Helpers
+
+extension Kernel.System {
+    /// Rounds a value down to the nearest multiple of alignment.
+    ///
+    /// - Parameters:
+    ///   - value: The value to align.
+    ///   - alignment: The alignment boundary (must be a power of 2).
+    /// - Returns: The largest multiple of `alignment` that is ≤ `value`.
+    ///
+    /// - Precondition: `alignment` must be a power of 2.
+    @inlinable
+    public static func alignDown(_ value: Int, to alignment: Int) -> Int {
+        value & ~(alignment - 1)
+    }
+
+    /// Rounds a value up to the nearest multiple of alignment.
+    ///
+    /// - Parameters:
+    ///   - value: The value to align.
+    ///   - alignment: The alignment boundary (must be a power of 2).
+    /// - Returns: The smallest multiple of `alignment` that is ≥ `value`.
+    ///
+    /// - Precondition: `alignment` must be a power of 2.
+    @inlinable
+    public static func alignUp(_ value: Int, to alignment: Int) -> Int {
+        (value + alignment - 1) & ~(alignment - 1)
+    }
+}
+
 #if !os(Windows)
 #if canImport(Darwin)
 internal import Darwin

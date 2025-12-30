@@ -14,6 +14,48 @@ extension Kernel {
     public enum Lock {}
 }
 
+// MARK: - Lock Errors
+
+extension Kernel.Lock {
+    /// Lock operation errors.
+    public enum Error: Swift.Error, Sendable, Equatable, Hashable {
+        /// Lock contention - another process holds a conflicting lock.
+        /// - POSIX: `EAGAIN` on `F_SETLK` (non-blocking)
+        /// - Windows: `ERROR_LOCK_VIOLATION`
+        ///
+        /// This is only thrown when `wait: false`. Use `try?` pattern:
+        /// ```swift
+        /// if (try? Kernel.Lock.lock(fd, range: .file, exclusive: true, wait: false)) != nil {
+        ///     // Lock acquired
+        /// }
+        /// ```
+        case contention
+
+        /// Deadlock detected.
+        /// - POSIX: `EDEADLK`
+        ///
+        /// The kernel detected that acquiring this lock would cause
+        /// a deadlock with another process.
+        case deadlock
+
+        /// No locks available - system lock table exhausted.
+        /// - POSIX: `ENOLCK`
+        ///
+        /// This is resource exhaustion, not contention.
+        case unavailable
+    }
+}
+
+extension Kernel.Lock.Error: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .contention: return "lock contention"
+        case .deadlock: return "deadlock detected"
+        case .unavailable: return "no locks available"
+        }
+    }
+}
+
 extension Kernel.Lock {
     /// The range of bytes to lock within a file.
     public enum Range: Sendable, Equatable, Hashable {

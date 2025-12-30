@@ -35,7 +35,7 @@ extension Kernel {
     /// For safe path handling, prefer the `FilePath`-based syscall overloads:
     /// ```swift
     /// let path = FilePath("/tmp/file.txt")
-    /// let fd = try Kernel.Syscalls.open(path: path, mode: .read, options: [], permissions: 0)
+    /// let fd = try Kernel.Open.open(path: path, mode: .read, options: [], permissions: 0)
     /// ```
     ///
     /// Only use `Kernel.Path` when you have a pre-validated C string and need
@@ -66,6 +66,72 @@ extension Kernel {
         @inlinable
         public init(unsafeCString cString: UnsafePointer<CChar>) {
             self.cString = cString
+        }
+    }
+}
+
+// MARK: - Path Resolution Errors
+
+extension Kernel.Path {
+    /// Path resolution domain - errors during path lookup.
+    ///
+    /// These errors occur when the kernel attempts to resolve a path
+    /// to an actual filesystem object.
+    public enum Resolution: Sendable {
+        /// Path resolution errors.
+        public enum Error: Swift.Error, Sendable, Equatable, Hashable {
+            /// The specified path does not exist.
+            /// - POSIX: `ENOENT`
+            /// - Windows: `ERROR_FILE_NOT_FOUND`, `ERROR_PATH_NOT_FOUND`
+            case notFound
+
+            /// A file or directory already exists at the path.
+            /// - POSIX: `EEXIST`
+            /// - Windows: `ERROR_FILE_EXISTS`, `ERROR_ALREADY_EXISTS`
+            case exists
+
+            /// The path refers to a directory when a file was expected.
+            /// - POSIX: `EISDIR`
+            /// - Windows: `ERROR_DIRECTORY`
+            case isDirectory
+
+            /// A path component is not a directory.
+            /// - POSIX: `ENOTDIR`
+            /// - Windows: `ERROR_DIRECTORY_NOT_SUPPORTED`
+            case notDirectory
+
+            /// The directory is not empty.
+            /// - POSIX: `ENOTEMPTY`
+            /// - Windows: `ERROR_DIR_NOT_EMPTY`
+            case notEmpty
+
+            /// Too many symbolic links encountered.
+            /// - POSIX: `ELOOP`
+            case loop
+
+            /// Cross-device link attempted.
+            /// - POSIX: `EXDEV`
+            /// - Windows: `ERROR_NOT_SAME_DEVICE`
+            case crossDevice
+
+            /// Path name too long.
+            /// - POSIX: `ENAMETOOLONG`
+            case nameTooLong
+        }
+    }
+}
+
+extension Kernel.Path.Resolution.Error: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .notFound: return "not found"
+        case .exists: return "already exists"
+        case .isDirectory: return "is a directory"
+        case .notDirectory: return "not a directory"
+        case .notEmpty: return "directory not empty"
+        case .loop: return "too many symbolic links"
+        case .crossDevice: return "cross-device link"
+        case .nameTooLong: return "name too long"
         }
     }
 }
