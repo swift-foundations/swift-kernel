@@ -287,13 +287,13 @@ extension Kernel.Lock.Token {
         let nanoseconds = UInt64(seconds) * 1_000_000_000 + UInt64(attoseconds) / 1_000_000_000
 
         #if os(Windows)
-        let milliseconds = nanoseconds / 1_000_000
-        Sleep(DWORD(min(milliseconds, UInt64(DWORD.max))))
+            let milliseconds = nanoseconds / 1_000_000
+            Sleep(DWORD(min(milliseconds, UInt64(DWORD.max))))
         #else
-        var ts = timespec()
-        ts.tv_sec = Int(nanoseconds / 1_000_000_000)
-        ts.tv_nsec = Int(nanoseconds % 1_000_000_000)
-        nanosleep(&ts, nil)
+            var ts = timespec()
+            ts.tv_sec = Int(nanoseconds / 1_000_000_000)
+            ts.tv_nsec = Int(nanoseconds % 1_000_000_000)
+            nanosleep(&ts, nil)
         #endif
     }
 }
@@ -352,134 +352,134 @@ extension Kernel.Lock {
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-    public import Darwin
-#elseif canImport(Glibc)
-    public import Glibc
-#elseif canImport(Musl)
-    public import Musl
-#endif
+    #if canImport(Darwin)
+        public import Darwin
+    #elseif canImport(Glibc)
+        public import Glibc
+    #elseif canImport(Musl)
+        public import Musl
+    #endif
 
-extension Kernel.Lock {
-    /// Acquires a lock on a byte range (blocking).
-    ///
-    /// This call blocks until the lock can be acquired.
-    ///
-    /// - Parameters:
-    ///   - descriptor: The file descriptor.
-    ///   - range: The byte range to lock.
-    ///   - kind: The lock kind (shared or exclusive).
-    /// - Throws: `Error.deadlock` if a deadlock is detected,
-    ///           `Error.unavailable` if the system lock table is exhausted.
-    @inlinable
-    public static func lock(
-        _ descriptor: Kernel.Descriptor,
-        range: Range,
-        kind: Kind
-    ) throws(Error) {
-        var fl = makeFlock(range: range, kind: kind)
+    extension Kernel.Lock {
+        /// Acquires a lock on a byte range (blocking).
+        ///
+        /// This call blocks until the lock can be acquired.
+        ///
+        /// - Parameters:
+        ///   - descriptor: The file descriptor.
+        ///   - range: The byte range to lock.
+        ///   - kind: The lock kind (shared or exclusive).
+        /// - Throws: `Error.deadlock` if a deadlock is detected,
+        ///           `Error.unavailable` if the system lock table is exhausted.
+        @inlinable
+        public static func lock(
+            _ descriptor: Kernel.Descriptor,
+            range: Range,
+            kind: Kind
+        ) throws(Error) {
+            var fl = makeFlock(range: range, kind: kind)
 
-        let result = fcntl(descriptor, F_SETLKW, &fl)
-        guard result != -1 else {
-            throw Error.fromErrno(errno)
-        }
-    }
-
-    /// Attempts to acquire a lock without blocking.
-    ///
-    /// - Parameters:
-    ///   - descriptor: The file descriptor.
-    ///   - range: The byte range to lock.
-    ///   - kind: The lock kind (shared or exclusive).
-    /// - Returns: `true` if the lock was acquired, `false` if it would block.
-    /// - Throws: `Error.deadlock` if a deadlock is detected,
-    ///           `Error.unavailable` if the system lock table is exhausted.
-    @inlinable
-    public static func tryLock(
-        _ descriptor: Kernel.Descriptor,
-        range: Range,
-        kind: Kind
-    ) throws(Error) -> Bool {
-        var fl = makeFlock(range: range, kind: kind)
-
-        let result = fcntl(descriptor, F_SETLK, &fl)
-        if result == -1 {
-            // EAGAIN or EACCES means the lock is held by another process
-            if errno == EAGAIN || errno == EACCES {
-                return false
+            let result = fcntl(descriptor, F_SETLKW, &fl)
+            guard result != -1 else {
+                throw Error.fromErrno(errno)
             }
-            throw Error.fromErrno(errno)
         }
-        return true
+
+        /// Attempts to acquire a lock without blocking.
+        ///
+        /// - Parameters:
+        ///   - descriptor: The file descriptor.
+        ///   - range: The byte range to lock.
+        ///   - kind: The lock kind (shared or exclusive).
+        /// - Returns: `true` if the lock was acquired, `false` if it would block.
+        /// - Throws: `Error.deadlock` if a deadlock is detected,
+        ///           `Error.unavailable` if the system lock table is exhausted.
+        @inlinable
+        public static func tryLock(
+            _ descriptor: Kernel.Descriptor,
+            range: Range,
+            kind: Kind
+        ) throws(Error) -> Bool {
+            var fl = makeFlock(range: range, kind: kind)
+
+            let result = fcntl(descriptor, F_SETLK, &fl)
+            if result == -1 {
+                // EAGAIN or EACCES means the lock is held by another process
+                if errno == EAGAIN || errno == EACCES {
+                    return false
+                }
+                throw Error.fromErrno(errno)
+            }
+            return true
+        }
+
+        /// Releases a lock on a byte range.
+        ///
+        /// - Parameters:
+        ///   - descriptor: The file descriptor.
+        ///   - range: The byte range to unlock.
+        /// - Throws: `Error` if unlocking fails.
+        @inlinable
+        public static func unlock(
+            _ descriptor: Kernel.Descriptor,
+            range: Range
+        ) throws(Error) {
+            var fl = flock()
+            fl.l_type = Int16(F_UNLCK)
+            fl.l_whence = Int16(SEEK_SET)
+
+            switch range {
+            case .file:
+                fl.l_start = 0
+                fl.l_len = 0  // 0 means lock to EOF
+            case .bytes(let start, let end):
+                fl.l_start = off_t(start)
+                fl.l_len = off_t(end - start)
+            }
+
+            let result = fcntl(descriptor, F_SETLK, &fl)
+            guard result != -1 else {
+                throw Error.fromErrno(errno)
+            }
+        }
+
+        /// Creates a flock structure for fcntl.
+        @inlinable
+        static func makeFlock(range: Range, kind: Kind) -> flock {
+            var fl = flock()
+
+            fl.l_type = kind == .shared ? Int16(F_RDLCK) : Int16(F_WRLCK)
+            fl.l_whence = Int16(SEEK_SET)
+
+            switch range {
+            case .file:
+                // l_start = 0, l_len = 0 means "lock entire file to EOF"
+                fl.l_start = 0
+                fl.l_len = 0
+            case .bytes(let start, let end):
+                fl.l_start = off_t(start)
+                fl.l_len = off_t(end - start)
+            }
+
+            return fl
+        }
     }
 
-    /// Releases a lock on a byte range.
-    ///
-    /// - Parameters:
-    ///   - descriptor: The file descriptor.
-    ///   - range: The byte range to unlock.
-    /// - Throws: `Error` if unlocking fails.
-    @inlinable
-    public static func unlock(
-        _ descriptor: Kernel.Descriptor,
-        range: Range
-    ) throws(Error) {
-        var fl = flock()
-        fl.l_type = Int16(F_UNLCK)
-        fl.l_whence = Int16(SEEK_SET)
-
-        switch range {
-        case .file:
-            fl.l_start = 0
-            fl.l_len = 0  // 0 means lock to EOF
-        case .bytes(let start, let end):
-            fl.l_start = off_t(start)
-            fl.l_len = off_t(end - start)
-        }
-
-        let result = fcntl(descriptor, F_SETLK, &fl)
-        guard result != -1 else {
-            throw Error.fromErrno(errno)
+    extension Kernel.Lock.Error {
+        /// Maps errno to lock error.
+        @inlinable
+        static func fromErrno(_ errno: Int32) -> Self {
+            switch errno {
+            case EDEADLK:
+                return .deadlock
+            case ENOLCK:
+                return .unavailable
+            default:
+                // EAGAIN/EACCES are handled in tryLock, shouldn't reach here
+                return .contention
+            }
         }
     }
-
-    /// Creates a flock structure for fcntl.
-    @inlinable
-    static func makeFlock(range: Range, kind: Kind) -> flock {
-        var fl = flock()
-
-        fl.l_type = kind == .shared ? Int16(F_RDLCK) : Int16(F_WRLCK)
-        fl.l_whence = Int16(SEEK_SET)
-
-        switch range {
-        case .file:
-            // l_start = 0, l_len = 0 means "lock entire file to EOF"
-            fl.l_start = 0
-            fl.l_len = 0
-        case .bytes(let start, let end):
-            fl.l_start = off_t(start)
-            fl.l_len = off_t(end - start)
-        }
-
-        return fl
-    }
-}
-
-extension Kernel.Lock.Error {
-    /// Maps errno to lock error.
-    @inlinable
-    static func fromErrno(_ errno: Int32) -> Self {
-        switch errno {
-        case EDEADLK:
-            return .deadlock
-        case ENOLCK:
-            return .unavailable
-        default:
-            // EAGAIN/EACCES are handled in tryLock, shouldn't reach here
-            return .contention
-        }
-    }
-}
 
 #endif
 
@@ -488,154 +488,154 @@ extension Kernel.Lock.Error {
 #if os(Windows)
     public import WinSDK
 
-extension Kernel.Lock {
-    /// Acquires a lock on a byte range (blocking).
-    ///
-    /// This call blocks until the lock can be acquired.
-    ///
-    /// - Parameters:
-    ///   - descriptor: The file descriptor (Windows HANDLE).
-    ///   - range: The byte range to lock.
-    ///   - kind: The lock kind (shared or exclusive).
-    /// - Throws: `Error.unavailable` on failure.
-    @inlinable
-    public static func lock(
-        _ descriptor: Kernel.Descriptor,
-        range: Range,
-        kind: Kind
-    ) throws(Error) {
-        var overlapped = makeOverlapped(range: range)
-        let (lengthLow, lengthHigh) = lockLength(range: range)
+    extension Kernel.Lock {
+        /// Acquires a lock on a byte range (blocking).
+        ///
+        /// This call blocks until the lock can be acquired.
+        ///
+        /// - Parameters:
+        ///   - descriptor: The file descriptor (Windows HANDLE).
+        ///   - range: The byte range to lock.
+        ///   - kind: The lock kind (shared or exclusive).
+        /// - Throws: `Error.unavailable` on failure.
+        @inlinable
+        public static func lock(
+            _ descriptor: Kernel.Descriptor,
+            range: Range,
+            kind: Kind
+        ) throws(Error) {
+            var overlapped = makeOverlapped(range: range)
+            let (lengthLow, lengthHigh) = lockLength(range: range)
 
-        // For blocking, don't use LOCKFILE_FAIL_IMMEDIATELY
-        let flags: DWORD = kind == .exclusive ? DWORD(LOCKFILE_EXCLUSIVE_LOCK) : 0
+            // For blocking, don't use LOCKFILE_FAIL_IMMEDIATELY
+            let flags: DWORD = kind == .exclusive ? DWORD(LOCKFILE_EXCLUSIVE_LOCK) : 0
 
-        let result = LockFileEx(
-            descriptor,
-            flags,
-            0,
-            lengthLow,
-            lengthHigh,
-            &overlapped
-        )
+            let result = LockFileEx(
+                descriptor,
+                flags,
+                0,
+                lengthLow,
+                lengthHigh,
+                &overlapped
+            )
 
-        guard result != 0 else {
-            throw Error.fromWindowsError(GetLastError())
-        }
-    }
-
-    /// Attempts to acquire a lock without blocking.
-    ///
-    /// - Parameters:
-    ///   - descriptor: The file descriptor (Windows HANDLE).
-    ///   - range: The byte range to lock.
-    ///   - kind: The lock kind (shared or exclusive).
-    /// - Returns: `true` if the lock was acquired, `false` if it would block.
-    /// - Throws: `Error` on failure other than contention.
-    @inlinable
-    public static func tryLock(
-        _ descriptor: Kernel.Descriptor,
-        range: Range,
-        kind: Kind
-    ) throws(Error) -> Bool {
-        var overlapped = makeOverlapped(range: range)
-        let (lengthLow, lengthHigh) = lockLength(range: range)
-
-        var flags: DWORD = DWORD(LOCKFILE_FAIL_IMMEDIATELY)
-        if kind == .exclusive {
-            flags |= DWORD(LOCKFILE_EXCLUSIVE_LOCK)
-        }
-
-        let result = LockFileEx(
-            descriptor,
-            flags,
-            0,
-            lengthLow,
-            lengthHigh,
-            &overlapped
-        )
-
-        if result == 0 {
-            let error = GetLastError()
-            if error == DWORD(ERROR_LOCK_VIOLATION) || error == DWORD(ERROR_LOCK_FAILED) {
-                return false
+            guard result != 0 else {
+                throw Error.fromWindowsError(GetLastError())
             }
-            throw Error.fromWindowsError(error)
         }
-        return true
+
+        /// Attempts to acquire a lock without blocking.
+        ///
+        /// - Parameters:
+        ///   - descriptor: The file descriptor (Windows HANDLE).
+        ///   - range: The byte range to lock.
+        ///   - kind: The lock kind (shared or exclusive).
+        /// - Returns: `true` if the lock was acquired, `false` if it would block.
+        /// - Throws: `Error` on failure other than contention.
+        @inlinable
+        public static func tryLock(
+            _ descriptor: Kernel.Descriptor,
+            range: Range,
+            kind: Kind
+        ) throws(Error) -> Bool {
+            var overlapped = makeOverlapped(range: range)
+            let (lengthLow, lengthHigh) = lockLength(range: range)
+
+            var flags: DWORD = DWORD(LOCKFILE_FAIL_IMMEDIATELY)
+            if kind == .exclusive {
+                flags |= DWORD(LOCKFILE_EXCLUSIVE_LOCK)
+            }
+
+            let result = LockFileEx(
+                descriptor,
+                flags,
+                0,
+                lengthLow,
+                lengthHigh,
+                &overlapped
+            )
+
+            if result == 0 {
+                let error = GetLastError()
+                if error == DWORD(ERROR_LOCK_VIOLATION) || error == DWORD(ERROR_LOCK_FAILED) {
+                    return false
+                }
+                throw Error.fromWindowsError(error)
+            }
+            return true
+        }
+
+        /// Releases a lock on a byte range.
+        ///
+        /// - Parameters:
+        ///   - descriptor: The file descriptor (Windows HANDLE).
+        ///   - range: The byte range to unlock.
+        /// - Throws: `Error` if unlocking fails.
+        @inlinable
+        public static func unlock(
+            _ descriptor: Kernel.Descriptor,
+            range: Range
+        ) throws(Error) {
+            var overlapped = makeOverlapped(range: range)
+            let (lengthLow, lengthHigh) = lockLength(range: range)
+
+            let result = UnlockFileEx(
+                descriptor,
+                0,
+                lengthLow,
+                lengthHigh,
+                &overlapped
+            )
+
+            guard result != 0 else {
+                throw Error.fromWindowsError(GetLastError())
+            }
+        }
+
+        /// Creates an OVERLAPPED structure for the given range.
+        @inlinable
+        static func makeOverlapped(range: Range) -> OVERLAPPED {
+            var overlapped = OVERLAPPED()
+            let start: UInt64
+            switch range {
+            case .file:
+                start = 0
+            case .bytes(let s, _):
+                start = s
+            }
+            overlapped.Offset = DWORD(start & 0xFFFF_FFFF)
+            overlapped.OffsetHigh = DWORD(start >> 32)
+            return overlapped
+        }
+
+        /// Computes the DWORD pair for the lock length.
+        ///
+        /// Windows LockFileEx locks exact byte counts (unlike POSIX's "to EOF" with l_len=0).
+        @inlinable
+        static func lockLength(range: Range) -> (low: DWORD, high: DWORD) {
+            switch range {
+            case .file:
+                // Use max DWORD values to lock the largest possible range from offset 0.
+                // This is the Windows equivalent of "lock entire file".
+                return (DWORD.max, DWORD.max)
+            case .bytes(let start, let end):
+                let length = end - start
+                return (DWORD(length & 0xFFFF_FFFF), DWORD(length >> 32))
+            }
+        }
     }
 
-    /// Releases a lock on a byte range.
-    ///
-    /// - Parameters:
-    ///   - descriptor: The file descriptor (Windows HANDLE).
-    ///   - range: The byte range to unlock.
-    /// - Throws: `Error` if unlocking fails.
-    @inlinable
-    public static func unlock(
-        _ descriptor: Kernel.Descriptor,
-        range: Range
-    ) throws(Error) {
-        var overlapped = makeOverlapped(range: range)
-        let (lengthLow, lengthHigh) = lockLength(range: range)
-
-        let result = UnlockFileEx(
-            descriptor,
-            0,
-            lengthLow,
-            lengthHigh,
-            &overlapped
-        )
-
-        guard result != 0 else {
-            throw Error.fromWindowsError(GetLastError())
+    extension Kernel.Lock.Error {
+        /// Maps Windows error code to lock error.
+        @inlinable
+        static func fromWindowsError(_ error: DWORD) -> Self {
+            switch error {
+            case DWORD(ERROR_LOCK_VIOLATION), DWORD(ERROR_SHARING_VIOLATION), DWORD(ERROR_LOCK_FAILED):
+                return .contention
+            default:
+                return .unavailable
+            }
         }
     }
-
-    /// Creates an OVERLAPPED structure for the given range.
-    @inlinable
-    static func makeOverlapped(range: Range) -> OVERLAPPED {
-        var overlapped = OVERLAPPED()
-        let start: UInt64
-        switch range {
-        case .file:
-            start = 0
-        case .bytes(let s, _):
-            start = s
-        }
-        overlapped.Offset = DWORD(start & 0xFFFFFFFF)
-        overlapped.OffsetHigh = DWORD(start >> 32)
-        return overlapped
-    }
-
-    /// Computes the DWORD pair for the lock length.
-    ///
-    /// Windows LockFileEx locks exact byte counts (unlike POSIX's "to EOF" with l_len=0).
-    @inlinable
-    static func lockLength(range: Range) -> (low: DWORD, high: DWORD) {
-        switch range {
-        case .file:
-            // Use max DWORD values to lock the largest possible range from offset 0.
-            // This is the Windows equivalent of "lock entire file".
-            return (DWORD.max, DWORD.max)
-        case .bytes(let start, let end):
-            let length = end - start
-            return (DWORD(length & 0xFFFFFFFF), DWORD(length >> 32))
-        }
-    }
-}
-
-extension Kernel.Lock.Error {
-    /// Maps Windows error code to lock error.
-    @inlinable
-    static func fromWindowsError(_ error: DWORD) -> Self {
-        switch error {
-        case DWORD(ERROR_LOCK_VIOLATION), DWORD(ERROR_SHARING_VIOLATION), DWORD(ERROR_LOCK_FAILED):
-            return .contention
-        default:
-            return .unavailable
-        }
-    }
-}
 
 #endif
