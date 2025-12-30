@@ -103,10 +103,20 @@ extension Kernel {
             /// - Windows: `ERROR_INVALID_HANDLE`
             case invalid
 
-            /// Too many open files (process or system limit reached).
-            /// - POSIX: `EMFILE`, `ENFILE`
-            /// - Windows: `ERROR_TOO_MANY_OPEN_FILES`
-            case limit
+            /// Too many open files.
+            case limit(Limit)
+
+            /// Limit scope for file descriptor exhaustion.
+            public enum Limit: Sendable, Equatable {
+                /// Per-process file descriptor limit reached.
+                /// - POSIX: `EMFILE`
+                /// - Windows: `ERROR_TOO_MANY_OPEN_FILES`
+                case process
+
+                /// System-wide file descriptor limit reached.
+                /// - POSIX: `ENFILE`
+                case system
+            }
         }
 
         /// I/O operation error conditions.
@@ -120,10 +130,20 @@ extension Kernel {
             /// - POSIX: `ECONNRESET`
             case reset
 
-            /// The device is unavailable or not configured.
-            /// - POSIX: `ENODEV`, `ENXIO`
-            /// - Windows: `ERROR_IO_DEVICE`
-            case device
+            /// Device-related errors.
+            case device(Device)
+
+            /// Device error types.
+            public enum Device: Sendable, Equatable {
+                /// The device does not support the requested operation.
+                /// - POSIX: `ENODEV`
+                case unsupported
+
+                /// The device does not exist or is not configured.
+                /// - POSIX: `ENXIO`
+                /// - Windows: `ERROR_IO_DEVICE`
+                case unavailable
+            }
 
             /// Illegal seek on a non-seekable descriptor (e.g., pipe, socket).
             /// - POSIX: `ESPIPE`
@@ -157,10 +177,20 @@ extension Kernel {
 
         /// System resource error conditions.
         public enum Resource: Sendable, Equatable {
-            /// Permission denied for the requested operation.
-            /// - POSIX: `EACCES`, `EPERM`
-            /// - Windows: `ERROR_ACCESS_DENIED`
-            case permission
+            /// Permission-related errors.
+            case permission(Permission)
+
+            /// Permission error types.
+            public enum Permission: Sendable, Equatable {
+                /// File or directory permission denied.
+                /// - POSIX: `EACCES`
+                /// - Windows: `ERROR_ACCESS_DENIED`
+                case denied
+
+                /// Operation not permitted (requires privilege).
+                /// - POSIX: `EPERM`
+                case notPermitted
+            }
 
             /// No space left on the device.
             /// - POSIX: `ENOSPC`
@@ -224,7 +254,16 @@ extension Kernel.Error.Descriptor: CustomStringConvertible {
     public var description: String {
         switch self {
         case .invalid: return "invalid descriptor"
-        case .limit: return "too many open files"
+        case .limit(let limit): return limit.description
+        }
+    }
+}
+
+extension Kernel.Error.Descriptor.Limit: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .process: return "too many open files in process"
+        case .system: return "too many open files in system"
         }
     }
 }
@@ -234,8 +273,17 @@ extension Kernel.Error.IO: CustomStringConvertible {
         switch self {
         case .broken: return "broken pipe"
         case .reset: return "connection reset"
-        case .device: return "device unavailable"
+        case .device(let device): return device.description
         case .seek: return "illegal seek"
+        }
+    }
+}
+
+extension Kernel.Error.IO.Device: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .unsupported: return "operation not supported by device"
+        case .unavailable: return "device unavailable"
         }
     }
 }
@@ -261,11 +309,20 @@ extension Kernel.Error.Memory: CustomStringConvertible {
 extension Kernel.Error.Resource: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .permission: return "permission denied"
+        case .permission(let permission): return permission.description
         case .space: return "no space left on device"
         case .interrupted: return "interrupted"
         case .blocked: return "would block"
         case .unsupported: return "operation not supported"
+        }
+    }
+}
+
+extension Kernel.Error.Resource.Permission: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .denied: return "permission denied"
+        case .notPermitted: return "operation not permitted"
         }
     }
 }

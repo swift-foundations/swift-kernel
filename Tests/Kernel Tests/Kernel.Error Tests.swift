@@ -36,7 +36,7 @@ extension Kernel.Error.Test.Unit {
     @Test("error is Equatable")
     func isEquatable() {
         #expect(Kernel.Error.path(.notFound) == Kernel.Error.path(.notFound))
-        #expect(Kernel.Error.path(.notFound) != Kernel.Error.resource(.permission))
+        #expect(Kernel.Error.path(.notFound) != Kernel.Error.resource(.permission(.denied)))
     }
 
     @Test("platform error stores code and message")
@@ -58,7 +58,7 @@ extension Kernel.Error.Test.Unit {
             .io(.broken),
             .lock(.deadlock),
             .memory(.address),
-            .resource(.permission),
+            .resource(.permission(.denied)),
             .platform(code: 0, message: ""),
         ]
 
@@ -73,7 +73,7 @@ extension Kernel.Error.Test.Unit {
 
     @Test("Path error cases are distinct")
     func pathCasesDistinct() {
-        let cases: [Kernel.Error.Path] = [.notFound, .exists, .isDirectory, .notDirectory, .notEmpty]
+        let cases: [Kernel.Error.Path] = [.notFound, .exists, .isDirectory, .notDirectory, .notEmpty, .crossDevice]
         for (i, a) in cases.enumerated() {
             for (j, b) in cases.enumerated() {
                 if i != j {
@@ -85,12 +85,20 @@ extension Kernel.Error.Test.Unit {
 
     @Test("Descriptor error cases are distinct")
     func descriptorCasesDistinct() {
-        #expect(Kernel.Error.Descriptor.invalid != Kernel.Error.Descriptor.limit)
+        #expect(Kernel.Error.Descriptor.invalid != Kernel.Error.Descriptor.limit(.process))
+        #expect(Kernel.Error.Descriptor.limit(.process) != Kernel.Error.Descriptor.limit(.system))
     }
 
     @Test("IO error cases are distinct")
     func ioCasesDistinct() {
-        #expect(Kernel.Error.IO.broken != Kernel.Error.IO.reset)
+        let cases: [Kernel.Error.IO] = [.broken, .reset, .device(.unsupported), .device(.unavailable), .seek]
+        for (i, a) in cases.enumerated() {
+            for (j, b) in cases.enumerated() {
+                if i != j {
+                    #expect(a != b)
+                }
+            }
+        }
     }
 
     @Test("Lock error cases are distinct")
@@ -105,7 +113,7 @@ extension Kernel.Error.Test.Unit {
 
     @Test("Resource error cases are distinct")
     func resourceCasesDistinct() {
-        let cases: [Kernel.Error.Resource] = [.permission, .space, .interrupted, .blocked]
+        let cases: [Kernel.Error.Resource] = [.permission(.denied), .permission(.notPermitted), .space, .interrupted, .blocked, .unsupported]
         for (i, a) in cases.enumerated() {
             for (j, b) in cases.enumerated() {
                 if i != j {
@@ -127,18 +135,25 @@ extension Kernel.Error.Test.EdgeCase {
             .path(.isDirectory),
             .path(.notDirectory),
             .path(.notEmpty),
+            .path(.crossDevice),
             .descriptor(.invalid),
-            .descriptor(.limit),
+            .descriptor(.limit(.process)),
+            .descriptor(.limit(.system)),
             .io(.broken),
             .io(.reset),
+            .io(.device(.unsupported)),
+            .io(.device(.unavailable)),
+            .io(.seek),
             .lock(.deadlock),
             .lock(.unavailable),
             .memory(.address),
             .memory(.exhausted),
-            .resource(.permission),
+            .resource(.permission(.denied)),
+            .resource(.permission(.notPermitted)),
             .resource(.space),
             .resource(.interrupted),
             .resource(.blocked),
+            .resource(.unsupported),
             .platform(code: 0, message: ""),
         ]
 

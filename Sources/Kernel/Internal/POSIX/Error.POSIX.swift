@@ -32,8 +32,10 @@ extension Kernel.Error {
         switch errno {
         case .noSuchFileOrDirectory:
             return .path(.notFound)
-        case .permissionDenied, .notPermitted:
-            return .resource(.permission)
+        case .permissionDenied:
+            return .resource(.permission(.denied))
+        case .notPermitted:
+            return .resource(.permission(.notPermitted))
         case .fileExists:
             return .path(.exists)
         case .isDirectory:
@@ -45,7 +47,9 @@ extension Kernel.Error {
         case .noSpace:
             return .resource(.space)
         case .tooManyOpenFiles:
-            return .descriptor(.limit)
+            return .descriptor(.limit(.process))
+        case .tooManyOpenFilesInSystem:
+            return .descriptor(.limit(.system))
         case .badFileDescriptor:
             return .descriptor(.invalid)
         case .interrupted:
@@ -68,8 +72,10 @@ extension Kernel.Error {
         case .improperLink:
             return .path(.crossDevice)
         // I/O errors
-        case .operationNotSupportedByDevice, .noSuchAddressOrDevice:
-            return .io(.device)
+        case .operationNotSupportedByDevice:
+            return .io(.device(.unsupported))
+        case .noSuchAddressOrDevice:
+            return .io(.device(.unavailable))
         case .illegalSeek:
             return .io(.seek)
         // Resource errors

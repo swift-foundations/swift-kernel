@@ -36,7 +36,7 @@ extension Kernel.Error {
         case DWORD(ERROR_INVALID_HANDLE):
             return .descriptor(.invalid)
         case DWORD(ERROR_TOO_MANY_OPEN_FILES):
-            return .descriptor(.limit)
+            return .descriptor(.limit(.process))
 
         // I/O errors
         case DWORD(ERROR_BROKEN_PIPE):
@@ -48,7 +48,7 @@ extension Kernel.Error {
 
         // Resource errors
         case DWORD(ERROR_ACCESS_DENIED):
-            return .resource(.permission)
+            return .resource(.permission(.denied))
         case DWORD(ERROR_DISK_FULL):
             return .resource(.space)
         case DWORD(ERROR_LOCK_VIOLATION), DWORD(ERROR_LOCK_FAILED):
@@ -68,7 +68,7 @@ extension Kernel.Error {
 
         // I/O device errors
         case DWORD(ERROR_IO_DEVICE):
-            return .io(.device)
+            return .io(.device(.unavailable))
 
         default:
             return .platform(code: Int32(code), message: formatWindowsError(code))
