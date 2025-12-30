@@ -173,7 +173,7 @@ extension Kernel.Syscalls {
 
         // Apply F_NOCACHE on macOS if requested
         #if canImport(Darwin)
-        if options.contains(.noCache) {
+        if options.contains(.cacheDisabled) {
             _ = fcntl(fd, F_NOCACHE, 1)
         }
         #endif
@@ -578,11 +578,11 @@ extension Kernel.Stat.Kind {
         case S_IFDIR:
             self = .directory
         case S_IFLNK:
-            self = .symbolicLink
+            self = .link(.symbolic)
         case S_IFBLK:
-            self = .blockDevice
+            self = .device(.block)
         case S_IFCHR:
-            self = .characterDevice
+            self = .device(.character)
         case S_IFIFO:
             self = .fifo
         case S_IFSOCK:

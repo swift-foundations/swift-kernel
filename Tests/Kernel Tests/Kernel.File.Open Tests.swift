@@ -21,21 +21,33 @@ extension Kernel.File.Open {
 // MARK: - Mode Unit Tests
 
 extension Kernel.File.Open.Test.Unit {
-    @Test("Mode cases are distinct")
-    func modeCasesDistinct() {
+    @Test("Mode is OptionSet")
+    func modeIsOptionSet() {
+        let mode: Kernel.File.Open.Mode = [.read, .write]
+        #expect(mode.contains(.read))
+        #expect(mode.contains(.write))
+    }
+
+    @Test("Mode options are distinct")
+    func modeOptionsDistinct() {
         let read = Kernel.File.Open.Mode.read
         let write = Kernel.File.Open.Mode.write
-        let readWrite = Kernel.File.Open.Mode.readWrite
 
         #expect(read != write)
-        #expect(read != readWrite)
-        #expect(write != readWrite)
+        #expect(!read.intersection(write).contains(.read))
     }
 
     @Test("Mode is Sendable")
     func modeIsSendable() {
         let mode: any Sendable = Kernel.File.Open.Mode.read
         #expect(mode is Kernel.File.Open.Mode)
+    }
+
+    @Test("Mode can combine read and write")
+    func modeCombine() {
+        let combined: Kernel.File.Open.Mode = [.read, .write]
+        #expect(combined.contains(.read))
+        #expect(combined.contains(.write))
     }
 }
 
@@ -70,10 +82,7 @@ extension Kernel.File.Open.Test.Unit {
             .truncate,
             .append,
             .exclusive,
-            .closeOnExec,
-            .nonBlocking,
             .direct,
-            .noCache,
         ]
 
         for (i, a) in options.enumerated() {

@@ -23,20 +23,20 @@ extension Kernel.Error {
 extension Kernel.Error.Test.Unit {
     @Test("error conforms to Swift.Error")
     func conformsToError() {
-        let error: any Swift.Error = Kernel.Error.notFound
+        let error: any Swift.Error = Kernel.Error.path(.notFound)
         #expect(error is Kernel.Error)
     }
 
     @Test("error is Sendable")
     func isSendable() {
-        let error: any Sendable = Kernel.Error.notFound
+        let error: any Sendable = Kernel.Error.path(.notFound)
         #expect(error is Kernel.Error)
     }
 
     @Test("error is Equatable")
     func isEquatable() {
-        #expect(Kernel.Error.notFound == Kernel.Error.notFound)
-        #expect(Kernel.Error.notFound != Kernel.Error.permissionDenied)
+        #expect(Kernel.Error.path(.notFound) == Kernel.Error.path(.notFound))
+        #expect(Kernel.Error.path(.notFound) != Kernel.Error.resource(.permission))
     }
 
     @Test("platform error stores code and message")
@@ -50,32 +50,66 @@ extension Kernel.Error.Test.Unit {
         }
     }
 
-    @Test("all semantic cases are distinct")
-    func semanticCasesDistinct() {
-        let cases: [Kernel.Error] = [
-            .notFound,
-            .permissionDenied,
-            .alreadyExists,
-            .isDirectory,
-            .notDirectory,
-            .notEmpty,
-            .noSpace,
-            .tooManyOpenFiles,
-            .invalidDescriptor,
-            .interrupted,
-            .wouldBlock,
-            .brokenPipe,
-            .connectionReset,
-            .deadlock,
-            .noLocksAvailable,
-            .invalidAddress,
-            .outOfMemory,
+    @Test("all error categories are distinct")
+    func errorCategoriesDistinct() {
+        let categories: [Kernel.Error] = [
+            .path(.notFound),
+            .descriptor(.invalid),
+            .io(.broken),
+            .lock(.deadlock),
+            .memory(.address),
+            .resource(.permission),
+            .platform(code: 0, message: ""),
         ]
 
+        for (i, a) in categories.enumerated() {
+            for (j, b) in categories.enumerated() {
+                if i != j {
+                    #expect(a != b, "Categories at index \(i) and \(j) should be different")
+                }
+            }
+        }
+    }
+
+    @Test("Path error cases are distinct")
+    func pathCasesDistinct() {
+        let cases: [Kernel.Error.Path] = [.notFound, .exists, .isDirectory, .notDirectory, .notEmpty]
         for (i, a) in cases.enumerated() {
             for (j, b) in cases.enumerated() {
                 if i != j {
-                    #expect(a != b, "Cases at index \(i) and \(j) should be different")
+                    #expect(a != b)
+                }
+            }
+        }
+    }
+
+    @Test("Descriptor error cases are distinct")
+    func descriptorCasesDistinct() {
+        #expect(Kernel.Error.Descriptor.invalid != Kernel.Error.Descriptor.limit)
+    }
+
+    @Test("IO error cases are distinct")
+    func ioCasesDistinct() {
+        #expect(Kernel.Error.IO.broken != Kernel.Error.IO.reset)
+    }
+
+    @Test("Lock error cases are distinct")
+    func lockCasesDistinct() {
+        #expect(Kernel.Error.Lock.deadlock != Kernel.Error.Lock.unavailable)
+    }
+
+    @Test("Memory error cases are distinct")
+    func memoryCasesDistinct() {
+        #expect(Kernel.Error.Memory.address != Kernel.Error.Memory.exhausted)
+    }
+
+    @Test("Resource error cases are distinct")
+    func resourceCasesDistinct() {
+        let cases: [Kernel.Error.Resource] = [.permission, .space, .interrupted, .blocked]
+        for (i, a) in cases.enumerated() {
+            for (j, b) in cases.enumerated() {
+                if i != j {
+                    #expect(a != b)
                 }
             }
         }
@@ -85,26 +119,26 @@ extension Kernel.Error.Test.Unit {
 // MARK: - Edge Cases
 
 extension Kernel.Error.Test.EdgeCase {
-    @Test("description is non-empty for all cases")
+    @Test("description is non-empty for all error categories")
     func descriptionNonEmpty() {
         let cases: [Kernel.Error] = [
-            .notFound,
-            .permissionDenied,
-            .alreadyExists,
-            .isDirectory,
-            .notDirectory,
-            .notEmpty,
-            .noSpace,
-            .tooManyOpenFiles,
-            .invalidDescriptor,
-            .interrupted,
-            .wouldBlock,
-            .brokenPipe,
-            .connectionReset,
-            .deadlock,
-            .noLocksAvailable,
-            .invalidAddress,
-            .outOfMemory,
+            .path(.notFound),
+            .path(.exists),
+            .path(.isDirectory),
+            .path(.notDirectory),
+            .path(.notEmpty),
+            .descriptor(.invalid),
+            .descriptor(.limit),
+            .io(.broken),
+            .io(.reset),
+            .lock(.deadlock),
+            .lock(.unavailable),
+            .memory(.address),
+            .memory(.exhausted),
+            .resource(.permission),
+            .resource(.space),
+            .resource(.interrupted),
+            .resource(.blocked),
             .platform(code: 0, message: ""),
         ]
 

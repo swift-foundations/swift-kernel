@@ -29,7 +29,7 @@ extension Kernel.Syscalls.Test.Unit {
         // Create and open
         let fd = try Kernel.Syscalls.open(
             path: path,
-            mode: .readWrite,
+            mode: [.read, .write],
             options: [.create, .truncate],
             permissions: 0o644
         )
@@ -43,14 +43,14 @@ extension Kernel.Syscalls.Test.Unit {
         try? Kernel.Syscalls.unlink(path: path)
     }
 
-    @Test("open nonexistent file throws notFound")
+    @Test("open nonexistent file throws path.notFound")
     func openNonexistent() {
         let path = FilePath("/nonexistent/path/that/does/not/exist/file.txt")
 
-        #expect(throws: Kernel.Error.notFound) {
+        #expect(throws: Kernel.Error.path(.notFound)) {
             try Kernel.Syscalls.open(
                 path: path,
-                mode: .read,
+                mode: [.read],
                 options: [],
                 permissions: 0
             )
@@ -69,7 +69,7 @@ extension Kernel.Syscalls.Test.Unit {
         // Create file
         let fd = try Kernel.Syscalls.open(
             path: path,
-            mode: .readWrite,
+            mode: [.read, .write],
             options: [.create, .truncate],
             permissions: 0o644
         )
@@ -106,7 +106,7 @@ extension Kernel.Syscalls.Test.Unit {
         // Create empty file
         let fd = try Kernel.Syscalls.open(
             path: path,
-            mode: .readWrite,
+            mode: [.read, .write],
             options: [.create, .truncate],
             permissions: 0o644
         )
@@ -200,7 +200,7 @@ extension Kernel.Syscalls.Test.Unit {
 
         let fd = try Kernel.Syscalls.open(
             path: path,
-            mode: .readWrite,
+            mode: [.read, .write],
             options: [.create, .truncate],
             permissions: 0o644
         )
@@ -225,7 +225,7 @@ extension Kernel.Syscalls.Test.Unit {
 
         let fd = try Kernel.Syscalls.open(
             path: path,
-            mode: .readWrite,
+            mode: [.read, .write],
             options: [.create, .truncate],
             permissions: 0o644
         )
@@ -254,7 +254,7 @@ extension Kernel.Syscalls.Test.Unit {
 
         let fd = try Kernel.Syscalls.open(
             path: path,
-            mode: .readWrite,
+            mode: [.read, .write],
             options: [.create, .truncate],
             permissions: 0o644
         )
@@ -282,7 +282,7 @@ extension Kernel.Syscalls.Test.Unit {
 extension Kernel.Syscalls.Test.EdgeCase {
     @Test("close invalid descriptor throws")
     func closeInvalid() {
-        #expect(throws: Kernel.Error.invalidDescriptor) {
+        #expect(throws: Kernel.Error.descriptor(.invalid)) {
             try Kernel.Syscalls.close(-1)
         }
     }
@@ -290,7 +290,7 @@ extension Kernel.Syscalls.Test.EdgeCase {
     @Test("read from invalid descriptor throws")
     func readInvalid() {
         var buffer = [UInt8](repeating: 0, count: 10)
-        #expect(throws: Kernel.Error.invalidDescriptor) {
+        #expect(throws: Kernel.Error.descriptor(.invalid)) {
             try buffer.withUnsafeMutableBytes { buf in
                 try Kernel.Syscalls.read(-1, into: buf)
             }
@@ -300,7 +300,7 @@ extension Kernel.Syscalls.Test.EdgeCase {
     @Test("write to invalid descriptor throws")
     func writeInvalid() {
         let data: [UInt8] = [1, 2, 3]
-        #expect(throws: Kernel.Error.invalidDescriptor) {
+        #expect(throws: Kernel.Error.descriptor(.invalid)) {
             try data.withUnsafeBytes { buf in
                 try Kernel.Syscalls.write(-1, from: buf)
             }

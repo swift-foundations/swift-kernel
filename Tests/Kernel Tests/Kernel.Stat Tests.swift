@@ -109,9 +109,9 @@ extension Kernel.Stat.Test.Unit {
         let cases: [Kernel.Stat.Kind] = [
             .regular,
             .directory,
-            .symbolicLink,
-            .blockDevice,
-            .characterDevice,
+            .link(.symbolic),
+            .device(.block),
+            .device(.character),
             .fifo,
             .socket,
             .unknown,
@@ -138,6 +138,19 @@ extension Kernel.Stat.Test.Unit {
         let b = Kernel.Stat.Kind.regular
 
         #expect(a.hashValue == b.hashValue)
+    }
+
+    @Test("Kind.Link cases")
+    func kindLinkCases() {
+        let symbolic = Kernel.Stat.Kind.Link.symbolic
+        #expect(symbolic == .symbolic)
+    }
+
+    @Test("Kind.Device cases are distinct")
+    func kindDeviceCases() {
+        let block = Kernel.Stat.Kind.Device.block
+        let character = Kernel.Stat.Kind.Device.character
+        #expect(block != character)
     }
 }
 

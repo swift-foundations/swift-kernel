@@ -95,13 +95,10 @@ extension Kernel {
             case directory
 
             /// Symbolic link.
-            case symbolicLink
+            case link(Link)
 
-            /// Block device (POSIX only).
-            case blockDevice
-
-            /// Character device (POSIX only).
-            case characterDevice
+            /// Device (block or character, POSIX only).
+            case device(Device)
 
             /// Named pipe/FIFO (POSIX only).
             case fifo
@@ -111,6 +108,21 @@ extension Kernel {
 
             /// Unknown or unsupported file type.
             case unknown
+
+            /// Link types.
+            public enum Link: Sendable, Equatable, Hashable {
+                /// Symbolic link.
+                case symbolic
+            }
+
+            /// Device types.
+            public enum Device: Sendable, Equatable, Hashable {
+                /// Block device.
+                case block
+
+                /// Character device.
+                case character
+            }
         }
     }
 }

@@ -31,39 +31,39 @@ extension Kernel.Error {
     public static func fromErrno(_ errno: Errno) -> Kernel.Error {
         switch errno {
         case .noSuchFileOrDirectory:
-            return .notFound
+            return .path(.notFound)
         case .permissionDenied, .notPermitted:
-            return .permissionDenied
+            return .resource(.permission)
         case .fileExists:
-            return .alreadyExists
+            return .path(.exists)
         case .isDirectory:
-            return .isDirectory
+            return .path(.isDirectory)
         case .notDirectory:
-            return .notDirectory
+            return .path(.notDirectory)
         case .directoryNotEmpty:
-            return .notEmpty
+            return .path(.notEmpty)
         case .noSpace:
-            return .noSpace
+            return .resource(.space)
         case .tooManyOpenFiles:
-            return .tooManyOpenFiles
+            return .descriptor(.limit)
         case .badFileDescriptor:
-            return .invalidDescriptor
+            return .descriptor(.invalid)
         case .interrupted:
-            return .interrupted
+            return .resource(.interrupted)
         case .wouldBlock, .resourceTemporarilyUnavailable:
-            return .wouldBlock
+            return .resource(.blocked)
         case .brokenPipe:
-            return .brokenPipe
+            return .io(.broken)
         case .connectionReset:
-            return .connectionReset
+            return .io(.reset)
         case .deadlock:
-            return .deadlock
+            return .lock(.deadlock)
         case .noLocks:
-            return .noLocksAvailable
+            return .lock(.unavailable)
         case .badAddress:
-            return .invalidAddress
+            return .memory(.address)
         case .noMemory:
-            return .outOfMemory
+            return .memory(.exhausted)
         default:
             return .platform(code: errno.rawValue, message: String(describing: errno))
         }
