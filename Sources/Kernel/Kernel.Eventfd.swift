@@ -78,13 +78,13 @@
             public static let none = Flags(rawValue: 0)
 
             /// Set close-on-exec flag.
-            public static let cloexec = Flags(rawValue: EFD_CLOEXEC)
+            public static let cloexec = Flags(rawValue: Int32(EFD_CLOEXEC))
 
             /// Set non-blocking mode.
-            public static let nonblock = Flags(rawValue: EFD_NONBLOCK)
+            public static let nonblock = Flags(rawValue: Int32(EFD_NONBLOCK))
 
             /// Provide semaphore-like semantics for reads.
-            public static let semaphore = Flags(rawValue: EFD_SEMAPHORE)
+            public static let semaphore = Flags(rawValue: Int32(EFD_SEMAPHORE))
 
             /// Combines multiple flags.
             @inlinable

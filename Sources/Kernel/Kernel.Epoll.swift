@@ -152,7 +152,7 @@
             public static let none = CreateFlags(rawValue: 0)
 
             /// Set close-on-exec flag on the new file descriptor.
-            public static let cloexec = CreateFlags(rawValue: EPOLL_CLOEXEC)
+            public static let cloexec = CreateFlags(rawValue: Int32(EPOLL_CLOEXEC))
 
             /// Combines multiple flags.
             @inlinable
