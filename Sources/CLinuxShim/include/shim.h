@@ -3,18 +3,13 @@
 
 #if defined(__linux__)
 
-#define _GNU_SOURCE
-#include <sys/epoll.h>
-#include <sys/vfs.h>
-#include <sys/statfs.h>
-#include <sys/eventfd.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <linux/fs.h>
-#include <time.h>
-#include <unistd.h>
+// Only include headers that provide symbols missing from SwiftGlibc
+// Avoid headers that redefine types (like unistd.h which pulls in sys/select.h)
 
-// O_DIRECT may not be defined on all systems
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
+
+// O_DIRECT is not in SwiftGlibc's fcntl overlay
 #ifndef O_DIRECT
 #define O_DIRECT 040000
 #endif
