@@ -47,12 +47,17 @@ extension Kernel.System {
 #if os(Windows)
 internal import WinSDK
 
+// Cache the system info since it never changes at runtime
+private let cachedSystemInfo: SYSTEM_INFO = {
+    var info = SYSTEM_INFO()
+    GetSystemInfo(&info)
+    return info
+}()
+
 extension Kernel.System {
     /// Memory page size in bytes.
     public static var pageSize: Int {
-        var info = SYSTEM_INFO()
-        GetSystemInfo(&info)
-        return Int(info.dwPageSize)
+        Int(cachedSystemInfo.dwPageSize)
     }
 
     /// Allocation granularity in bytes.
@@ -60,9 +65,7 @@ extension Kernel.System {
     /// On Windows, this is typically 64KB and differs from page size.
     /// Memory mapping offsets must be aligned to this value.
     public static var allocationGranularity: Int {
-        var info = SYSTEM_INFO()
-        GetSystemInfo(&info)
-        return Int(info.dwAllocationGranularity)
+        Int(cachedSystemInfo.dwAllocationGranularity)
     }
 }
 #endif

@@ -20,32 +20,48 @@ extension Kernel.Error {
     @inlinable
     public static func windows(_ code: DWORD) -> Kernel.Error {
         switch code {
+        // Path errors
         case DWORD(ERROR_FILE_NOT_FOUND), DWORD(ERROR_PATH_NOT_FOUND):
-            return .notFound
-        case DWORD(ERROR_ACCESS_DENIED):
-            return .permissionDenied
+            return .path(.notFound)
         case DWORD(ERROR_FILE_EXISTS), DWORD(ERROR_ALREADY_EXISTS):
-            return .alreadyExists
+            return .path(.exists)
         case DWORD(ERROR_DIRECTORY):
-            return .isDirectory
+            return .path(.isDirectory)
         case DWORD(ERROR_DIRECTORY_NOT_SUPPORTED):
-            return .notDirectory
+            return .path(.notDirectory)
         case DWORD(ERROR_DIR_NOT_EMPTY):
-            return .notEmpty
-        case DWORD(ERROR_DISK_FULL):
-            return .noSpace
-        case DWORD(ERROR_TOO_MANY_OPEN_FILES):
-            return .tooManyOpenFiles
+            return .path(.notEmpty)
+
+        // Descriptor errors
         case DWORD(ERROR_INVALID_HANDLE):
-            return .invalidDescriptor
+            return .descriptor(.invalid)
+        case DWORD(ERROR_TOO_MANY_OPEN_FILES):
+            return .descriptor(.limit)
+
+        // I/O errors
         case DWORD(ERROR_BROKEN_PIPE):
-            return .brokenPipe
-        case DWORD(ERROR_LOCK_VIOLATION):
-            // Note: This is lock contention, not resource exhaustion
-            // The lock() API returns false on contention instead of throwing
-            return .wouldBlock
+            return .io(.broken)
+
+        // Memory errors
         case DWORD(ERROR_NOT_ENOUGH_MEMORY), DWORD(ERROR_OUTOFMEMORY):
-            return .outOfMemory
+            return .memory(.exhausted)
+
+        // Resource errors
+        case DWORD(ERROR_ACCESS_DENIED):
+            return .resource(.permission)
+        case DWORD(ERROR_DISK_FULL):
+            return .resource(.space)
+        case DWORD(ERROR_LOCK_VIOLATION), DWORD(ERROR_LOCK_FAILED):
+            // Note: Lock contention - the lock() API returns false on contention
+            // instead of throwing, so this is only hit in edge cases
+            return .resource(.blocked)
+        case DWORD(ERROR_SHARING_VIOLATION):
+            // File is open by another process with incompatible sharing mode
+            return .resource(.blocked)
+        case DWORD(ERROR_NOT_SAME_DEVICE):
+            // Cross-device operation (e.g., rename across volumes)
+            return .platform(code: Int32(code), message: formatWindowsError(code))
+
         default:
             return .platform(code: Int32(code), message: formatWindowsError(code))
         }

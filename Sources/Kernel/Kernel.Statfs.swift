@@ -45,6 +45,15 @@ extension Kernel {
         /// Maximum length of filenames.
         public let nameMax: UInt64
 
+        /// Filesystem type name.
+        ///
+        /// - Darwin: `f_fstypename` (e.g., "apfs", "hfs", "nfs")
+        /// - Linux: Not available (derived from `type` if needed)
+        /// - Windows: Filesystem name from `GetVolumeInformationW` (e.g., "NTFS", "FAT32")
+        ///
+        /// This field is `nil` when the filesystem type name is not available.
+        public let fsTypeName: String?
+
         /// Creates a Statfs with the given values.
         public init(
             type: UInt64,
@@ -55,7 +64,8 @@ extension Kernel {
             files: UInt64,
             freeFiles: UInt64,
             fsid: UInt64,
-            nameMax: UInt64
+            nameMax: UInt64,
+            fsTypeName: String? = nil
         ) {
             self.type = type
             self.blockSize = blockSize
@@ -66,6 +76,7 @@ extension Kernel {
             self.freeFiles = freeFiles
             self.fsid = fsid
             self.nameMax = nameMax
+            self.fsTypeName = fsTypeName
         }
     }
 }

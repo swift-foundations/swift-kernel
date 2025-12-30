@@ -76,6 +76,17 @@ extension Kernel.File {
             ///   not validate alignment requirements. Higher layers (swift-io)
             ///   handle capability probing and alignment validation.
             public static let direct = Options(rawValue: 1 << 6)
+
+            // MARK: - Symlink Handling
+
+            /// Do not follow symlinks when opening.
+            ///
+            /// - POSIX: `O_NOFOLLOW`
+            /// - Windows: `FILE_FLAG_OPEN_REPARSE_POINT`
+            ///
+            /// On POSIX, this causes open() to fail with ELOOP if the path is a symlink.
+            /// On Windows, this opens the reparse point itself rather than following it.
+            public static let noFollow = Options(rawValue: 1 << 8)
         }
 
         /// Exec behavior options.
@@ -184,6 +195,9 @@ extension Kernel.File.Open.Options {
             flags |= O_DIRECT
         }
         #endif
+        if contains(.noFollow) {
+            flags |= O_NOFOLLOW
+        }
 
         return flags
     }
@@ -196,17 +210,32 @@ internal import WinSDK
 extension Kernel.File.Open.Mode {
     /// Converts the mode to Windows desired access flags.
     @usableFromInline
-    internal var windowsDesiredAccess: DWORD {
+    internal func windowsDesiredAccess(options: Kernel.File.Open.Options) -> DWORD {
         let hasRead = contains(.read)
         let hasWrite = contains(.write)
+        let hasAppend = options.contains(.append)
 
-        if hasRead && hasWrite {
-            return GENERIC_READ | GENERIC_WRITE
-        } else if hasWrite {
-            return GENERIC_WRITE
-        } else {
-            return GENERIC_READ
+        var access: DWORD = 0
+
+        if hasRead {
+            access |= GENERIC_READ
         }
+        if hasWrite {
+            if hasAppend {
+                // Append mode: use FILE_APPEND_DATA instead of GENERIC_WRITE
+                // This ensures all writes go to the end of the file
+                access |= FILE_APPEND_DATA
+            } else {
+                access |= GENERIC_WRITE
+            }
+        }
+
+        // If no mode specified, default to read
+        if access == 0 {
+            access = GENERIC_READ
+        }
+
+        return access
     }
 }
 
@@ -238,6 +267,9 @@ extension Kernel.File.Open.Options {
 
         if contains(.direct) {
             flags |= FILE_FLAG_NO_BUFFERING
+        }
+        if contains(.noFollow) {
+            flags |= FILE_FLAG_OPEN_REPARSE_POINT
         }
 
         return flags

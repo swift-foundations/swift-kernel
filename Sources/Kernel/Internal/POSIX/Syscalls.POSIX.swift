@@ -786,10 +786,18 @@ extension Kernel.Statfs {
         self.availableBlocks = UInt64(buf.f_bavail)
         self.files = UInt64(buf.f_files)
         self.freeFiles = UInt64(buf.f_ffree)
-        // Darwin fsid is a struct with val[2]
-        self.fsid = UInt64(buf.f_fsid.val.0) | (UInt64(buf.f_fsid.val.1) << 32)
-        // Darwin doesn't have f_namelen, use a reasonable default
-        self.nameMax = 255
+        // Darwin fsid is a struct with val[2] (signed int32_t)
+        // Use bitPattern to preserve bits for signed values
+        self.fsid = UInt64(bitPattern: Int64(buf.f_fsid.val.0)) | (UInt64(bitPattern: Int64(buf.f_fsid.val.1)) << 32)
+        // Darwin doesn't have f_namelen in statfs, use NAME_MAX
+        // Most Darwin filesystems support at least NAME_MAX (255) characters
+        self.nameMax = UInt64(NAME_MAX)
+        // Darwin has f_fstypename which gives the filesystem type name
+        self.fsTypeName = withUnsafeBytes(of: buf.f_fstypename) { ptr in
+            // f_fstypename is a tuple of CChars, convert to String
+            let cString = ptr.bindMemory(to: CChar.self)
+            return String(cString: cString.baseAddress!)
+        }
         #else
         // Linux (Glibc/Musl) uses f_type for filesystem type
         self.type = UInt64(buf.f_type)
@@ -799,9 +807,12 @@ extension Kernel.Statfs {
         self.availableBlocks = UInt64(buf.f_bavail)
         self.files = UInt64(buf.f_files)
         self.freeFiles = UInt64(buf.f_ffree)
-        // Linux fsid is a struct with __val[2]
+        // Linux fsid is a struct with __val[2] (signed int)
+        // Use bitPattern to preserve bits for signed values
         self.fsid = UInt64(bitPattern: Int64(buf.f_fsid.__val.0)) | (UInt64(bitPattern: Int64(buf.f_fsid.__val.1)) << 32)
         self.nameMax = UInt64(buf.f_namelen)
+        // Linux statfs doesn't have a filesystem name field
+        self.fsTypeName = nil
         #endif
     }
 }

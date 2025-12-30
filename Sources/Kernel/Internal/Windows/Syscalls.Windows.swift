@@ -102,16 +102,24 @@ extension Kernel.Syscalls {
         options: Kernel.File.Open.Options,
         permissions: UInt16
     ) throws(Kernel.Error) -> Kernel.Descriptor {
-        let desiredAccess = mode.windowsDesiredAccess
+        let desiredAccess = mode.windowsDesiredAccess(options: options)
         let creationDisposition = options.windowsCreationDisposition
         let flagsAndAttributes = options.windowsFlagsAndAttributes
         let shareMode = Kernel.File.Open.Options.windowsShareMode
+
+        // Set up security attributes for handle inheritance
+        // By default, handles are inheritable. If closeOnExec is set,
+        // make the handle non-inheritable (equivalent to O_CLOEXEC on POSIX)
+        var securityAttributes = SECURITY_ATTRIBUTES()
+        securityAttributes.nLength = DWORD(MemoryLayout<SECURITY_ATTRIBUTES>.size)
+        securityAttributes.lpSecurityDescriptor = nil
+        securityAttributes.bInheritHandle = options.contains(.execClose) ? false : true
 
         let handle = CreateFileW(
             unsafePath,
             desiredAccess,
             shareMode,
-            nil,  // Security attributes
+            &securityAttributes,
             creationDisposition,
             flagsAndAttributes,
             nil   // Template file
@@ -431,8 +439,37 @@ extension Kernel.Syscalls {
             throw Kernel.Error.currentWindowsError()
         }
 
-        return Kernel.Stat(windows: info)
+        // If this is a reparse point, query the reparse tag to distinguish
+        // symlinks from junctions/mount points
+        var reparseTag: DWORD = 0
+        if (info.dwFileAttributes & DWORD(FILE_ATTRIBUTE_REPARSE_POINT)) != 0 {
+            reparseTag = getReparseTag(descriptor)
+        }
+
+        return Kernel.Stat(windows: info, reparseTag: reparseTag)
     }
+}
+
+// MARK: - Reparse Tag Helper
+
+/// Gets the reparse tag for a file handle.
+///
+/// Returns 0 if the reparse tag cannot be determined.
+@usableFromInline
+internal func getReparseTag(_ descriptor: Kernel.Descriptor) -> DWORD {
+    // Use GetFileInformationByHandleEx with FileAttributeTagInfo
+    var tagInfo = FILE_ATTRIBUTE_TAG_INFO()
+    let result = GetFileInformationByHandleEx(
+        descriptor,
+        FileAttributeTagInfo,
+        &tagInfo,
+        DWORD(MemoryLayout<FILE_ATTRIBUTE_TAG_INFO>.size)
+    )
+
+    if result != 0 {
+        return tagInfo.ReparseTag
+    }
+    return 0
 }
 
 // MARK: - Lock Operations
@@ -554,21 +591,25 @@ extension Kernel.Syscalls {
             throw Kernel.Error.currentWindowsError()
         }
 
-        // Get volume info
+        // Get volume info including filesystem name
         var volumeSerialNumber: DWORD = 0
         var maxComponentLength: DWORD = 0
         var fileSystemFlags: DWORD = 0
+        var fileSystemName = [WCHAR](repeating: 0, count: Int(MAX_PATH) + 1)
 
-        _ = GetVolumeInformationW(
+        let volumeInfoResult = GetVolumeInformationW(
             volumePath,
             nil,
             0,
             &volumeSerialNumber,
             &maxComponentLength,
             &fileSystemFlags,
-            nil,
-            0
+            &fileSystemName,
+            DWORD(fileSystemName.count)
         )
+
+        // Convert filesystem name to String if available
+        let fsTypeName: String? = volumeInfoResult != 0 ? String(decodingCString: fileSystemName, as: UTF16.self) : nil
 
         // Get sector size for block size
         var sectorsPerCluster: DWORD = 0
@@ -598,11 +639,26 @@ extension Kernel.Syscalls {
             files: 0,  // Windows doesn't expose inode count
             freeFiles: 0,
             fsid: UInt64(volumeSerialNumber),
-            nameMax: UInt64(maxComponentLength)
+            nameMax: UInt64(maxComponentLength),
+            fsTypeName: fsTypeName
         )
     }
 
     /// Gets filesystem statistics for an open handle.
+    ///
+    /// - Important: On Windows, this function cannot retrieve disk space information
+    ///   from a file handle alone. The `blocks`, `freeBlocks`, and `availableBlocks`
+    ///   fields will be 0. Use `statfs(path:)` if you need disk space information.
+    ///
+    /// The following fields are populated:
+    /// - `type`: Volume serial number
+    /// - `blockSize`: Default 4096 (cannot be queried from handle)
+    /// - `fsid`: Volume serial number
+    /// - `nameMax`: Maximum component length (255 if unavailable)
+    ///
+    /// - Parameter descriptor: The file handle.
+    /// - Returns: Filesystem statistics with limited information.
+    /// - Throws: `Kernel.Error` on failure.
     @inlinable
     public static func fstatfs(
         _ descriptor: Kernel.Descriptor
@@ -611,62 +667,65 @@ extension Kernel.Syscalls {
             throw .descriptor(.invalid)
         }
 
-        // Get file path from handle, then call statfs
-        var fileNameInfo = FILE_NAME_INFO()
-        var buffer = [UInt8](repeating: 0, count: MemoryLayout<FILE_NAME_INFO>.size + Int(MAX_PATH) * 2)
-
-        let success = buffer.withUnsafeMutableBytes { ptr in
-            GetFileInformationByHandleEx(
-                descriptor,
-                FileNameInfo,
-                ptr.baseAddress,
-                DWORD(ptr.count)
-            )
-        }
-
-        guard success != 0 else {
-            throw Kernel.Error.currentWindowsError()
-        }
-
-        // Extract path and get statfs
-        let info = buffer.withUnsafeBytes { ptr in
-            ptr.load(as: FILE_NAME_INFO.self)
-        }
-
-        // For simplicity, get volume info directly from handle using volume serial
+        // Get volume information from the handle
         var volumeInfo = BY_HANDLE_FILE_INFORMATION()
         guard GetFileInformationByHandle(descriptor, &volumeInfo) != 0 else {
             throw Kernel.Error.currentWindowsError()
         }
 
-        // Build minimal statfs from what we can get from handle
+        // Note: We cannot get disk space info from a handle alone on Windows.
+        // GetDiskFreeSpaceEx requires a path. The blocks/freeBlocks/availableBlocks
+        // will be 0. Callers who need disk space should use statfs(path:) instead.
         return Kernel.Statfs(
             type: UInt64(volumeInfo.dwVolumeSerialNumber),
-            blockSize: 4096,  // Default
-            blocks: 0,
-            freeBlocks: 0,
-            availableBlocks: 0,
-            files: 0,
+            blockSize: 4096,  // Cannot query from handle; use reasonable default
+            blocks: 0,        // Cannot query from handle
+            freeBlocks: 0,    // Cannot query from handle
+            availableBlocks: 0,  // Cannot query from handle
+            files: 0,         // Windows doesn't expose inode count
             freeFiles: 0,
             fsid: UInt64(volumeInfo.dwVolumeSerialNumber),
-            nameMax: 255
+            nameMax: 255,     // Default; actual value requires volume path
+            fsTypeName: nil   // Cannot query from handle
         )
     }
 }
 
 // MARK: - Stat Conversion
 
+// Windows reparse tag constants
+// These are from winnt.h but may not be exposed in Swift's WinSDK overlay
+@usableFromInline internal let IO_REPARSE_TAG_SYMLINK: DWORD = 0xA000000C
+@usableFromInline internal let IO_REPARSE_TAG_MOUNT_POINT: DWORD = 0xA0000003
+
 extension Kernel.Stat {
     /// Creates a Stat from Windows BY_HANDLE_FILE_INFORMATION.
+    ///
+    /// - Parameters:
+    ///   - info: The file information from GetFileInformationByHandle.
+    ///   - reparseTag: The reparse tag (0 if not a reparse point or unknown).
     @inlinable
-    init(windows info: BY_HANDLE_FILE_INFORMATION) {
+    init(windows info: BY_HANDLE_FILE_INFORMATION, reparseTag: DWORD = 0) {
         self.size = Int64(info.nFileSizeHigh) << 32 | Int64(info.nFileSizeLow)
 
         // Determine file type
-        if (info.dwFileAttributes & DWORD(FILE_ATTRIBUTE_DIRECTORY)) != 0 {
+        // IMPORTANT: Check reparse point FIRST, because symlinks to directories
+        // have both FILE_ATTRIBUTE_REPARSE_POINT and FILE_ATTRIBUTE_DIRECTORY set
+        if (info.dwFileAttributes & DWORD(FILE_ATTRIBUTE_REPARSE_POINT)) != 0 {
+            // Classify based on reparse tag
+            switch reparseTag {
+            case IO_REPARSE_TAG_SYMLINK:
+                self.type = .link(.symbolic)
+            case IO_REPARSE_TAG_MOUNT_POINT:
+                // Junctions and volume mount points both use this tag
+                self.type = .link(.junction)
+            default:
+                // Unknown reparse point type - treat as symlink for safety
+                // This includes things like OneDrive placeholders, dedup, etc.
+                self.type = .link(.symbolic)
+            }
+        } else if (info.dwFileAttributes & DWORD(FILE_ATTRIBUTE_DIRECTORY)) != 0 {
             self.type = .directory
-        } else if (info.dwFileAttributes & DWORD(FILE_ATTRIBUTE_REPARSE_POINT)) != 0 {
-            self.type = .link(.symbolic)
         } else {
             self.type = .regular
         }
@@ -682,9 +741,12 @@ extension Kernel.Stat {
         self.linkCount = UInt32(info.nNumberOfLinks)
 
         // Timestamps
+        // Note: Windows doesn't have a separate "status change time" like POSIX ctime.
+        // We use ftLastWriteTime for changeTime as it's the closest approximation -
+        // it updates when the file is modified, unlike ftCreationTime which never changes.
         self.accessTime = Kernel.Time(windows: info.ftLastAccessTime)
         self.modificationTime = Kernel.Time(windows: info.ftLastWriteTime)
-        self.changeTime = Kernel.Time(windows: info.ftCreationTime)
+        self.changeTime = Kernel.Time(windows: info.ftLastWriteTime)
     }
 }
 

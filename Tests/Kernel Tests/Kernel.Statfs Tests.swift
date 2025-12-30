@@ -44,6 +44,25 @@ extension Kernel.Statfs.Test.Unit {
         #expect(fs.freeFiles == 50000)
         #expect(fs.fsid == 0xABCD)
         #expect(fs.nameMax == 255)
+        #expect(fs.fsTypeName == nil) // Default is nil
+    }
+
+    @Test("Statfs with fsTypeName")
+    func withFsTypeName() {
+        let fs = Kernel.Statfs(
+            type: 0x1234,
+            blockSize: 4096,
+            blocks: 1000000,
+            freeBlocks: 500000,
+            availableBlocks: 400000,
+            files: 100000,
+            freeFiles: 50000,
+            fsid: 0xABCD,
+            nameMax: 255,
+            fsTypeName: "apfs"
+        )
+
+        #expect(fs.fsTypeName == "apfs")
     }
 
     @Test("Statfs is equatable")

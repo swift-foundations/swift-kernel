@@ -55,7 +55,15 @@ extension Kernel {
         /// Last modification time.
         public let modificationTime: Kernel.Time
 
-        /// Status change time (POSIX) or creation time (Windows).
+        /// Status change time (POSIX) or last write time (Windows).
+        ///
+        /// On POSIX, this is `st_ctime` - the time of last status change (metadata or data).
+        /// On Windows, this is `ftLastWriteTime` - the closest approximation, as Windows
+        /// does not track metadata changes separately.
+        ///
+        /// - Note: This differs from some implementations that use `ftCreationTime`.
+        ///   We use `ftLastWriteTime` because it better matches POSIX ctime semantics
+        ///   (it updates when the file is modified, whereas creation time never changes).
         public let changeTime: Kernel.Time
 
         /// Creates a Stat value.
@@ -113,6 +121,13 @@ extension Kernel {
             public enum Link: Sendable, Equatable, Hashable {
                 /// Symbolic link.
                 case symbolic
+
+                /// Junction or mount point (Windows only).
+                ///
+                /// On Windows, junctions and mount points are reparse points with
+                /// `IO_REPARSE_TAG_MOUNT_POINT`. They behave like directory symlinks
+                /// but have different semantics (junctions are always absolute paths).
+                case junction
             }
 
             /// Device types.
