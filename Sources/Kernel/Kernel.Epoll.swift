@@ -13,6 +13,7 @@
 
     #if canImport(Glibc)
         internal import Glibc
+        internal import CLinuxShim
     #elseif canImport(Musl)
         internal import Musl
     #endif

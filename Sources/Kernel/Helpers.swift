@@ -22,6 +22,7 @@
         public import Darwin
     #elseif canImport(Glibc)
         public import Glibc
+        internal import CLinuxShim
     #elseif canImport(Musl)
         public import Musl
     #endif

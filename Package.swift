@@ -24,9 +24,15 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "CLinuxShim",
+            dependencies: [],
+            path: "Sources/CLinuxShim"
+        ),
+        .target(
             name: "Kernel",
             dependencies: [
                 .product(name: "SystemPackage", package: "swift-system"),
+                .target(name: "CLinuxShim", condition: .when(platforms: [.linux])),
             ]
         ),
         .testTarget(
