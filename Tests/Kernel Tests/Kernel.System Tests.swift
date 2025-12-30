@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,7 +7,7 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
 import Testing
@@ -40,10 +40,10 @@ extension Kernel.System.Test.Unit {
     }
 
     #if os(macOS) && arch(arm64)
-    @Test("pageSize is 16KB on Apple Silicon")
-    func pageSizeAppleSilicon() {
-        #expect(Kernel.System.pageSize == 16384)
-    }
+        @Test("pageSize is 16KB on Apple Silicon")
+        func pageSizeAppleSilicon() {
+            #expect(Kernel.System.pageSize == 16384)
+        }
     #endif
 }
 
@@ -62,10 +62,10 @@ extension Kernel.System.Test.Unit {
     }
 
     #if !os(Windows)
-    @Test("allocationGranularity equals pageSize on POSIX")
-    func allocationGranularityEqualsPageSize() {
-        #expect(Kernel.System.allocationGranularity == Kernel.System.pageSize)
-    }
+        @Test("allocationGranularity equals pageSize on POSIX")
+        func allocationGranularityEqualsPageSize() {
+            #expect(Kernel.System.allocationGranularity == Kernel.System.pageSize)
+        }
     #endif
 }
 

@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,7 +7,7 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
 import Testing
@@ -26,7 +26,7 @@ extension Kernel.Statfs.Test.Unit {
         let fs = Kernel.Statfs(
             type: 0x1234,
             blockSize: 4096,
-            blocks: 1000000,
+            blocks: 1_000_000,
             freeBlocks: 500000,
             availableBlocks: 400000,
             files: 100000,
@@ -37,14 +37,14 @@ extension Kernel.Statfs.Test.Unit {
 
         #expect(fs.type == 0x1234)
         #expect(fs.blockSize == 4096)
-        #expect(fs.blocks == 1000000)
+        #expect(fs.blocks == 1_000_000)
         #expect(fs.freeBlocks == 500000)
         #expect(fs.availableBlocks == 400000)
         #expect(fs.files == 100000)
         #expect(fs.freeFiles == 50000)
         #expect(fs.fsid == 0xABCD)
         #expect(fs.nameMax == 255)
-        #expect(fs.fsTypeName == nil) // Default is nil
+        #expect(fs.fsTypeName == nil)  // Default is nil
     }
 
     @Test("Statfs with fsTypeName")
@@ -52,7 +52,7 @@ extension Kernel.Statfs.Test.Unit {
         let fs = Kernel.Statfs(
             type: 0x1234,
             blockSize: 4096,
-            blocks: 1000000,
+            blocks: 1_000_000,
             freeBlocks: 500000,
             availableBlocks: 400000,
             files: 100000,
@@ -92,7 +92,7 @@ extension Kernel.Statfs.Test.Unit {
         )
 
         let fs3 = Kernel.Statfs(
-            type: 2, // Different type
+            type: 2,  // Different type
             blockSize: 4096,
             blocks: 1000,
             freeBlocks: 500,
@@ -135,7 +135,7 @@ extension Kernel.Statfs.Test.Unit {
 
         var set = Set<Kernel.Statfs>()
         set.insert(fs1)
-        set.insert(fs1) // Duplicate
+        set.insert(fs1)  // Duplicate
         set.insert(fs2)
 
         #expect(set.count == 2)
@@ -154,7 +154,7 @@ extension Kernel.Statfs.Test.Unit {
             blockSize: 4096,
             blocks: 1000,
             freeBlocks: 500,
-            availableBlocks: 400, // Less than freeBlocks
+            availableBlocks: 400,  // Less than freeBlocks
             files: 100,
             freeFiles: 50,
             fsid: 1,

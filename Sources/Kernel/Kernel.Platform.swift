@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,7 +7,7 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 extension Kernel {
     /// Platform domain - unmapped platform-specific errors.
@@ -33,7 +33,7 @@ extension Kernel {
 extension Kernel.Platform.Error: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
-        case let (.unmapped(lcode, _), .unmapped(rcode, _)):
+        case (.unmapped(let lcode, _), .unmapped(let rcode, _)):
             // Compare by code only - messages may vary by locale
             return lcode == rcode
         }
@@ -45,7 +45,7 @@ extension Kernel.Platform.Error: Equatable {
 extension Kernel.Platform.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case let .unmapped(code, message):
+        case .unmapped(let code, let message):
             return "platform error \(code): \(message)"
         }
     }

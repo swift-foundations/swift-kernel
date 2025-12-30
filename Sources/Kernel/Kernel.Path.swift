@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,19 +7,19 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
-
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#elseif os(Windows)
-import ucrt
-#endif
+// ===----------------------------------------------------------------------===//
 
 public import SystemPackage
+
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#elseif canImport(Musl)
+    import Musl
+#elseif os(Windows)
+    import ucrt
+#endif
 
 extension Kernel {
     /// An unsafe, borrow-only path wrapper for syscall use.
@@ -139,29 +139,84 @@ extension Kernel.Path.Resolution.Error: CustomStringConvertible {
 // MARK: - FilePath Integration
 
 extension Kernel {
+    /// Calls a typed-throwing closure with a platform string pointer.
+    ///
+    /// This wrapper preserves 100% typed throws when using `FilePath.withPlatformString`,
+    /// which uses `rethrows` and would otherwise erase typed error information.
+    ///
+    /// - Parameters:
+    ///   - path: The file path.
+    ///   - body: A typed-throwing closure that receives the platform string pointer.
+    /// - Returns: The value returned by the closure.
+    /// - Throws: The typed error from the closure.
+    @inlinable
+    public static func withPlatformString<R, E: Swift.Error>(
+        _ path: FilePath,
+        _ body: (UnsafePointer<CInterop.PlatformChar>) throws(E) -> R
+    ) throws(E) -> R {
+        let ps = PlatformString(copying: path)
+        return try body(ps.pointer)
+    }
+}
+
+// MARK: - Owned Platform String Buffer
+
+extension Kernel {
+    /// An owned, null-terminated platform string buffer.
+    ///
+    /// This type copies a `FilePath`'s platform string into Kernel-owned storage,
+    /// enabling typed-throwing syscalls without existential error handling.
+    /// The copy happens in a non-throwing closure, and typed-throwing operations
+    /// occur outside the rethrows boundary.
+    @usableFromInline
+    internal struct PlatformString: ~Copyable {
+        @usableFromInline
+        let buffer: UnsafeMutableBufferPointer<CInterop.PlatformChar>
+
+        @inlinable
+        init(copying path: FilePath) {
+            var length = 0
+            path.withPlatformString { p in
+                while p[length] != 0 { length += 1 }
+            }
+            let buf = UnsafeMutableBufferPointer<CInterop.PlatformChar>.allocate(capacity: length + 1)
+            path.withPlatformString { p in
+                for i in 0...length {
+                    buf[i] = p[i]
+                }
+            }
+            self.buffer = buf
+        }
+
+        @inlinable
+        deinit {
+            buffer.deallocate()
+        }
+
+        @inlinable
+        var pointer: UnsafePointer<CInterop.PlatformChar> {
+            UnsafePointer(buffer.baseAddress!)
+        }
+    }
+
     /// Executes a closure with a path suitable for syscall use.
     ///
     /// This is the safe way to use paths with Kernel syscalls. It leverages
     /// `FilePath.withPlatformString` internally to ensure proper lifetime
-    /// and null-termination.
+    /// and null-termination, while preserving 100% typed throws.
     ///
     /// - Parameters:
     ///   - path: The file path.
     ///   - body: A closure that receives the path for syscall use.
     /// - Returns: The value returned by the closure.
-    /// - Throws: Any error thrown by the closure.
+    /// - Throws: The typed error from the closure.
+    @inlinable
     public static func withPath<R>(
         _ path: FilePath,
         _ body: (borrowing Path) throws(Kernel.Error) -> R
     ) throws(Kernel.Error) -> R {
-        do {
-            return try path.withPlatformString { cString in
-                try body(Path(unsafeCString: cString))
-            }
-        } catch let error as Kernel.Error {
-            throw error
-        } catch {
-            throw .platform(code: -1, message: "Unexpected error: \(error)")
+        try Kernel.withPlatformString(path) { (cString: UnsafePointer<CInterop.PlatformChar>) throws(Kernel.Error) -> R in
+            try body(Path(unsafeCString: cString))
         }
     }
 }

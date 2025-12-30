@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,7 +7,7 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
 import Testing
@@ -39,16 +39,16 @@ extension Kernel.Limits.Test.Unit {
 
 extension Kernel.Limits.Test.EdgeCase {
     #if os(macOS)
-    @Test("macOS pathMax is 1024")
-    func macOSPathMax() {
-        #expect(Kernel.Limits.pathMax == 1024)
-    }
+        @Test("macOS pathMax is 1024")
+        func macOSPathMax() {
+            #expect(Kernel.Limits.pathMax == 1024)
+        }
     #endif
 
     #if os(Linux)
-    @Test("Linux pathMax is typically 4096")
-    func linuxPathMax() {
-        #expect(Kernel.Limits.pathMax == 4096)
-    }
+        @Test("Linux pathMax is typically 4096")
+        func linuxPathMax() {
+            #expect(Kernel.Limits.pathMax == 4096)
+        }
     #endif
 }

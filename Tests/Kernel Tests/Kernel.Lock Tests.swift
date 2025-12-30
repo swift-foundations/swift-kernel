@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,7 +7,7 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
 import Testing
@@ -77,7 +77,7 @@ extension Kernel.Lock.Test.Unit {
         var set = Set<Kernel.Lock.Range>()
         set.insert(.file)
         set.insert(.bytes(start: 10, end: 30))
-        set.insert(.bytes(start: 10, end: 30)) // Duplicate
+        set.insert(.bytes(start: 10, end: 30))  // Duplicate
 
         #expect(set.count == 2)
     }
@@ -87,7 +87,7 @@ extension Kernel.Lock.Test.Unit {
         var set = Set<Kernel.Lock.Kind>()
         set.insert(.shared)
         set.insert(.exclusive)
-        set.insert(.shared) // Duplicate
+        set.insert(.shared)  // Duplicate
 
         #expect(set.count == 2)
     }

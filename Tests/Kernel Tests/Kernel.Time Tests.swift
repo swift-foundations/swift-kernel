@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,7 +7,7 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
 import Testing
@@ -23,15 +23,15 @@ extension Kernel.Time {
 extension Kernel.Time.Test.Unit {
     @Test("init with seconds and nanoseconds")
     func initWithSecondsAndNanoseconds() {
-        let time = Kernel.Time(seconds: 1234567890, nanoseconds: 123456789)
-        #expect(time.seconds == 1234567890)
-        #expect(time.nanoseconds == 123456789)
+        let time = Kernel.Time(seconds: 1_234_567_890, nanoseconds: 123_456_789)
+        #expect(time.seconds == 1_234_567_890)
+        #expect(time.nanoseconds == 123_456_789)
     }
 
     @Test("init with seconds only")
     func initWithSecondsOnly() {
-        let time = Kernel.Time(seconds: 1234567890)
-        #expect(time.seconds == 1234567890)
+        let time = Kernel.Time(seconds: 1_234_567_890)
+        #expect(time.seconds == 1_234_567_890)
         #expect(time.nanoseconds == 0)
     }
 

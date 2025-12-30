@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,10 +7,10 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 #endif
 
 extension Kernel {
@@ -35,9 +35,9 @@ extension Kernel {
     /// The descriptor value itself can be safely passed between threads; it's the
     /// underlying kernel resource that requires coordination.
     #if os(Windows)
-    public typealias Descriptor = HANDLE
+        public typealias Descriptor = HANDLE
     #else
-    public typealias Descriptor = Int32
+        public typealias Descriptor = Int32
     #endif
 
     /// Invalid descriptor sentinel.
@@ -46,9 +46,9 @@ extension Kernel {
     /// - Windows: `INVALID_HANDLE_VALUE` (not nil)
     public static var invalidDescriptor: Descriptor {
         #if os(Windows)
-        return INVALID_HANDLE_VALUE
+            return INVALID_HANDLE_VALUE
         #else
-        return -1
+            return -1
         #endif
     }
 
@@ -56,9 +56,9 @@ extension Kernel {
     @inlinable
     public static func isValid(_ descriptor: Descriptor) -> Bool {
         #if os(Windows)
-        return descriptor != INVALID_HANDLE_VALUE && descriptor != nil
+            return descriptor != INVALID_HANDLE_VALUE && descriptor != nil
         #else
-        return descriptor >= 0
+            return descriptor >= 0
         #endif
     }
 }

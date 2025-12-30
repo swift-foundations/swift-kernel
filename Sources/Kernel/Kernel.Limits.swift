@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,16 +7,16 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif canImport(Musl)
-import Musl
+    import Musl
 #elseif os(Windows)
-import WinSDK
+    import WinSDK
 #endif
 
 extension Kernel {
@@ -29,13 +29,13 @@ extension Kernel {
         /// Extended-length paths on Windows can exceed MAX_PATH.
         public static var pathMax: Int {
             #if os(Windows)
-            return Int(MAX_PATH)  // 260
+                return Int(MAX_PATH)  // 260
             #elseif canImport(Darwin)
-            return Int(PATH_MAX)  // 1024
+                return Int(PATH_MAX)  // 1024
             #elseif canImport(Glibc) || canImport(Musl)
-            return Int(PATH_MAX)  // Usually 4096
+                return Int(PATH_MAX)  // Usually 4096
             #else
-            return 4096  // Conservative fallback
+                return 4096  // Conservative fallback
             #endif
         }
     }

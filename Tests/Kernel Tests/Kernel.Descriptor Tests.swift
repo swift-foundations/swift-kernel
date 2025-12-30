@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-kernel open source project
 //
@@ -7,7 +7,7 @@
 //
 // See LICENSE for license information
 //
-//===----------------------------------------------------------------------===//
+// ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
 import Testing
@@ -21,7 +21,7 @@ extension Kernel.Test.Unit {
     @Test("invalidDescriptor is negative on POSIX")
     func invalidDescriptorValue() {
         #if !os(Windows)
-        #expect(Kernel.invalidDescriptor == -1)
+            #expect(Kernel.invalidDescriptor == -1)
         #endif
     }
 
@@ -33,10 +33,10 @@ extension Kernel.Test.Unit {
     @Test("isValid returns true for valid descriptor")
     func isValidTrueForValid() {
         #if !os(Windows)
-        // Standard input (0), stdout (1), stderr (2) are always valid
-        #expect(Kernel.isValid(0))
-        #expect(Kernel.isValid(1))
-        #expect(Kernel.isValid(2))
+            // Standard input (0), stdout (1), stderr (2) are always valid
+            #expect(Kernel.isValid(0))
+            #expect(Kernel.isValid(1))
+            #expect(Kernel.isValid(2))
         #endif
     }
 }
