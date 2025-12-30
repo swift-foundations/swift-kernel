@@ -12,8 +12,8 @@
 #if canImport(Glibc) || canImport(Musl)
 
     #if canImport(Glibc)
-        internal import Glibc
-        internal import CLinuxShim
+        public import Glibc
+        public import CLinuxShim
     #elseif canImport(Musl)
         internal import Musl
     #endif
