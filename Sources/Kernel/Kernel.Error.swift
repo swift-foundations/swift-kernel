@@ -89,6 +89,11 @@ extension Kernel {
             /// - POSIX: `ENOTEMPTY`
             /// - Windows: `ERROR_DIR_NOT_EMPTY`
             case notEmpty
+
+            /// Cross-device link attempted (e.g., rename across filesystems).
+            /// - POSIX: `EXDEV`
+            /// - Windows: `ERROR_NOT_SAME_DEVICE`
+            case crossDevice
         }
 
         /// File descriptor error conditions.
@@ -114,6 +119,15 @@ extension Kernel {
             /// The connection was reset by the remote peer.
             /// - POSIX: `ECONNRESET`
             case reset
+
+            /// The device is unavailable or not configured.
+            /// - POSIX: `ENODEV`, `ENXIO`
+            /// - Windows: `ERROR_IO_DEVICE`
+            case device
+
+            /// Illegal seek on a non-seekable descriptor (e.g., pipe, socket).
+            /// - POSIX: `ESPIPE`
+            case seek
         }
 
         /// File locking error conditions.
@@ -162,6 +176,10 @@ extension Kernel {
             /// The operation would block on a non-blocking descriptor.
             /// - POSIX: `EAGAIN`, `EWOULDBLOCK`
             case blocked
+
+            /// The operation is not supported on this descriptor or filesystem.
+            /// - POSIX: `ENOTSUP`, `EOPNOTSUPP`
+            case unsupported
         }
     }
 }
@@ -197,6 +215,7 @@ extension Kernel.Error.Path: CustomStringConvertible {
         case .isDirectory: return "is a directory"
         case .notDirectory: return "not a directory"
         case .notEmpty: return "directory not empty"
+        case .crossDevice: return "cross-device link"
         }
     }
 }
@@ -215,6 +234,8 @@ extension Kernel.Error.IO: CustomStringConvertible {
         switch self {
         case .broken: return "broken pipe"
         case .reset: return "connection reset"
+        case .device: return "device unavailable"
+        case .seek: return "illegal seek"
         }
     }
 }
@@ -244,6 +265,7 @@ extension Kernel.Error.Resource: CustomStringConvertible {
         case .space: return "no space left on device"
         case .interrupted: return "interrupted"
         case .blocked: return "would block"
+        case .unsupported: return "operation not supported"
         }
     }
 }

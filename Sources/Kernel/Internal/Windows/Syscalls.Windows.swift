@@ -375,13 +375,16 @@ extension Kernel.Syscalls {
         var newHandle: HANDLE? = nil
         let currentProcess = GetCurrentProcess()
 
+        // Use bInheritHandle = true to match POSIX dup() semantics.
+        // POSIX dup() creates a new descriptor that inherits FD_CLOEXEC status,
+        // and by default POSIX descriptors are inheritable.
         let result = DuplicateHandle(
             currentProcess,
             descriptor,
             currentProcess,
             &newHandle,
             0,
-            false,
+            true,  // bInheritHandle: match POSIX dup() default (inheritable)
             DWORD(DUPLICATE_SAME_ACCESS)
         )
 

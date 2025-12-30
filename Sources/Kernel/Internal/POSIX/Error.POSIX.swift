@@ -64,6 +64,17 @@ extension Kernel.Error {
             return .memory(.address)
         case .noMemory:
             return .memory(.exhausted)
+        // Path errors
+        case .improperLink:
+            return .path(.crossDevice)
+        // I/O errors
+        case .operationNotSupportedByDevice, .noSuchAddressOrDevice:
+            return .io(.device)
+        case .illegalSeek:
+            return .io(.seek)
+        // Resource errors
+        case .notSupported:
+            return .resource(.unsupported)
         default:
             return .platform(code: errno.rawValue, message: String(describing: errno))
         }

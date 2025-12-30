@@ -60,7 +60,15 @@ extension Kernel.Error {
             return .resource(.blocked)
         case DWORD(ERROR_NOT_SAME_DEVICE):
             // Cross-device operation (e.g., rename across volumes)
-            return .platform(code: Int32(code), message: formatWindowsError(code))
+            return .path(.crossDevice)
+
+        // Additional disk space error
+        case DWORD(ERROR_HANDLE_DISK_FULL):
+            return .resource(.space)
+
+        // I/O device errors
+        case DWORD(ERROR_IO_DEVICE):
+            return .io(.device)
 
         default:
             return .platform(code: Int32(code), message: formatWindowsError(code))

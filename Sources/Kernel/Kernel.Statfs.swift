@@ -14,11 +14,27 @@ extension Kernel {
     ///
     /// Used by higher layers (swift-io) for Direct I/O capability probing
     /// and filesystem type detection.
+    ///
+    /// ## Platform Differences
+    ///
+    /// The `type` field has different semantics across platforms:
+    /// - **POSIX**: Filesystem magic number (e.g., 0x9123683E for Btrfs, 0x58465342 for XFS).
+    ///   Use this to detect filesystem capabilities.
+    /// - **Windows**: Volume serial number, which identifies a specific volume instance.
+    ///   Use `fsTypeName` (e.g., "NTFS", "FAT32") for filesystem type detection on Windows.
+    ///
+    /// For cross-platform filesystem type detection, prefer `fsTypeName` when available,
+    /// falling back to `type` magic number comparison on POSIX systems.
     public struct Statfs: Sendable, Equatable, Hashable {
         /// Filesystem type identifier.
         ///
-        /// - POSIX: `f_type` (e.g., 0x9123683E for Btrfs, 0x58465342 for XFS)
-        /// - Windows: Volume serial number
+        /// - POSIX: `f_type` — Filesystem magic number (e.g., 0x9123683E for Btrfs).
+        ///   These values are platform-specific and can be used to detect filesystem capabilities.
+        /// - Windows: Volume serial number, which identifies the volume instance.
+        ///   **Note**: This is NOT a filesystem type. Use `fsTypeName` for type detection on Windows.
+        ///
+        /// - Important: The semantic meaning differs between platforms. For portable
+        ///   filesystem type detection, use `fsTypeName` when available.
         public let type: UInt64
 
         /// Optimal transfer block size in bytes.
