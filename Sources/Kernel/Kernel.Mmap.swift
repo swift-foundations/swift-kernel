@@ -163,6 +163,7 @@ extension Kernel.Mmap {
         public import Darwin
     #elseif canImport(Glibc)
         public import Glibc
+        public import CLinuxShim
     #elseif canImport(Musl)
         public import Musl
     #endif
