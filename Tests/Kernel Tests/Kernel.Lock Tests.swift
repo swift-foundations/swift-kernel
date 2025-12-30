@@ -30,9 +30,9 @@ extension Kernel.Lock.Test.Unit {
 
     @Test("Range.bytes is equatable")
     func rangeBytesEquatable() {
-        let r1 = Kernel.Lock.Range.bytes(start: 10, length: 100)
-        let r2 = Kernel.Lock.Range.bytes(start: 10, length: 100)
-        let r3 = Kernel.Lock.Range.bytes(start: 20, length: 100)
+        let r1 = Kernel.Lock.Range.bytes(start: 10, end: 110)
+        let r2 = Kernel.Lock.Range.bytes(start: 10, end: 110)
+        let r3 = Kernel.Lock.Range.bytes(start: 20, end: 120)
 
         #expect(r1 == r2)
         #expect(r1 != r3)
@@ -41,9 +41,17 @@ extension Kernel.Lock.Test.Unit {
     @Test("Range.file and Range.bytes are not equal")
     func rangeFileVsBytes() {
         let file = Kernel.Lock.Range.file
-        let bytes = Kernel.Lock.Range.bytes(start: 0, length: 0)
+        let bytes = Kernel.Lock.Range.bytes(start: 0, end: 0)
 
         #expect(file != bytes)
+    }
+
+    @Test("Range can be created from Swift Range")
+    func rangeFromSwiftRange() {
+        let swiftRange: Range<UInt64> = 100..<200
+        let lockRange = Kernel.Lock.Range(swiftRange)
+
+        #expect(lockRange == .bytes(start: 100, end: 200))
     }
 }
 
@@ -68,8 +76,8 @@ extension Kernel.Lock.Test.Unit {
     func rangeHashable() {
         var set = Set<Kernel.Lock.Range>()
         set.insert(.file)
-        set.insert(.bytes(start: 10, length: 20))
-        set.insert(.bytes(start: 10, length: 20)) // Duplicate
+        set.insert(.bytes(start: 10, end: 30))
+        set.insert(.bytes(start: 10, end: 30)) // Duplicate
 
         #expect(set.count == 2)
     }

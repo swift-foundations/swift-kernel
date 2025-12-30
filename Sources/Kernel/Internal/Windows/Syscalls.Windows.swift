@@ -479,13 +479,32 @@ internal func getReparseTag(_ descriptor: Kernel.Descriptor) -> DWORD {
 
 extension Kernel.Syscalls {
     /// Acquires a lock on a byte range.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The file handle.
+    ///   - range: The byte range to lock.
+    ///   - exclusive: `true` for exclusive (write) lock, `false` for shared (read) lock.
+    ///   - wait: `true` to block until lock is acquired, `false` to fail immediately on contention.
+    /// - Throws: `Kernel.Error` on failure.
+    ///   - `.resource(.blocked)` if `wait` is `false` and the lock is held by another process.
+    ///
+    /// ## Usage
+    /// ```swift
+    /// // Blocking lock
+    /// try Kernel.Syscalls.lock(handle, range: .file, exclusive: true)
+    ///
+    /// // Non-blocking "try lock" using Swift's try?
+    /// if (try? Kernel.Syscalls.lock(handle, range: .file, exclusive: true, wait: false)) != nil {
+    ///     // Lock acquired
+    /// }
+    /// ```
     @inlinable
     public static func lock(
         _ descriptor: Kernel.Descriptor,
         range: Kernel.Lock.Range,
         exclusive: Bool,
-        wait: Bool
-    ) throws(Kernel.Error) -> Bool {
+        wait: Bool = true
+    ) throws(Kernel.Error) {
         guard descriptor != INVALID_HANDLE_VALUE else {
             throw .descriptor(.invalid)
         }
@@ -513,14 +532,8 @@ extension Kernel.Syscalls {
         )
 
         if result == 0 {
-            let error = GetLastError()
-            // Lock contention when not waiting
-            if !wait && (error == DWORD(ERROR_LOCK_VIOLATION) || error == DWORD(ERROR_LOCK_FAILED)) {
-                return false
-            }
-            throw Kernel.Error.windows(error)
+            throw Kernel.Error.currentWindowsError()
         }
-        return true
     }
 
     /// Releases a lock on a byte range.
@@ -560,7 +573,15 @@ extension Kernel.Syscalls {
         case .file:
             // Lock from offset 0 with max length
             return (0, DWORD.max, DWORD.max)
-        case .bytes(let start, let length):
+        case .bytes(let start, let end):
+            // Convert end to length
+            // If end is UInt64.max, use max length to mean "to EOF"
+            let length: UInt64
+            if end == UInt64.max {
+                length = UInt64.max
+            } else {
+                length = end - start
+            }
             return (start, DWORD(length & 0xFFFFFFFF), DWORD(length >> 32))
         }
     }

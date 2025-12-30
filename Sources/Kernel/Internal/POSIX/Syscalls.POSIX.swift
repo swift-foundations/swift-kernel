@@ -470,20 +470,27 @@ extension Kernel.Syscalls {
     ///   - descriptor: The file descriptor.
     ///   - range: The byte range to lock.
     ///   - exclusive: `true` for exclusive (write) lock, `false` for shared (read) lock.
-    ///   - wait: `true` to block until lock is acquired, `false` to return immediately.
-    /// - Returns: `true` if lock was acquired, `false` if `wait` is `false` and lock is held.
+    ///   - wait: `true` to block until lock is acquired, `false` to fail immediately on contention.
     /// - Throws: `Kernel.Error` on failure.
+    ///   - `.resource(.blocked)` if `wait` is `false` and the lock is held by another process.
     ///
-    /// ## Contract
-    /// - `wait == false`: Returns `false` on contention (no throw). Returns `true` on success.
-    /// - `wait == true`: Never returns `false`. Either succeeds or throws.
+    /// ## Usage
+    /// ```swift
+    /// // Blocking lock
+    /// try Kernel.Syscalls.lock(fd, range: .file, exclusive: true)
+    ///
+    /// // Non-blocking "try lock" using Swift's try?
+    /// if (try? Kernel.Syscalls.lock(fd, range: .file, exclusive: true, wait: false)) != nil {
+    ///     // Lock acquired
+    /// }
+    /// ```
     @inlinable
     public static func lock(
         _ descriptor: Kernel.Descriptor,
         range: Kernel.Lock.Range,
         exclusive: Bool,
-        wait: Bool
-    ) throws(Kernel.Error) -> Bool {
+        wait: Bool = true
+    ) throws(Kernel.Error) {
         var fl = flock()
         fl.l_type = exclusive ? Int16(F_WRLCK) : Int16(F_RDLCK)
         fl.l_whence = Int16(SEEK_SET)
@@ -493,23 +500,23 @@ extension Kernel.Syscalls {
             // l_start = 0, l_len = 0 means "lock entire file to EOF"
             fl.l_start = 0
             fl.l_len = 0
-        case .bytes(let start, let length):
+        case .bytes(let start, let end):
             fl.l_start = off_t(start)
-            fl.l_len = off_t(length)
+            // Convert end to length: end - start
+            // If end is UInt64.max, use 0 to mean "to EOF"
+            if end == UInt64.max {
+                fl.l_len = 0
+            } else {
+                fl.l_len = off_t(end - start)
+            }
         }
 
         let command = wait ? F_SETLKW : F_SETLK
         let result = fcntl(descriptor, command, &fl)
 
         if result == -1 {
-            let err = errno
-            // EAGAIN or EACCES means the lock is held (non-blocking case)
-            if !wait && (err == EAGAIN || err == EACCES) {
-                return false
-            }
-            throw Kernel.Error.posix(err)
+            throw Kernel.Error.currentPosixError()
         }
-        return true
     }
 
     /// Releases a lock on a byte range.
@@ -531,9 +538,13 @@ extension Kernel.Syscalls {
         case .file:
             fl.l_start = 0
             fl.l_len = 0
-        case .bytes(let start, let length):
+        case .bytes(let start, let end):
             fl.l_start = off_t(start)
-            fl.l_len = off_t(length)
+            if end == UInt64.max {
+                fl.l_len = 0
+            } else {
+                fl.l_len = off_t(end - start)
+            }
         }
 
         let result = fcntl(descriptor, F_SETLK, &fl)

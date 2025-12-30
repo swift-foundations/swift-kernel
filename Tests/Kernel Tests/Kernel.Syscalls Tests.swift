@@ -328,8 +328,7 @@ extension Kernel.Syscalls.Test.Unit {
         }
 
         // Acquire exclusive lock
-        let acquired = try Kernel.Syscalls.lock(fd, range: .file, exclusive: true, wait: true)
-        #expect(acquired == true)
+        try Kernel.Syscalls.lock(fd, range: .file, exclusive: true, wait: true)
 
         // Unlock
         try Kernel.Syscalls.unlock(fd, range: .file)
@@ -355,17 +354,16 @@ extension Kernel.Syscalls.Test.Unit {
         let data: [UInt8] = Array(repeating: 0, count: 100)
         _ = try data.withUnsafeBytes { try Kernel.Syscalls.write(fd, from: $0) }
 
-        // Lock bytes 10-50
-        let acquired = try Kernel.Syscalls.lock(
+        // Lock bytes 10-50 (using end offset, not length)
+        try Kernel.Syscalls.lock(
             fd,
-            range: .bytes(start: 10, length: 40),
+            range: .bytes(start: 10, end: 50),
             exclusive: true,
             wait: true
         )
-        #expect(acquired == true)
 
         // Unlock
-        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 10, length: 40))
+        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 10, end: 50))
     }
 
     @Test("shared lock allows multiple readers")
@@ -393,12 +391,10 @@ extension Kernel.Syscalls.Test.Unit {
         }
 
         // First shared lock
-        let acquired1 = try Kernel.Syscalls.lock(fd1, range: .file, exclusive: false, wait: true)
-        #expect(acquired1 == true)
+        try Kernel.Syscalls.lock(fd1, range: .file, exclusive: false, wait: true)
 
         // Second shared lock should also succeed
-        let acquired2 = try Kernel.Syscalls.lock(fd2, range: .file, exclusive: false, wait: true)
-        #expect(acquired2 == true)
+        try Kernel.Syscalls.lock(fd2, range: .file, exclusive: false, wait: true)
 
         // Unlock both
         try Kernel.Syscalls.unlock(fd1, range: .file)
@@ -429,27 +425,51 @@ extension Kernel.Syscalls.Test.Unit {
         let data: [UInt8] = Array(repeating: 0, count: 200)
         _ = try data.withUnsafeBytes { try Kernel.Syscalls.write(fd, from: $0) }
 
-        // Lock first range
-        let acquired1 = try Kernel.Syscalls.lock(
+        // Lock first range (0-50)
+        try Kernel.Syscalls.lock(
             fd,
-            range: .bytes(start: 0, length: 50),
+            range: .bytes(start: 0, end: 50),
             exclusive: true,
             wait: true
         )
-        #expect(acquired1 == true)
 
-        // Lock second non-overlapping range
-        let acquired2 = try Kernel.Syscalls.lock(
+        // Lock second non-overlapping range (100-150)
+        try Kernel.Syscalls.lock(
             fd,
-            range: .bytes(start: 100, length: 50),
+            range: .bytes(start: 100, end: 150),
             exclusive: true,
             wait: true
         )
-        #expect(acquired2 == true)
 
         // Unlock both
-        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 0, length: 50))
-        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 100, length: 50))
+        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 0, end: 50))
+        try Kernel.Syscalls.unlock(fd, range: .bytes(start: 100, end: 150))
+    }
+
+    @Test("non-blocking lock throws .resource(.blocked) on contention")
+    func nonBlockingLockThrows() throws {
+        // This test verifies that try? works for the "try lock" pattern
+        let path = FilePath("/tmp/kernel-test-trylock-\(ProcessInfo.processInfo.processIdentifier).txt")
+
+        let fd = try Kernel.Syscalls.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: 0o644
+        )
+
+        defer {
+            try? Kernel.Syscalls.close(fd)
+            try? Kernel.Syscalls.unlink(path: path)
+        }
+
+        // Non-blocking lock should succeed when no contention
+        // Using try? pattern: if nil, lock wasn't acquired
+        let result = try? Kernel.Syscalls.lock(fd, range: .file, exclusive: true, wait: false)
+        #expect(result != nil, "Non-blocking lock should succeed when no contention")
+
+        // Unlock
+        try Kernel.Syscalls.unlock(fd, range: .file)
     }
 }
 
