@@ -206,7 +206,7 @@ extension Kernel.File.Open.Options {
 #endif
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.File.Open.Mode {
         /// Converts the mode to Windows desired access flags.

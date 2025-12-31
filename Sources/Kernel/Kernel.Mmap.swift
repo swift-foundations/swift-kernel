@@ -370,17 +370,17 @@ extension Kernel.Mmap {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.Mmap.Protection {
         /// Pages may be read.
-        public static let read = Protection(rawValue: 1)
+        public static let read = Self(rawValue: 1)
 
         /// Pages may be written.
-        public static let write = Protection(rawValue: 2)
+        public static let write = Self(rawValue: 2)
 
         /// Pages may be executed.
-        public static let execute = Protection(rawValue: 4)
+        public static let execute = Self(rawValue: 4)
 
         /// Read and write access.
         public static let readWrite = read | write
@@ -415,30 +415,30 @@ extension Kernel.Mmap {
 
     extension Kernel.Mmap.Flags {
         /// Changes are shared.
-        public static let shared = Flags(rawValue: 1)
+        public static let shared = Self(rawValue: 1)
 
         /// Changes are private (copy-on-write).
-        public static let `private` = Flags(rawValue: 2)
+        public static let `private` = Self(rawValue: 2)
 
         /// Anonymous mapping.
-        public static let anonymous = Flags(rawValue: 4)
+        public static let anonymous = Self(rawValue: 4)
 
         /// Fixed address.
-        public static let fixed = Flags(rawValue: 8)
+        public static let fixed = Self(rawValue: 8)
     }
 
     extension Kernel.Mmap.SyncFlags {
-        public static let sync = SyncFlags(rawValue: 1)
-        public static let async = SyncFlags(rawValue: 2)
-        public static let invalidate = SyncFlags(rawValue: 4)
+        public static let sync = Self(rawValue: 1)
+        public static let async = Self(rawValue: 2)
+        public static let invalidate = Self(rawValue: 4)
     }
 
     extension Kernel.Mmap.Advice {
-        public static let normal = Advice(rawValue: 0)
-        public static let sequential = Advice(rawValue: 1)
-        public static let random = Advice(rawValue: 2)
-        public static let willNeed = Advice(rawValue: 3)
-        public static let dontNeed = Advice(rawValue: 4)
+        public static let normal = Self(rawValue: 0)
+        public static let sequential = Self(rawValue: 1)
+        public static let random = Self(rawValue: 2)
+        public static let willNeed = Self(rawValue: 3)
+        public static let dontNeed = Self(rawValue: 4)
     }
 
     extension Kernel.Mmap {

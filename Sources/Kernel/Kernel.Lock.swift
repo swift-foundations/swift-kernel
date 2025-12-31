@@ -153,8 +153,19 @@ extension Kernel.Lock {
     /// - `release()` is the canonical way to release the lock
     /// - `deinit` releases the lock as a backstop (correctness should not depend on this)
     /// - Once released, the token cannot be used
-    public struct Token: ~Copyable, Sendable {
-        private let descriptor: Kernel.Descriptor
+    ///
+    /// ## Thread Safety
+    ///
+    /// Token uses `@unchecked Sendable` because:
+    /// - On POSIX: `Int32` is Sendable but we use unchecked for consistency
+    /// - On Windows: `HANDLE` (UnsafeMutableRawPointer) is not Sendable
+    /// The descriptor is managed safely within the Token's lifecycle.
+    public struct Token: ~Copyable, @unchecked Sendable {
+        #if os(Windows)
+            private nonisolated(unsafe) let descriptor: Kernel.Descriptor
+        #else
+            private let descriptor: Kernel.Descriptor
+        #endif
         private let range: Range
         private var isReleased: Bool
 
@@ -520,7 +531,7 @@ extension Kernel.Lock {
                 &overlapped
             )
 
-            guard result != 0 else {
+            guard result else {
                 throw Error.fromWindowsError(GetLastError())
             }
         }
@@ -556,7 +567,7 @@ extension Kernel.Lock {
                 &overlapped
             )
 
-            if result == 0 {
+            if !result {
                 let error = GetLastError()
                 if error == DWORD(ERROR_LOCK_VIOLATION) || error == DWORD(ERROR_LOCK_FAILED) {
                     return false
@@ -588,7 +599,7 @@ extension Kernel.Lock {
                 &overlapped
             )
 
-            guard result != 0 else {
+            guard result else {
                 throw Error.fromWindowsError(GetLastError())
             }
         }

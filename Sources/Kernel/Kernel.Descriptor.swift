@@ -56,7 +56,8 @@ extension Kernel {
     @inlinable
     public static func isValid(_ descriptor: Descriptor) -> Bool {
         #if os(Windows)
-            return descriptor != INVALID_HANDLE_VALUE && descriptor != nil
+            // HANDLE is UnsafeMutableRawPointer (non-optional), so we only check for INVALID_HANDLE_VALUE
+            return descriptor != INVALID_HANDLE_VALUE
         #else
             return descriptor >= 0
         #endif
