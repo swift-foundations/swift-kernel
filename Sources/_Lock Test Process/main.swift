@@ -292,7 +292,7 @@ func main() -> Int32 {
     }
 
     // Open the file
-    let handle = args.filePath.withCString(encodedAs: UTF16.self) { widePath in
+    let maybeHandle = args.filePath.withCString(encodedAs: UTF16.self) { widePath in
         CreateFileW(
             widePath,
             DWORD(GENERIC_READ) | DWORD(GENERIC_WRITE),
@@ -304,7 +304,7 @@ func main() -> Int32 {
         )
     }
 
-    guard handle != INVALID_HANDLE_VALUE else {
+    guard let handle = maybeHandle, handle != INVALID_HANDLE_VALUE else {
         writeStderr("Failed to open file: \(args.filePath)\n")
         return 3
     }
