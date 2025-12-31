@@ -166,7 +166,7 @@
 // MARK: - Windows Error Mapping
 
 #if os(Windows)
-    import WinSDK
+    public import WinSDK
 
     extension Kernel.Path.Resolution.Error {
         @inlinable
