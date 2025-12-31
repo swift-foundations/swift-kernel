@@ -444,8 +444,15 @@ extension Kernel.Mmap {
     extension Kernel.Mmap {
         /// Result of a Windows memory mapping operation.
         ///
-        /// Uses `@unchecked Sendable` because `UnsafeMutableRawPointer` and `HANDLE`
-        /// are not Sendable, but we manage them safely within the mapping lifecycle.
+        /// ## Thread Safety
+        ///
+        /// Uses `@unchecked Sendable` because the stored pointers/handles are not
+        /// `Sendable`, but this is safe because:
+        /// - `baseAddress` is an opaque pointer to kernel-managed memory
+        /// - `mappingHandle` is an opaque kernel identifier (never dereferenced)
+        /// - Both are immutable once created
+        /// - The caller is responsible for proper synchronization when accessing
+        ///   the mapped memory region
         public struct WindowsMapping: @unchecked Sendable {
             /// The base address of the mapped view.
             public nonisolated(unsafe) let baseAddress: UnsafeMutableRawPointer

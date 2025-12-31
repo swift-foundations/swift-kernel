@@ -156,16 +156,11 @@ extension Kernel.Lock {
     ///
     /// ## Thread Safety
     ///
-    /// Token uses `@unchecked Sendable` because:
-    /// - On POSIX: `Int32` is Sendable but we use unchecked for consistency
-    /// - On Windows: `HANDLE` (UnsafeMutableRawPointer) is not Sendable
-    /// The descriptor is managed safely within the Token's lifecycle.
-    public struct Token: ~Copyable, @unchecked Sendable {
-        #if os(Windows)
-            private nonisolated(unsafe) let descriptor: Kernel.Descriptor
-        #else
-            private let descriptor: Kernel.Descriptor
-        #endif
+    /// Token stores a `Kernel.Descriptor` which is conditionally `Sendable`.
+    /// The mutable `isReleased` state is safe because `~Copyable` ensures
+    /// single ownership - only one thread can own the token at a time.
+    public struct Token: ~Copyable {
+        private let descriptor: Kernel.Descriptor
         private let range: Range
         private var isReleased: Bool
 
@@ -214,6 +209,16 @@ extension Kernel.Lock {
         }
     }
 }
+
+// MARK: - Token Sendable
+
+#if os(Windows)
+    // On Windows, Kernel.Descriptor uses @unchecked Sendable.
+    // Token's mutable isReleased is safe because ~Copyable ensures single ownership.
+    extension Kernel.Lock.Token: @unchecked Sendable {}
+#else
+    extension Kernel.Lock.Token: Sendable {}
+#endif
 
 // MARK: - Token Acquisition Logic
 
