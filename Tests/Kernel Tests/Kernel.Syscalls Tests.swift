@@ -25,7 +25,10 @@ import Testing
 #endif
 
 // MARK: - Open/Close Unit Tests
+// Note: These tests use POSIX-style paths (/tmp/). On Windows,
+// these paths don't exist, so these tests are skipped.
 
+#if !os(Windows)
 extension Kernel.Test.Unit {
     @Test("open and close file")
     func openAndClose() throws {
@@ -126,6 +129,7 @@ extension Kernel.Test.Unit {
         #expect(bytesRead == 0)  // EOF returns 0, not error
     }
 }
+#endif
 
 // MARK: - Edge Cases
 // Note: These tests use -1 as an invalid descriptor (POSIX convention).
