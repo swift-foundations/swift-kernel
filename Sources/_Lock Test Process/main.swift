@@ -28,15 +28,33 @@
 //    3  Error (invalid arguments, file not found, etc.)
 //
 
+import SystemPackage
+import Kernel
+
 #if canImport(Darwin)
-@preconcurrency import Darwin
+import Darwin
 #elseif canImport(Glibc)
-@preconcurrency import Glibc
+import Glibc
 #elseif os(Windows)
-@preconcurrency import WinSDK
+import WinSDK
 #endif
 
-import Kernel
+// MARK: - IO Helpers
+
+func writeStdout(_ message: String) {
+    _ = try? FileDescriptor.standardOutput.writeAll(message.utf8)
+}
+
+func writeStderr(_ message: String) {
+    _ = try? FileDescriptor.standardError.writeAll(message.utf8)
+}
+
+func readStdinByte() {
+    var buffer: UInt8 = 0
+    _ = try? withUnsafeMutableBytes(of: &buffer) { ptr in
+        try FileDescriptor.standardInput.read(into: ptr)
+    }
+}
 
 // MARK: - Argument Parsing
 
@@ -83,7 +101,7 @@ func parseArguments() -> Arguments? {
     case "deadline-shared":
         command = .deadlineShared
     default:
-        fputs("Unknown command: \(commandStr)\n", stderr)
+        writeStderr("Unknown command: \(commandStr)\n")
         printUsage()
         return nil
     }
@@ -97,7 +115,7 @@ func parseArguments() -> Arguments? {
         switch arg {
         case "--range":
             guard i + 1 < args.count else {
-                fputs("--range requires an argument\n", stderr)
+                writeStderr("--range requires an argument\n")
                 return nil
             }
             i += 1
@@ -106,31 +124,31 @@ func parseArguments() -> Arguments? {
             guard parts.count == 2,
                   let start = UInt64(parts[0]),
                   let end = UInt64(parts[1]) else {
-                fputs("Invalid range format. Use: start-end\n", stderr)
+                writeStderr("Invalid range format. Use: start-end\n")
                 return nil
             }
             result.range = .bytes(start: start, end: end)
 
         case "--hold":
             guard i + 1 < args.count else {
-                fputs("--hold requires an argument\n", stderr)
+                writeStderr("--hold requires an argument\n")
                 return nil
             }
             i += 1
             guard let seconds = Int(args[i]) else {
-                fputs("Invalid hold seconds\n", stderr)
+                writeStderr("Invalid hold seconds\n")
                 return nil
             }
             result.holdSeconds = seconds
 
         case "--deadline-ms":
             guard i + 1 < args.count else {
-                fputs("--deadline-ms requires an argument\n", stderr)
+                writeStderr("--deadline-ms requires an argument\n")
                 return nil
             }
             i += 1
             guard let ms = Int(args[i]) else {
-                fputs("Invalid deadline milliseconds\n", stderr)
+                writeStderr("Invalid deadline milliseconds\n")
                 return nil
             }
             result.deadlineMs = ms
@@ -139,7 +157,7 @@ func parseArguments() -> Arguments? {
             result.signalReady = true
 
         default:
-            fputs("Unknown option: \(arg)\n", stderr)
+            writeStderr("Unknown option: \(arg)\n")
             return nil
         }
         i += 1
@@ -171,9 +189,9 @@ func printUsage() {
       1  Lock would block (try-* commands)
       2  Lock timed out (deadline-* commands)
       3  Error
+
     """
-    fputs(usage, stderr)
-    fputs("\n", stderr)
+    writeStderr(usage)
 }
 
 // MARK: - Main
@@ -188,7 +206,7 @@ func main() -> Int32 {
     // Open the file
     let fd = open(args.filePath, O_RDWR)
     guard fd >= 0 else {
-        fputs("Failed to open file: \(args.filePath)\n", stderr)
+        writeStderr("Failed to open file: \(args.filePath)\n")
         return 3
     }
     defer { close(fd) }
@@ -229,26 +247,22 @@ func main() -> Int32 {
     } catch {
         switch error {
         case .contention:
-            // Could be wouldBlock or timedOut
             if case .try = acquire {
-                fputs("WOULD_BLOCK\n", stdout)
-                fflush(stdout)
+                writeStdout("WOULD_BLOCK\n")
                 return 1
             } else {
-                fputs("TIMED_OUT\n", stdout)
-                fflush(stdout)
+                writeStdout("TIMED_OUT\n")
                 return 2
             }
         default:
-            fputs("Failed to acquire lock: \(error)\n", stderr)
+            writeStderr("Failed to acquire lock: \(error)\n")
             return 3
         }
     }
 
     // Signal ready if requested
     if args.signalReady {
-        fputs("READY\n", stdout)
-        fflush(stdout)
+        writeStdout("READY\n")
     }
 
     // Hold lock
@@ -256,15 +270,13 @@ func main() -> Int32 {
         sleep(UInt32(seconds))
     } else {
         // Wait for newline on stdin
-        var buffer = [CChar](repeating: 0, count: 2)
-        _ = read(STDIN_FILENO, &buffer, 1)
+        readStdinByte()
     }
 
     // Release lock
     token.release()
 
-    fputs("RELEASED\n", stdout)
-    fflush(stdout)
+    writeStdout("RELEASED\n")
 
     return 0
 }
@@ -293,7 +305,7 @@ func main() -> Int32 {
     }
 
     guard handle != INVALID_HANDLE_VALUE else {
-        fputs("Failed to open file: \(args.filePath)\n", stderr)
+        writeStderr("Failed to open file: \(args.filePath)\n")
         return 3
     }
     defer { CloseHandle(handle) }
@@ -334,26 +346,22 @@ func main() -> Int32 {
     } catch {
         switch error {
         case .contention:
-            // Could be wouldBlock or timedOut
             if case .try = acquire {
-                fputs("WOULD_BLOCK\n", stdout)
-                fflush(stdout)
+                writeStdout("WOULD_BLOCK\n")
                 return 1
             } else {
-                fputs("TIMED_OUT\n", stdout)
-                fflush(stdout)
+                writeStdout("TIMED_OUT\n")
                 return 2
             }
         default:
-            fputs("Failed to acquire lock: \(error)\n", stderr)
+            writeStderr("Failed to acquire lock: \(error)\n")
             return 3
         }
     }
 
     // Signal ready if requested
     if args.signalReady {
-        fputs("READY\n", stdout)
-        fflush(stdout)
+        writeStdout("READY\n")
     }
 
     // Hold lock
@@ -361,17 +369,13 @@ func main() -> Int32 {
         Sleep(DWORD(seconds * 1000))
     } else {
         // Wait for newline on stdin
-        var buffer: CChar = 0
-        var bytesRead: DWORD = 0
-        let stdinHandle = GetStdHandle(STD_INPUT_HANDLE)
-        _ = ReadFile(stdinHandle, &buffer, 1, &bytesRead, nil)
+        readStdinByte()
     }
 
     // Release lock
     token.release()
 
-    fputs("RELEASED\n", stdout)
-    fflush(stdout)
+    writeStdout("RELEASED\n")
 
     return 0
 }
