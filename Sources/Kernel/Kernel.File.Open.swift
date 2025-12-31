@@ -283,7 +283,7 @@ extension Kernel.File.Open.Options {
         /// This is a documented stability guarantee matching common POSIX expectations.
         @usableFromInline
         internal static var windowsShareMode: DWORD {
-            return FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE
+            return DWORD(FILE_SHARE_READ) | DWORD(FILE_SHARE_WRITE) | DWORD(FILE_SHARE_DELETE)
         }
     }
 #endif

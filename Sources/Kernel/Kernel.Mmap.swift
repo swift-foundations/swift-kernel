@@ -587,7 +587,7 @@ extension Kernel.Mmap {
             let unmapResult = UnmapViewOfFile(mapping.baseAddress)
             CloseHandle(mapping.mappingHandle)
 
-            guard unmapResult != 0 else {
+            guard unmapResult else {
                 throw .windows(code: GetLastError(), operation: "UnmapViewOfFile")
             }
         }
@@ -603,7 +603,7 @@ extension Kernel.Mmap {
             length: Int
         ) throws(Error) {
             let result = FlushViewOfFile(addr, SIZE_T(length))
-            guard result != 0 else {
+            guard result else {
                 throw .windows(code: GetLastError(), operation: "FlushViewOfFile")
             }
         }
@@ -627,7 +627,7 @@ extension Kernel.Mmap {
                 protection.windowsPageProtection,
                 &oldProtection
             )
-            guard result != 0 else {
+            guard result else {
                 throw .windows(code: GetLastError(), operation: "VirtualProtect")
             }
         }
