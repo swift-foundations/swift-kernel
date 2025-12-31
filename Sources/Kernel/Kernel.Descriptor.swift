@@ -34,12 +34,7 @@ extension Kernel {
     ///
     /// The descriptor value itself can be safely passed between threads; it's the
     /// underlying kernel resource that requires coordination.
-    ///
-    /// - Note: `@unchecked Sendable` is used because on Windows, `HANDLE` is
-    ///   `UnsafeMutableRawPointer` which isn't `Sendable`. However, this is safe
-    ///   because the handle is an opaque kernel identifier that we never dereference -
-    ///   we only pass it to syscalls. The value is immutable once created.
-    public struct Descriptor: RawRepresentable, @unchecked Sendable, Equatable, Hashable {
+    public struct Descriptor: RawRepresentable, Equatable, Hashable {
         #if os(Windows)
             public typealias RawValue = HANDLE
         #else
@@ -76,3 +71,15 @@ extension Kernel {
         }
     }
 }
+
+// MARK: - Sendable
+
+#if os(Windows)
+    // On Windows, HANDLE is UnsafeMutableRawPointer which isn't Sendable.
+    // However, this is safe because the handle is an opaque kernel identifier
+    // that we never dereference - we only pass it to syscalls.
+    // The value is immutable once created.
+    extension Kernel.Descriptor: @unchecked Sendable {}
+#else
+    extension Kernel.Descriptor: Sendable {}
+#endif
