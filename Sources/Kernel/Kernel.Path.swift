@@ -24,11 +24,16 @@ public import SystemPackage
 extension Kernel {
     /// An unsafe, borrow-only path wrapper for syscall use.
     ///
-    /// `Kernel.Path` is a thin wrapper over a null-terminated C string pointer.
+    /// `Kernel.Path` is a thin wrapper over a null-terminated platform string pointer.
     /// It is **explicitly unsafe** and **non-Sendable**:
     /// - The caller must ensure the pointer remains valid for the path's lifetime
     /// - The caller must ensure the string is properly null-terminated
     /// - This type does NOT own the memory it points to
+    ///
+    /// ## Platform Notes
+    ///
+    /// - On POSIX: Uses narrow strings (`CChar`/UTF-8)
+    /// - On Windows: Uses wide strings (`UInt16`/UTF-16)
     ///
     /// ## Recommended Usage
     ///
@@ -38,7 +43,7 @@ extension Kernel {
     /// let fd = try Kernel.Open.open(path: path, mode: .read, options: [], permissions: 0)
     /// ```
     ///
-    /// Only use `Kernel.Path` when you have a pre-validated C string and need
+    /// Only use `Kernel.Path` when you have a pre-validated platform string and need
     /// to avoid the FilePath conversion overhead:
     /// ```swift
     /// someCString.withCString { cString in
@@ -50,21 +55,21 @@ extension Kernel {
     /// - Warning: This type is intentionally NOT `Sendable`. Pointer lifetimes
     ///   cannot be safely transferred across concurrency boundaries.
     public struct Path: ~Copyable {
-        /// The underlying null-terminated C string.
+        /// The underlying null-terminated platform string.
         ///
         /// - Warning: This pointer is NOT owned. The caller must ensure validity.
-        public let cString: UnsafePointer<CChar>
+        public let cString: UnsafePointer<CInterop.PlatformChar>
 
-        /// Creates an unsafe path from a C string pointer.
+        /// Creates an unsafe path from a platform string pointer.
         ///
-        /// - Parameter cString: A pointer to a null-terminated C string.
+        /// - Parameter cString: A pointer to a null-terminated platform string.
         ///
         /// - Warning: No validation is performed. The caller must ensure:
         ///   - The string is properly null-terminated
         ///   - The pointer remains valid for the lifetime of this `Path`
         ///   - The string does not contain interior NUL bytes
         @inlinable
-        public init(unsafeCString cString: UnsafePointer<CChar>) {
+        public init(unsafeCString cString: UnsafePointer<CInterop.PlatformChar>) {
             self.cString = cString
         }
     }

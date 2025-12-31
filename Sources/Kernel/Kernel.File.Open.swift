@@ -219,21 +219,21 @@ extension Kernel.File.Open.Options {
             var access: DWORD = 0
 
             if hasRead {
-                access |= GENERIC_READ
+                access |= DWORD(GENERIC_READ)
             }
             if hasWrite {
                 if hasAppend {
                     // Append mode: use FILE_APPEND_DATA instead of GENERIC_WRITE
                     // This ensures all writes go to the end of the file
-                    access |= FILE_APPEND_DATA
+                    access |= DWORD(FILE_APPEND_DATA)
                 } else {
-                    access |= GENERIC_WRITE
+                    access |= DWORD(GENERIC_WRITE)
                 }
             }
 
             // If no mode specified, default to read
             if access == 0 {
-                access = GENERIC_READ
+                access = DWORD(GENERIC_READ)
             }
 
             return access
@@ -264,13 +264,13 @@ extension Kernel.File.Open.Options {
         /// Converts the options to Windows flags and attributes.
         @usableFromInline
         internal var windowsFlagsAndAttributes: DWORD {
-            var flags: DWORD = FILE_ATTRIBUTE_NORMAL
+            var flags: DWORD = DWORD(FILE_ATTRIBUTE_NORMAL)
 
             if contains(.direct) {
-                flags |= FILE_FLAG_NO_BUFFERING
+                flags |= DWORD(FILE_FLAG_NO_BUFFERING)
             }
             if contains(.noFollow) {
-                flags |= FILE_FLAG_OPEN_REPARSE_POINT
+                flags |= DWORD(FILE_FLAG_OPEN_REPARSE_POINT)
             }
 
             return flags

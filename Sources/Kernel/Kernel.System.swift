@@ -76,10 +76,11 @@ extension Kernel.System {
 #endif
 
 #if os(Windows)
-    internal import WinSDK
+    @preconcurrency internal import WinSDK
 
-    // Cache the system info since it never changes at runtime
-    private let cachedSystemInfo: SYSTEM_INFO = {
+    // Cache the system info since it never changes at runtime.
+    // Uses nonisolated(unsafe) because SYSTEM_INFO is not Sendable but is immutable after initialization.
+    private nonisolated(unsafe) let cachedSystemInfo: SYSTEM_INFO = {
         var info = SYSTEM_INFO()
         GetSystemInfo(&info)
         return info

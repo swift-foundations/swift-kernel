@@ -241,7 +241,7 @@ extension Kernel.Read {
                 nil
             )
 
-            guard result != 0 else {
+            guard result else {
                 let error = GetLastError()
                 if error == DWORD(ERROR_HANDLE_EOF) {
                     return 0
@@ -278,7 +278,7 @@ extension Kernel.Read {
                 &overlapped
             )
 
-            guard result != 0 else {
+            guard result else {
                 let error = GetLastError()
                 if error == DWORD(ERROR_HANDLE_EOF) {
                     return 0

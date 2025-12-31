@@ -443,12 +443,15 @@ extension Kernel.Mmap {
 
     extension Kernel.Mmap {
         /// Result of a Windows memory mapping operation.
-        public struct WindowsMapping: Sendable {
+        ///
+        /// Uses `@unchecked Sendable` because `UnsafeMutableRawPointer` and `HANDLE`
+        /// are not Sendable, but we manage them safely within the mapping lifecycle.
+        public struct WindowsMapping: @unchecked Sendable {
             /// The base address of the mapped view.
-            public let baseAddress: UnsafeMutableRawPointer
+            public nonisolated(unsafe) let baseAddress: UnsafeMutableRawPointer
 
             /// The file mapping handle (must be closed after unmapping).
-            public let mappingHandle: HANDLE
+            public nonisolated(unsafe) let mappingHandle: HANDLE
         }
 
         /// Maps a file into memory using Windows APIs.

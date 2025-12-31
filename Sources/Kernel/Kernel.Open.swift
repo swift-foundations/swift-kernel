@@ -320,10 +320,8 @@ extension Kernel.Close.Error: CustomStringConvertible {
             options: Kernel.File.Open.Options,
             permissions: UInt16
         ) throws(Error) -> Kernel.Descriptor {
-            let widePath = String(cString: path.cString)
-            return try widePath.withCString(encodedAs: UTF16.self) { wpath in
-                try open(unsafePath: wpath, mode: mode, options: options, permissions: permissions)
-            }
+            // path.cString is already a wide string (UnsafePointer<UInt16>) on Windows
+            try open(unsafePath: path.cString, mode: mode, options: options, permissions: permissions)
         }
 
         /// Opens a file at the specified path (Windows wide string).

@@ -252,7 +252,7 @@ extension Kernel.Write {
                 nil
             )
 
-            guard result != 0 else {
+            guard result else {
                 throw .current()
             }
             return Int(bytesWritten)
@@ -285,7 +285,7 @@ extension Kernel.Write {
                 &overlapped
             )
 
-            guard result != 0 else {
+            guard result else {
                 throw .current()
             }
             return Int(bytesWritten)
