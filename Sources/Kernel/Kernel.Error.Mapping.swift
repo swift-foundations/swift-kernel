@@ -208,7 +208,7 @@
         @inlinable
         public init?(windowsError error: DWORD) {
             switch Int32(error) {
-            case ERROR_DISK_FULL: self = .noSpace
+            case ERROR_DISK_FULL: self = .exhausted
             default: return nil
             }
         }
@@ -218,7 +218,7 @@
         @inlinable
         public init?(windowsError error: DWORD) {
             switch Int32(error) {
-            case ERROR_BROKEN_PIPE: self = .brokenPipe
+            case ERROR_BROKEN_PIPE: self = .broken
             default: return nil
             }
         }

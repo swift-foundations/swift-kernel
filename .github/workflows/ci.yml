@@ -35,9 +35,11 @@ jobs:
           restore-keys: |
             macos-swift62-spm-
 
-      # Note: swift test builds automatically, no separate build step needed
+      - name: Build
+        run: swift build -c debug
+
       - name: Test
-        run: swift test -c debug
+        run: swift test -c debug --skip-build
 
       - name: Validate Package.swift
         run: swift package dump-package
@@ -72,9 +74,11 @@ jobs:
           key: linux-swift62-spm-v4-${{ hashFiles('Package.swift', 'Package@*.swift') }}
           restore-keys: linux-swift62-spm-
 
-      # Note: swift test builds automatically in release mode
+      - name: Build
+        run: swift build -c release
+
       - name: Test (release)
-        run: swift test -c release
+        run: swift test -c release --skip-build
 
   # Compatibility check: Minimum supported Swift version (6.2)
   # Update to swift:6.3 when available
@@ -92,9 +96,11 @@ jobs:
           key: linux-swift62-compat-spm-v4-${{ hashFiles('Package.swift', 'Package@*.swift') }}
           restore-keys: linux-swift62-compat-spm-
 
-      # Note: swift test builds automatically
+      - name: Build
+        run: swift build -c release
+
       - name: Test (Swift 6.2)
-        run: swift test -c release
+        run: swift test -c release --skip-build
 
   # Windows validation
   windows-latest:
@@ -119,6 +125,8 @@ jobs:
           key: windows-swift62-spm-v2-${{ hashFiles('Package.swift', 'Package@*.swift') }}
           restore-keys: windows-swift62-spm-
 
-      # Note: swift test builds automatically
+      - name: Build
+        run: swift build -c debug
+
       - name: Test
-        run: swift test -c debug
+        run: swift test -c debug --skip-build
