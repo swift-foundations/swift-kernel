@@ -113,7 +113,7 @@
             guard efd >= 0 else {
                 throw .createFailed(errno: errno)
             }
-            return efd
+            return Kernel.Descriptor(rawValue: efd)
         }
 
         /// Reads the counter value from an eventfd.
@@ -127,7 +127,7 @@
         public static func read(_ efd: Kernel.Descriptor) throws(Error) -> UInt64 {
             var value: UInt64 = 0
             let result = withUnsafeMutablePointer(to: &value) { ptr in
-                Glibc.read(efd, ptr, MemoryLayout<UInt64>.size)
+                Glibc.read(efd.rawValue, ptr, MemoryLayout<UInt64>.size)
             }
             guard result == MemoryLayout<UInt64>.size else {
                 let err = errno
@@ -153,7 +153,7 @@
         public static func write(_ efd: Kernel.Descriptor, value: UInt64 = 1) throws(Error) {
             var val = value
             let result = withUnsafePointer(to: &val) { ptr in
-                Glibc.write(efd, ptr, MemoryLayout<UInt64>.size)
+                Glibc.write(efd.rawValue, ptr, MemoryLayout<UInt64>.size)
             }
             guard result == MemoryLayout<UInt64>.size else {
                 let err = errno
@@ -174,7 +174,7 @@
         public static func signal(_ efd: Kernel.Descriptor) {
             var val: UInt64 = 1
             _ = withUnsafePointer(to: &val) { ptr in
-                Glibc.write(efd, ptr, MemoryLayout<UInt64>.size)
+                Glibc.write(efd.rawValue, ptr, MemoryLayout<UInt64>.size)
             }
         }
     }

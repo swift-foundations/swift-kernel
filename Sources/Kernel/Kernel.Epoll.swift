@@ -176,7 +176,7 @@
             guard epfd >= 0 else {
                 throw .createFailed(errno: errno)
             }
-            return epfd
+            return Kernel.Descriptor(rawValue: epfd)
         }
 
         /// Controls the epoll instance (add/modify/delete).
@@ -194,7 +194,7 @@
             fd: Kernel.Descriptor,
             event: UnsafeMutablePointer<epoll_event>?
         ) throws(Error) {
-            let result = epoll_ctl(epfd, op.rawValue, fd, event)
+            let result = epoll_ctl(epfd.rawValue, op.rawValue, fd.rawValue, event)
             guard result == 0 else {
                 throw .ctlFailed(errno: errno)
             }
@@ -216,7 +216,7 @@
             maxEvents: Int32,
             timeout: Int32
         ) throws(Error) -> Int {
-            let result = epoll_wait(epfd, events, maxEvents, timeout)
+            let result = epoll_wait(epfd.rawValue, events, maxEvents, timeout)
             guard result >= 0 else {
                 let err = errno
                 if err == EINTR {
