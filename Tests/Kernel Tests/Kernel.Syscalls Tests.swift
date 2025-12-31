@@ -134,16 +134,12 @@ extension Kernel.Test.Unit {
 }
 
 // MARK: - Edge Cases
-// Note: These tests use -1 as an invalid descriptor (POSIX convention).
-// On Windows, Kernel.Descriptor is HANDLE (UnsafeMutableRawPointer),
-// so these tests are skipped.
 
-#if !os(Windows)
 extension Kernel.Test.EdgeCase {
     @Test("close invalid descriptor throws")
     func closeInvalid() {
         #expect(throws: (any Error).self) {
-            try Kernel.Close.close(-1)
+            try Kernel.Close.close(Kernel.invalidDescriptor)
         }
     }
 
@@ -152,7 +148,7 @@ extension Kernel.Test.EdgeCase {
         var buffer = [UInt8](repeating: 0, count: 10)
         #expect(throws: (any Error).self) {
             try buffer.withUnsafeMutableBytes { buf in
-                try Kernel.Read.read(-1, into: buf)
+                try Kernel.Read.read(Kernel.invalidDescriptor, into: buf)
             }
         }
     }
@@ -162,12 +158,11 @@ extension Kernel.Test.EdgeCase {
         let data: [UInt8] = [1, 2, 3]
         #expect(throws: (any Error).self) {
             try data.withUnsafeBytes { buf in
-                try Kernel.Write.write(-1, from: buf)
+                try Kernel.Write.write(Kernel.invalidDescriptor, from: buf)
             }
         }
     }
 }
-#endif
 
 // MARK: - Helper for cleanup
 

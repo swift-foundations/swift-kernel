@@ -10,12 +10,18 @@
 // ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
+import SystemPackage
 import Testing
 
 #if canImport(Darwin)
 import Darwin
 #elseif canImport(Glibc)
 import Glibc
+#elseif canImport(Musl)
+import Musl
+#elseif os(Windows)
+import ucrt
+import WinSDK
 #endif
 
 #if canImport(Foundation)
@@ -110,37 +116,46 @@ extension Kernel.Lock.Test.Unit {
 
 // MARK: - Cross-Platform Test Helpers
 
-#if !os(Windows)
-/// Returns a unique temporary file path for testing
-private func tempFilePath(prefix: String) -> String {
-    "/tmp/\(prefix)-\(getpid())-\(Int.random(in: 0..<Int.max))"
-}
-
-/// Creates a temporary file and returns its path and file descriptor
-private func createTempFile(prefix: String) -> (path: String, fd: Int32) {
-    let path = tempFilePath(prefix: prefix)
-    let fd = open(path, O_CREAT | O_RDWR, 0o644)
-    // Write some data so the file isn't empty
-    _ = "x".withCString { ptr in
-        write(fd, ptr, 1024)
+/// Creates a temporary file using Kernel APIs and returns its path and descriptor.
+private func createTempFile(prefix: String) throws -> (path: FilePath, fd: Kernel.Descriptor) {
+    let path = Kernel.Temporary.filePath(prefix: prefix)
+    let fd = try Kernel.Open.open(
+        path: path,
+        mode: [.read, .write],
+        options: [.create, .truncate],
+        permissions: 0o644
+    )
+    // Write some data so the file isn't empty (needed for byte-range locking)
+    let data = [UInt8](repeating: 0x78, count: 1024)  // 'x' repeated
+    _ = try data.withUnsafeBytes { buffer in
+        try Kernel.Write.write(fd, from: buffer)
     }
     return (path, fd)
 }
-#endif
+
+/// Cleans up a temporary file.
+private func cleanupTempFile(path: FilePath, fd: Kernel.Descriptor) {
+    try? Kernel.Close.close(fd)
+    #if os(Windows)
+        try? path.withPlatformString { wPath in
+            _ = DeleteFileW(wPath)
+        }
+    #else
+        try? path.withPlatformString { cPath in
+            _ = unlink(cPath)
+        }
+    #endif
+}
 
 // MARK: - Token Tests
 
-#if !os(Windows)
 extension Kernel.Lock.Test.Unit {
     @Test("Token acquires and releases lock")
     func tokenAcquiresAndReleasesLock() throws {
-        let (path, fd) = createTempFile(prefix: "kernel-lock-token")
-        defer {
-            close(fd)
-            unlink(path)
-        }
+        let (path, fd) = try createTempFile(prefix: "kernel-lock-token")
+        defer { cleanupTempFile(path: path, fd: fd) }
 
-        #expect(fd >= 0, "Failed to create test file")
+        #expect(Kernel.isValid(fd), "Failed to create test file")
 
         // Acquire exclusive lock
         var token = try Kernel.Lock.Token(
@@ -156,13 +171,10 @@ extension Kernel.Lock.Test.Unit {
 
     @Test("Try lock returns immediately when uncontested")
     func tryLockUncontested() throws {
-        let (path, fd) = createTempFile(prefix: "kernel-lock-try")
-        defer {
-            close(fd)
-            unlink(path)
-        }
+        let (path, fd) = try createTempFile(prefix: "kernel-lock-try")
+        defer { cleanupTempFile(path: path, fd: fd) }
 
-        #expect(fd >= 0, "Failed to create test file")
+        #expect(Kernel.isValid(fd), "Failed to create test file")
 
         // Try to acquire lock without blocking - should succeed
         var token = try Kernel.Lock.Token(
@@ -175,11 +187,24 @@ extension Kernel.Lock.Test.Unit {
         token.release()
     }
 }
-#endif
 
 // MARK: - Multi-Process Contention Tests
+// Note: These tests require Foundation.Process and use POSIX-specific helpers.
+// They spawn a separate process to test lock contention across processes.
 
 #if canImport(Foundation) && !os(Windows)
+
+/// POSIX-only helper that returns String path for use with Foundation.Process
+private func createTempFileForProcess(prefix: String) -> (path: String, fd: Int32) {
+    let path = Kernel.Temporary.filePath(prefix: prefix).string
+    let fd = open(path, O_CREAT | O_RDWR, 0o644)
+    // Write some data so the file isn't empty
+    _ = "x".withCString { ptr in
+        write(fd, ptr, 1024)
+    }
+    return (path, fd)
+}
+
 extension Kernel.Lock.Test.Integration {
 
     /// Path to the lock test helper executable
@@ -196,7 +221,7 @@ extension Kernel.Lock.Test.Integration {
 
     @Test("Exclusive lock blocks try-exclusive from another process")
     func exclusiveBlocksTryExclusive() throws {
-        let (path, fd) = createTempFile(prefix: "kernel-contention")
+        let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
         defer {
             close(fd)
             unlink(path)
@@ -234,7 +259,7 @@ extension Kernel.Lock.Test.Integration {
 
     @Test("Exclusive lock blocks try-shared from another process")
     func exclusiveBlocksTryShared() throws {
-        let (path, fd) = createTempFile(prefix: "kernel-contention")
+        let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
         defer {
             close(fd)
             unlink(path)
@@ -272,7 +297,7 @@ extension Kernel.Lock.Test.Integration {
 
     @Test("Shared lock allows try-shared from another process")
     func sharedAllowsTryShared() throws {
-        let (path, fd) = createTempFile(prefix: "kernel-contention")
+        let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
         defer {
             close(fd)
             unlink(path)
@@ -311,7 +336,7 @@ extension Kernel.Lock.Test.Integration {
 
     @Test("Shared lock blocks try-exclusive from another process")
     func sharedBlocksTryExclusive() throws {
-        let (path, fd) = createTempFile(prefix: "kernel-contention")
+        let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
         defer {
             close(fd)
             unlink(path)
@@ -349,7 +374,7 @@ extension Kernel.Lock.Test.Integration {
 
     @Test("Non-overlapping byte ranges don't conflict")
     func nonOverlappingRangesDontConflict() throws {
-        let (path, fd) = createTempFile(prefix: "kernel-contention")
+        let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
         defer {
             close(fd)
             unlink(path)
@@ -387,7 +412,7 @@ extension Kernel.Lock.Test.Integration {
 
     @Test("Overlapping byte ranges do conflict")
     func overlappingRangesConflict() throws {
-        let (path, fd) = createTempFile(prefix: "kernel-contention")
+        let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
         defer {
             close(fd)
             unlink(path)
