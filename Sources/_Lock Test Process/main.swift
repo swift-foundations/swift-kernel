@@ -29,11 +29,11 @@
 //
 
 #if canImport(Darwin)
-import Darwin
+@preconcurrency import Darwin
 #elseif canImport(Glibc)
-import Glibc
+@preconcurrency import Glibc
 #elseif os(Windows)
-import WinSDK
+@preconcurrency import WinSDK
 #endif
 
 import Kernel
