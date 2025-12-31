@@ -34,7 +34,7 @@ extension Kernel {
     ///
     /// The descriptor value itself can be safely passed between threads; it's the
     /// underlying kernel resource that requires coordination.
-    public struct Descriptor: RawRepresentable, Sendable, Equatable, Hashable {
+    public struct Descriptor: RawRepresentable, @unchecked Sendable, Equatable, Hashable {
         #if os(Windows)
             public typealias RawValue = HANDLE
         #else
