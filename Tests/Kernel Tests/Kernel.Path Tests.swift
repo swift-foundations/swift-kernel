@@ -20,7 +20,10 @@ extension Kernel.Path {
 }
 
 // MARK: - Unit Tests
+// Note: These tests use POSIX-style C strings (CChar). On Windows,
+// Kernel.Path uses wide strings (UInt16), so these tests are skipped.
 
+#if !os(Windows)
 extension Kernel.Path.Test.Unit {
     @Test("Path stores C string pointer")
     func storesCString() {
@@ -75,3 +78,4 @@ extension Kernel.Test.Unit {
         }
     }
 }
+#endif

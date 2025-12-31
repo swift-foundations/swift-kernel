@@ -128,7 +128,11 @@ extension Kernel.Test.Unit {
 }
 
 // MARK: - Edge Cases
+// Note: These tests use -1 as an invalid descriptor (POSIX convention).
+// On Windows, Kernel.Descriptor is HANDLE (UnsafeMutableRawPointer),
+// so these tests are skipped.
 
+#if !os(Windows)
 extension Kernel.Test.EdgeCase {
     @Test("close invalid descriptor throws")
     func closeInvalid() {
@@ -157,6 +161,7 @@ extension Kernel.Test.EdgeCase {
         }
     }
 }
+#endif
 
 // MARK: - Helper for cleanup
 
