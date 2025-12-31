@@ -295,7 +295,7 @@ func main() -> Int32 {
     let handle = args.filePath.withCString(encodedAs: UTF16.self) { widePath in
         CreateFileW(
             widePath,
-            DWORD(GENERIC_READ | GENERIC_WRITE),
+            DWORD(GENERIC_READ) | DWORD(GENERIC_WRITE),
             0,  // No sharing
             nil,
             DWORD(OPEN_EXISTING),
@@ -343,8 +343,8 @@ func main() -> Int32 {
             kind: kind,
             acquire: acquire
         )
-    } catch {
-        switch error {
+    } catch let lockError as Kernel.Lock.Error {
+        switch lockError {
         case .contention:
             if case .try = acquire {
                 writeStdout("WOULD_BLOCK\n")
@@ -354,9 +354,12 @@ func main() -> Int32 {
                 return 2
             }
         default:
-            writeStderr("Failed to acquire lock: \(error)\n")
+            writeStderr("Failed to acquire lock: \(lockError)\n")
             return 3
         }
+    } catch {
+        writeStderr("Failed to acquire lock: \(error)\n")
+        return 3
     }
 
     // Signal ready if requested
