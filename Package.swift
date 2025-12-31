@@ -40,7 +40,9 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 .product(name: "StandardsTestSupport", package: "swift-standards")
-            ]
+            ],
+            path: "Tests",
+            sources: ["Kernel Tests", "Support"]
         ),
         .executableTarget(
             name: "_Lock Test Process",

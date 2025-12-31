@@ -9,7 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Foundation
 import StandardsTestSupport
 import SystemPackage
 import Testing
@@ -22,17 +21,17 @@ import Testing
     import Glibc
 #elseif canImport(Musl)
     import Musl
+#elseif os(Windows)
+    import ucrt
+    import WinSDK
 #endif
 
 // MARK: - Open/Close Unit Tests
-// Note: These tests use POSIX-style paths (/tmp/). On Windows,
-// these paths don't exist, so these tests are skipped.
 
-#if !os(Windows)
 extension Kernel.Test.Unit {
     @Test("open and close file")
     func openAndClose() throws {
-        let path = FilePath("/tmp/kernel-test-\(ProcessInfo.processInfo.processIdentifier).txt")
+        let path = Kernel.Temporary.filePath(prefix: "kernel-test")
 
         // Create and open
         let fd = try Kernel.Open.open(
@@ -53,7 +52,11 @@ extension Kernel.Test.Unit {
 
     @Test("open nonexistent file throws path error")
     func openNonexistent() {
-        let path = FilePath("/nonexistent/path/that/does/not/exist/file.txt")
+        #if os(Windows)
+            let path = FilePath("C:\\nonexistent\\path\\that\\does\\not\\exist\\file.txt")
+        #else
+            let path = FilePath("/nonexistent/path/that/does/not/exist/file.txt")
+        #endif
 
         #expect(throws: (any Error).self) {
             try Kernel.Open.open(
@@ -71,7 +74,7 @@ extension Kernel.Test.Unit {
 extension Kernel.Test.Unit {
     @Test("write and read data")
     func writeAndRead() throws {
-        let path = FilePath("/tmp/kernel-test-rw-\(ProcessInfo.processInfo.processIdentifier).txt")
+        let path = Kernel.Temporary.filePath(prefix: "kernel-test-rw")
         let testData: [UInt8] = [0x48, 0x65, 0x6C, 0x6C, 0x6F]  // "Hello"
 
         // Create file
@@ -105,7 +108,7 @@ extension Kernel.Test.Unit {
 
     @Test("read returns 0 on EOF")
     func readEOF() throws {
-        let path = FilePath("/tmp/kernel-test-eof-\(ProcessInfo.processInfo.processIdentifier).txt")
+        let path = Kernel.Temporary.filePath(prefix: "kernel-test-eof")
 
         // Create empty file
         let fd = try Kernel.Open.open(
@@ -129,7 +132,6 @@ extension Kernel.Test.Unit {
         #expect(bytesRead == 0)  // EOF returns 0, not error
     }
 }
-#endif
 
 // MARK: - Edge Cases
 // Note: These tests use -1 as an invalid descriptor (POSIX convention).
@@ -171,11 +173,13 @@ extension Kernel.Test.EdgeCase {
 
 /// Helper to unlink (delete) a file - used in test cleanup
 private func unlinkFile(at path: FilePath) throws {
-    #if !os(Windows)
+    #if os(Windows)
+        try path.withPlatformString { wPath in
+            _ = DeleteFileW(wPath)
+        }
+    #else
         try path.withPlatformString { cString in
-            if unlink(cString) != 0 {
-                // Ignore errors during cleanup
-            }
+            _ = unlink(cString)
         }
     #endif
 }
