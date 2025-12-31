@@ -120,10 +120,10 @@ extension Kernel.Write.Error: CustomStringConvertible {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
             }
-            guard descriptor >= 0 else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            let result = _cWrite(descriptor, baseAddress, buffer.count)
+            let result = _cWrite(descriptor.rawValue, baseAddress, buffer.count)
             guard result >= 0 else {
                 throw .current()
             }
@@ -147,10 +147,10 @@ extension Kernel.Write.Error: CustomStringConvertible {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
             }
-            guard descriptor >= 0 else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            let result = _cPwrite(descriptor, baseAddress, buffer.count, off_t(offset))
+            let result = _cPwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
             guard result >= 0 else {
                 throw .current()
             }
@@ -239,13 +239,13 @@ extension Kernel.Write {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
             }
-            guard descriptor != INVALID_HANDLE_VALUE else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
 
             var bytesWritten: DWORD = 0
             let result = WriteFile(
-                descriptor,
+                descriptor.rawValue,
                 baseAddress,
                 DWORD(min(buffer.count, Int(DWORD.max))),
                 &bytesWritten,
@@ -268,7 +268,7 @@ extension Kernel.Write {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
             }
-            guard descriptor != INVALID_HANDLE_VALUE else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
 
@@ -278,7 +278,7 @@ extension Kernel.Write {
 
             var bytesWritten: DWORD = 0
             let result = WriteFile(
-                descriptor,
+                descriptor.rawValue,
                 baseAddress,
                 DWORD(min(buffer.count, Int(DWORD.max))),
                 &bytesWritten,

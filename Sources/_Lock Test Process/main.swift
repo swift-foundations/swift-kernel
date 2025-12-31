@@ -239,7 +239,7 @@ func main() -> Int32 {
     var token: Kernel.Lock.Token
     do {
         token = try Kernel.Lock.Token(
-            descriptor: fd,
+            descriptor: Kernel.Descriptor(rawValue: fd),
             range: args.range,
             kind: kind,
             acquire: acquire
@@ -338,7 +338,7 @@ func main() -> Int32 {
     var token: Kernel.Lock.Token
     do {
         token = try Kernel.Lock.Token(
-            descriptor: handle,
+            descriptor: Kernel.Descriptor(rawValue: handle),
             range: args.range,
             kind: kind,
             acquire: acquire

@@ -246,7 +246,7 @@ extension Kernel.Mmap {
             length: Int,
             protection: Protection,
             flags: Flags,
-            fd: Kernel.Descriptor = -1,
+            fd: Kernel.Descriptor = .invalid,
             offset: Int64 = 0
         ) throws(Error) -> UnsafeMutableRawPointer {
             guard length > 0 else {
@@ -258,7 +258,7 @@ extension Kernel.Mmap {
                 length,
                 protection.rawValue,
                 flags.rawValue,
-                fd,
+                fd.rawValue,
                 off_t(offset)
             )
 

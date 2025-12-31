@@ -155,7 +155,7 @@ extension Kernel.Lock.Test.Unit {
         let (path, fd) = try createTempFile(prefix: "kernel-lock-token")
         defer { cleanupTempFile(path: path, fd: fd) }
 
-        #expect(Kernel.isValid(fd), "Failed to create test file")
+        #expect(fd.isValid, "Failed to create test file")
 
         // Acquire exclusive lock
         var token = try Kernel.Lock.Token(
@@ -174,7 +174,7 @@ extension Kernel.Lock.Test.Unit {
         let (path, fd) = try createTempFile(prefix: "kernel-lock-try")
         defer { cleanupTempFile(path: path, fd: fd) }
 
-        #expect(Kernel.isValid(fd), "Failed to create test file")
+        #expect(fd.isValid, "Failed to create test file")
 
         // Try to acquire lock without blocking - should succeed
         var token = try Kernel.Lock.Token(
@@ -231,7 +231,7 @@ extension Kernel.Lock.Test.Integration {
 
         // Acquire exclusive lock in this process
         var token = try Kernel.Lock.Token(
-            descriptor: fd,
+            descriptor: Kernel.Descriptor(rawValue: fd),
             range: .file,
             kind: .exclusive,
             acquire: .wait
@@ -269,7 +269,7 @@ extension Kernel.Lock.Test.Integration {
 
         // Acquire exclusive lock in this process
         var token = try Kernel.Lock.Token(
-            descriptor: fd,
+            descriptor: Kernel.Descriptor(rawValue: fd),
             range: .file,
             kind: .exclusive,
             acquire: .wait
@@ -307,7 +307,7 @@ extension Kernel.Lock.Test.Integration {
 
         // Acquire shared lock in this process
         var token = try Kernel.Lock.Token(
-            descriptor: fd,
+            descriptor: Kernel.Descriptor(rawValue: fd),
             range: .file,
             kind: .shared,
             acquire: .wait
@@ -346,7 +346,7 @@ extension Kernel.Lock.Test.Integration {
 
         // Acquire shared lock in this process
         var token = try Kernel.Lock.Token(
-            descriptor: fd,
+            descriptor: Kernel.Descriptor(rawValue: fd),
             range: .file,
             kind: .shared,
             acquire: .wait
@@ -384,7 +384,7 @@ extension Kernel.Lock.Test.Integration {
 
         // Acquire exclusive lock on bytes 0-100 in this process
         var token = try Kernel.Lock.Token(
-            descriptor: fd,
+            descriptor: Kernel.Descriptor(rawValue: fd),
             range: .bytes(start: 0, end: 100),
             kind: .exclusive,
             acquire: .wait
@@ -422,7 +422,7 @@ extension Kernel.Lock.Test.Integration {
 
         // Acquire exclusive lock on bytes 0-200 in this process
         var token = try Kernel.Lock.Token(
-            descriptor: fd,
+            descriptor: Kernel.Descriptor(rawValue: fd),
             range: .bytes(start: 0, end: 200),
             kind: .exclusive,
             acquire: .wait

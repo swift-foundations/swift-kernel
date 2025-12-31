@@ -113,10 +113,10 @@ extension Kernel.Read.Error: CustomStringConvertible {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
             }
-            guard descriptor >= 0 else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            let result = _cRead(descriptor, baseAddress, buffer.count)
+            let result = _cRead(descriptor.rawValue, baseAddress, buffer.count)
             guard result >= 0 else {
                 throw .current()
             }
@@ -140,10 +140,10 @@ extension Kernel.Read.Error: CustomStringConvertible {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
             }
-            guard descriptor >= 0 else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            let result = _cPread(descriptor, baseAddress, buffer.count, off_t(offset))
+            let result = _cPread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
             guard result >= 0 else {
                 throw .current()
             }
@@ -228,13 +228,13 @@ extension Kernel.Read {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
             }
-            guard descriptor != INVALID_HANDLE_VALUE else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
 
             var bytesRead: DWORD = 0
             let result = ReadFile(
-                descriptor,
+                descriptor.rawValue,
                 baseAddress,
                 DWORD(min(buffer.count, Int(DWORD.max))),
                 &bytesRead,
@@ -261,7 +261,7 @@ extension Kernel.Read {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
             }
-            guard descriptor != INVALID_HANDLE_VALUE else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
 
@@ -271,7 +271,7 @@ extension Kernel.Read {
 
             var bytesRead: DWORD = 0
             let result = ReadFile(
-                descriptor,
+                descriptor.rawValue,
                 baseAddress,
                 DWORD(min(buffer.count, Int(DWORD.max))),
                 &bytesRead,

@@ -391,7 +391,7 @@ extension Kernel.Lock {
         ) throws(Error) {
             var fl = makeFlock(range: range, kind: kind)
 
-            let result = fcntl(descriptor, F_SETLKW, &fl)
+            let result = fcntl(descriptor.rawValue, F_SETLKW, &fl)
             guard result != -1 else {
                 throw Error.fromErrno(errno)
             }
@@ -414,7 +414,7 @@ extension Kernel.Lock {
         ) throws(Error) -> Bool {
             var fl = makeFlock(range: range, kind: kind)
 
-            let result = fcntl(descriptor, F_SETLK, &fl)
+            let result = fcntl(descriptor.rawValue, F_SETLK, &fl)
             if result == -1 {
                 // EAGAIN or EACCES means the lock is held by another process
                 if errno == EAGAIN || errno == EACCES {
@@ -449,7 +449,7 @@ extension Kernel.Lock {
                 fl.l_len = off_t(end - start)
             }
 
-            let result = fcntl(descriptor, F_SETLK, &fl)
+            let result = fcntl(descriptor.rawValue, F_SETLK, &fl)
             guard result != -1 else {
                 throw Error.fromErrno(errno)
             }
@@ -523,7 +523,7 @@ extension Kernel.Lock {
             let flags: DWORD = kind == .exclusive ? DWORD(LOCKFILE_EXCLUSIVE_LOCK) : 0
 
             let result = LockFileEx(
-                descriptor,
+                descriptor.rawValue,
                 flags,
                 0,
                 lengthLow,
@@ -559,7 +559,7 @@ extension Kernel.Lock {
             }
 
             let result = LockFileEx(
-                descriptor,
+                descriptor.rawValue,
                 flags,
                 0,
                 lengthLow,
@@ -592,7 +592,7 @@ extension Kernel.Lock {
             let (lengthLow, lengthHigh) = lockLength(range: range)
 
             let result = UnlockFileEx(
-                descriptor,
+                descriptor.rawValue,
                 0,
                 lengthLow,
                 lengthHigh,

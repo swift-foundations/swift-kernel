@@ -77,7 +77,7 @@
             guard kq >= 0 else {
                 throw .createFailed(errno: errno)
             }
-            return kq
+            return Kernel.Descriptor(rawValue: kq)
         }
 
         /// Registers events and/or waits for events.
@@ -105,7 +105,7 @@
             nevents: Int32,
             timeout: UnsafePointer<timespec>?
         ) throws(Error) -> Int {
-            let result = _kevent(kq, changelist, nchanges, eventlist, nevents, timeout)
+            let result = _kevent(kq.rawValue, changelist, nchanges, eventlist, nevents, timeout)
             guard result >= 0 else {
                 let err = errno
                 if err == EINTR {

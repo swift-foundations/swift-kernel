@@ -220,7 +220,7 @@ extension Kernel.Close.Error: CustomStringConvertible {
                 }
             #endif
 
-            return fd
+            return Kernel.Descriptor(rawValue: fd)
         }
     }
 
@@ -230,10 +230,10 @@ extension Kernel.Close.Error: CustomStringConvertible {
         /// Closes a file descriptor.
         @inlinable
         public static func close(_ descriptor: Kernel.Descriptor) throws(Error) {
-            guard descriptor >= 0 else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            guard _cClose(descriptor) == 0 else {
+            guard _cClose(descriptor.rawValue) == 0 else {
                 throw .current()
             }
         }
@@ -356,7 +356,7 @@ extension Kernel.Close.Error: CustomStringConvertible {
                 throw .current()
             }
 
-            return handle
+            return Kernel.Descriptor(rawValue: handle)
         }
     }
 
@@ -364,10 +364,10 @@ extension Kernel.Close.Error: CustomStringConvertible {
         /// Closes a file handle.
         @inlinable
         public static func close(_ descriptor: Kernel.Descriptor) throws(Error) {
-            guard descriptor != INVALID_HANDLE_VALUE else {
+            guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            if CloseHandle(descriptor) == false {
+            if CloseHandle(descriptor.rawValue) == false {
                 throw .current()
             }
         }

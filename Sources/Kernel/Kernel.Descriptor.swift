@@ -14,9 +14,9 @@
 #endif
 
 extension Kernel {
-    /// Raw file descriptor (POSIX) or HANDLE (Windows).
+    /// File descriptor (POSIX) or HANDLE (Windows).
     ///
-    /// This is the raw platform value with no ownership semantics.
+    /// A type-safe wrapper around the platform's raw descriptor value.
     /// Higher layers (swift-io, swift-file-system) wrap this in `~Copyable` types
     /// to enforce ownership and prevent double-close.
     ///
@@ -34,32 +34,40 @@ extension Kernel {
     ///
     /// The descriptor value itself can be safely passed between threads; it's the
     /// underlying kernel resource that requires coordination.
-    #if os(Windows)
-        public typealias Descriptor = HANDLE
-    #else
-        public typealias Descriptor = Int32
-    #endif
-
-    /// Invalid descriptor sentinel.
-    ///
-    /// - POSIX: `-1`
-    /// - Windows: `INVALID_HANDLE_VALUE` (not nil)
-    public static var invalidDescriptor: Descriptor {
+    public struct Descriptor: RawRepresentable, Sendable, Equatable, Hashable {
         #if os(Windows)
-            return INVALID_HANDLE_VALUE
+            public typealias RawValue = HANDLE
         #else
-            return -1
+            public typealias RawValue = Int32
         #endif
-    }
 
-    /// Checks if a descriptor is valid (not the invalid sentinel).
-    @inlinable
-    public static func isValid(_ descriptor: Descriptor) -> Bool {
-        #if os(Windows)
-            // HANDLE is UnsafeMutableRawPointer (non-optional), so we only check for INVALID_HANDLE_VALUE
-            return descriptor != INVALID_HANDLE_VALUE
-        #else
-            return descriptor >= 0
-        #endif
+        public let rawValue: RawValue
+
+        @inlinable
+        public init(rawValue: RawValue) {
+            self.rawValue = rawValue
+        }
+
+        /// Invalid descriptor sentinel.
+        ///
+        /// - POSIX: `-1`
+        /// - Windows: `INVALID_HANDLE_VALUE`
+        public static var invalid: Descriptor {
+            #if os(Windows)
+                Descriptor(rawValue: INVALID_HANDLE_VALUE)
+            #else
+                Descriptor(rawValue: -1)
+            #endif
+        }
+
+        /// Checks if this descriptor is valid (not the invalid sentinel).
+        @inlinable
+        public var isValid: Bool {
+            #if os(Windows)
+                rawValue != INVALID_HANDLE_VALUE
+            #else
+                rawValue >= 0
+            #endif
+        }
     }
 }

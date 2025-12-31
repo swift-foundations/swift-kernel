@@ -41,7 +41,7 @@ extension Kernel.Test.Unit {
             permissions: 0o644
         )
 
-        #expect(Kernel.isValid(fd))
+        #expect(fd.isValid)
 
         // Close
         try Kernel.Close.close(fd)
@@ -139,7 +139,7 @@ extension Kernel.Test.EdgeCase {
     @Test("close invalid descriptor throws")
     func closeInvalid() {
         #expect(throws: (any Error).self) {
-            try Kernel.Close.close(Kernel.invalidDescriptor)
+            try Kernel.Close.close(.invalid)
         }
     }
 
@@ -148,7 +148,7 @@ extension Kernel.Test.EdgeCase {
         var buffer = [UInt8](repeating: 0, count: 10)
         #expect(throws: (any Error).self) {
             try buffer.withUnsafeMutableBytes { buf in
-                try Kernel.Read.read(Kernel.invalidDescriptor, into: buf)
+                try Kernel.Read.read(.invalid, into: buf)
             }
         }
     }
@@ -158,7 +158,7 @@ extension Kernel.Test.EdgeCase {
         let data: [UInt8] = [1, 2, 3]
         #expect(throws: (any Error).self) {
             try data.withUnsafeBytes { buf in
-                try Kernel.Write.write(Kernel.invalidDescriptor, from: buf)
+                try Kernel.Write.write(.invalid, from: buf)
             }
         }
     }
