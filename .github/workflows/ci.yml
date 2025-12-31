@@ -129,4 +129,5 @@ jobs:
         run: swift build -c debug
 
       - name: Test
-        run: swift test -c debug --skip-build
+        # Note: --skip-build doesn't work reliably on Windows with executable targets
+        run: swift test -c debug
