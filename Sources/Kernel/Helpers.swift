@@ -180,4 +180,24 @@
         unlink(path)
     }
 
+    // Linux-specific syscalls
+
+    #if os(Linux)
+
+    @usableFromInline
+    internal func _cCopyFileRange(
+        _ fdIn: Int32, _ offIn: UnsafeMutablePointer<off_t>?,
+        _ fdOut: Int32, _ offOut: UnsafeMutablePointer<off_t>?,
+        _ len: Int, _ flags: UInt32
+    ) -> Int {
+        swift_copy_file_range(fdIn, offIn, fdOut, offOut, len, flags)
+    }
+
+    @usableFromInline
+    internal func _cFiclone(_ destFd: Int32, _ srcFd: Int32) -> Int32 {
+        swift_ficlone(destFd, srcFd)
+    }
+
+    #endif
+
 #endif
