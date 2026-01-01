@@ -40,6 +40,11 @@ static inline int swift_ficlone(int dest_fd, int src_fd) {
     return ioctl(dest_fd, FICLONE, src_fd);
 }
 
+// statfs wrapper (not exported by SwiftGlibc)
+static inline int swift_statfs(const char *path, struct statfs *buf) {
+    return statfs(path, buf);
+}
+
 #endif /* __linux__ */
 
 #endif /* CLINUX_SHIM_H */
