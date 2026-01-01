@@ -459,6 +459,13 @@ extension Kernel.Mmap {
 
             /// The file mapping handle (must be closed after unmapping).
             public nonisolated(unsafe) let mappingHandle: HANDLE
+
+            /// Creates a WindowsMapping with the given address and handle.
+            @inlinable
+            public init(baseAddress: UnsafeMutableRawPointer, mappingHandle: HANDLE) {
+                self.baseAddress = baseAddress
+                self.mappingHandle = mappingHandle
+            }
         }
 
         /// Maps a file into memory using Windows APIs.
