@@ -16,28 +16,38 @@ public import SystemPackage
 extension Kernel {
     /// File copy operations.
     public enum Copy: Sendable {
-        public enum Error: Swift.Error, Sendable {
-            case handle(Kernel.Handle.Error)
-            case io(Kernel.IO.Error)
-            case space(Kernel.Space.Error)
-            case permission(Kernel.Permission.Error)
-            case platform(Kernel.Platform.Error)
-            /// Operation not supported (e.g., cross-filesystem copy_file_range).
-            case unsupported
-        }
-    }
-}
+        /// Errors from copy operations.
+        ///
+        /// Each case represents a specific failure mode of `copy_file_range`,
+        /// `clone` (FICLONE), or `clonefile`.
+        public enum Error: Swift.Error, Sendable, Equatable, Hashable {
+            /// Invalid file descriptor.
+            /// - POSIX: `EBADF`
+            case invalidDescriptor
 
-extension Kernel.Copy.Error: Equatable {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        switch (lhs, rhs) {
-        case (.handle(let l), .handle(let r)): return l == r
-        case (.io(let l), .io(let r)): return l == r
-        case (.space(let l), .space(let r)): return l == r
-        case (.permission(let l), .permission(let r)): return l == r
-        case (.platform(let l), .platform(let r)): return l == r
-        case (.unsupported, .unsupported): return true
-        default: return false
+            /// Cross-device copy not supported.
+            /// - POSIX: `EXDEV`
+            ///
+            /// The source and destination are on different filesystems.
+            case crossDevice
+
+            /// Operation not supported.
+            /// - POSIX: `EINVAL`, `ENOTSUP`, `EOPNOTSUPP`
+            ///
+            /// The filesystem or file type doesn't support this operation.
+            case unsupported
+
+            /// No space left on device.
+            /// - POSIX: `ENOSPC`
+            case noSpace
+
+            /// Physical I/O error.
+            /// - POSIX: `EIO`
+            case io
+
+            /// Permission denied.
+            /// - POSIX: `EACCES`, `EPERM`
+            case permissionDenied
         }
     }
 }
@@ -45,12 +55,12 @@ extension Kernel.Copy.Error: Equatable {
 extension Kernel.Copy.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .handle(let e): return "handle: \(e)"
-        case .io(let e): return "io: \(e)"
-        case .space(let e): return "space: \(e)"
-        case .permission(let e): return "permission: \(e)"
-        case .platform(let e): return "\(e)"
+        case .invalidDescriptor: return "invalid file descriptor"
+        case .crossDevice: return "cross-device copy not supported"
         case .unsupported: return "operation not supported"
+        case .noSpace: return "no space left on device"
+        case .io: return "I/O error"
+        case .permissionDenied: return "permission denied"
         }
     }
 }
@@ -66,40 +76,6 @@ public import CLinuxShim
 public import Musl
 #endif
 
-extension Kernel.Copy.Error {
-    @inlinable
-    init(errno: Errno) {
-        switch errno {
-        case .crossDeviceLink, .invalidArgument:
-            // EXDEV: cross-filesystem, EINVAL: unsupported
-            self = .unsupported
-        default:
-            if let e = Kernel.Handle.Error(errno: errno) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.IO.Error(errno: errno) {
-                self = .io(e)
-                return
-            }
-            if let e = Kernel.Space.Error(errno: errno) {
-                self = .space(e)
-                return
-            }
-            if let e = Kernel.Permission.Error(errno: errno) {
-                self = .permission(e)
-                return
-            }
-            self = .platform(Kernel.Platform.Error(errno: errno))
-        }
-    }
-
-    @inlinable
-    static func current() -> Self {
-        Self(errno: Errno(rawValue: errno))
-    }
-}
-
 extension Kernel.Copy {
     /// Copies bytes between file descriptors using copy_file_range(2).
     ///
@@ -108,9 +84,9 @@ extension Kernel.Copy {
     ///
     /// - Parameters:
     ///   - source: Source file descriptor.
-    ///   - sourceOffset: Offset in source file (updated on return). Pass nil to use current position.
+    ///   - sourceOffset: Offset in source file (updated on return).
     ///   - destination: Destination file descriptor.
-    ///   - destOffset: Offset in destination file (updated on return). Pass nil to use current position.
+    ///   - destOffset: Offset in destination file (updated on return).
     ///   - length: Maximum number of bytes to copy.
     /// - Returns: Number of bytes copied.
     /// - Throws: `Kernel.Copy.Error` on failure.
@@ -122,8 +98,8 @@ extension Kernel.Copy {
         destOffset: inout Int64,
         length: Int
     ) throws(Error) -> Int {
-        guard source.isValid else { throw .handle(.invalid) }
-        guard destination.isValid else { throw .handle(.invalid) }
+        guard source.isValid else { throw .invalidDescriptor }
+        guard destination.isValid else { throw .invalidDescriptor }
 
         var srcOff = off_t(sourceOffset)
         var dstOff = off_t(destOffset)
@@ -135,7 +111,7 @@ extension Kernel.Copy {
         )
 
         guard result >= 0 else {
-            throw .current()
+            throw Error(posix: errno)
         }
 
         sourceOffset = Int64(srcOff)
@@ -159,12 +135,35 @@ extension Kernel.Copy {
         from source: Kernel.Descriptor,
         to destination: Kernel.Descriptor
     ) throws(Error) {
-        guard source.isValid else { throw .handle(.invalid) }
-        guard destination.isValid else { throw .handle(.invalid) }
+        guard source.isValid else { throw .invalidDescriptor }
+        guard destination.isValid else { throw .invalidDescriptor }
 
         let result = _cFiclone(destination.rawValue, source.rawValue)
         guard result == 0 else {
-            throw .current()
+            throw Error(posix: errno)
+        }
+    }
+}
+
+extension Kernel.Copy.Error {
+    @usableFromInline
+    init(posix code: Int32) {
+        switch code {
+        case EBADF:
+            self = .invalidDescriptor
+        case EXDEV:
+            self = .crossDevice
+        case EINVAL, ENOTSUP, EOPNOTSUPP:
+            self = .unsupported
+        case ENOSPC:
+            self = .noSpace
+        case EIO:
+            self = .io
+        case EACCES, EPERM:
+            self = .permissionDenied
+        default:
+            // Map unknown errors to unsupported as a fallback
+            self = .unsupported
         }
     }
 }
@@ -176,34 +175,6 @@ extension Kernel.Copy {
 #if canImport(Darwin)
 
 public import Darwin
-
-extension Kernel.Copy.Error {
-    @inlinable
-    init(errno: Errno) {
-        if let e = Kernel.Handle.Error(errno: errno) {
-            self = .handle(e)
-            return
-        }
-        if let e = Kernel.IO.Error(errno: errno) {
-            self = .io(e)
-            return
-        }
-        if let e = Kernel.Space.Error(errno: errno) {
-            self = .space(e)
-            return
-        }
-        if let e = Kernel.Permission.Error(errno: errno) {
-            self = .permission(e)
-            return
-        }
-        self = .platform(Kernel.Platform.Error(errno: errno))
-    }
-
-    @inlinable
-    static func current() -> Self {
-        Self(errno: Errno(rawValue: errno))
-    }
-}
 
 extension Kernel.Copy {
     /// Clones a file using clonefile(2).
@@ -225,7 +196,30 @@ extension Kernel.Copy {
             }
         }
         guard result == 0 else {
-            throw .current()
+            throw Error(posix: errno)
+        }
+    }
+}
+
+extension Kernel.Copy.Error {
+    @usableFromInline
+    init(posix code: Int32) {
+        switch code {
+        case EBADF:
+            self = .invalidDescriptor
+        case EXDEV:
+            self = .crossDevice
+        case EINVAL, ENOTSUP, EOPNOTSUPP:
+            self = .unsupported
+        case ENOSPC:
+            self = .noSpace
+        case EIO:
+            self = .io
+        case EACCES, EPERM:
+            self = .permissionDenied
+        default:
+            // Map unknown errors to unsupported as a fallback
+            self = .unsupported
         }
     }
 }
