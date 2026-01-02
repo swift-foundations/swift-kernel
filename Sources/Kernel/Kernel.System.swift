@@ -112,7 +112,6 @@ extension Kernel.System {
         ///
         /// - Parameter nanoseconds: The number of nanoseconds to sleep.
         /// - Note: Windows Sleep has millisecond granularity.
-        @inlinable
         public static func sleep(nanoseconds: UInt64) {
             let milliseconds = nanoseconds / 1_000_000
             Sleep(DWORD(min(milliseconds, UInt64(DWORD.max))))
