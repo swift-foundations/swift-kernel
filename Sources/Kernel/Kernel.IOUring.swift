@@ -13,7 +13,7 @@
 
     #if canImport(Glibc)
         public import Glibc
-        internal import CLinuxShim
+        public import CLinuxShim
     #elseif canImport(Musl)
         public import Musl
     #endif
@@ -391,7 +391,8 @@
                 toSubmit,
                 minComplete,
                 flags.rawValue,
-                nil
+                nil,
+                0
             )
             guard result >= 0 else {
                 let err = errno
