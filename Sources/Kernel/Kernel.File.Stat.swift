@@ -196,7 +196,7 @@ extension Kernel.File {
             // FILETIME to 100-nanosecond intervals
             let intervals = (Int64(ft.dwHighDateTime) << 32) | Int64(ft.dwLowDateTime)
             // Offset between Windows epoch (1601) and Unix epoch (1970) in 100-ns intervals
-            let epochOffset: Int64 = 116444736000000000
+            let epochOffset: Int64 = 116_444_736_000_000_000
             let unixIntervals = intervals - epochOffset
             let seconds = unixIntervals / 10_000_000
             let nanoseconds = Int32((unixIntervals % 10_000_000) * 100)
