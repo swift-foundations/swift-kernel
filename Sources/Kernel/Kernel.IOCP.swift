@@ -62,6 +62,24 @@
         }
     }
 
+    extension Kernel.IOCP.Error {
+        /// Converts this IOCP error to a `Kernel.Error`.
+        public var asKernelError: Kernel.Error {
+            switch self {
+            case .createFailed(let code):
+                return .platform(code: Int32(code), message: "CreateIoCompletionPort failed")
+            case .associateFailed(let code):
+                return .platform(code: Int32(code), message: "associate failed")
+            case .dequeueFailed(let code):
+                return .platform(code: Int32(code), message: "GetQueuedCompletionStatus failed")
+            case .postFailed(let code):
+                return .platform(code: Int32(code), message: "PostQueuedCompletionStatus failed")
+            case .timeout:
+                return .resource(.blocked)
+            }
+        }
+    }
+
     // MARK: - Completion Key
 
     extension Kernel.IOCP {

@@ -63,6 +63,26 @@
         }
     }
 
+    // MARK: - Kernel.Error Conversion
+
+    extension Kernel.IOUring.Error {
+        /// Converts this io_uring error to a `Kernel.Error`.
+        ///
+        /// Maps to semantic cases where possible, falls back to `.platform` otherwise.
+        public var asKernelError: Kernel.Error {
+            switch self {
+            case .setupFailed(let errno):
+                return .platform(code: errno, message: "io_uring_setup failed")
+            case .enterFailed(let errno):
+                return .platform(code: errno, message: "io_uring_enter failed")
+            case .registerFailed(let errno):
+                return .platform(code: errno, message: "io_uring_register failed")
+            case .interrupted:
+                return .resource(.interrupted)
+            }
+        }
+    }
+
     // MARK: - Setup Flags
 
     extension Kernel.IOUring {
@@ -436,6 +456,90 @@
         public static func close(_ fd: Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
         }
+    }
+
+    // MARK: - Mmap Offsets
+
+    extension Kernel.IOUring {
+        /// Mmap offsets for io_uring ring buffers.
+        ///
+        /// These magic offset values are passed to `mmap()` to map different
+        /// parts of the io_uring ring structure:
+        ///
+        /// - `sqRing`: Maps the submission queue ring (head, tail, mask, flags, array)
+        /// - `cqRing`: Maps the completion queue ring (head, tail, mask, cqes)
+        /// - `sqes`: Maps the submission queue entry array
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Map the SQ ring
+        /// let sqRingPtr = try Kernel.Mmap.map(
+        ///     length: sqRingSize,
+        ///     protection: .readWrite,
+        ///     flags: .shared,
+        ///     fd: ringFd,
+        ///     offset: Kernel.IOUring.MmapOffset.sqRing
+        /// )
+        /// ```
+        public enum MmapOffset {
+            /// Offset for mapping the submission queue ring.
+            ///
+            /// Value: `IORING_OFF_SQ_RING` (0)
+            public static let sqRing: Int64 = 0
+
+            /// Offset for mapping the completion queue ring.
+            ///
+            /// Value: `IORING_OFF_CQ_RING` (0x8000000)
+            public static let cqRing: Int64 = 0x8000000
+
+            /// Offset for mapping the submission queue entries array.
+            ///
+            /// Value: `IORING_OFF_SQES` (0x10000000)
+            public static let sqes: Int64 = 0x1000_0000
+        }
+    }
+
+    // MARK: - Runtime Detection
+
+    extension Kernel.IOUring {
+        /// Whether io_uring is available on this system.
+        ///
+        /// Checks by attempting `io_uring_setup` with minimal parameters.
+        /// Result is cached after first call.
+        ///
+        /// Can be disabled via the `IO_URING_DISABLED=1` environment variable.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// if Kernel.IOUring.isSupported {
+        ///     // Use io_uring backend
+        /// } else {
+        ///     // Fall back to epoll or other backend
+        /// }
+        /// ```
+        public static var isSupported: Bool {
+            _isSupported
+        }
+
+        /// Cached support check.
+        private static let _isSupported: Bool = {
+            // Check if disabled via environment
+            if Kernel.Environment.isSet("IO_URING_DISABLED", to: "1") {
+                return false
+            }
+
+            // Try to set up a minimal ring to check support
+            var params = Params()
+            do {
+                let fd = try setup(entries: 1, params: &params)
+                close(fd)
+                return true
+            } catch {
+                return false
+            }
+        }()
     }
 
 #endif

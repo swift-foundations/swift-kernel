@@ -62,6 +62,32 @@
         }
     }
 
+    extension Kernel.Eventfd.Error {
+        /// The errno value associated with this error, if any.
+        public var errno: Int32? {
+            switch self {
+            case .createFailed(let code): return code
+            case .readFailed(let code): return code
+            case .writeFailed(let code): return code
+            case .wouldBlock: return nil
+            }
+        }
+
+        /// Converts this eventfd error to a `Kernel.Error`.
+        public var asKernelError: Kernel.Error {
+            switch self {
+            case .createFailed(let errno):
+                return .platform(code: errno, message: "eventfd creation failed")
+            case .readFailed(let errno):
+                return .platform(code: errno, message: "eventfd read failed")
+            case .writeFailed(let errno):
+                return .platform(code: errno, message: "eventfd write failed")
+            case .wouldBlock:
+                return .resource(.blocked)
+            }
+        }
+    }
+
     // MARK: - Flags
 
     extension Kernel.Eventfd {
