@@ -203,4 +203,15 @@
 
     #endif
 
+    // Time Operations
+
+    /// Sleeps for the specified number of nanoseconds.
+    @usableFromInline
+    internal func _cNanosleep(_ seconds: Int, _ nanoseconds: Int) {
+        var ts = timespec()
+        ts.tv_sec = seconds
+        ts.tv_nsec = nanoseconds
+        nanosleep(&ts, nil)
+    }
+
 #endif

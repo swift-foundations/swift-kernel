@@ -72,6 +72,14 @@ extension Kernel.System {
         public static var allocationGranularity: Int {
             pageSize
         }
+
+        /// Sleeps for the specified number of nanoseconds.
+        ///
+        /// - Parameter nanoseconds: The number of nanoseconds to sleep.
+        @inlinable
+        public static func sleep(nanoseconds: UInt64) {
+            _cNanosleep(Int(nanoseconds / 1_000_000_000), Int(nanoseconds % 1_000_000_000))
+        }
     }
 #endif
 
@@ -98,6 +106,16 @@ extension Kernel.System {
         /// Memory mapping offsets must be aligned to this value.
         public static var allocationGranularity: Int {
             Int(cachedSystemInfo.dwAllocationGranularity)
+        }
+
+        /// Sleeps for the specified number of nanoseconds.
+        ///
+        /// - Parameter nanoseconds: The number of nanoseconds to sleep.
+        /// - Note: Windows Sleep has millisecond granularity.
+        @inlinable
+        public static func sleep(nanoseconds: UInt64) {
+            let milliseconds = nanoseconds / 1_000_000
+            Sleep(DWORD(min(milliseconds, UInt64(DWORD.max))))
         }
     }
 #endif
