@@ -270,14 +270,14 @@
 
             // Use stack allocation for small buffers, heap for large ones
             let count = events.count
-            return try withUnsafeTemporaryAllocation(of: epoll_event.self, capacity: count) { buffer in
+            return try withUnsafeTemporaryAllocation(of: epoll_event.self, capacity: count) { buffer -> Int in
                 let result = epoll_wait(epfd.rawValue, buffer.baseAddress!, Int32(count), timeout)
                 guard result >= 0 else {
                     let err = errno
                     if err == EINTR {
-                        throw .interrupted
+                        throw Error.interrupted
                     }
-                    throw .waitFailed(errno: err)
+                    throw Error.waitFailed(errno: err)
                 }
 
                 // Convert C events to Swift events

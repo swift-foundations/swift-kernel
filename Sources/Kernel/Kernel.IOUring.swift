@@ -186,7 +186,6 @@
             ///   - flags: Setup flags to configure the ring.
             ///   - sqThreadCPU: CPU to pin SQ thread to (requires .sqAff flag).
             ///   - sqThreadIdle: SQ thread idle timeout in milliseconds.
-            @inlinable
             public init(
                 flags: SetupFlags = [],
                 sqThreadCPU: UInt32 = 0,
