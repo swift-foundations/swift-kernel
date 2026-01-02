@@ -214,6 +214,16 @@
         }
     }
 
+    extension Kernel.Memory.Error {
+        @inlinable
+        public init?(windowsError error: DWORD) {
+            switch Int32(error) {
+            case ERROR_NOT_ENOUGH_MEMORY, ERROR_OUTOFMEMORY: self = .exhausted
+            default: return nil
+            }
+        }
+    }
+
     extension Kernel.IO.Error {
         @inlinable
         public init?(windowsError error: DWORD) {

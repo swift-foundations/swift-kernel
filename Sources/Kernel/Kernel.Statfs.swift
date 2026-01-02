@@ -339,7 +339,14 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
                 DWORD(fsNameBuffer.count)
             )
 
-            let fsTypeName = gotVolumeInfo ? String(decodingCString: fsNameBuffer, as: UTF16.self) : nil
+            let fsTypeName: String? =
+                gotVolumeInfo
+                ? {
+                    if let nullIndex = fsNameBuffer.firstIndex(of: 0) {
+                        return String(decoding: fsNameBuffer[..<nullIndex], as: UTF16.self)
+                    }
+                    return String(decoding: fsNameBuffer, as: UTF16.self)
+                }() : nil
 
             return Kernel.Statfs(
                 type: UInt64(volumeSerial),

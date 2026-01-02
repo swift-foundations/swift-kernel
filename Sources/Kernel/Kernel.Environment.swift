@@ -52,7 +52,10 @@ extension Kernel.Environment {
                 let result = GetEnvironmentVariableW(wname, &buffer, size)
                 guard result > 0, result < size else { return nil }
 
-                return String(decodingCString: buffer, as: UTF16.self)
+                if let nullIndex = buffer.firstIndex(of: 0) {
+                    return String(decoding: buffer[..<nullIndex], as: UTF16.self)
+                }
+                return String(decoding: buffer, as: UTF16.self)
             }
         #else
             guard let ptr = getenv(name) else { return nil }
