@@ -15,7 +15,7 @@
     internal import SystemPackage
 
     #if canImport(Darwin)
-        public import Darwin
+        import Darwin
     #elseif canImport(Glibc)
         public import Glibc
     #elseif canImport(Musl)

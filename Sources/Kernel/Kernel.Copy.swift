@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 // MARK: - Copy Error Type
 
 extension Kernel {

@@ -181,6 +181,8 @@
     }
 
     // Linux-specific syscalls
+    // These use Glibc's syscall() and ioctl() directly instead of C wrapper functions
+    // to avoid CLinuxShim including headers that conflict with SwiftGlibc.
 
     #if os(Linux)
 
@@ -193,12 +195,44 @@
             _ len: Int,
             _ flags: UInt32
         ) -> Int {
-            swift_copy_file_range(fdIn, offIn, fdOut, offOut, len, flags)
+            syscall(SYS_copy_file_range, fdIn, offIn, fdOut, offOut, len, flags)
         }
 
         @usableFromInline
         internal func _cFiclone(_ destFd: Int32, _ srcFd: Int32) -> Int32 {
-            swift_ficlone(destFd, srcFd)
+            Int32(ioctl(destFd, UInt(FICLONE), srcFd))
+        }
+
+        // io_uring syscall wrappers
+
+        @usableFromInline
+        internal func _cIoUringSetup(
+            _ entries: UInt32,
+            _ params: UnsafeMutablePointer<io_uring_params>
+        ) -> Int32 {
+            Int32(syscall(SYS_io_uring_setup, entries, params))
+        }
+
+        @usableFromInline
+        internal func _cIoUringEnter(
+            _ fd: Int32,
+            _ toSubmit: UInt32,
+            _ minComplete: UInt32,
+            _ flags: UInt32,
+            _ sig: UnsafeMutableRawPointer?,
+            _ sigsz: Int
+        ) -> Int32 {
+            Int32(syscall(SYS_io_uring_enter, fd, toSubmit, minComplete, flags, sig, sigsz))
+        }
+
+        @usableFromInline
+        internal func _cIoUringRegister(
+            _ fd: Int32,
+            _ opcode: UInt32,
+            _ arg: UnsafeMutableRawPointer?,
+            _ count: UInt32
+        ) -> Int32 {
+            Int32(syscall(SYS_io_uring_register, fd, opcode, arg, count))
         }
 
     #endif
