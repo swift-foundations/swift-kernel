@@ -13,7 +13,7 @@
 
     #if canImport(Glibc)
         public import Glibc
-        public import CLinuxShim
+        internal import CLinuxShim
     #elseif canImport(Musl)
         public import Musl
     #endif
@@ -148,6 +148,153 @@
         }
     }
 
+    // MARK: - Params Type
+
+    extension Kernel.IOUring {
+        /// Swift wrapper for io_uring_params C struct.
+        ///
+        /// Contains setup parameters passed to io_uring_setup, and ring offsets
+        /// returned by the kernel after setup.
+        public struct Params: Sendable, Equatable {
+            /// Number of submission queue entries (filled by kernel).
+            public private(set) var sqEntries: UInt32
+
+            /// Number of completion queue entries (filled by kernel).
+            public private(set) var cqEntries: UInt32
+
+            /// Setup flags.
+            public var flags: SetupFlags
+
+            /// SQ thread CPU affinity (when using .sqAff flag).
+            public var sqThreadCPU: UInt32
+
+            /// SQ thread idle timeout in milliseconds.
+            public var sqThreadIdle: UInt32
+
+            /// Ring features supported by kernel (filled by kernel).
+            public private(set) var features: UInt32
+
+            /// Submission queue ring offset info (filled by kernel).
+            public private(set) var sqOff: SQOffsets
+
+            /// Completion queue ring offset info (filled by kernel).
+            public private(set) var cqOff: CQOffsets
+
+            /// Creates io_uring parameters for setup.
+            ///
+            /// - Parameters:
+            ///   - flags: Setup flags to configure the ring.
+            ///   - sqThreadCPU: CPU to pin SQ thread to (requires .sqAff flag).
+            ///   - sqThreadIdle: SQ thread idle timeout in milliseconds.
+            @inlinable
+            public init(
+                flags: SetupFlags = [],
+                sqThreadCPU: UInt32 = 0,
+                sqThreadIdle: UInt32 = 0
+            ) {
+                self.sqEntries = 0
+                self.cqEntries = 0
+                self.flags = flags
+                self.sqThreadCPU = sqThreadCPU
+                self.sqThreadIdle = sqThreadIdle
+                self.features = 0
+                self.sqOff = SQOffsets()
+                self.cqOff = CQOffsets()
+            }
+
+            /// Creates params from the C struct (after setup).
+            @usableFromInline
+            internal init(_ cParams: io_uring_params) {
+                self.sqEntries = cParams.sq_entries
+                self.cqEntries = cParams.cq_entries
+                self.flags = SetupFlags(rawValue: cParams.flags)
+                self.sqThreadCPU = cParams.sq_thread_cpu
+                self.sqThreadIdle = cParams.sq_thread_idle
+                self.features = cParams.features
+                self.sqOff = SQOffsets(cParams.sq_off)
+                self.cqOff = CQOffsets(cParams.cq_off)
+            }
+
+            /// Converts to the C io_uring_params struct.
+            @usableFromInline
+            internal var cValue: io_uring_params {
+                var params = io_uring_params()
+                params.flags = flags.rawValue
+                params.sq_thread_cpu = sqThreadCPU
+                params.sq_thread_idle = sqThreadIdle
+                return params
+            }
+        }
+    }
+
+    extension Kernel.IOUring {
+        /// Offsets for submission queue ring mapping.
+        public struct SQOffsets: Sendable, Equatable {
+            public let head: UInt32
+            public let tail: UInt32
+            public let ringMask: UInt32
+            public let ringEntries: UInt32
+            public let flags: UInt32
+            public let dropped: UInt32
+            public let array: UInt32
+
+            @usableFromInline
+            internal init() {
+                self.head = 0
+                self.tail = 0
+                self.ringMask = 0
+                self.ringEntries = 0
+                self.flags = 0
+                self.dropped = 0
+                self.array = 0
+            }
+
+            @usableFromInline
+            internal init(_ off: io_sqring_offsets) {
+                self.head = off.head
+                self.tail = off.tail
+                self.ringMask = off.ring_mask
+                self.ringEntries = off.ring_entries
+                self.flags = off.flags
+                self.dropped = off.dropped
+                self.array = off.array
+            }
+        }
+
+        /// Offsets for completion queue ring mapping.
+        public struct CQOffsets: Sendable, Equatable {
+            public let head: UInt32
+            public let tail: UInt32
+            public let ringMask: UInt32
+            public let ringEntries: UInt32
+            public let overflow: UInt32
+            public let cqes: UInt32
+            public let flags: UInt32
+
+            @usableFromInline
+            internal init() {
+                self.head = 0
+                self.tail = 0
+                self.ringMask = 0
+                self.ringEntries = 0
+                self.overflow = 0
+                self.cqes = 0
+                self.flags = 0
+            }
+
+            @usableFromInline
+            internal init(_ off: io_cqring_offsets) {
+                self.head = off.head
+                self.tail = off.tail
+                self.ringMask = off.ring_mask
+                self.ringEntries = off.ring_entries
+                self.overflow = off.overflow
+                self.cqes = off.cqes
+                self.flags = off.flags
+            }
+        }
+    }
+
     // MARK: - Register Opcodes
 
     extension Kernel.IOUring {
@@ -211,12 +358,15 @@
         @inlinable
         public static func setup(
             entries: UInt32,
-            params: inout io_uring_params
+            params: inout Params
         ) throws(Error) -> Kernel.Descriptor {
-            let fd = swift_io_uring_setup(entries, &params)
+            var cParams = params.cValue
+            let fd = swift_io_uring_setup(entries, &cParams)
             guard fd >= 0 else {
                 throw .setupFailed(errno: errno)
             }
+            // Update params with kernel-filled values
+            params = Params(cParams)
             return Kernel.Descriptor(rawValue: fd)
         }
 

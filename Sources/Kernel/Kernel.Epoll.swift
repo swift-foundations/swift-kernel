@@ -13,7 +13,7 @@
 
     #if canImport(Glibc)
         public import Glibc
-        public import CLinuxShim
+        internal import CLinuxShim
     #elseif canImport(Musl)
         internal import Musl
     #endif
@@ -136,6 +136,51 @@
         }
     }
 
+    // MARK: - Event Type
+
+    extension Kernel.Epoll {
+        /// Swift wrapper for epoll_event C struct.
+        ///
+        /// Provides a Sendable, Swift-native interface to epoll events.
+        public struct Event: Sendable, Equatable, Hashable {
+            /// The event flags that occurred or are being monitored.
+            public var events: Events
+
+            /// User data associated with the file descriptor.
+            ///
+            /// This is typically used to store an identifier that helps dispatch
+            /// the event to the appropriate handler.
+            public var data: UInt64
+
+            /// Creates an epoll event.
+            ///
+            /// - Parameters:
+            ///   - events: The event flags to monitor.
+            ///   - data: User data to associate with the file descriptor.
+            @inlinable
+            public init(events: Events, data: UInt64 = 0) {
+                self.events = events
+                self.data = data
+            }
+
+            /// Creates an epoll event from the C struct.
+            @usableFromInline
+            internal init(_ cEvent: epoll_event) {
+                self.events = Events(rawValue: cEvent.events)
+                self.data = cEvent.data.u64
+            }
+
+            /// Converts to the C epoll_event struct.
+            @usableFromInline
+            internal var cValue: epoll_event {
+                var event = epoll_event()
+                event.events = events.rawValue
+                event.data.u64 = data
+                return event
+            }
+        }
+    }
+
     // MARK: - Create Flags
 
     extension Kernel.Epoll {
@@ -185,16 +230,21 @@
         ///   - epfd: The epoll file descriptor.
         ///   - op: The operation to perform.
         ///   - fd: The target file descriptor.
-        ///   - event: The event structure (can be nil for delete).
+        ///   - event: The event structure (required for add/modify, ignored for delete).
         /// - Throws: `Error.ctlFailed` if the operation fails.
         @inlinable
         public static func ctl(
             _ epfd: Kernel.Descriptor,
             op: Operation,
             fd: Kernel.Descriptor,
-            event: UnsafeMutablePointer<epoll_event>?
+            event: Event? = nil
         ) throws(Error) {
-            let result = epoll_ctl(epfd.rawValue, op.rawValue, fd.rawValue, event)
+            let result: Int32
+            if var cEvent = event?.cValue {
+                result = epoll_ctl(epfd.rawValue, op.rawValue, fd.rawValue, &cEvent)
+            } else {
+                result = epoll_ctl(epfd.rawValue, op.rawValue, fd.rawValue, nil)
+            }
             guard result == 0 else {
                 throw .ctlFailed(errno: errno)
             }
@@ -202,55 +252,42 @@
 
         /// Waits for events on the epoll instance.
         ///
-        /// - Parameters:
-        ///   - epfd: The epoll file descriptor.
-        ///   - events: Buffer for returned events.
-        ///   - maxEvents: Maximum number of events to return.
-        ///   - timeout: Timeout in milliseconds (-1 for infinite, 0 for immediate).
-        /// - Returns: Number of events, or 0 on timeout.
-        /// - Throws: `Error.waitFailed` on failure, `Error.interrupted` on EINTR.
-        @inlinable
-        public static func wait(
-            _ epfd: Kernel.Descriptor,
-            events: UnsafeMutablePointer<epoll_event>,
-            maxEvents: Int32,
-            timeout: Int32
-        ) throws(Error) -> Int {
-            let result = epoll_wait(epfd.rawValue, events, maxEvents, timeout)
-            guard result >= 0 else {
-                let err = errno
-                if err == EINTR {
-                    throw .interrupted
-                }
-                throw .waitFailed(errno: err)
-            }
-            return Int(result)
-        }
-
-        /// Waits for events on the epoll instance (buffer pointer variant).
+        /// Low-level wait that writes events into a pre-allocated buffer.
         ///
         /// - Parameters:
         ///   - epfd: The epoll file descriptor.
         ///   - events: Buffer for returned events.
         ///   - timeout: Timeout in milliseconds (-1 for infinite, 0 for immediate).
-        /// - Returns: Number of events, or 0 on timeout.
+        /// - Returns: Number of events written to buffer, or 0 on timeout.
         /// - Throws: `Error.waitFailed` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func wait(
             _ epfd: Kernel.Descriptor,
-            events: UnsafeMutableBufferPointer<epoll_event>,
+            events: inout [Event],
             timeout: Int32
         ) throws(Error) -> Int {
-            guard let baseAddress = events.baseAddress else {
-                return 0
+            guard !events.isEmpty else { return 0 }
+
+            // Use stack allocation for small buffers, heap for large ones
+            let count = events.count
+            return try withUnsafeTemporaryAllocation(of: epoll_event.self, capacity: count) { buffer in
+                let result = epoll_wait(epfd.rawValue, buffer.baseAddress!, Int32(count), timeout)
+                guard result >= 0 else {
+                    let err = errno
+                    if err == EINTR {
+                        throw .interrupted
+                    }
+                    throw .waitFailed(errno: err)
+                }
+
+                // Convert C events to Swift events
+                for i in 0..<Int(result) {
+                    events[i] = Event(buffer[i])
+                }
+                return Int(result)
             }
-            return try wait(epfd, events: baseAddress, maxEvents: Int32(events.count), timeout: timeout)
         }
-    }
 
-    // MARK: - Duration Convenience
-
-    extension Kernel.Epoll {
         /// Waits for events with a Duration timeout.
         ///
         /// Convenience wrapper that converts Duration to milliseconds.
@@ -259,16 +296,16 @@
         ///   - epfd: The epoll file descriptor.
         ///   - events: Buffer for returned events.
         ///   - timeout: Timeout duration, or `nil` for infinite.
-        /// - Returns: Number of events, or 0 on timeout.
+        /// - Returns: Number of events written to buffer, or 0 on timeout.
         /// - Throws: `Error.waitFailed` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func wait(
             _ epfd: Kernel.Descriptor,
-            events: UnsafeMutableBufferPointer<epoll_event>,
+            events: inout [Event],
             timeout: Duration?
         ) throws(Error) -> Int {
             let ms = Kernel.Time.milliseconds(from: timeout)
-            return try wait(epfd, events: events, timeout: ms)
+            return try wait(epfd, events: &events, timeout: ms)
         }
     }
 

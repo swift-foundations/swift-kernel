@@ -49,7 +49,7 @@ extension Kernel.System {
         internal import Darwin
     #elseif canImport(Glibc)
         public import Glibc
-        public import CLinuxShim
+        internal import CLinuxShim
     #elseif canImport(Musl)
         internal import Musl
     #endif
