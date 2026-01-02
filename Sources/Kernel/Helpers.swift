@@ -186,6 +186,11 @@
 
     #if os(Linux)
 
+        // FICLONE ioctl code: _IOW(0x94, 9, int) = 0x40049409
+        // Defined as literal because the _IOW macro can't be imported into Swift.
+        @usableFromInline
+        internal let _FICLONE: UInt = 0x40049409
+
         @usableFromInline
         internal func _cCopyFileRange(
             _ fdIn: Int32,
@@ -195,12 +200,12 @@
             _ len: Int,
             _ flags: UInt32
         ) -> Int {
-            syscall(SYS_copy_file_range, fdIn, offIn, fdOut, offOut, len, flags)
+            syscall(Int(SYS_copy_file_range), fdIn, offIn, fdOut, offOut, len, flags)
         }
 
         @usableFromInline
         internal func _cFiclone(_ destFd: Int32, _ srcFd: Int32) -> Int32 {
-            Int32(ioctl(destFd, UInt(FICLONE), srcFd))
+            Int32(ioctl(destFd, _FICLONE, srcFd))
         }
 
         // io_uring syscall wrappers
@@ -210,7 +215,7 @@
             _ entries: UInt32,
             _ params: UnsafeMutablePointer<io_uring_params>
         ) -> Int32 {
-            Int32(syscall(SYS_io_uring_setup, entries, params))
+            Int32(syscall(Int(SYS_io_uring_setup), entries, params))
         }
 
         @usableFromInline
@@ -222,7 +227,7 @@
             _ sig: UnsafeMutableRawPointer?,
             _ sigsz: Int
         ) -> Int32 {
-            Int32(syscall(SYS_io_uring_enter, fd, toSubmit, minComplete, flags, sig, sigsz))
+            Int32(syscall(Int(SYS_io_uring_enter), fd, toSubmit, minComplete, flags, sig, sigsz))
         }
 
         @usableFromInline
@@ -232,7 +237,7 @@
             _ arg: UnsafeMutableRawPointer?,
             _ count: UInt32
         ) -> Int32 {
-            Int32(syscall(SYS_io_uring_register, fd, opcode, arg, count))
+            Int32(syscall(Int(SYS_io_uring_register), fd, opcode, arg, count))
         }
 
     #endif

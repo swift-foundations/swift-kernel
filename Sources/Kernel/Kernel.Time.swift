@@ -121,10 +121,10 @@ extension Kernel.Time {
     #if canImport(Darwin)
         public import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
-        public import CLinuxShim
+        import Glibc
+        import CLinuxShim
     #elseif canImport(Musl)
-        public import Musl
+        import Musl
     #endif
 
     extension Kernel.Time {

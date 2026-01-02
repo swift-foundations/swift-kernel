@@ -17,9 +17,9 @@
     #if canImport(Darwin)
         import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
+        import Glibc
     #elseif canImport(Musl)
-        public import Musl
+        import Musl
     #endif
 #endif
 
