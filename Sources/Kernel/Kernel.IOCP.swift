@@ -154,7 +154,7 @@
                 timeout
             )
 
-            if result == 0 {
+            if !result {
                 let error = GetLastError()
                 if error == WAIT_TIMEOUT {
                     throw .timeout
@@ -191,10 +191,10 @@
                 ULONG(entries.count),
                 &removed,
                 timeout,
-                0  // Not alertable
+                false  // Not alertable
             )
 
-            if result == 0 {
+            if !result {
                 let error = GetLastError()
                 if error == WAIT_TIMEOUT {
                     return 0
@@ -229,7 +229,7 @@
                 completionKey.rawValue,
                 overlapped
             )
-            guard result != 0 else {
+            guard result else {
                 throw .postFailed(win32: GetLastError())
             }
         }
