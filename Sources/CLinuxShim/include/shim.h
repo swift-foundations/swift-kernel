@@ -26,6 +26,42 @@
 #define FICLONE 0x40049409
 #endif
 
+// Forward declarations of syscall/ioctl - already in glibc, just need signatures.
+// These avoid including <unistd.h> and <sys/ioctl.h> which cause fd_set conflicts.
+extern long int syscall(long int __sysno, ...) __attribute__((__nothrow__, __leaf__));
+extern int ioctl(int __fd, unsigned long int __request, ...) __attribute__((__nothrow__, __leaf__));
+
+// Syscall wrappers - non-variadic functions that Swift can call
+
+static inline long swift_copy_file_range(
+    int fd_in, long long *off_in,
+    int fd_out, long long *off_out,
+    unsigned long len, unsigned int flags
+) {
+    return syscall(SYS_copy_file_range, fd_in, off_in, fd_out, off_out, len, flags);
+}
+
+static inline int swift_ficlone(int dest_fd, int src_fd) {
+    return ioctl(dest_fd, FICLONE, src_fd);
+}
+
+static inline int swift_io_uring_setup(unsigned int entries, struct io_uring_params *p) {
+    return (int)syscall(SYS_io_uring_setup, entries, p);
+}
+
+static inline int swift_io_uring_enter(
+    int fd, unsigned int to_submit, unsigned int min_complete,
+    unsigned int flags, void *sig, unsigned long sigsz
+) {
+    return (int)syscall(SYS_io_uring_enter, fd, to_submit, min_complete, flags, sig, sigsz);
+}
+
+static inline int swift_io_uring_register(
+    int fd, unsigned int opcode, void *arg, unsigned int nr_args
+) {
+    return (int)syscall(SYS_io_uring_register, fd, opcode, arg, nr_args);
+}
+
 #endif /* __linux__ */
 
 #endif /* CLINUX_SHIM_H */

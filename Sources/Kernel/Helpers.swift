@@ -181,15 +181,10 @@
     }
 
     // Linux-specific syscalls
-    // These use Glibc's syscall() and ioctl() directly instead of C wrapper functions
-    // to avoid CLinuxShim including headers that conflict with SwiftGlibc.
+    // These use C wrapper functions from CLinuxShim that forward-declare
+    // syscall/ioctl to avoid including headers that conflict with SwiftGlibc.
 
     #if os(Linux)
-
-        // FICLONE ioctl code: _IOW(0x94, 9, int) = 0x40049409
-        // Defined as literal because the _IOW macro can't be imported into Swift.
-        @usableFromInline
-        internal let _FICLONE: UInt = 0x40049409
 
         @usableFromInline
         internal func _cCopyFileRange(
@@ -200,12 +195,12 @@
             _ len: Int,
             _ flags: UInt32
         ) -> Int {
-            syscall(Int(SYS_copy_file_range), fdIn, offIn, fdOut, offOut, len, flags)
+            Int(swift_copy_file_range(fdIn, offIn, fdOut, offOut, len, flags))
         }
 
         @usableFromInline
         internal func _cFiclone(_ destFd: Int32, _ srcFd: Int32) -> Int32 {
-            Int32(ioctl(destFd, _FICLONE, srcFd))
+            swift_ficlone(destFd, srcFd)
         }
 
         // io_uring syscall wrappers
@@ -215,7 +210,7 @@
             _ entries: UInt32,
             _ params: UnsafeMutablePointer<io_uring_params>
         ) -> Int32 {
-            Int32(syscall(Int(SYS_io_uring_setup), entries, params))
+            swift_io_uring_setup(entries, params)
         }
 
         @usableFromInline
@@ -227,7 +222,7 @@
             _ sig: UnsafeMutableRawPointer?,
             _ sigsz: Int
         ) -> Int32 {
-            Int32(syscall(Int(SYS_io_uring_enter), fd, toSubmit, minComplete, flags, sig, sigsz))
+            swift_io_uring_enter(fd, toSubmit, minComplete, flags, sig, sigsz)
         }
 
         @usableFromInline
@@ -237,7 +232,7 @@
             _ arg: UnsafeMutableRawPointer?,
             _ count: UInt32
         ) -> Int32 {
-            Int32(syscall(Int(SYS_io_uring_register), fd, opcode, arg, count))
+            swift_io_uring_register(fd, opcode, arg, count)
         }
 
     #endif
