@@ -11,6 +11,7 @@
 #include <sys/statfs.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <signal.h>
 #include <linux/fs.h>
 #include <linux/io_uring.h>
 
