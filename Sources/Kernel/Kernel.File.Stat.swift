@@ -28,9 +28,8 @@ extension Kernel.File {
     ///
     /// - Parameter descriptor: The file descriptor to stat.
     /// - Returns: File metadata.
-    /// - Throws: `Kernel.Error` if the syscall fails.
-    @inlinable
-    public static func stat(_ descriptor: Kernel.Descriptor) throws(Kernel.Error) -> Kernel.Stat {
+    /// - Throws: `Kernel.Stat.Error` if the syscall fails.
+    public static func stat(_ descriptor: Kernel.Descriptor) throws(Kernel.Stat.Error) -> Kernel.Stat {
         #if os(Windows)
             return try statWindows(descriptor)
         #else
@@ -44,19 +43,32 @@ extension Kernel.File {
 #if !os(Windows)
 
     extension Kernel.File {
-        @usableFromInline
-        internal static func statPosix(_ descriptor: Kernel.Descriptor) throws(Kernel.Error) -> Kernel.Stat {
+        internal static func statPosix(_ descriptor: Kernel.Descriptor) throws(Kernel.Stat.Error) -> Kernel.Stat {
             var sb = PlatformStat()
             guard _cFstat(descriptor.rawValue, &sb) == 0 else {
-                throw .platform(code: errno, message: "fstat failed")
+                throw Kernel.Stat.Error(posixErrno: errno)
             }
             return Kernel.Stat(from: sb)
         }
     }
 
+    extension Kernel.Stat.Error {
+        internal init(posixErrno code: Int32) {
+            let errno = Errno(rawValue: code)
+            if let e = Kernel.Handle.Error(errno: errno) {
+                self = .handle(e)
+                return
+            }
+            if let e = Kernel.IO.Error(errno: errno) {
+                self = .io(e)
+                return
+            }
+            self = .platform(Kernel.Platform.Error(errno: errno))
+        }
+    }
+
     extension Kernel.Stat {
         /// Creates a Kernel.Stat from a POSIX stat structure.
-        @usableFromInline
         internal init(from sb: PlatformStat) {
             #if canImport(Darwin)
                 let atime = Kernel.Time(seconds: Int64(sb.st_atimespec.tv_sec), nanoseconds: Int32(sb.st_atimespec.tv_nsec))
@@ -86,7 +98,6 @@ extension Kernel.File {
 
     extension Kernel.Stat.Kind {
         /// Creates a file type from POSIX st_mode.
-        @usableFromInline
         internal init(mode: mode_t) {
             let fileType = mode & S_IFMT
             switch fileType {
@@ -117,11 +128,10 @@ extension Kernel.File {
 #if os(Windows)
 
     extension Kernel.File {
-        @usableFromInline
-        internal static func statWindows(_ descriptor: Kernel.Descriptor) throws(Kernel.Error) -> Kernel.Stat {
+        internal static func statWindows(_ descriptor: Kernel.Descriptor) throws(Kernel.Stat.Error) -> Kernel.Stat {
             var info = BY_HANDLE_FILE_INFORMATION()
             guard GetFileInformationByHandle(descriptor.rawValue, &info) else {
-                throw Kernel.Error.windows(GetLastError())
+                throw Kernel.Stat.Error(windowsError: GetLastError())
             }
 
             let size = (Int64(info.nFileSizeHigh) << 32) | Int64(info.nFileSizeLow)
@@ -163,12 +173,25 @@ extension Kernel.File {
         }
     }
 
+    extension Kernel.Stat.Error {
+        internal init(windowsError error: DWORD) {
+            if let e = Kernel.Handle.Error(windowsError: error) {
+                self = .handle(e)
+                return
+            }
+            if let e = Kernel.IO.Error(windowsError: error) {
+                self = .io(e)
+                return
+            }
+            self = .platform(Kernel.Platform.Error(windowsError: error))
+        }
+    }
+
     extension Kernel.Time {
         /// Creates a time from a Windows FILETIME.
         ///
         /// FILETIME is 100-nanosecond intervals since January 1, 1601.
         /// We convert to Unix epoch (January 1, 1970).
-        @usableFromInline
         internal init(from ft: FILETIME) {
             // FILETIME to 100-nanosecond intervals
             let intervals = (Int64(ft.dwHighDateTime) << 32) | Int64(ft.dwLowDateTime)
