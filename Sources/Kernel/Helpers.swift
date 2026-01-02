@@ -195,7 +195,7 @@
             _ len: Int,
             _ flags: UInt32
         ) -> Int {
-            Int(swift_copy_file_range(fdIn, offIn, fdOut, offOut, len, flags))
+            Int(swift_copy_file_range(fdIn, offIn, fdOut, offOut, size_t(len), flags))
         }
 
         @usableFromInline
@@ -222,7 +222,7 @@
             _ sig: UnsafeMutableRawPointer?,
             _ sigsz: Int
         ) -> Int32 {
-            swift_io_uring_enter(fd, toSubmit, minComplete, flags, sig, sigsz)
+            swift_io_uring_enter(fd, toSubmit, minComplete, flags, sig, size_t(sigsz))
         }
 
         @usableFromInline

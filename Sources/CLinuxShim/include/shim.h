@@ -32,11 +32,15 @@ extern long int syscall(long int __sysno, ...) __attribute__((__nothrow__, __lea
 extern int ioctl(int __fd, unsigned long int __request, ...) __attribute__((__nothrow__, __leaf__));
 
 // Syscall wrappers - non-variadic functions that Swift can call
+// Types match Swift's expectations: off_t = long (Int), size_t = unsigned long (UInt)
 
-static inline long swift_copy_file_range(
-    int fd_in, long long *off_in,
-    int fd_out, long long *off_out,
-    unsigned long len, unsigned int flags
+#include <stddef.h>  // for size_t
+#include <sys/types.h>  // for off_t, ssize_t
+
+static inline ssize_t swift_copy_file_range(
+    int fd_in, off_t *off_in,
+    int fd_out, off_t *off_out,
+    size_t len, unsigned int flags
 ) {
     return syscall(SYS_copy_file_range, fd_in, off_in, fd_out, off_out, len, flags);
 }
@@ -51,7 +55,7 @@ static inline int swift_io_uring_setup(unsigned int entries, struct io_uring_par
 
 static inline int swift_io_uring_enter(
     int fd, unsigned int to_submit, unsigned int min_complete,
-    unsigned int flags, void *sig, unsigned long sigsz
+    unsigned int flags, void *sig, size_t sigsz
 ) {
     return (int)syscall(SYS_io_uring_enter, fd, to_submit, min_complete, flags, sig, sigsz);
 }
