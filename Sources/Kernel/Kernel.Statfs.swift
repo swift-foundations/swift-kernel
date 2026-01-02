@@ -257,7 +257,7 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    import WinSDK
+    public import WinSDK
 
     extension Kernel.Statfs.Error {
         @inlinable
