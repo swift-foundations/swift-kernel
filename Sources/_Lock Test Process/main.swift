@@ -28,15 +28,15 @@
 //    3  Error (invalid arguments, file not found, etc.)
 //
 
-import SystemPackage
 import Kernel
+import SystemPackage
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif os(Windows)
-import WinSDK
+    import WinSDK
 #endif
 
 // MARK: - IO Helpers
@@ -122,8 +122,9 @@ func parseArguments() -> Arguments? {
             let rangeStr = args[i]
             let parts = rangeStr.split(separator: "-")
             guard parts.count == 2,
-                  let start = UInt64(parts[0]),
-                  let end = UInt64(parts[1]) else {
+                let start = UInt64(parts[0]),
+                let end = UInt64(parts[1])
+            else {
                 writeStderr("Invalid range format. Use: start-end\n")
                 return nil
             }
@@ -168,29 +169,29 @@ func parseArguments() -> Arguments? {
 
 func printUsage() {
     let usage = """
-    Usage: _Lock\\ Test\\ Process <command> <file> [options]
+        Usage: _Lock\\ Test\\ Process <command> <file> [options]
 
-    Commands:
-      lock-exclusive <file>       Acquire exclusive lock, wait, release
-      lock-shared <file>          Acquire shared lock, wait, release
-      try-exclusive <file>        Try exclusive lock (non-blocking)
-      try-shared <file>           Try shared lock (non-blocking)
-      deadline-exclusive <file>   Acquire exclusive lock with deadline
-      deadline-shared <file>      Acquire shared lock with deadline
+        Commands:
+          lock-exclusive <file>       Acquire exclusive lock, wait, release
+          lock-shared <file>          Acquire shared lock, wait, release
+          try-exclusive <file>        Try exclusive lock (non-blocking)
+          try-shared <file>           Try shared lock (non-blocking)
+          deadline-exclusive <file>   Acquire exclusive lock with deadline
+          deadline-shared <file>      Acquire shared lock with deadline
 
-    Options:
-      --range <start>-<end>       Lock byte range (default: whole file)
-      --hold <seconds>            Hold lock for N seconds
-      --deadline-ms <ms>          Deadline in milliseconds (default: 1000)
-      --signal-ready              Print "READY" when lock acquired
+        Options:
+          --range <start>-<end>       Lock byte range (default: whole file)
+          --hold <seconds>            Hold lock for N seconds
+          --deadline-ms <ms>          Deadline in milliseconds (default: 1000)
+          --signal-ready              Print "READY" when lock acquired
 
-    Exit codes:
-      0  Success
-      1  Lock would block (try-* commands)
-      2  Lock timed out (deadline-* commands)
-      3  Error
+        Exit codes:
+          0  Success
+          1  Lock would block (try-* commands)
+          2  Lock timed out (deadline-* commands)
+          3  Error
 
-    """
+        """
     writeStderr(usage)
 }
 
@@ -198,191 +199,191 @@ func printUsage() {
 
 #if !os(Windows)
 
-func main() -> Int32 {
-    guard let args = parseArguments() else {
-        return 3
-    }
-
-    // Open the file
-    let fd = open(args.filePath, O_RDWR)
-    guard fd >= 0 else {
-        writeStderr("Failed to open file: \(args.filePath)\n")
-        return 3
-    }
-    defer { close(fd) }
-
-    let kind: Kernel.Lock.Kind
-    let acquire: Kernel.Lock.Acquire
-
-    switch args.command {
-    case .lockExclusive:
-        kind = .exclusive
-        acquire = .wait
-    case .lockShared:
-        kind = .shared
-        acquire = .wait
-    case .tryExclusive:
-        kind = .exclusive
-        acquire = .try
-    case .tryShared:
-        kind = .shared
-        acquire = .try
-    case .deadlineExclusive:
-        kind = .exclusive
-        acquire = .timeout(.milliseconds(args.deadlineMs))
-    case .deadlineShared:
-        kind = .shared
-        acquire = .timeout(.milliseconds(args.deadlineMs))
-    }
-
-    // Acquire lock
-    var token: Kernel.Lock.Token
-    do {
-        token = try Kernel.Lock.Token(
-            descriptor: Kernel.Descriptor(rawValue: fd),
-            range: args.range,
-            kind: kind,
-            acquire: acquire
-        )
-    } catch {
-        switch error {
-        case .contention:
-            if case .try = acquire {
-                writeStdout("WOULD_BLOCK\n")
-                return 1
-            } else {
-                writeStdout("TIMED_OUT\n")
-                return 2
-            }
-        default:
-            writeStderr("Failed to acquire lock: \(error)\n")
+    func main() -> Int32 {
+        guard let args = parseArguments() else {
             return 3
         }
+
+        // Open the file
+        let fd = open(args.filePath, O_RDWR)
+        guard fd >= 0 else {
+            writeStderr("Failed to open file: \(args.filePath)\n")
+            return 3
+        }
+        defer { close(fd) }
+
+        let kind: Kernel.Lock.Kind
+        let acquire: Kernel.Lock.Acquire
+
+        switch args.command {
+        case .lockExclusive:
+            kind = .exclusive
+            acquire = .wait
+        case .lockShared:
+            kind = .shared
+            acquire = .wait
+        case .tryExclusive:
+            kind = .exclusive
+            acquire = .try
+        case .tryShared:
+            kind = .shared
+            acquire = .try
+        case .deadlineExclusive:
+            kind = .exclusive
+            acquire = .timeout(.milliseconds(args.deadlineMs))
+        case .deadlineShared:
+            kind = .shared
+            acquire = .timeout(.milliseconds(args.deadlineMs))
+        }
+
+        // Acquire lock
+        var token: Kernel.Lock.Token
+        do {
+            token = try Kernel.Lock.Token(
+                descriptor: Kernel.Descriptor(rawValue: fd),
+                range: args.range,
+                kind: kind,
+                acquire: acquire
+            )
+        } catch {
+            switch error {
+            case .contention:
+                if case .try = acquire {
+                    writeStdout("WOULD_BLOCK\n")
+                    return 1
+                } else {
+                    writeStdout("TIMED_OUT\n")
+                    return 2
+                }
+            default:
+                writeStderr("Failed to acquire lock: \(error)\n")
+                return 3
+            }
+        }
+
+        // Signal ready if requested
+        if args.signalReady {
+            writeStdout("READY\n")
+        }
+
+        // Hold lock
+        if let seconds = args.holdSeconds {
+            sleep(UInt32(seconds))
+        } else {
+            // Wait for newline on stdin
+            readStdinByte()
+        }
+
+        // Release lock
+        token.release()
+
+        writeStdout("RELEASED\n")
+
+        return 0
     }
 
-    // Signal ready if requested
-    if args.signalReady {
-        writeStdout("READY\n")
-    }
-
-    // Hold lock
-    if let seconds = args.holdSeconds {
-        sleep(UInt32(seconds))
-    } else {
-        // Wait for newline on stdin
-        readStdinByte()
-    }
-
-    // Release lock
-    token.release()
-
-    writeStdout("RELEASED\n")
-
-    return 0
-}
-
-exit(main())
+    exit(main())
 
 #else
 
-// Windows implementation
-func main() -> Int32 {
-    guard let args = parseArguments() else {
-        return 3
-    }
-
-    // Open the file
-    let maybeHandle = args.filePath.withCString(encodedAs: UTF16.self) { widePath in
-        CreateFileW(
-            widePath,
-            DWORD(GENERIC_READ) | DWORD(GENERIC_WRITE),
-            0,  // No sharing
-            nil,
-            DWORD(OPEN_EXISTING),
-            DWORD(FILE_ATTRIBUTE_NORMAL),
-            nil
-        )
-    }
-
-    guard let handle = maybeHandle, handle != INVALID_HANDLE_VALUE else {
-        writeStderr("Failed to open file: \(args.filePath)\n")
-        return 3
-    }
-    defer { CloseHandle(handle) }
-
-    let kind: Kernel.Lock.Kind
-    let acquire: Kernel.Lock.Acquire
-
-    switch args.command {
-    case .lockExclusive:
-        kind = .exclusive
-        acquire = .wait
-    case .lockShared:
-        kind = .shared
-        acquire = .wait
-    case .tryExclusive:
-        kind = .exclusive
-        acquire = .try
-    case .tryShared:
-        kind = .shared
-        acquire = .try
-    case .deadlineExclusive:
-        kind = .exclusive
-        acquire = .timeout(.milliseconds(args.deadlineMs))
-    case .deadlineShared:
-        kind = .shared
-        acquire = .timeout(.milliseconds(args.deadlineMs))
-    }
-
-    // Acquire lock
-    var token: Kernel.Lock.Token
-    do {
-        token = try Kernel.Lock.Token(
-            descriptor: Kernel.Descriptor(rawValue: handle),
-            range: args.range,
-            kind: kind,
-            acquire: acquire
-        )
-    } catch let lockError as Kernel.Lock.Error {
-        switch lockError {
-        case .contention:
-            if case .try = acquire {
-                writeStdout("WOULD_BLOCK\n")
-                return 1
-            } else {
-                writeStdout("TIMED_OUT\n")
-                return 2
-            }
-        default:
-            writeStderr("Failed to acquire lock: \(lockError)\n")
+    // Windows implementation
+    func main() -> Int32 {
+        guard let args = parseArguments() else {
             return 3
         }
-    } catch {
-        writeStderr("Failed to acquire lock: \(error)\n")
-        return 3
+
+        // Open the file
+        let maybeHandle = args.filePath.withCString(encodedAs: UTF16.self) { widePath in
+            CreateFileW(
+                widePath,
+                DWORD(GENERIC_READ) | DWORD(GENERIC_WRITE),
+                0,  // No sharing
+                nil,
+                DWORD(OPEN_EXISTING),
+                DWORD(FILE_ATTRIBUTE_NORMAL),
+                nil
+            )
+        }
+
+        guard let handle = maybeHandle, handle != INVALID_HANDLE_VALUE else {
+            writeStderr("Failed to open file: \(args.filePath)\n")
+            return 3
+        }
+        defer { CloseHandle(handle) }
+
+        let kind: Kernel.Lock.Kind
+        let acquire: Kernel.Lock.Acquire
+
+        switch args.command {
+        case .lockExclusive:
+            kind = .exclusive
+            acquire = .wait
+        case .lockShared:
+            kind = .shared
+            acquire = .wait
+        case .tryExclusive:
+            kind = .exclusive
+            acquire = .try
+        case .tryShared:
+            kind = .shared
+            acquire = .try
+        case .deadlineExclusive:
+            kind = .exclusive
+            acquire = .timeout(.milliseconds(args.deadlineMs))
+        case .deadlineShared:
+            kind = .shared
+            acquire = .timeout(.milliseconds(args.deadlineMs))
+        }
+
+        // Acquire lock
+        var token: Kernel.Lock.Token
+        do {
+            token = try Kernel.Lock.Token(
+                descriptor: Kernel.Descriptor(rawValue: handle),
+                range: args.range,
+                kind: kind,
+                acquire: acquire
+            )
+        } catch let lockError as Kernel.Lock.Error {
+            switch lockError {
+            case .contention:
+                if case .try = acquire {
+                    writeStdout("WOULD_BLOCK\n")
+                    return 1
+                } else {
+                    writeStdout("TIMED_OUT\n")
+                    return 2
+                }
+            default:
+                writeStderr("Failed to acquire lock: \(lockError)\n")
+                return 3
+            }
+        } catch {
+            writeStderr("Failed to acquire lock: \(error)\n")
+            return 3
+        }
+
+        // Signal ready if requested
+        if args.signalReady {
+            writeStdout("READY\n")
+        }
+
+        // Hold lock
+        if let seconds = args.holdSeconds {
+            Sleep(DWORD(seconds * 1000))
+        } else {
+            // Wait for newline on stdin
+            readStdinByte()
+        }
+
+        // Release lock
+        token.release()
+
+        writeStdout("RELEASED\n")
+
+        return 0
     }
 
-    // Signal ready if requested
-    if args.signalReady {
-        writeStdout("READY\n")
-    }
-
-    // Hold lock
-    if let seconds = args.holdSeconds {
-        Sleep(DWORD(seconds * 1000))
-    } else {
-        // Wait for newline on stdin
-        readStdinByte()
-    }
-
-    // Release lock
-    token.release()
-
-    writeStdout("RELEASED\n")
-
-    return 0
-}
-
-exit(main())
+    exit(main())
 
 #endif

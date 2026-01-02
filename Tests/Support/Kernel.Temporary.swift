@@ -11,8 +11,9 @@
 
 /// Test support for cross-platform temporary file paths.
 
-@testable import Kernel
 import SystemPackage
+
+@testable import Kernel
 
 #if canImport(Darwin)
     import Darwin

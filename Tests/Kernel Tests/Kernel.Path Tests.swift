@@ -24,58 +24,58 @@ extension Kernel.Path {
 // Kernel.Path uses wide strings (UInt16), so these tests are skipped.
 
 #if !os(Windows)
-extension Kernel.Path.Test.Unit {
-    @Test("Path stores C string pointer")
-    func storesCString() {
-        "/tmp/test".withCString { cString in
-            let path = Kernel.Path(unsafeCString: cString)
-            #expect(path.cString == cString)
+    extension Kernel.Path.Test.Unit {
+        @Test("Path stores C string pointer")
+        func storesCString() {
+            "/tmp/test".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
+                #expect(path.cString == cString)
+            }
+        }
+
+        @Test("Path is non-Copyable")
+        func isNonCopyable() {
+            // This test verifies compilation behavior
+            // Kernel.Path: ~Copyable means it cannot be copied
+            "/tmp/test".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
+                // Cannot do: let copy = path (would not compile)
+                _ = path.cString
+            }
         }
     }
 
-    @Test("Path is non-Copyable")
-    func isNonCopyable() {
-        // This test verifies compilation behavior
-        // Kernel.Path: ~Copyable means it cannot be copied
-        "/tmp/test".withCString { cString in
-            let path = Kernel.Path(unsafeCString: cString)
-            // Cannot do: let copy = path (would not compile)
-            _ = path.cString
-        }
-    }
-}
+    // MARK: - Edge Cases
 
-// MARK: - Edge Cases
-
-extension Kernel.Path.Test.EdgeCase {
-    @Test("Path with empty string")
-    func emptyString() {
-        "".withCString { cString in
-            let path = Kernel.Path(unsafeCString: cString)
-            #expect(path.cString == cString)
-        }
-    }
-}
-
-// MARK: - withPath Tests
-
-extension Kernel.Test.Unit {
-    @Test("withPath converts FilePath to Kernel.Path")
-    func withPathConversion() throws {
-        let filePath = FilePath("/tmp/test")
-        try Kernel.withPath(filePath) { path in
-            // Verify we can access the C string
-            _ = path.cString
+    extension Kernel.Path.Test.EdgeCase {
+        @Test("Path with empty string")
+        func emptyString() {
+            "".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
+                #expect(path.cString == cString)
+            }
         }
     }
 
-    @Test("withPath body receives valid C string")
-    func withPathValidCString() throws {
-        let filePath = FilePath("/tmp/test")
-        try Kernel.withPath(filePath) { path in
-            let string = String(cString: path.cString)
-            #expect(string == "/tmp/test")
+    // MARK: - withPath Tests
+
+    extension Kernel.Test.Unit {
+        @Test("withPath converts FilePath to Kernel.Path")
+        func withPathConversion() throws {
+            let filePath = FilePath("/tmp/test")
+            try Kernel.withPath(filePath) { path in
+                // Verify we can access the C string
+                _ = path.cString
+            }
+        }
+
+        @Test("withPath body receives valid C string")
+        func withPathValidCString() throws {
+            let filePath = FilePath("/tmp/test")
+            try Kernel.withPath(filePath) { path in
+                let string = String(cString: path.cString)
+                #expect(string == "/tmp/test")
+            }
         }
     }
-}
 #endif
