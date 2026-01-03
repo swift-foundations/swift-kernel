@@ -87,19 +87,19 @@ extension Kernel.Error {
     public init(_ error: Kernel.IOCP.Error) {
         switch error {
         case .create(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .associate(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .dequeue(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .post(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .read(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .write(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .result(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .timeout:
             self = .blocking(.wouldBlock)
         }

@@ -58,7 +58,7 @@ extension Kernel.File.Stats {
     extension Kernel.File.Stats.Error {
         internal init(posixErrno code: Int32) {
             let errno = Errno(rawValue: code)
-            if let e = Kernel.Handle.Error(errno: errno) {
+            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
                 self = .handle(e)
                 return
             }
@@ -66,7 +66,7 @@ extension Kernel.File.Stats {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Platform.Error(errno: errno))
+            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
         }
     }
 
@@ -178,7 +178,7 @@ extension Kernel.File.Stats {
 
     extension Kernel.File.Stats.Error {
         internal init(windowsError error: DWORD) {
-            if let e = Kernel.Handle.Error(windowsError: error) {
+            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
                 self = .handle(e)
                 return
             }
@@ -186,7 +186,7 @@ extension Kernel.File.Stats {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Platform.Error(windowsError: error))
+            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
         }
     }
 

@@ -9,15 +9,12 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// Handle domain - file descriptor/handle validity.
+extension Kernel.Descriptor {
+    /// Validity domain - file descriptor/handle validity.
     ///
     /// These errors indicate problems with file descriptors (POSIX)
     /// or HANDLEs (Windows).
-    ///
-    /// ## Note
-    /// Named `Handle` to avoid conflict with `Kernel.Descriptor` typealias.
-    public enum Handle: Sendable {
+    public enum Validity: Sendable {
 
     }
 }

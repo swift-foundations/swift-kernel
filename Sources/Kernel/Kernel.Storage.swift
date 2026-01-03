@@ -10,11 +10,11 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel {
-    /// Blocking domain - non-blocking operation semantics.
+    /// Storage domain - storage space exhaustion.
     ///
-    /// When a descriptor is in non-blocking mode and an operation
-    /// cannot complete immediately, these errors are returned.
-    public enum Blocking: Sendable {
+    /// These errors indicate the filesystem cannot allocate
+    /// additional storage for the operation.
+    public enum Storage: Sendable {
 
     }
 }

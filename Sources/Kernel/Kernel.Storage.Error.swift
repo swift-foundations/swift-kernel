@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Space {
+extension Kernel.Storage {
     /// Space-related errors.
     public enum Error: Swift.Error, Sendable, Equatable, Hashable {
         /// No space left on device.
@@ -25,7 +25,7 @@ extension Kernel.Space {
 
 // MARK: - CustomStringConvertible
 
-extension Kernel.Space.Error: CustomStringConvertible {
+extension Kernel.Storage.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .exhausted:

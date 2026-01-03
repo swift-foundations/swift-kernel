@@ -55,6 +55,18 @@ extension Kernel.System {
     #endif
 
     extension Kernel.System {
+        /// Platform path length limit.
+        ///
+        /// Falls back to 4096 if the platform constant is undefined.
+        /// Note: This is a conservative limit, not a universal truth.
+        public static var pathMax: Int {
+            #if canImport(Darwin)
+                return Int(PATH_MAX)  // 1024
+            #else
+                return Int(PATH_MAX)  // Usually 4096
+            #endif
+        }
+
         /// Memory page size in bytes.
         ///
         /// This is the fundamental unit of memory management.
@@ -117,6 +129,14 @@ extension Kernel.System {
     }()
 
     extension Kernel.System {
+        /// Platform path length limit.
+        ///
+        /// Note: This is a conservative limit. Extended-length paths
+        /// on Windows can exceed MAX_PATH using \\?\ prefix.
+        public static var pathMax: Int {
+            Int(MAX_PATH)  // 260
+        }
+
         /// Memory page size in bytes.
         public static var pageSize: Int {
             Int(cachedSystemInfo.dwPageSize)

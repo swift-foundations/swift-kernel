@@ -9,25 +9,28 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Blocking {
-    /// Blocking-related errors.
+extension Kernel.Descriptor.Validity {
+    /// Handle-related errors.
     public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-        /// Operation would block on a non-blocking descriptor.
-        /// - POSIX: `EAGAIN`, `EWOULDBLOCK`
-        ///
-        /// The caller should wait for the descriptor to become ready
-        /// (e.g., via poll/select/kqueue/epoll) and retry.
-        case wouldBlock
+        /// The file descriptor or handle is invalid.
+        /// - POSIX: `EBADF`
+        /// - Windows: `ERROR_INVALID_HANDLE`
+        case invalid
+
+        /// Too many open files.
+        case limit(Limit)
     }
 }
 
 // MARK: - CustomStringConvertible
 
-extension Kernel.Blocking.Error: CustomStringConvertible {
+extension Kernel.Descriptor.Validity.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .wouldBlock:
-            return "operation would block"
+        case .invalid:
+            return "invalid descriptor"
+        case .limit(let limit):
+            return limit.description
         }
     }
 }

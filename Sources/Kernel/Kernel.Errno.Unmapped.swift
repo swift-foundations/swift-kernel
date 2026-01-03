@@ -9,12 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// Space domain - storage space exhaustion.
+extension Kernel.Errno {
+    /// Unmapped domain - unmapped platform-specific errors.
     ///
-    /// These errors indicate the filesystem cannot allocate
-    /// additional storage for the operation.
-    public enum Space: Sendable {
+    /// This is the escape hatch for errno/GetLastError codes that
+    /// are not mapped to semantic error cases. Every syscall error
+    /// type includes this as a case to ensure completeness.
+    public enum Unmapped: Sendable {
 
     }
 }

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Handle.Error {
+extension Kernel.Descriptor.Validity.Error {
     /// Limit scope for file descriptor exhaustion.
     public enum Limit: Sendable, Equatable, Hashable {
         /// Per-process file descriptor limit reached.
@@ -25,7 +25,7 @@ extension Kernel.Handle.Error {
 
 // MARK: - CustomStringConvertible
 
-extension Kernel.Handle.Error.Limit: CustomStringConvertible {
+extension Kernel.Descriptor.Validity.Error.Limit: CustomStringConvertible {
     public var description: String {
         switch self {
         case .process:

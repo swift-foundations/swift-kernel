@@ -64,11 +64,11 @@ extension Kernel.Error {
     public init(_ error: Kernel.Event.Descriptor.Error) {
         switch error {
         case .create(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .read(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .write(let code):
-            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
         case .wouldBlock:
             self = .blocking(.wouldBlock)
         }

@@ -9,13 +9,12 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// Platform domain - unmapped platform-specific errors.
+extension Kernel.IO {
+    /// Blocking domain - non-blocking operation semantics.
     ///
-    /// This is the escape hatch for errno/GetLastError codes that
-    /// are not mapped to semantic error cases. Every syscall error
-    /// type includes this as a case to ensure completeness.
-    public enum Platform: Sendable {
+    /// When a descriptor is in non-blocking mode and an operation
+    /// cannot complete immediately, these errors are returned.
+    public enum Blocking: Sendable {
 
     }
 }

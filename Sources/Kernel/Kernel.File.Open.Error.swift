@@ -11,19 +11,19 @@
 
 public import SystemPackage
 
-extension Kernel.Open {
+extension Kernel.File.Open {
     public enum Error: Swift.Error, Sendable {
         case path(Kernel.Path.Resolution.Error)
         case permission(Kernel.Permission.Error)
-        case handle(Kernel.Handle.Error)
+        case handle(Kernel.Descriptor.Validity.Error)
         case signal(Kernel.Signal.Error)
-        case space(Kernel.Space.Error)
+        case space(Kernel.Storage.Error)
         case io(Kernel.IO.Error)
-        case platform(Kernel.Platform.Error)
+        case platform(Kernel.Errno.Unmapped.Error)
     }
 }
 
-extension Kernel.Open.Error: Equatable {
+extension Kernel.File.Open.Error: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case (.path(let l), .path(let r)): return l == r
@@ -38,7 +38,7 @@ extension Kernel.Open.Error: Equatable {
     }
 }
 
-extension Kernel.Open.Error: CustomStringConvertible {
+extension Kernel.File.Open.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .path(let e): return "path: \(e)"
@@ -64,7 +64,7 @@ extension Kernel.Open.Error: CustomStringConvertible {
         public import Musl
     #endif
 
-    extension Kernel.Open.Error {
+    extension Kernel.File.Open.Error {
         @inlinable
         init(errno: Errno) {
             if let e = Kernel.Path.Resolution.Error(errno: errno) {
@@ -75,7 +75,7 @@ extension Kernel.Open.Error: CustomStringConvertible {
                 self = .permission(e)
                 return
             }
-            if let e = Kernel.Handle.Error(errno: errno) {
+            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
                 self = .handle(e)
                 return
             }
@@ -83,7 +83,7 @@ extension Kernel.Open.Error: CustomStringConvertible {
                 self = .signal(e)
                 return
             }
-            if let e = Kernel.Space.Error(errno: errno) {
+            if let e = Kernel.Storage.Error(errno: errno) {
                 self = .space(e)
                 return
             }
@@ -91,7 +91,7 @@ extension Kernel.Open.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Platform.Error(errno: errno))
+            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
         }
 
         @inlinable
@@ -107,7 +107,7 @@ extension Kernel.Open.Error: CustomStringConvertible {
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.Open.Error {
+    extension Kernel.File.Open.Error {
         @inlinable
         init(windowsError error: DWORD) {
             if let e = Kernel.Path.Resolution.Error(windowsError: error) {
@@ -118,11 +118,11 @@ extension Kernel.Open.Error: CustomStringConvertible {
                 self = .permission(e)
                 return
             }
-            if let e = Kernel.Handle.Error(windowsError: error) {
+            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
                 self = .handle(e)
                 return
             }
-            if let e = Kernel.Space.Error(windowsError: error) {
+            if let e = Kernel.Storage.Error(windowsError: error) {
                 self = .space(e)
                 return
             }
@@ -130,7 +130,7 @@ extension Kernel.Open.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Platform.Error(windowsError: error))
+            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
         }
 
         @inlinable

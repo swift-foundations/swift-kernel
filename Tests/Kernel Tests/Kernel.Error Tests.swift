@@ -91,8 +91,8 @@ extension Kernel.Error.Test.Unit {
 
     @Test("Handle.Error cases are distinct")
     func handleCasesDistinct() {
-        #expect(Kernel.Handle.Error.invalid != Kernel.Handle.Error.limit(.process))
-        #expect(Kernel.Handle.Error.limit(.process) != Kernel.Handle.Error.limit(.system))
+        #expect(Kernel.Descriptor.Validity.Error.invalid != Kernel.Descriptor.Validity.Error.limit(.process))
+        #expect(Kernel.Descriptor.Validity.Error.limit(.process) != Kernel.Descriptor.Validity.Error.limit(.system))
     }
 
     @Test("IO.Error cases are distinct")
@@ -132,7 +132,7 @@ extension Kernel.Error.Test.Unit {
 
     @Test("Space.Error cases are distinct")
     func spaceCasesDistinct() {
-        #expect(Kernel.Space.Error.exhausted != Kernel.Space.Error.quota)
+        #expect(Kernel.Storage.Error.exhausted != Kernel.Storage.Error.quota)
     }
 }
 

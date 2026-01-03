@@ -40,7 +40,7 @@ extension Kernel {
     /// For safe path handling, prefer the `FilePath`-based syscall overloads:
     /// ```swift
     /// let path = FilePath("/tmp/file.txt")
-    /// let fd = try Kernel.Open.open(path: path, mode: .read, options: [], permissions: 0)
+    /// let fd = try Kernel.File.Open.open(path: path, mode: .read, options: [], permissions: 0)
     /// ```
     ///
     /// Only use `Kernel.Path` when you have a pre-validated platform string and need
@@ -79,6 +79,47 @@ extension Kernel.Path {
     }
 }
 
+// MARK: - Owned Platform String
+
+extension Kernel.Path {
+    /// An owned, null-terminated platform string buffer.
+    ///
+    /// This type copies a `FilePath`'s platform string into Kernel-owned storage,
+    /// enabling typed-throwing syscalls without existential error handling.
+    /// The copy happens in a non-throwing closure, and typed-throwing operations
+    /// occur outside the rethrows boundary.
+    @usableFromInline
+    internal struct String: ~Copyable {
+        @usableFromInline
+        let buffer: UnsafeMutableBufferPointer<CInterop.PlatformChar>
+
+        @inlinable
+        init(copying path: FilePath) {
+            var length = 0
+            path.withPlatformString { p in
+                while p[length] != 0 { length += 1 }
+            }
+            let buf = UnsafeMutableBufferPointer<CInterop.PlatformChar>.allocate(capacity: length + 1)
+            path.withPlatformString { p in
+                for i in 0...length {
+                    buf[i] = p[i]
+                }
+            }
+            self.buffer = buf
+        }
+
+        @usableFromInline
+        deinit {
+            buffer.deallocate()
+        }
+
+        @inlinable
+        var pointer: UnsafePointer<CInterop.PlatformChar> {
+            UnsafePointer(buffer.baseAddress!)
+        }
+    }
+}
+
 // MARK: - FilePath Integration
 
 extension Kernel {
@@ -97,7 +138,7 @@ extension Kernel {
         _ path: FilePath,
         _ body: (UnsafePointer<CInterop.PlatformChar>) throws(E) -> R
     ) throws(E) -> R {
-        let ps = Kernel.Platform.String(copying: path)
+        let ps = Kernel.Path.String(copying: path)
         return try body(ps.pointer)
     }
 

@@ -60,7 +60,7 @@ extension Kernel.Permission.Error {
 
 // MARK: - Handle
 
-extension Kernel.Handle.Error {
+extension Kernel.Descriptor.Validity.Error {
     @inlinable
     public init?(errno: Errno) {
         switch errno {
@@ -86,7 +86,7 @@ extension Kernel.Signal.Error {
 
 // MARK: - Blocking
 
-extension Kernel.Blocking.Error {
+extension Kernel.IO.Blocking.Error {
     @inlinable
     public init?(errno: Errno) {
         switch errno {
@@ -98,7 +98,7 @@ extension Kernel.Blocking.Error {
 
 // MARK: - Space
 
-extension Kernel.Space.Error {
+extension Kernel.Storage.Error {
     @inlinable
     public init?(errno: Errno) {
         switch errno {
@@ -153,7 +153,7 @@ extension Kernel.Lock.Error {
 
 // MARK: - Platform (catch-all)
 
-extension Kernel.Platform.Error {
+extension Kernel.Errno.Unmapped.Error {
     /// Creates a platform error from an errno value.
     @inlinable
     public init(errno: Errno) {
@@ -193,7 +193,7 @@ extension Kernel.Permission.Error {
     }
 }
 
-extension Kernel.Handle.Error {
+extension Kernel.Descriptor.Validity.Error {
     @inlinable
     public init?(windowsError error: DWORD) {
         switch Int32(error) {
@@ -204,7 +204,7 @@ extension Kernel.Handle.Error {
     }
 }
 
-extension Kernel.Space.Error {
+extension Kernel.Storage.Error {
     @inlinable
     public init?(windowsError error: DWORD) {
         switch Int32(error) {
@@ -244,7 +244,7 @@ extension Kernel.Lock.Error {
     }
 }
 
-extension Kernel.Platform.Error {
+extension Kernel.Errno.Unmapped.Error {
     /// Creates a platform error from a Windows error code.
     @inlinable
     public init(windowsError error: DWORD) {

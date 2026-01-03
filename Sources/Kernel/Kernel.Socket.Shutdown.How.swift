@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Shutdown {
+extension Kernel.Socket.Shutdown {
     /// Specifies which half of the connection to shut down.
     public enum How: Int32, Sendable {
         /// Shut down the read side of the connection.
@@ -28,7 +28,7 @@ extension Kernel.Shutdown {
 #if os(Windows)
 public import WinSDK
 
-extension Kernel.Shutdown.How {
+extension Kernel.Socket.Shutdown.How {
     /// Converts to Windows SD_* constant.
     @usableFromInline
     internal var windowsValue: Int32 {

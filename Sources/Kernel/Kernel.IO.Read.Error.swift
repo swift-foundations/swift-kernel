@@ -11,21 +11,21 @@
 
 public import SystemPackage
 
-extension Kernel.Read {
+extension Kernel.IO.Read {
     /// Errors that can occur during read operations.
     public enum Error: Swift.Error, Sendable {
-        case handle(Kernel.Handle.Error)
+        case handle(Kernel.Descriptor.Validity.Error)
         case signal(Kernel.Signal.Error)
-        case blocking(Kernel.Blocking.Error)
+        case blocking(Kernel.IO.Blocking.Error)
         case io(Kernel.IO.Error)
         case memory(Kernel.Memory.Error)
-        case platform(Kernel.Platform.Error)
+        case platform(Kernel.Errno.Unmapped.Error)
     }
 }
 
 // MARK: - Equatable
 
-extension Kernel.Read.Error: Equatable {
+extension Kernel.IO.Read.Error: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case (.handle(let l), .handle(let r)): return l == r
@@ -41,7 +41,7 @@ extension Kernel.Read.Error: Equatable {
 
 // MARK: - CustomStringConvertible
 
-extension Kernel.Read.Error: CustomStringConvertible {
+extension Kernel.IO.Read.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .handle(let e): return "handle: \(e)"
@@ -66,10 +66,10 @@ public import Glibc
 public import Musl
 #endif
 
-extension Kernel.Read.Error {
+extension Kernel.IO.Read.Error {
     @inlinable
     init(errno: Errno) {
-        if let e = Kernel.Handle.Error(errno: errno) {
+        if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
             self = .handle(e)
             return
         }
@@ -77,7 +77,7 @@ extension Kernel.Read.Error {
             self = .signal(e)
             return
         }
-        if let e = Kernel.Blocking.Error(errno: errno) {
+        if let e = Kernel.IO.Blocking.Error(errno: errno) {
             self = .blocking(e)
             return
         }
@@ -89,7 +89,7 @@ extension Kernel.Read.Error {
             self = .memory(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(errno: errno))
+        self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
     }
 
     @inlinable
@@ -105,10 +105,10 @@ extension Kernel.Read.Error {
 #if os(Windows)
 public import WinSDK
 
-extension Kernel.Read.Error {
+extension Kernel.IO.Read.Error {
     @inlinable
     init(windowsError error: DWORD) {
-        if let e = Kernel.Handle.Error(windowsError: error) {
+        if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
             self = .handle(e)
             return
         }
@@ -116,7 +116,7 @@ extension Kernel.Read.Error {
             self = .io(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(windowsError: error))
+        self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
     }
 
     @inlinable

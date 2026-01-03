@@ -11,22 +11,22 @@
 
 public import SystemPackage
 
-extension Kernel.Write {
+extension Kernel.IO.Write {
     /// Errors that can occur during write operations.
     public enum Error: Swift.Error, Sendable {
-        case handle(Kernel.Handle.Error)
+        case handle(Kernel.Descriptor.Validity.Error)
         case signal(Kernel.Signal.Error)
-        case blocking(Kernel.Blocking.Error)
+        case blocking(Kernel.IO.Blocking.Error)
         case io(Kernel.IO.Error)
-        case space(Kernel.Space.Error)
+        case space(Kernel.Storage.Error)
         case memory(Kernel.Memory.Error)
-        case platform(Kernel.Platform.Error)
+        case platform(Kernel.Errno.Unmapped.Error)
     }
 }
 
 // MARK: - Equatable
 
-extension Kernel.Write.Error: Equatable {
+extension Kernel.IO.Write.Error: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case (.handle(let l), .handle(let r)): return l == r
@@ -43,7 +43,7 @@ extension Kernel.Write.Error: Equatable {
 
 // MARK: - CustomStringConvertible
 
-extension Kernel.Write.Error: CustomStringConvertible {
+extension Kernel.IO.Write.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .handle(let e): return "handle: \(e)"
@@ -69,10 +69,10 @@ public import Glibc
 public import Musl
 #endif
 
-extension Kernel.Write.Error {
+extension Kernel.IO.Write.Error {
     @inlinable
     init(errno: Errno) {
-        if let e = Kernel.Handle.Error(errno: errno) {
+        if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
             self = .handle(e)
             return
         }
@@ -80,7 +80,7 @@ extension Kernel.Write.Error {
             self = .signal(e)
             return
         }
-        if let e = Kernel.Blocking.Error(errno: errno) {
+        if let e = Kernel.IO.Blocking.Error(errno: errno) {
             self = .blocking(e)
             return
         }
@@ -88,7 +88,7 @@ extension Kernel.Write.Error {
             self = .io(e)
             return
         }
-        if let e = Kernel.Space.Error(errno: errno) {
+        if let e = Kernel.Storage.Error(errno: errno) {
             self = .space(e)
             return
         }
@@ -96,7 +96,7 @@ extension Kernel.Write.Error {
             self = .memory(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(errno: errno))
+        self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
     }
 
     @inlinable
@@ -112,10 +112,10 @@ extension Kernel.Write.Error {
 #if os(Windows)
 public import WinSDK
 
-extension Kernel.Write.Error {
+extension Kernel.IO.Write.Error {
     @inlinable
     init(windowsError error: DWORD) {
-        if let e = Kernel.Handle.Error(windowsError: error) {
+        if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
             self = .handle(e)
             return
         }
@@ -123,11 +123,11 @@ extension Kernel.Write.Error {
             self = .io(e)
             return
         }
-        if let e = Kernel.Space.Error(windowsError: error) {
+        if let e = Kernel.Storage.Error(windowsError: error) {
             self = .space(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(windowsError: error))
+        self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
     }
 
     @inlinable

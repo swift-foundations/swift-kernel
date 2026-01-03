@@ -18,6 +18,37 @@ extension Kernel.System {
     #TestSuites
 }
 
+// MARK: - Path Max Unit Tests
+
+extension Kernel.System.Test.Unit {
+    @Test("pathMax is positive")
+    func pathMaxPositive() {
+        #expect(Kernel.System.pathMax > 0)
+    }
+
+    @Test("pathMax is reasonable")
+    func pathMaxReasonable() {
+        // PATH_MAX should be at least 256 on any platform
+        #expect(Kernel.System.pathMax >= 256)
+        // And not unreasonably large (sanity check)
+        #expect(Kernel.System.pathMax <= 65536)
+    }
+
+    #if os(macOS)
+        @Test("macOS pathMax is 1024")
+        func macOSPathMax() {
+            #expect(Kernel.System.pathMax == 1024)
+        }
+    #endif
+
+    #if os(Linux)
+        @Test("Linux pathMax is typically 4096")
+        func linuxPathMax() {
+            #expect(Kernel.System.pathMax == 4096)
+        }
+    #endif
+}
+
 // MARK: - Page Size Unit Tests
 
 extension Kernel.System.Test.Unit {

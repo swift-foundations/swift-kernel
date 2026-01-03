@@ -15,11 +15,11 @@ extension Kernel.File.System.Stats {
     /// Error type for filesystem statistics operations.
     public enum Error: Swift.Error, Sendable, Equatable {
         case path(Kernel.Path.Resolution.Error)
-        case handle(Kernel.Handle.Error)
+        case handle(Kernel.Descriptor.Validity.Error)
         case permission(Kernel.Permission.Error)
         case memory(Kernel.Memory.Error)
         case io(Kernel.IO.Error)
-        case platform(Kernel.Platform.Error)
+        case platform(Kernel.Errno.Unmapped.Error)
     }
 }
 
@@ -56,7 +56,7 @@ extension Kernel.File.System.Stats.Error: CustomStringConvertible {
                 self = .path(e)
                 return
             }
-            if let e = Kernel.Handle.Error(errno: errno) {
+            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
                 self = .handle(e)
                 return
             }
@@ -72,7 +72,7 @@ extension Kernel.File.System.Stats.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Platform.Error(errno: errno))
+            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
         }
 
         @inlinable
@@ -95,7 +95,7 @@ extension Kernel.File.System.Stats.Error: CustomStringConvertible {
                 self = .path(e)
                 return
             }
-            if let e = Kernel.Handle.Error(windowsError: error) {
+            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
                 self = .handle(e)
                 return
             }
@@ -111,7 +111,7 @@ extension Kernel.File.System.Stats.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Platform.Error(windowsError: error))
+            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
         }
 
         @inlinable

@@ -119,7 +119,7 @@ extension Kernel.Lock.Test.Unit {
 /// Creates a temporary file using Kernel APIs and returns its path and descriptor.
 private func createTempFile(prefix: String) throws -> (path: FilePath, fd: Kernel.Descriptor) {
     let path = Kernel.Temporary.filePath(prefix: prefix)
-    let fd = try Kernel.Open.open(
+    let fd = try Kernel.File.Open.open(
         path: path,
         mode: [.read, .write],
         options: [.create, .truncate],
@@ -128,7 +128,7 @@ private func createTempFile(prefix: String) throws -> (path: FilePath, fd: Kerne
     // Write some data so the file isn't empty (needed for byte-range locking)
     let data = [UInt8](repeating: 0x78, count: 1024)  // 'x' repeated
     _ = try data.withUnsafeBytes { buffer in
-        try Kernel.Write.write(fd, from: buffer)
+        try Kernel.IO.Write.write(fd, from: buffer)
     }
     return (path, fd)
 }

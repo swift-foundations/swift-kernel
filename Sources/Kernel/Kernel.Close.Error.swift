@@ -13,10 +13,10 @@ public import SystemPackage
 
 extension Kernel.Close {
     public enum Error: Swift.Error, Sendable {
-        case handle(Kernel.Handle.Error)
+        case handle(Kernel.Descriptor.Validity.Error)
         case signal(Kernel.Signal.Error)
         case io(Kernel.IO.Error)
-        case platform(Kernel.Platform.Error)
+        case platform(Kernel.Errno.Unmapped.Error)
     }
 }
 
@@ -58,7 +58,7 @@ public import Musl
 extension Kernel.Close.Error {
     @inlinable
     init(errno: Errno) {
-        if let e = Kernel.Handle.Error(errno: errno) {
+        if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
             self = .handle(e)
             return
         }
@@ -70,7 +70,7 @@ extension Kernel.Close.Error {
             self = .io(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(errno: errno))
+        self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
     }
     
     @inlinable
@@ -89,7 +89,7 @@ public import WinSDK
 extension Kernel.Close.Error {
     @inlinable
     init(windowsError error: DWORD) {
-        if let e = Kernel.Handle.Error(windowsError: error) {
+        if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
             self = .handle(e)
             return
         }
@@ -97,7 +97,7 @@ extension Kernel.Close.Error {
             self = .io(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(windowsError: error))
+        self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
     }
     
     @inlinable

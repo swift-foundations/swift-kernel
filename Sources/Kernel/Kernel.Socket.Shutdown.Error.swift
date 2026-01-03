@@ -11,23 +11,23 @@
 
 public import SystemPackage
 
-extension Kernel.Shutdown {
+extension Kernel.Socket.Shutdown {
     /// Errors that can occur during shutdown operations.
     public enum Error: Swift.Error, Sendable {
         /// The descriptor is invalid.
-        case handle(Kernel.Handle.Error)
+        case handle(Kernel.Descriptor.Validity.Error)
 
         /// An I/O error occurred.
         case io(Kernel.IO.Error)
 
         /// A platform-specific error.
-        case platform(Kernel.Platform.Error)
+        case platform(Kernel.Errno.Unmapped.Error)
     }
 }
 
 // MARK: - Equatable
 
-extension Kernel.Shutdown.Error: Equatable {
+extension Kernel.Socket.Shutdown.Error: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case (.handle(let l), .handle(let r)): return l == r
@@ -40,7 +40,7 @@ extension Kernel.Shutdown.Error: Equatable {
 
 // MARK: - CustomStringConvertible
 
-extension Kernel.Shutdown.Error: CustomStringConvertible {
+extension Kernel.Socket.Shutdown.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .handle(let e): return "handle: \(e)"
@@ -62,10 +62,10 @@ public import Glibc
 public import Musl
 #endif
 
-extension Kernel.Shutdown.Error {
+extension Kernel.Socket.Shutdown.Error {
     @inlinable
     init(errno: Errno) {
-        if let e = Kernel.Handle.Error(errno: errno) {
+        if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
             self = .handle(e)
             return
         }
@@ -73,7 +73,7 @@ extension Kernel.Shutdown.Error {
             self = .io(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(errno: errno))
+        self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
     }
 
     @inlinable
@@ -89,10 +89,10 @@ extension Kernel.Shutdown.Error {
 #if os(Windows)
 public import WinSDK
 
-extension Kernel.Shutdown.Error {
+extension Kernel.Socket.Shutdown.Error {
     @inlinable
     init(windowsError error: DWORD) {
-        if let e = Kernel.Handle.Error(windowsError: error) {
+        if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
             self = .handle(e)
             return
         }
@@ -100,7 +100,7 @@ extension Kernel.Shutdown.Error {
             self = .io(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(windowsError: error))
+        self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
     }
 
     @inlinable

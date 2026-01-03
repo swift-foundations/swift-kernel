@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
+extension Kernel.Socket {
     /// Socket shutdown operations.
     public enum Shutdown: Sendable {
 
@@ -28,13 +28,13 @@ public import Glibc
 public import Musl
 #endif
 
-extension Kernel.Shutdown {
+extension Kernel.Socket.Shutdown {
     /// Shuts down part of a full-duplex connection.
     ///
     /// - Parameters:
     ///   - descriptor: The socket descriptor.
     ///   - how: Which half of the connection to shut down.
-    /// - Throws: `Kernel.Shutdown.Error` on failure.
+    /// - Throws: `Kernel.Socket.Shutdown.Error` on failure.
     @inlinable
     public static func shutdown(
         _ descriptor: Kernel.Descriptor,
@@ -61,13 +61,13 @@ extension Kernel.Shutdown {
 #if os(Windows)
 public import WinSDK
 
-extension Kernel.Shutdown {
+extension Kernel.Socket.Shutdown {
     /// Shuts down part of a full-duplex connection.
     ///
     /// - Parameters:
     ///   - descriptor: The socket descriptor.
     ///   - how: Which half of the connection to shut down.
-    /// - Throws: `Kernel.Shutdown.Error` on failure.
+    /// - Throws: `Kernel.Socket.Shutdown.Error` on failure.
     @inlinable
     public static func shutdown(
         _ descriptor: Kernel.Descriptor,

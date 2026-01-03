@@ -25,7 +25,7 @@ extension Kernel {
         case path(Kernel.Path.Resolution.Error)
 
         /// File descriptor/handle errors.
-        case handle(Kernel.Handle.Error)
+        case handle(Kernel.Descriptor.Validity.Error)
 
         /// I/O operation errors.
         /// Note: EOF is NOT an error. read/pread return 0 on EOF.
@@ -41,16 +41,16 @@ extension Kernel {
         case permission(Kernel.Permission.Error)
 
         /// Storage space errors.
-        case space(Kernel.Space.Error)
+        case space(Kernel.Storage.Error)
 
         /// Signal interruption errors.
         case signal(Kernel.Signal.Error)
 
         /// Non-blocking operation errors.
-        case blocking(Kernel.Blocking.Error)
+        case blocking(Kernel.IO.Blocking.Error)
 
         /// Unmapped platform-specific errors.
-        case platform(Kernel.Platform.Error)
+        case platform(Kernel.Errno.Unmapped.Error)
     }
 }
 
@@ -102,10 +102,10 @@ extension Kernel.Error {
             // Try each domain in priority order
             if let e = Kernel.Path.Resolution.Error(errno: errno) { self = .path(e) }
             if let e = Kernel.Permission.Error(errno: errno) { self = .permission(e) }
-            if let e = Kernel.Handle.Error(errno: errno) { self = .handle(e) }
+            if let e = Kernel.Descriptor.Validity.Error(errno: errno) { self = .handle(e) }
             if let e = Kernel.Signal.Error(errno: errno) { self = .signal(e) }
-            if let e = Kernel.Blocking.Error(errno: errno) { self = .blocking(e) }
-            if let e = Kernel.Space.Error(errno: errno) { self = .space(e) }
+            if let e = Kernel.IO.Blocking.Error(errno: errno) { self = .blocking(e) }
+            if let e = Kernel.Storage.Error(errno: errno) { self = .space(e) }
             if let e = Kernel.Memory.Error(errno: errno) { self = .memory(e) }
             if let e = Kernel.IO.Error(errno: errno) { self = .io(e) }
             if let e = Kernel.Lock.Error(errno: errno) { self = .lock(e) }
@@ -118,8 +118,8 @@ extension Kernel.Error {
             let dword = DWORD(code)
             if let e = Kernel.Path.Resolution.Error(windowsError: dword) { self = .path(e) }
             if let e = Kernel.Permission.Error(windowsError: dword) { self = .permission(e) }
-            if let e = Kernel.Handle.Error(windowsError: dword) { self = .handle(e) }
-            if let e = Kernel.Space.Error(windowsError: dword) { self = .space(e) }
+            if let e = Kernel.Descriptor.Validity.Error(windowsError: dword) { self = .handle(e) }
+            if let e = Kernel.Storage.Error(windowsError: dword) { self = .space(e) }
             if let e = Kernel.Memory.Error(windowsError: dword) { self = .memory(e) }
             if let e = Kernel.IO.Error(windowsError: dword) { self = .io(e) }
             if let e = Kernel.Lock.Error(windowsError: dword) { self = .lock(e) }

@@ -143,11 +143,11 @@ extension Kernel.File.Handle.Error {
     }
 }
 
-// MARK: - From Kernel.Read.Error
+// MARK: - From Kernel.IO.Read.Error
 
 extension Kernel.File.Handle.Error {
     /// Creates an IO handle error from a Kernel read error.
-    package init(from error: Kernel.Read.Error, operation: Kernel.File.Handle.Operation) {
+    package init(from error: Kernel.IO.Read.Error, operation: Kernel.File.Handle.Operation) {
         switch error {
         case .handle(let handleError):
             switch handleError {
@@ -173,11 +173,11 @@ extension Kernel.File.Handle.Error {
     }
 }
 
-// MARK: - From Kernel.Write.Error
+// MARK: - From Kernel.IO.Write.Error
 
 extension Kernel.File.Handle.Error {
     /// Creates an IO handle error from a Kernel write error.
-    package init(from error: Kernel.Write.Error, operation: Kernel.File.Handle.Operation) {
+    package init(from error: Kernel.IO.Write.Error, operation: Kernel.File.Handle.Operation) {
         switch error {
         case .handle(let handleError):
             switch handleError {

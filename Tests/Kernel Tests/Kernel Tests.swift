@@ -54,7 +54,7 @@ extension Kernel.Test.Unit {
         let path = Kernel.Temporary.filePath(prefix: "kernel-test")
 
         // Create and open
-        let fd = try Kernel.Open.open(
+        let fd = try Kernel.File.Open.open(
             path: path,
             mode: [.read, .write],
             options: [.create, .truncate],
@@ -79,7 +79,7 @@ extension Kernel.Test.Unit {
         #endif
 
         #expect(throws: (any Error).self) {
-            try Kernel.Open.open(
+            try Kernel.File.Open.open(
                 path: path,
                 mode: [.read],
                 options: [],
@@ -98,7 +98,7 @@ extension Kernel.Test.Unit {
         let testData: [UInt8] = [0x48, 0x65, 0x6C, 0x6C, 0x6F]  // "Hello"
 
         // Create file
-        let fd = try Kernel.Open.open(
+        let fd = try Kernel.File.Open.open(
             path: path,
             mode: [.read, .write],
             options: [.create, .truncate],
@@ -112,14 +112,14 @@ extension Kernel.Test.Unit {
 
         // Write
         let written = try testData.withUnsafeBytes { buffer in
-            try Kernel.Write.write(fd, from: buffer)
+            try Kernel.IO.Write.write(fd, from: buffer)
         }
         #expect(written == testData.count)
 
         // Read using pread (positional read from offset 0)
         var readBuffer = [UInt8](repeating: 0, count: testData.count)
         let bytesRead = try readBuffer.withUnsafeMutableBytes { buffer in
-            try Kernel.Read.pread(fd, into: buffer, at: 0)
+            try Kernel.IO.Read.pread(fd, into: buffer, at: 0)
         }
 
         #expect(bytesRead == testData.count)
@@ -131,7 +131,7 @@ extension Kernel.Test.Unit {
         let path = Kernel.Temporary.filePath(prefix: "kernel-test-eof")
 
         // Create empty file
-        let fd = try Kernel.Open.open(
+        let fd = try Kernel.File.Open.open(
             path: path,
             mode: [.read, .write],
             options: [.create, .truncate],
@@ -146,7 +146,7 @@ extension Kernel.Test.Unit {
         // Read from empty file using pread at offset 0
         var buffer = [UInt8](repeating: 0, count: 100)
         let bytesRead = try buffer.withUnsafeMutableBytes { buf in
-            try Kernel.Read.pread(fd, into: buf, at: 0)
+            try Kernel.IO.Read.pread(fd, into: buf, at: 0)
         }
 
         #expect(bytesRead == 0)  // EOF returns 0, not error
@@ -168,7 +168,7 @@ extension Kernel.Test.EdgeCase {
         var buffer = [UInt8](repeating: 0, count: 10)
         #expect(throws: (any Error).self) {
             try buffer.withUnsafeMutableBytes { buf in
-                try Kernel.Read.read(.invalid, into: buf)
+                try Kernel.IO.Read.read(.invalid, into: buf)
             }
         }
     }
@@ -178,7 +178,7 @@ extension Kernel.Test.EdgeCase {
         let data: [UInt8] = [1, 2, 3]
         #expect(throws: (any Error).self) {
             try data.withUnsafeBytes { buf in
-                try Kernel.Write.write(.invalid, from: buf)
+                try Kernel.IO.Write.write(.invalid, from: buf)
             }
         }
     }

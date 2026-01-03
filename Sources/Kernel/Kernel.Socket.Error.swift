@@ -15,10 +15,10 @@ extension Kernel.Socket {
     /// Errors that can occur during socket operations.
     public enum Error: Swift.Error, Sendable {
         /// The descriptor is invalid.
-        case handle(Kernel.Handle.Error)
+        case handle(Kernel.Descriptor.Validity.Error)
 
         /// A platform-specific error.
-        case platform(Kernel.Platform.Error)
+        case platform(Kernel.Errno.Unmapped.Error)
     }
 }
 
@@ -60,11 +60,11 @@ public import Musl
 extension Kernel.Socket.Error {
     @inlinable
     init(errno: Errno) {
-        if let e = Kernel.Handle.Error(errno: errno) {
+        if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
             self = .handle(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(errno: errno))
+        self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
     }
 
     @inlinable
@@ -83,11 +83,11 @@ public import WinSDK
 extension Kernel.Socket.Error {
     @inlinable
     init(windowsError error: DWORD) {
-        if let e = Kernel.Handle.Error(windowsError: error) {
+        if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
             self = .handle(e)
             return
         }
-        self = .platform(Kernel.Platform.Error(windowsError: error))
+        self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
     }
 
     @inlinable

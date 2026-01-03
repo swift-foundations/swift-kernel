@@ -13,7 +13,7 @@ public import SystemPackage
 
 // MARK: - Read Type
 
-extension Kernel {
+extension Kernel.IO {
     /// Read operations.
     public enum Read: Sendable {
 
@@ -32,14 +32,14 @@ extension Kernel {
         public import Musl
     #endif
 
-    extension Kernel.Read {
+    extension Kernel.IO.Read {
         /// Reads bytes from a file descriptor.
         ///
         /// - Parameters:
         ///   - descriptor: The file descriptor to read from.
         ///   - buffer: The buffer to read into.
         /// - Returns: Number of bytes read. Returns 0 on EOF.
-        /// - Throws: `Kernel.Read.Error` on failure.
+        /// - Throws: `Kernel.IO.Read.Error` on failure.
         @inlinable
         public static func read(
             _ descriptor: Kernel.Descriptor,
@@ -71,7 +71,7 @@ extension Kernel {
         ///   - buffer: The buffer to read into.
         ///   - offset: The file offset to read from.
         /// - Returns: Number of bytes read. Returns 0 on EOF.
-        /// - Throws: `Kernel.Read.Error` on failure.
+        /// - Throws: `Kernel.IO.Read.Error` on failure.
         @inlinable
         public static func pread(
             _ descriptor: Kernel.Descriptor,
@@ -102,14 +102,14 @@ extension Kernel {
 
 // MARK: - Span Adapters
 
-extension Kernel.Read {
+extension Kernel.IO.Read {
     /// Reads bytes from a file descriptor into a mutable span.
     ///
     /// - Parameters:
     ///   - descriptor: The file descriptor to read from.
     ///   - span: The mutable span to read into.
     /// - Returns: Number of bytes read. Returns 0 on EOF.
-    /// - Throws: `Kernel.Read.Error` on failure.
+    /// - Throws: `Kernel.IO.Read.Error` on failure.
     @inlinable
     public static func read(
         _ descriptor: Kernel.Descriptor,
@@ -127,7 +127,7 @@ extension Kernel.Read {
     ///   - span: The mutable span to read into.
     ///   - offset: The file offset to read from.
     /// - Returns: Number of bytes read. Returns 0 on EOF.
-    /// - Throws: `Kernel.Read.Error` on failure.
+    /// - Throws: `Kernel.IO.Read.Error` on failure.
     @inlinable
     public static func pread(
         _ descriptor: Kernel.Descriptor,
@@ -145,7 +145,7 @@ extension Kernel.Read {
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.Read {
+    extension Kernel.IO.Read {
         /// Reads bytes from a file handle.
         @inlinable
         public static func read(

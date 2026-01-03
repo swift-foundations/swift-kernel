@@ -13,7 +13,7 @@ public import SystemPackage
 
 // MARK: - Write Type
 
-extension Kernel {
+extension Kernel.IO {
     /// Write operations.
     public enum Write: Sendable {
 
@@ -32,14 +32,14 @@ extension Kernel {
         public import Musl
     #endif
 
-    extension Kernel.Write {
+    extension Kernel.IO.Write {
         /// Writes bytes to a file descriptor.
         ///
         /// - Parameters:
         ///   - descriptor: The file descriptor to write to.
         ///   - buffer: The buffer to write from.
         /// - Returns: Number of bytes written (may be less than buffer.count).
-        /// - Throws: `Kernel.Write.Error` on failure.
+        /// - Throws: `Kernel.IO.Write.Error` on failure.
         @inlinable
         public static func write(
             _ descriptor: Kernel.Descriptor,
@@ -71,7 +71,7 @@ extension Kernel {
         ///   - buffer: The buffer to write from.
         ///   - offset: The file offset to write at.
         /// - Returns: Number of bytes written (may be less than buffer.count).
-        /// - Throws: `Kernel.Write.Error` on failure.
+        /// - Throws: `Kernel.IO.Write.Error` on failure.
         @inlinable
         public static func pwrite(
             _ descriptor: Kernel.Descriptor,
@@ -102,14 +102,14 @@ extension Kernel {
 
 // MARK: - Span Adapters
 
-extension Kernel.Write {
+extension Kernel.IO.Write {
     /// Writes bytes from a span to a file descriptor.
     ///
     /// - Parameters:
     ///   - descriptor: The file descriptor to write to.
     ///   - span: The span containing bytes to write.
     /// - Returns: Number of bytes written.
-    /// - Throws: `Kernel.Write.Error` on failure.
+    /// - Throws: `Kernel.IO.Write.Error` on failure.
     @inlinable
     public static func write(
         _ descriptor: Kernel.Descriptor,
@@ -127,7 +127,7 @@ extension Kernel.Write {
     ///   - span: The span containing bytes to write.
     ///   - offset: The file offset to write at.
     /// - Returns: Number of bytes written.
-    /// - Throws: `Kernel.Write.Error` on failure.
+    /// - Throws: `Kernel.IO.Write.Error` on failure.
     @inlinable
     public static func pwrite(
         _ descriptor: Kernel.Descriptor,
@@ -145,7 +145,7 @@ extension Kernel.Write {
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.Write {
+    extension Kernel.IO.Write {
         /// Writes bytes to a file handle.
         @inlinable
         public static func write(
