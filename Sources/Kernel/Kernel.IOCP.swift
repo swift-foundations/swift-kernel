@@ -29,16 +29,25 @@
         /// Errors from IOCP operations.
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
             /// Failed to create IOCP.
-            case createFailed(win32: DWORD)
+            case create(win32: DWORD)
 
             /// Failed to associate handle with IOCP.
-            case associateFailed(win32: DWORD)
+            case associate(win32: DWORD)
 
             /// Failed to dequeue completions.
-            case dequeueFailed(win32: DWORD)
+            case dequeue(win32: DWORD)
 
             /// Failed to post completion.
-            case postFailed(win32: DWORD)
+            case post(win32: DWORD)
+
+            /// Failed to read.
+            case read(win32: DWORD)
+
+            /// Failed to write.
+            case write(win32: DWORD)
+
+            /// Failed to get result.
+            case result(win32: DWORD)
 
             /// Poll timed out.
             case timeout
@@ -48,14 +57,20 @@
     extension Kernel.IOCP.Error: CustomStringConvertible {
         public var description: String {
             switch self {
-            case .createFailed(let code):
+            case .create(let code):
                 return "CreateIoCompletionPort failed (error: \(code))"
-            case .associateFailed(let code):
+            case .associate(let code):
                 return "associate failed (error: \(code))"
-            case .dequeueFailed(let code):
+            case .dequeue(let code):
                 return "GetQueuedCompletionStatus failed (error: \(code))"
-            case .postFailed(let code):
+            case .post(let code):
                 return "PostQueuedCompletionStatus failed (error: \(code))"
+            case .read(let code):
+                return "ReadFile failed (error: \(code))"
+            case .write(let code):
+                return "WriteFile failed (error: \(code))"
+            case .result(let code):
+                return "GetOverlappedResult failed (error: \(code))"
             case .timeout:
                 return "operation timed out"
             }
@@ -66,14 +81,20 @@
         /// Converts this IOCP error to a `Kernel.Error`.
         public var asKernelError: Kernel.Error {
             switch self {
-            case .createFailed(let code):
-                return .platform(code: Int32(code), message: "CreateIoCompletionPort failed")
-            case .associateFailed(let code):
-                return .platform(code: Int32(code), message: "associate failed")
-            case .dequeueFailed(let code):
-                return .platform(code: Int32(code), message: "GetQueuedCompletionStatus failed")
-            case .postFailed(let code):
-                return .platform(code: Int32(code), message: "PostQueuedCompletionStatus failed")
+            case .create(let code):
+                return .platform(code: Int32(code))
+            case .associate(let code):
+                return .platform(code: Int32(code))
+            case .dequeue(let code):
+                return .platform(code: Int32(code))
+            case .post(let code):
+                return .platform(code: Int32(code))
+            case .read(let code):
+                return .platform(code: Int32(code))
+            case .write(let code):
+                return .platform(code: Int32(code))
+            case .result(let code):
+                return .platform(code: Int32(code))
             case .timeout:
                 return .resource(.blocked)
             }
@@ -209,7 +230,7 @@
         /// - Parameter concurrentThreads: Maximum number of threads allowed to
         ///   concurrently process completions. Pass 0 to use the number of CPUs.
         /// - Returns: The IOCP handle.
-        /// - Throws: `Error.createFailed` if creation fails.
+        /// - Throws: `Error.create` if creation fails.
         @inlinable
         public static func create(
             concurrentThreads: UInt32 = 0
@@ -221,7 +242,7 @@
                 DWORD(concurrentThreads)
             )
             guard let handle, handle != INVALID_HANDLE_VALUE else {
-                throw .createFailed(win32: GetLastError())
+                throw .create(win32: GetLastError())
             }
             return Kernel.Descriptor(rawValue: handle)
         }
@@ -234,7 +255,7 @@
         ///   - port: The IOCP handle.
         ///   - fileHandle: The file handle to associate.
         ///   - completionKey: Application-defined value returned with completions.
-        /// - Throws: `Error.associateFailed` if association fails.
+        /// - Throws: `Error.associate` if association fails.
         @inlinable
         public static func associate(
             _ port: Kernel.Descriptor,
@@ -248,7 +269,7 @@
                 0
             )
             guard result != nil else {
-                throw .associateFailed(win32: GetLastError())
+                throw .associate(win32: GetLastError())
             }
         }
 
@@ -260,7 +281,7 @@
             ///   - port: The IOCP handle.
             ///   - timeout: Timeout in milliseconds (`INFINITE` = 0xFFFFFFFF).
             /// - Returns: Tuple of (bytes transferred, completion key, overlapped pointer).
-            /// - Throws: `Error.timeout` on timeout, `Error.dequeueFailed` on failure.
+            /// - Throws: `Error.timeout` on timeout, `Error.dequeue` on failure.
             @inlinable
             public static func single(
                 _ port: Kernel.Descriptor,
@@ -283,7 +304,7 @@
                     if error == WAIT_TIMEOUT {
                         throw .timeout
                     }
-                    throw .dequeueFailed(win32: error)
+                    throw .dequeue(win32: error)
                 }
 
                 return (bytes, CompletionKey(rawValue: key), overlapped)
@@ -299,7 +320,7 @@
             ///   - entries: Buffer for completion entries.
             ///   - timeout: Timeout in milliseconds.
             /// - Returns: Number of entries dequeued (0 on timeout).
-            /// - Throws: `Error.dequeueFailed` on failure.
+            /// - Throws: `Error.dequeue` on failure.
             @inlinable
             public static func batch(
                 _ port: Kernel.Descriptor,
@@ -323,7 +344,7 @@
                     if error == WAIT_TIMEOUT {
                         return 0
                     }
-                    throw .dequeueFailed(win32: error)
+                    throw .dequeue(win32: error)
                 }
 
                 return Int(removed)
@@ -340,7 +361,7 @@
         ///   - bytesTransferred: Number of bytes to report.
         ///   - completionKey: The completion key to return.
         ///   - overlapped: The overlapped pointer to return (can be nil).
-        /// - Throws: `Error.postFailed` on failure.
+        /// - Throws: `Error.post` on failure.
         @inlinable
         public static func post(
             _ port: Kernel.Descriptor,
@@ -355,7 +376,7 @@
                 overlapped
             )
             guard result else {
-                throw .postFailed(win32: GetLastError())
+                throw .post(win32: GetLastError())
             }
         }
 
@@ -412,7 +433,7 @@
         ///   - buffer: The buffer to read into.
         ///   - overlapped: The overlapped structure for this operation.
         /// - Returns: `.pending` if async, `.completed(bytes:)` if sync completion.
-        /// - Throws: `Error` on failure (excluding ERROR_IO_PENDING).
+        /// - Throws: `Error.read` on failure (excluding ERROR_IO_PENDING).
         @inlinable
         public static func read(
             _ handle: HANDLE,
@@ -437,7 +458,7 @@
                 return .pending
             }
 
-            throw .readFailed(win32: error)
+            throw .read(win32: error)
         }
 
         /// Initiates an overlapped write operation.
@@ -447,7 +468,7 @@
         ///   - buffer: The buffer to write from.
         ///   - overlapped: The overlapped structure for this operation.
         /// - Returns: `.pending` if async, `.completed(bytes:)` if sync completion.
-        /// - Throws: `Error` on failure (excluding ERROR_IO_PENDING).
+        /// - Throws: `Error.write` on failure (excluding ERROR_IO_PENDING).
         @inlinable
         public static func write(
             _ handle: HANDLE,
@@ -472,7 +493,7 @@
                 return .pending
             }
 
-            throw .writeFailed(win32: error)
+            throw .write(win32: error)
         }
 
         /// Gets the result of a completed overlapped operation.
@@ -482,7 +503,7 @@
         ///   - overlapped: The overlapped structure.
         ///   - wait: If `true`, blocks until the operation completes.
         /// - Returns: The number of bytes transferred.
-        /// - Throws: `Error` on failure.
+        /// - Throws: `Error.result` on failure.
         @inlinable
         public static func result(
             _ handle: HANDLE,
@@ -501,7 +522,7 @@
                 return bytesTransferred
             }
 
-            throw .resultFailed(win32: GetLastError())
+            throw .result(win32: GetLastError())
         }
 
     }
@@ -515,21 +536,6 @@
         @inlinable
         public static func last() -> DWORD {
             GetLastError()
-        }
-
-        /// ReadFile failed.
-        public static func readFailed(win32: DWORD) -> Self {
-            .dequeueFailed(win32: win32)  // Reuse existing case for now
-        }
-
-        /// WriteFile failed.
-        public static func writeFailed(win32: DWORD) -> Self {
-            .dequeueFailed(win32: win32)  // Reuse existing case for now
-        }
-
-        /// GetOverlappedResult failed.
-        public static func resultFailed(win32: DWORD) -> Self {
-            .dequeueFailed(win32: win32)  // Reuse existing case for now
         }
     }
 

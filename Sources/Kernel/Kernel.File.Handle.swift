@@ -179,10 +179,11 @@ extension Kernel.File.Handle {
     ///
     /// - Parameter body: A closure that receives the descriptor.
     /// - Returns: The value returned by `body`.
+    /// - Throws: Any error thrown by `body`.
     @inlinable
-    public func withDescriptor<T>(
-        _ body: (Kernel.File.Descriptor) throws -> T
-    ) rethrows -> T {
+    public func withDescriptor<T, E: Swift.Error>(
+        _ body: (Kernel.File.Descriptor) throws(E) -> T
+    ) throws(E) -> T {
         try body(descriptor)
     }
 }

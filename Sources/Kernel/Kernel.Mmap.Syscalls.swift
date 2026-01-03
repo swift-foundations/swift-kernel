@@ -33,7 +33,7 @@
         ///   - fd: File descriptor to map, or -1 for anonymous.
         ///   - offset: Offset into the file (must be page-aligned).
         /// - Returns: Pointer to the mapped region.
-        /// - Throws: `Error.mapFailed` on failure.
+        /// - Throws: `Error.map` on failure.
         @inlinable
         public static func map(
             addr: UnsafeMutableRawPointer? = nil,
@@ -44,7 +44,7 @@
             offset: Int64 = 0
         ) throws(Error) -> UnsafeMutableRawPointer {
             guard length > 0 else {
-                throw .invalidArgument("length must be > 0")
+                throw .invalid(.length)
             }
 
             let result = mmap(
@@ -57,7 +57,7 @@
             )
 
             guard result != MAP_FAILED else {
-                throw .mapFailed(errno: errno)
+                throw .map(errno: errno)
             }
 
             return result!
@@ -68,7 +68,7 @@
         /// - Parameters:
         ///   - addr: The base address of the mapping.
         ///   - length: The length of the mapping.
-        /// - Throws: `Error.unmapFailed` on failure.
+        /// - Throws: `Error.unmap` on failure.
         @inlinable
         public static func unmap(
             addr: UnsafeMutableRawPointer,
@@ -76,7 +76,7 @@
         ) throws(Error) {
             let result = munmap(addr, length)
             guard result == 0 else {
-                throw .unmapFailed(errno: errno)
+                throw .unmap(errno: errno)
             }
         }
 
@@ -86,7 +86,7 @@
         ///   - addr: The base address of the region.
         ///   - length: The length of the region.
         ///   - flags: Sync flags (sync, async, invalidate).
-        /// - Throws: `Error.syncFailed` on failure.
+        /// - Throws: `Error.sync` on failure.
         @inlinable
         public static func sync(
             addr: UnsafeMutableRawPointer,
@@ -95,7 +95,7 @@
         ) throws(Error) {
             let result = msync(addr, length, flags.rawValue)
             guard result == 0 else {
-                throw .syncFailed(errno: errno)
+                throw .sync(errno: errno)
             }
         }
 
@@ -105,7 +105,7 @@
         ///   - addr: The base address (must be page-aligned).
         ///   - length: The length of the region.
         ///   - protection: The new protection flags.
-        /// - Throws: `Error.protectFailed` on failure.
+        /// - Throws: `Error.protect` on failure.
         @inlinable
         public static func protect(
             addr: UnsafeMutableRawPointer,
@@ -114,7 +114,7 @@
         ) throws(Error) {
             let result = mprotect(addr, length, protection.rawValue)
             guard result == 0 else {
-                throw .protectFailed(errno: errno)
+                throw .protect(errno: errno)
             }
         }
 
@@ -179,7 +179,7 @@
             CloseHandle(mapping.mappingHandle)
 
             guard unmapResult else {
-                throw .windows(code: GetLastError(), operation: "UnmapViewOfFile")
+                throw .windows(code: GetLastError(), operation: .unmapViewOfFile)
             }
         }
 
@@ -195,7 +195,7 @@
         ) throws(Error) {
             let result = FlushViewOfFile(addr, SIZE_T(length))
             guard result else {
-                throw .windows(code: GetLastError(), operation: "FlushViewOfFile")
+                throw .windows(code: GetLastError(), operation: .flushViewOfFile)
             }
         }
 
@@ -219,7 +219,7 @@
                 &oldProtection
             )
             guard result else {
-                throw .windows(code: GetLastError(), operation: "VirtualProtect")
+                throw .windows(code: GetLastError(), operation: .virtualProtect)
             }
         }
 

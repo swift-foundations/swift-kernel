@@ -35,13 +35,13 @@
         /// Errors from epoll operations.
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
             /// Failed to create epoll instance.
-            case createFailed(errno: Int32)
+            case create(errno: Int32)
 
             /// Failed to control epoll (add/modify/delete).
-            case ctlFailed(errno: Int32)
+            case ctl(errno: Int32)
 
             /// Failed to wait for events.
-            case waitFailed(errno: Int32)
+            case wait(errno: Int32)
 
             /// Operation was interrupted by a signal.
             case interrupted
@@ -51,11 +51,11 @@
     extension Kernel.Epoll.Error: CustomStringConvertible {
         public var description: String {
             switch self {
-            case .createFailed(let errno):
+            case .create(let errno):
                 return "epoll_create1 failed (errno: \(errno))"
-            case .ctlFailed(let errno):
+            case .ctl(let errno):
                 return "epoll_ctl failed (errno: \(errno))"
-            case .waitFailed(let errno):
+            case .wait(let errno):
                 return "epoll_wait failed (errno: \(errno))"
             case .interrupted:
                 return "operation interrupted"
@@ -214,12 +214,12 @@
         ///
         /// - Parameter flags: Flags for the new epoll instance.
         /// - Returns: A file descriptor for the new epoll instance.
-        /// - Throws: `Error.createFailed` if creation fails.
+        /// - Throws: `Error.create` if creation fails.
         @inlinable
         public static func create(flags: CreateFlags = .cloexec) throws(Error) -> Kernel.Descriptor {
             let epfd = epoll_create1(flags.rawValue)
             guard epfd >= 0 else {
-                throw .createFailed(errno: errno)
+                throw .create(errno: errno)
             }
             return Kernel.Descriptor(rawValue: epfd)
         }
@@ -231,7 +231,7 @@
         ///   - op: The operation to perform.
         ///   - fd: The target file descriptor.
         ///   - event: The event structure (required for add/modify, ignored for delete).
-        /// - Throws: `Error.ctlFailed` if the operation fails.
+        /// - Throws: `Error.ctl` if the operation fails.
         @inlinable
         public static func ctl(
             _ epfd: Kernel.Descriptor,
@@ -246,7 +246,7 @@
                 result = epoll_ctl(epfd.rawValue, op.rawValue, fd.rawValue, nil)
             }
             guard result == 0 else {
-                throw .ctlFailed(errno: errno)
+                throw .ctl(errno: errno)
             }
         }
 
@@ -259,7 +259,7 @@
         ///   - events: Buffer for returned events.
         ///   - timeout: Timeout in milliseconds (-1 for infinite, 0 for immediate).
         /// - Returns: Number of events written to buffer, or 0 on timeout.
-        /// - Throws: `Error.waitFailed` on failure, `Error.interrupted` on EINTR.
+        /// - Throws: `Error.wait` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func wait(
             _ epfd: Kernel.Descriptor,
@@ -280,7 +280,7 @@
                     if err == EINTR {
                         return .failure(.interrupted)
                     }
-                    return .failure(.waitFailed(errno: err))
+                    return .failure(.wait(errno: err))
                 }
 
                 // Convert C events to Swift events
@@ -301,7 +301,7 @@
         ///   - events: Buffer for returned events.
         ///   - timeout: Timeout duration, or `nil` for infinite.
         /// - Returns: Number of events written to buffer, or 0 on timeout.
-        /// - Throws: `Error.waitFailed` on failure, `Error.interrupted` on EINTR.
+        /// - Throws: `Error.wait` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func wait(
             _ epfd: Kernel.Descriptor,

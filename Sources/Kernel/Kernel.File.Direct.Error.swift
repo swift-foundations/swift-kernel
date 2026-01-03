@@ -45,7 +45,7 @@ extension Kernel.File.Direct {
         case invalidLength(length: Int, requiredMultiple: Int)
 
         /// Failed to enable or disable cache bypass mode.
-        case modeChangeFailed
+        case modeChange
 
         /// The file handle is not valid or not open for the requested operation.
         case invalidHandle
@@ -68,7 +68,7 @@ extension Kernel.File.Direct.Error: CustomStringConvertible {
             return "File offset \(offset) not aligned to \(required) bytes"
         case .invalidLength(let length, let requiredMultiple):
             return "Length \(length) is not a multiple of \(requiredMultiple)"
-        case .modeChangeFailed:
+        case .modeChange:
             return "Failed to change cache mode"
         case .invalidHandle:
             return "Invalid file handle"
@@ -97,14 +97,14 @@ extension Kernel.File.Direct.Error {
     }
 }
 
-// MARK: - Syscall (Package-Internal Raw Error)
+// MARK: - Syscall
 
 extension Kernel.File.Direct.Error {
     /// Raw syscall-level error with platform-specific details.
     ///
     /// This type captures the exact errno/win32 error code from syscalls.
     /// It is translated to the semantic `Kernel.File.Direct.Error` at API boundaries.
-    public enum Syscall: Swift.Error, Sendable, Equatable {
+    package enum Syscall: Swift.Error, Sendable, Equatable {
         #if !os(Windows)
             /// POSIX syscall failure with errno.
             case posix(errno: Int32, operation: Operation)

@@ -79,11 +79,14 @@ extension Kernel.File.Clone {
     }
 }
 
-// MARK: - Internal Syscall Error
+// MARK: - Syscall Error
 
-extension Kernel.File.Clone {
-    /// Internal syscall-level errors for clone operations.
-    public enum SyscallError: Swift.Error, Sendable {
+extension Kernel.File.Clone.Error {
+    /// Raw syscall-level errors for clone operations.
+    ///
+    /// This type captures the exact errno/win32 error code from syscalls.
+    /// It is translated to the semantic `Kernel.File.Clone.Error` at API boundaries.
+    package enum Syscall: Swift.Error, Sendable {
         #if !os(Windows)
             case posix(errno: Int32, operation: Operation)
         #endif
@@ -93,42 +96,15 @@ extension Kernel.File.Clone {
         #endif
 
         case notSupported(operation: Operation)
-
-        public enum Operation: String, Sendable {
-            case clonefile
-            case copyfile
-            case ficlone
-            case copyFileRange
-            case duplicateExtents
-            case statfs
-            case stat
-            case copy
-        }
     }
 }
 
 // MARK: - Error Conversion
 
-extension Kernel.File.Clone.Error.Operation {
-    /// Creates a public operation from an internal syscall operation.
-    public init(from syscallOp: Kernel.File.Clone.SyscallError.Operation) {
-        switch syscallOp {
-        case .clonefile: self = .clonefile
-        case .copyfile: self = .copyfile
-        case .ficlone: self = .ficlone
-        case .copyFileRange: self = .copyFileRange
-        case .duplicateExtents: self = .duplicateExtents
-        case .statfs: self = .statfs
-        case .stat: self = .stat
-        case .copy: self = .copy
-        }
-    }
-}
-
 extension Kernel.File.Clone.Error {
-    /// Creates a public error from a syscall error.
-    public init(from syscallError: Kernel.File.Clone.SyscallError) {
-        switch syscallError {
+    /// Creates a semantic error from a raw syscall error.
+    package init(from syscall: Syscall) {
+        switch syscall {
         case .notSupported:
             self = .notSupported
 
@@ -148,7 +124,7 @@ extension Kernel.File.Clone.Error {
                 case ENOTSUP, EOPNOTSUPP:
                     self = .notSupported
                 default:
-                    self = .platform(code: errno, operation: Operation(from: operation))
+                    self = .platform(code: errno, operation: operation)
                 }
         #endif
 
@@ -164,7 +140,7 @@ extension Kernel.File.Clone.Error {
                 case 17:  // ERROR_NOT_SAME_DEVICE
                     self = .crossDevice
                 default:
-                    self = .platform(code: Int32(code), operation: Operation(from: operation))
+                    self = .platform(code: Int32(code), operation: operation)
                 }
         #endif
         }

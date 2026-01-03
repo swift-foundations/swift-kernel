@@ -38,11 +38,11 @@ extension Kernel.Mmap {
             copyOnWrite: Bool = false
         ) throws(Kernel.Mmap.Error) -> Kernel.Mmap.WindowsMapping {
             guard length > 0 else {
-                throw .invalidArgument("length must be > 0")
+                throw .invalid(.length)
             }
 
             guard fileHandle != INVALID_HANDLE_VALUE else {
-                throw .invalidArgument("invalid file handle")
+                throw .windows(code: DWORD(ERROR_INVALID_HANDLE), operation: .createFileMapping)
             }
 
             var pageProtection = protection.windowsPageProtection
@@ -68,7 +68,7 @@ extension Kernel.Mmap {
             )
 
             guard let mappingHandle, mappingHandle != INVALID_HANDLE_VALUE else {
-                throw .windows(code: GetLastError(), operation: "CreateFileMapping")
+                throw .windows(code: GetLastError(), operation: .createFileMapping)
             }
 
             var access = protection.windowsFileMapAccess
@@ -89,7 +89,7 @@ extension Kernel.Mmap {
 
             guard let address = viewAddress else {
                 CloseHandle(mappingHandle)
-                throw .windows(code: GetLastError(), operation: "MapViewOfFile")
+                throw .windows(code: GetLastError(), operation: .mapViewOfFile)
             }
 
             return Kernel.Mmap.WindowsMapping(baseAddress: address, mappingHandle: mappingHandle)

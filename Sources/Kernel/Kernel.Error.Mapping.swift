@@ -155,9 +155,9 @@
 
     extension Kernel.Platform.Error {
         /// Creates a platform error from an errno value.
-        /// Not inlinable because strerror is not public.
+        @inlinable
         public init(errno: Errno) {
-            self = .unmapped(code: errno.rawValue, message: String(cString: strerror(errno.rawValue)))
+            self = .unmapped(code: errno.rawValue)
         }
     }
 

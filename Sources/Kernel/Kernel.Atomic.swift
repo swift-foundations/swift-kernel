@@ -119,8 +119,9 @@ extension Kernel.Atomic {
     ///   For single-producer/single-consumer scenarios with proper data
     ///   dependencies, this is sufficient.
     @inline(__always)
+    @usableFromInline
     @_optimize(none)
-    private static func _compilerBarrier<T>(_ value: T) {
+    internal static func _compilerBarrier<T>(_ value: T) {
         // The @_optimize(none) attribute prevents the compiler from
         // optimizing away or reordering operations around this call
     }

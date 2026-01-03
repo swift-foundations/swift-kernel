@@ -20,22 +20,8 @@ extension Kernel {
         public enum Error: Swift.Error, Sendable, Hashable {
             /// Unmapped platform error code.
             ///
-            /// - Parameters:
-            ///   - code: The raw error code (errno on POSIX, GetLastError() on Windows).
-            ///   - message: Human-readable description from `strerror`/`FormatMessage`.
-            case unmapped(code: Int32, message: String)
-        }
-    }
-}
-
-// MARK: - Equatable
-
-extension Kernel.Platform.Error: Equatable {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        switch (lhs, rhs) {
-        case (.unmapped(let lcode, _), .unmapped(let rcode, _)):
-            // Compare by code only - messages may vary by locale
-            return lcode == rcode
+            /// - Parameter code: The raw error code (errno on POSIX, GetLastError() on Windows).
+            case unmapped(code: Int32)
         }
     }
 }
@@ -45,8 +31,8 @@ extension Kernel.Platform.Error: Equatable {
 extension Kernel.Platform.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .unmapped(let code, let message):
-            return "platform error \(code): \(message)"
+        case .unmapped(let code):
+            return "platform error \(code)"
         }
     }
 }

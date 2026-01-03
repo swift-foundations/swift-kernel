@@ -15,13 +15,13 @@
         /// Errors from io_uring operations.
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
             /// Failed to create io_uring instance.
-            case setupFailed(errno: Int32)
+            case setup(errno: Int32)
 
             /// Failed to submit/wait (io_uring_enter).
-            case enterFailed(errno: Int32)
+            case enter(errno: Int32)
 
             /// Failed to register resources.
-            case registerFailed(errno: Int32)
+            case register(errno: Int32)
 
             /// Operation was interrupted by a signal.
             case interrupted
@@ -31,11 +31,11 @@
     extension Kernel.IOUring.Error: CustomStringConvertible {
         public var description: String {
             switch self {
-            case .setupFailed(let errno):
+            case .setup(let errno):
                 return "io_uring_setup failed (errno: \(errno))"
-            case .enterFailed(let errno):
+            case .enter(let errno):
                 return "io_uring_enter failed (errno: \(errno))"
-            case .registerFailed(let errno):
+            case .register(let errno):
                 return "io_uring_register failed (errno: \(errno))"
             case .interrupted:
                 return "operation interrupted"
@@ -51,12 +51,12 @@
         /// Maps to semantic cases where possible, falls back to `.platform` otherwise.
         public var asKernelError: Kernel.Error {
             switch self {
-            case .setupFailed(let errno):
-                return .platform(code: errno, message: "io_uring_setup failed")
-            case .enterFailed(let errno):
-                return .platform(code: errno, message: "io_uring_enter failed")
-            case .registerFailed(let errno):
-                return .platform(code: errno, message: "io_uring_register failed")
+            case .setup(let errno):
+                return .platform(code: errno)
+            case .enter(let errno):
+                return .platform(code: errno)
+            case .register(let errno):
+                return .platform(code: errno)
             case .interrupted:
                 return .resource(.interrupted)
             }

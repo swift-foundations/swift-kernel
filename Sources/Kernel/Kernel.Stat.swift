@@ -15,20 +15,6 @@ extension Kernel {
     /// This is a minimal, cross-platform representation of file metadata.
     /// Platform-specific fields are normalized to common types.
     public struct Stat: Sendable, Equatable {
-        // MARK: - Error Type
-
-        /// Errors that can occur during stat operations.
-        public enum Error: Swift.Error, Sendable, Equatable {
-            /// The file descriptor or handle is invalid.
-            case handle(Kernel.Handle.Error)
-
-            /// An I/O error occurred while reading file metadata.
-            case io(Kernel.IO.Error)
-
-            /// A platform-specific error that doesn't map to a semantic case.
-            case platform(Kernel.Platform.Error)
-        }
-
         /// File size in bytes.
         public let size: Int64
 
@@ -106,64 +92,6 @@ extension Kernel {
             self.accessTime = accessTime
             self.modificationTime = modificationTime
             self.changeTime = changeTime
-        }
-
-        /// File type.
-        public enum Kind: Sendable, Equatable, Hashable {
-            /// Regular file.
-            case regular
-
-            /// Directory.
-            case directory
-
-            /// Symbolic link.
-            case link(Link)
-
-            /// Device (block or character, POSIX only).
-            case device(Device)
-
-            /// Named pipe/FIFO (POSIX only).
-            case fifo
-
-            /// Socket (POSIX only).
-            case socket
-
-            /// Unknown or unsupported file type.
-            case unknown
-
-            /// Link types.
-            public enum Link: Sendable, Equatable, Hashable {
-                /// Symbolic link.
-                case symbolic
-
-                /// Junction or mount point (Windows only).
-                ///
-                /// On Windows, junctions and mount points are reparse points with
-                /// `IO_REPARSE_TAG_MOUNT_POINT`. They behave like directory symlinks
-                /// but have different semantics (junctions are always absolute paths).
-                case junction
-            }
-
-            /// Device types.
-            public enum Device: Sendable, Equatable, Hashable {
-                /// Block device.
-                case block
-
-                /// Character device.
-                case character
-            }
-        }
-    }
-}
-
-// MARK: - Stat.Error CustomStringConvertible
-
-extension Kernel.Stat.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .handle(let e): return "handle: \(e)"
-        case .io(let e): return "io: \(e)"
-        case .platform(let e): return "\(e)"
         }
     }
 }

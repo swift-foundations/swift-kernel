@@ -16,32 +16,32 @@ extension Kernel.Thread {
         ///
         /// - On POSIX: The return value from `pthread_create` (e.g., EAGAIN, EPERM).
         /// - On Windows: The value from `GetLastError()`.
-        case createFailed(code: Int32)
+        case create(code: Int32)
 
         /// Thread join failed.
-        case joinFailed(code: Int32)
+        case join(code: Int32)
 
         /// Thread detach failed.
-        case detachFailed(code: Int32)
+        case detach(code: Int32)
     }
 }
 
 extension Kernel.Thread.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .createFailed(let code):
+        case .create(let code):
             #if os(Windows)
                 return "CreateThread failed with error code \(code)"
             #else
                 return "pthread_create failed with error code \(code)"
             #endif
-        case .joinFailed(let code):
+        case .join(let code):
             #if os(Windows)
                 return "WaitForSingleObject failed with error code \(code)"
             #else
                 return "pthread_join failed with error code \(code)"
             #endif
-        case .detachFailed(let code):
+        case .detach(let code):
             #if os(Windows)
                 return "CloseHandle failed with error code \(code)"
             #else

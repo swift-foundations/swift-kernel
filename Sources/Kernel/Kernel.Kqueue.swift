@@ -29,10 +29,10 @@
         /// Errors from kqueue operations.
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
             /// Failed to create kqueue.
-            case createFailed(errno: Int32)
+            case create(errno: Int32)
 
             /// Failed to register/modify events.
-            case keventFailed(errno: Int32)
+            case kevent(errno: Int32)
 
             /// Operation was interrupted by a signal.
             case interrupted
@@ -42,9 +42,9 @@
     extension Kernel.Kqueue.Error: CustomStringConvertible {
         public var description: String {
             switch self {
-            case .createFailed(let errno):
+            case .create(let errno):
                 return "kqueue creation failed (errno: \(errno))"
-            case .keventFailed(let errno):
+            case .kevent(let errno):
                 return "kevent failed (errno: \(errno))"
             case .interrupted:
                 return "operation interrupted"
@@ -275,12 +275,12 @@
         /// Creates a new kqueue descriptor.
         ///
         /// - Returns: A file descriptor for the new kqueue.
-        /// - Throws: `Error.createFailed` if kqueue creation fails.
+        /// - Throws: `Error.create` if kqueue creation fails.
         @inlinable
         public static func create() throws(Error) -> Kernel.Descriptor {
             let kq = Darwin.kqueue()
             guard kq >= 0 else {
-                throw .createFailed(errno: errno)
+                throw .create(errno: errno)
             }
             return Kernel.Descriptor(rawValue: kq)
         }
@@ -300,7 +300,7 @@
         ///   - nevents: Size of eventlist buffer.
         ///   - timeout: Timeout for waiting, or `nil` for infinite.
         /// - Returns: Number of events placed in eventlist.
-        /// - Throws: `Error.keventFailed` on failure, `Error.interrupted` on EINTR.
+        /// - Throws: `Error.kevent` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func kevent(
             _ kq: Kernel.Descriptor,
@@ -316,7 +316,7 @@
                 if err == EINTR {
                     throw .interrupted
                 }
-                throw .keventFailed(errno: err)
+                throw .kevent(errno: err)
             }
             return Int(result)
         }
@@ -331,7 +331,7 @@
         ///   - eventlist: Buffer for returned events.
         ///   - timeout: Timeout for waiting, or `nil` for infinite.
         /// - Returns: Number of events placed in eventlist.
-        /// - Throws: `Error.keventFailed` on failure, `Error.interrupted` on EINTR.
+        /// - Throws: `Error.kevent` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func kevent(
             _ kq: Kernel.Descriptor,
@@ -356,7 +356,7 @@
         /// - Parameters:
         ///   - kq: The kqueue descriptor.
         ///   - changelist: Events to register/modify.
-        /// - Throws: `Error.keventFailed` on failure.
+        /// - Throws: `Error.kevent` on failure.
         @inlinable
         public static func register(
             _ kq: Kernel.Descriptor,
@@ -381,7 +381,7 @@
         ///   - eventlist: Buffer for returned events.
         ///   - timeout: Timeout for waiting, or `nil` for infinite.
         /// - Returns: Number of events placed in eventlist.
-        /// - Throws: `Error.keventFailed` on failure, `Error.interrupted` on EINTR.
+        /// - Throws: `Error.kevent` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func poll(
             _ kq: Kernel.Descriptor,
@@ -411,7 +411,7 @@
         ///   - eventlist: Buffer for returned events.
         ///   - timeout: Timeout duration, or `nil` for infinite.
         /// - Returns: Number of events placed in eventlist.
-        /// - Throws: `Error.keventFailed` on failure, `Error.interrupted` on EINTR.
+        /// - Throws: `Error.kevent` on failure, `Error.interrupted` on EINTR.
         public static func poll(
             _ kq: Kernel.Descriptor,
             eventlist: UnsafeMutableBufferPointer<Darwin.kevent>,
@@ -436,7 +436,7 @@
         /// - Parameters:
         ///   - kq: The kqueue descriptor.
         ///   - events: Array of events to register/modify.
-        /// - Throws: `Error.keventFailed` on failure.
+        /// - Throws: `Error.kevent` on failure.
         @inlinable
         public static func register(
             _ kq: Kernel.Descriptor,
@@ -482,7 +482,7 @@
         ///   - events: Buffer for returned events (pre-sized).
         ///   - timeout: Timeout duration, or `nil` for infinite.
         /// - Returns: Number of events written to buffer.
-        /// - Throws: `Error.keventFailed` on failure, `Error.interrupted` on EINTR.
+        /// - Throws: `Error.kevent` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func poll(
             _ kq: Kernel.Descriptor,

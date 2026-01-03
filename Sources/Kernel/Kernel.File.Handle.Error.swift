@@ -129,7 +129,7 @@ extension Kernel.File.Handle.Error {
             self = .misalignedOffset(offset: offset, required: required)
         case .invalidLength(let length, let requiredMultiple):
             self = .invalidLength(length: length, requiredMultiple: requiredMultiple)
-        case .modeChangeFailed:
+        case .modeChange:
             self = .platform(code: -1, operation: .sync)
         case .invalidHandle:
             self = .invalidHandle

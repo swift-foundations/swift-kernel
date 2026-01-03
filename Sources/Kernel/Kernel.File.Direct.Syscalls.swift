@@ -41,7 +41,7 @@ public import SystemPackage
         ///   - descriptor: The file descriptor.
         ///   - enabled: `true` to enable no-cache, `false` to disable.
         /// - Throws: `Error.Syscall` if fcntl fails.
-        public static func setNoCache(
+        package static func setNoCache(
             descriptor: Kernel.File.Descriptor,
             enabled: Bool
         ) throws(Error.Syscall) {
@@ -66,7 +66,7 @@ public import SystemPackage
         ///
         /// On macOS, there are no alignment requirements since F_NOCACHE
         /// is a hint, not a strict bypass. Returns `.unknown(.platformUnsupported)`.
-        public static func getRequirements(
+        package static func getRequirements(
             descriptor: Int32
         ) throws(Error.Syscall) -> Requirements {
             // macOS F_NOCACHE has no alignment requirements

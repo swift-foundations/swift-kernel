@@ -56,47 +56,6 @@ extension Kernel.File.Direct {
         /// The system chooses the most appropriate mode based on platform
         /// capabilities and the specified policy.
         case auto(policy: Policy)
-
-        /// Policy for automatic mode selection.
-        public enum Policy: Sendable, Equatable {
-            /// Fall back to buffered I/O if direct is unavailable or alignment fails.
-            ///
-            /// Behavior by platform:
-            /// - **macOS**: Uses `.uncached` (matches intent: avoid cache pollution)
-            /// - **Linux/Windows**: Uses `.direct` if requirements known and alignment
-            ///   satisfied, otherwise falls back to `.buffered`
-            ///
-            /// This is the practical choice for portable code.
-            case fallbackToBuffered
-
-            /// Error if direct I/O requirements cannot be satisfied.
-            ///
-            /// Behavior by platform:
-            /// - **macOS**: Uses `.uncached` (never errors, since no alignment required)
-            /// - **Linux/Windows**: Errors on alignment violation or unknown requirements
-            ///
-            /// Use when you need cache bypass and want explicit failure on misconfiguration.
-            case errorOnViolation
-        }
-    }
-}
-
-// MARK: - Resolved Mode
-
-extension Kernel.File.Direct.Mode {
-    /// The resolved mode after platform-specific evaluation.
-    ///
-    /// This represents the actual mode that will be used, after `.auto`
-    /// policies have been resolved for the current platform.
-    public enum Resolved: Sendable, Equatable {
-        /// Strict Direct I/O is active.
-        case direct
-
-        /// Best-effort uncached mode is active (macOS).
-        case uncached
-
-        /// Normal buffered I/O is active.
-        case buffered
     }
 }
 

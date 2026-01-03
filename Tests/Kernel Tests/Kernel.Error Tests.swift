@@ -39,12 +39,11 @@ extension Kernel.Error.Test.Unit {
         #expect(Kernel.Error.path(.notFound) != Kernel.Error.resource(.permission(.denied)))
     }
 
-    @Test("platform error stores code and message")
+    @Test("platform error stores code")
     func platformError() {
-        let error = Kernel.Error.platform(code: 42, message: "test message")
-        if case .platform(let code, let message) = error {
+        let error = Kernel.Error.platform(code: 42)
+        if case .platform(let code) = error {
             #expect(code == 42)
-            #expect(message == "test message")
         } else {
             Issue.record("Expected platform error case")
         }
@@ -59,7 +58,7 @@ extension Kernel.Error.Test.Unit {
             .lock(.deadlock),
             .memory(.address),
             .resource(.permission(.denied)),
-            .platform(code: 0, message: ""),
+            .platform(code: 0),
         ]
 
         for (i, a) in categories.enumerated() {
@@ -154,7 +153,7 @@ extension Kernel.Error.Test.EdgeCase {
             .resource(.interrupted),
             .resource(.blocked),
             .resource(.unsupported),
-            .platform(code: 0, message: ""),
+            .platform(code: 0),
         ]
 
         for error in cases {
@@ -162,9 +161,9 @@ extension Kernel.Error.Test.EdgeCase {
         }
     }
 
-    @Test("platform error with empty message")
-    func platformEmptyMessage() {
-        let error = Kernel.Error.platform(code: -1, message: "")
+    @Test("platform error description contains code")
+    func platformErrorDescription() {
+        let error = Kernel.Error.platform(code: -1)
         #expect(error.description.contains("-1"))
     }
 }

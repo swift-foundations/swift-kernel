@@ -27,7 +27,7 @@ extension Kernel.Thread {
     ///
     /// - Parameter body: The work to run on the new thread.
     /// - Returns: A handle to the created thread.
-    /// - Throws: `Error.createFailed` if thread creation fails.
+    /// - Throws: `Error.create` if thread creation fails.
     ///
     /// - Note: The caller is responsible for memory management of any context
     ///   passed to the closure. For ownership transfer patterns, see swift-io's
@@ -59,7 +59,7 @@ extension Kernel.Thread {
             guard let handle else {
                 context.deinitialize(count: 1)
                 context.deallocate()
-                throw .createFailed(code: Int32(GetLastError()))
+                throw .create(code: Int32(GetLastError()))
             }
 
             return Handle(rawValue: handle)
@@ -83,7 +83,7 @@ extension Kernel.Thread {
             guard result == 0, let thread else {
                 context.deinitialize(count: 1)
                 context.deallocate()
-                throw .createFailed(code: result)
+                throw .create(code: result)
             }
 
             return Handle(rawValue: thread)
@@ -109,7 +109,7 @@ extension Kernel.Thread {
             guard result == 0 else {
                 context.deinitialize(count: 1)
                 context.deallocate()
-                throw .createFailed(code: result)
+                throw .create(code: result)
             }
 
             return Handle(rawValue: thread)

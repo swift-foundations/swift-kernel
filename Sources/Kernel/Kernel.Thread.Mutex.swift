@@ -122,8 +122,9 @@ extension Kernel.Thread.Mutex {
     ///
     /// - Parameter body: The closure to execute while holding the mutex.
     /// - Returns: The value returned by the closure.
+    /// - Throws: Any error thrown by `body`.
     @inlinable
-    public func withLock<T>(_ body: () throws -> T) rethrows -> T {
+    public func withLock<T, E: Error>(_ body: () throws(E) -> T) throws(E) -> T {
         lock()
         defer { unlock() }
         return try body()

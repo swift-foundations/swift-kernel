@@ -37,7 +37,7 @@ extension Kernel.Mmap {
         ///   - protection: Memory protection flags.
         ///   - shared: If true, mapping is shared; otherwise private.
         /// - Returns: Pointer to the mapped region.
-        /// - Throws: `Error.mapFailed` on failure.
+        /// - Throws: `Error.map` on failure.
         @inlinable
         public static func map(
             length: Int,
@@ -72,7 +72,7 @@ extension Kernel.Mmap {
             protection: Kernel.Mmap.Protection = .readWrite
         ) throws(Kernel.Mmap.Error) -> Kernel.Mmap.WindowsMapping {
             guard length > 0 else {
-                throw .invalidArgument("length must be > 0")
+                throw .invalid(.length)
             }
 
             let pageProtection = protection.windowsPageProtection
@@ -89,7 +89,7 @@ extension Kernel.Mmap {
             )
 
             guard let mappingHandle, mappingHandle != INVALID_HANDLE_VALUE else {
-                throw .windows(code: GetLastError(), operation: "CreateFileMapping")
+                throw .windows(code: GetLastError(), operation: .createFileMapping)
             }
 
             let access = protection.windowsFileMapAccess
@@ -104,7 +104,7 @@ extension Kernel.Mmap {
 
             guard let address = viewAddress else {
                 CloseHandle(mappingHandle)
-                throw .windows(code: GetLastError(), operation: "MapViewOfFile")
+                throw .windows(code: GetLastError(), operation: .mapViewOfFile)
             }
 
             return Kernel.Mmap.WindowsMapping(baseAddress: address, mappingHandle: mappingHandle)

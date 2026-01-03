@@ -97,8 +97,16 @@ extension Kernel.System {
 #if os(Windows)
     @preconcurrency internal import WinSDK
 
-    // Cache the system info since it never changes at runtime.
-    // Uses nonisolated(unsafe) because SYSTEM_INFO is not Sendable but is immutable after initialization.
+    // PATTERN EXCEPTION: Global immutable cache (Rule 6.6)
+    //
+    // Justification: This is an immutable cache of system configuration that:
+    // - Never changes at runtime (hardware properties)
+    // - Is initialized exactly once on first access
+    // - Has no observable side effects
+    // - Cannot be testably injected (GetSystemInfo is a syscall)
+    //
+    // Uses nonisolated(unsafe) because SYSTEM_INFO is not Sendable but is
+    // immutable after initialization. The value is a `let` constant.
     private nonisolated(unsafe) let cachedSystemInfo: SYSTEM_INFO = {
         var info = SYSTEM_INFO()
         GetSystemInfo(&info)

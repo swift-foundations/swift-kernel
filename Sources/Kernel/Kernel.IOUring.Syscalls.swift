@@ -25,7 +25,7 @@
         ///   - entries: Number of SQ entries (rounded up to power of 2).
         ///   - params: Parameters struct (modified on return with ring offsets).
         /// - Returns: File descriptor for the io_uring instance.
-        /// - Throws: `Error.setupFailed` if creation fails.
+        /// - Throws: `Error.setup` if creation fails.
         @inlinable
         public static func setup(
             entries: UInt32,
@@ -34,7 +34,7 @@
             var cParams = params.cValue
             let fd = _cIoUringSetup(entries, &cParams)
             guard fd >= 0 else {
-                throw .setupFailed(errno: errno)
+                throw .setup(errno: errno)
             }
             // Update params with kernel-filled values
             params = Params(cParams)
@@ -49,7 +49,7 @@
         ///   - minComplete: Minimum completions to wait for.
         ///   - flags: Enter flags.
         /// - Returns: Number of SQEs submitted.
-        /// - Throws: `Error.enterFailed` on failure, `Error.interrupted` on EINTR.
+        /// - Throws: `Error.enter` on failure, `Error.interrupted` on EINTR.
         @inlinable
         public static func enter(
             _ fd: Kernel.Descriptor,
@@ -68,7 +68,7 @@
             guard result >= 0 else {
                 let err = errno
                 if err == EINTR { throw .interrupted }
-                throw .enterFailed(errno: err)
+                throw .enter(errno: err)
             }
             return Int(result)
         }
@@ -80,7 +80,7 @@
         ///   - opcode: The registration operation to perform.
         ///   - argument: Pointer to the arguments for the operation.
         ///   - count: Number of arguments.
-        /// - Throws: `Error.registerFailed` on failure.
+        /// - Throws: `Error.register` on failure.
         @inlinable
         public static func register(
             _ fd: Kernel.Descriptor,
@@ -95,7 +95,7 @@
                 count
             )
             guard result >= 0 else {
-                throw .registerFailed(errno: errno)
+                throw .register(errno: errno)
             }
         }
 
