@@ -12,13 +12,13 @@
 public import SystemPackage
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif canImport(Musl)
-import Musl
+    import Musl
 #elseif os(Windows)
-import ucrt
+    import ucrt
 #endif
 
 extension Kernel {

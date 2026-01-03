@@ -13,10 +13,10 @@ extension Kernel.Socket.Shutdown {
     /// Specifies which half of the connection to shut down.
     public enum How: Int32, Sendable {
         /// Shut down the read side of the connection.
-        case read = 0       // SHUT_RD
+        case read = 0  // SHUT_RD
 
         /// Shut down the write side of the connection.
-        case write = 1      // SHUT_WR
+        case write = 1  // SHUT_WR
 
         /// Shut down both read and write sides.
         case readWrite = 2  // SHUT_RDWR
@@ -26,17 +26,17 @@ extension Kernel.Socket.Shutdown {
 // MARK: - Windows Conversion
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 
-extension Kernel.Socket.Shutdown.How {
-    /// Converts to Windows SD_* constant.
-    @usableFromInline
-    internal var windowsValue: Int32 {
-        switch self {
-        case .read: return SD_RECEIVE
-        case .write: return SD_SEND
-        case .readWrite: return SD_BOTH
+    extension Kernel.Socket.Shutdown.How {
+        /// Converts to Windows SD_* constant.
+        @usableFromInline
+        internal var windowsValue: Int32 {
+            switch self {
+            case .read: return SD_RECEIVE
+            case .write: return SD_SEND
+            case .readWrite: return SD_BOTH
+            }
         }
     }
-}
 #endif

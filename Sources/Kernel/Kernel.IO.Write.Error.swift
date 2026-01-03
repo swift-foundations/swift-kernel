@@ -61,79 +61,79 @@ extension Kernel.IO.Write.Error: CustomStringConvertible {
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-public import Darwin
-#elseif canImport(Glibc)
-public import Glibc
-#elseif canImport(Musl)
-public import Musl
-#endif
+    #if canImport(Darwin)
+        public import Darwin
+    #elseif canImport(Glibc)
+        public import Glibc
+    #elseif canImport(Musl)
+        public import Musl
+    #endif
 
-extension Kernel.IO.Write.Error {
-    @inlinable
-    init(errno: Errno) {
-        if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
-            self = .handle(e)
-            return
+    extension Kernel.IO.Write.Error {
+        @inlinable
+        init(errno: Errno) {
+            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
+                self = .handle(e)
+                return
+            }
+            if let e = Kernel.Signal.Error(errno: errno) {
+                self = .signal(e)
+                return
+            }
+            if let e = Kernel.IO.Blocking.Error(errno: errno) {
+                self = .blocking(e)
+                return
+            }
+            if let e = Kernel.IO.Error(errno: errno) {
+                self = .io(e)
+                return
+            }
+            if let e = Kernel.Storage.Error(errno: errno) {
+                self = .space(e)
+                return
+            }
+            if let e = Kernel.Memory.Error(errno: errno) {
+                self = .memory(e)
+                return
+            }
+            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
         }
-        if let e = Kernel.Signal.Error(errno: errno) {
-            self = .signal(e)
-            return
-        }
-        if let e = Kernel.IO.Blocking.Error(errno: errno) {
-            self = .blocking(e)
-            return
-        }
-        if let e = Kernel.IO.Error(errno: errno) {
-            self = .io(e)
-            return
-        }
-        if let e = Kernel.Storage.Error(errno: errno) {
-            self = .space(e)
-            return
-        }
-        if let e = Kernel.Memory.Error(errno: errno) {
-            self = .memory(e)
-            return
-        }
-        self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
-    }
 
-    @inlinable
-    static func current() -> Self {
-        Self(errno: Errno(rawValue: errno))
+        @inlinable
+        static func current() -> Self {
+            Self(errno: Errno(rawValue: errno))
+        }
     }
-}
 
 #endif
 
 // MARK: - Windows Initialization
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 
-extension Kernel.IO.Write.Error {
-    @inlinable
-    init(windowsError error: DWORD) {
-        if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
-            self = .handle(e)
-            return
+    extension Kernel.IO.Write.Error {
+        @inlinable
+        init(windowsError error: DWORD) {
+            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
+                self = .handle(e)
+                return
+            }
+            if let e = Kernel.IO.Error(windowsError: error) {
+                self = .io(e)
+                return
+            }
+            if let e = Kernel.Storage.Error(windowsError: error) {
+                self = .space(e)
+                return
+            }
+            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
         }
-        if let e = Kernel.IO.Error(windowsError: error) {
-            self = .io(e)
-            return
-        }
-        if let e = Kernel.Storage.Error(windowsError: error) {
-            self = .space(e)
-            return
-        }
-        self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
-    }
 
-    @inlinable
-    static func current() -> Self {
-        Self(windowsError: GetLastError())
+        @inlinable
+        static func current() -> Self {
+            Self(windowsError: GetLastError())
+        }
     }
-}
 
 #endif

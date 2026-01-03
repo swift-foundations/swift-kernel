@@ -13,12 +13,12 @@ extension Kernel.Memory.Map.Sync {
     /// Flags for msync operation.
     public struct Flags: Sendable, Equatable, Hashable {
         public let rawValue: Int32
-        
+
         @inlinable
         public init(rawValue: Int32) {
             self.rawValue = rawValue
         }
-        
+
         /// Combines multiple flags.
         @inlinable
         public static func | (lhs: Kernel.Memory.Map.Sync.Flags, rhs: Kernel.Memory.Map.Sync.Flags) -> Kernel.Memory.Map.Sync.Flags {
@@ -31,24 +31,24 @@ extension Kernel.Memory.Map.Sync {
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
+    #if canImport(Darwin)
+        import Darwin
+    #elseif canImport(Glibc)
+        import Glibc
+    #elseif canImport(Musl)
+        import Musl
+    #endif
 
-extension Kernel.Memory.Map.Sync.Flags {
-    /// Perform synchronous writes.
-    public static let sync = Self(rawValue: MS_SYNC)
-    
-    /// Schedule writes but return immediately.
-    public static let async = Self(rawValue: MS_ASYNC)
-    
-    /// Invalidate cached data.
-    public static let invalidate = Self(rawValue: MS_INVALIDATE)
-}
+    extension Kernel.Memory.Map.Sync.Flags {
+        /// Perform synchronous writes.
+        public static let sync = Self(rawValue: MS_SYNC)
+
+        /// Schedule writes but return immediately.
+        public static let async = Self(rawValue: MS_ASYNC)
+
+        /// Invalidate cached data.
+        public static let invalidate = Self(rawValue: MS_INVALIDATE)
+    }
 
 #endif
 
@@ -56,10 +56,10 @@ extension Kernel.Memory.Map.Sync.Flags {
 
 #if os(Windows)
 
-extension Kernel.Memory.Map.Sync.Flags {
-    public static let sync = Self(rawValue: 1)
-    public static let async = Self(rawValue: 2)
-    public static let invalidate = Self(rawValue: 4)
-}
+    extension Kernel.Memory.Map.Sync.Flags {
+        public static let sync = Self(rawValue: 1)
+        public static let async = Self(rawValue: 2)
+        public static let invalidate = Self(rawValue: 4)
+    }
 
 #endif

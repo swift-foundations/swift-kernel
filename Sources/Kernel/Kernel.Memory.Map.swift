@@ -84,8 +84,7 @@ extension Kernel.Memory {
             addr: Kernel.Memory.Address,
             length: Int
         ) throws(Error) {
-            let result = munmap(addr, length)
-            guard result == 0 else {
+            guard munmap(addr, length) == 0 else {
                 throw .unmap(.captureErrno())
             }
         }
@@ -112,8 +111,7 @@ extension Kernel.Memory {
             length: Int,
             flags: Sync.Flags = .sync
         ) throws(Error) {
-            let result = msync(addr, length, flags.rawValue)
-            guard result == 0 else {
+            guard msync(addr, length, flags.rawValue) == 0 else {
                 throw .sync(.captureErrno())
             }
         }
@@ -131,8 +129,7 @@ extension Kernel.Memory {
             length: Int,
             protection: Protection
         ) throws(Error) {
-            let result = mprotect(addr, length, protection.rawValue)
-            guard result == 0 else {
+            guard mprotect(addr, length, protection.rawValue) == 0 else {
                 throw .protect(.captureErrno())
             }
         }
@@ -186,8 +183,7 @@ extension Kernel.Memory {
             addr: Kernel.Memory.Address,
             length: Int
         ) throws(Error) {
-            let result = FlushViewOfFile(addr, SIZE_T(length))
-            guard result else {
+            guard FlushViewOfFile(addr, SIZE_T(length)) else {
                 throw .sync(.captureLastError())
             }
         }
@@ -205,13 +201,14 @@ extension Kernel.Memory {
             protection: Protection
         ) throws(Error) {
             var oldProtection: DWORD = 0
-            let result = VirtualProtect(
-                addr,
-                SIZE_T(length),
-                protection.windowsPageProtection,
-                &oldProtection
-            )
-            guard result else {
+            guard
+                VirtualProtect(
+                    addr,
+                    SIZE_T(length),
+                    protection.windowsPageProtection,
+                    &oldProtection
+                )
+            else {
                 throw .protect(.captureLastError())
             }
         }

@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import SystemPackage
+
 /// Namespace for file cloning (copy-on-write reflink) operations.
 ///
 /// File cloning creates a lightweight copy that shares storage with the original
@@ -43,8 +45,6 @@
 extension Kernel.File {
     public enum Clone {}
 }
-
-import SystemPackage
 
 #if canImport(Darwin)
     import Darwin

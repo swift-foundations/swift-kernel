@@ -67,23 +67,23 @@ extension Kernel.File {
 
             let fd: Int32
             #if canImport(Darwin)
-            if options.contains(.create) {
-                fd = Darwin.open(unsafePath, flags, mode_t(permissions))
-            } else {
-                fd = Darwin.open(unsafePath, flags)
-            }
+                if options.contains(.create) {
+                    fd = Darwin.open(unsafePath, flags, mode_t(permissions))
+                } else {
+                    fd = Darwin.open(unsafePath, flags)
+                }
             #elseif canImport(Glibc)
-            if options.contains(.create) {
-                fd = Glibc.open(unsafePath, flags, mode_t(permissions))
-            } else {
-                fd = Glibc.open(unsafePath, flags)
-            }
+                if options.contains(.create) {
+                    fd = Glibc.open(unsafePath, flags, mode_t(permissions))
+                } else {
+                    fd = Glibc.open(unsafePath, flags)
+                }
             #elseif canImport(Musl)
-            if options.contains(.create) {
-                fd = Musl.open(unsafePath, flags, mode_t(permissions))
-            } else {
-                fd = Musl.open(unsafePath, flags)
-            }
+                if options.contains(.create) {
+                    fd = Musl.open(unsafePath, flags, mode_t(permissions))
+                } else {
+                    fd = Musl.open(unsafePath, flags)
+                }
             #endif
 
             guard fd >= 0 else {

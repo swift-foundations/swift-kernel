@@ -11,9 +11,9 @@
 
 #if canImport(Glibc) || canImport(Musl)
 
-extension Kernel.IOUring {
-    /// Setup namespace for io_uring setup-related types.
-    public enum Setup {}
-}
+    extension Kernel.IOUring {
+        /// Setup namespace for io_uring setup-related types.
+        public enum Setup {}
+    }
 
 #endif

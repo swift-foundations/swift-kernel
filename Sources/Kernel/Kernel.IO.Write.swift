@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
+import SystemPackage
 
 // MARK: - Write Type
 
@@ -52,16 +52,24 @@ extension Kernel.IO {
                 throw .handle(.invalid)
             }
             #if canImport(Darwin)
-            let result = Darwin.write(descriptor.rawValue, baseAddress, buffer.count)
+                return try Kernel.Syscall.require(
+                    Darwin.write(descriptor.rawValue, baseAddress, buffer.count),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #elseif canImport(Glibc)
-            let result = Glibc.write(descriptor.rawValue, baseAddress, buffer.count)
+                return try Kernel.Syscall.require(
+                    Glibc.write(descriptor.rawValue, baseAddress, buffer.count),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #elseif canImport(Musl)
-            let result = Musl.write(descriptor.rawValue, baseAddress, buffer.count)
+                return try Kernel.Syscall.require(
+                    Musl.write(descriptor.rawValue, baseAddress, buffer.count),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #endif
-            guard result >= 0 else {
-                throw .current()
-            }
-            return result
         }
 
         /// Writes bytes to a file descriptor at a specific offset.
@@ -85,16 +93,24 @@ extension Kernel.IO {
                 throw .handle(.invalid)
             }
             #if canImport(Darwin)
-            let result = Darwin.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+                return try Kernel.Syscall.require(
+                    Darwin.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #elseif canImport(Glibc)
-            let result = Glibc.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+                return try Kernel.Syscall.require(
+                    Glibc.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #elseif canImport(Musl)
-            let result = Musl.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+                return try Kernel.Syscall.require(
+                    Musl.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #endif
-            guard result >= 0 else {
-                throw .current()
-            }
-            return result
         }
     }
 
@@ -168,9 +184,7 @@ extension Kernel.IO.Write {
                 nil
             )
 
-            guard result else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(result, .isTrue, orThrow: Error.current())
             return Int(bytesWritten)
         }
 
@@ -201,9 +215,7 @@ extension Kernel.IO.Write {
                 &overlapped
             )
 
-            guard result else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(result, .isTrue, orThrow: Error.current())
             return Int(bytesWritten)
         }
     }

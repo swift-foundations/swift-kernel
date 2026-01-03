@@ -107,39 +107,39 @@ extension Kernel.File.Direct.Error {
         switch code {
         case .posix(let errno):
             #if !os(Windows)
-            switch errno {
-            case EINVAL:
-                // EINVAL from O_DIRECT often means alignment violation
-                self = .platform(code: code, operation: operation)
-            case EBADF:
-                self = .invalidHandle
-            case ENOTSUP, EOPNOTSUPP:
-                self = .notSupported
-            case EACCES, EPERM:
-                self = .platform(code: code, operation: operation)
-            default:
-                self = .platform(code: code, operation: operation)
-            }
+                switch errno {
+                case EINVAL:
+                    // EINVAL from O_DIRECT often means alignment violation
+                    self = .platform(code: code, operation: operation)
+                case EBADF:
+                    self = .invalidHandle
+                case ENOTSUP, EOPNOTSUPP:
+                    self = .notSupported
+                case EACCES, EPERM:
+                    self = .platform(code: code, operation: operation)
+                default:
+                    self = .platform(code: code, operation: operation)
+                }
             #else
-            self = .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             #endif
 
         case .win32(let error):
             #if os(Windows)
-            switch error {
-            case UInt32(ERROR_INVALID_PARAMETER):
-                self = .platform(code: code, operation: operation)
-            case UInt32(ERROR_INVALID_HANDLE):
-                self = .invalidHandle
-            case UInt32(ERROR_NOT_SUPPORTED):
-                self = .notSupported
-            case UInt32(ERROR_ACCESS_DENIED):
-                self = .platform(code: code, operation: operation)
-            default:
-                self = .platform(code: code, operation: operation)
-            }
+                switch error {
+                case UInt32(ERROR_INVALID_PARAMETER):
+                    self = .platform(code: code, operation: operation)
+                case UInt32(ERROR_INVALID_HANDLE):
+                    self = .invalidHandle
+                case UInt32(ERROR_NOT_SUPPORTED):
+                    self = .notSupported
+                case UInt32(ERROR_ACCESS_DENIED):
+                    self = .platform(code: code, operation: operation)
+                default:
+                    self = .platform(code: code, operation: operation)
+                }
             #else
-            self = .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             #endif
         }
     }

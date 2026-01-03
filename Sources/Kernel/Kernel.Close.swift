@@ -17,55 +17,47 @@ extension Kernel {
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-public import Darwin
-#elseif canImport(Glibc)
-public import Glibc
-#elseif canImport(Musl)
-public import Musl
-#endif
+    #if canImport(Darwin)
+        public import Darwin
+    #elseif canImport(Glibc)
+        public import Glibc
+    #elseif canImport(Musl)
+        public import Musl
+    #endif
 
-extension Kernel.Close {
-    /// Closes a file descriptor.
-    @inlinable
-    public static func close(_ descriptor: Kernel.Descriptor) throws(Error) {
-        guard descriptor.isValid else {
-            throw .handle(.invalid)
+    extension Kernel.Close {
+        /// Closes a file descriptor.
+        @inlinable
+        public static func close(_ descriptor: Kernel.Descriptor) throws(Error) {
+            guard descriptor.isValid else {
+                throw .handle(.invalid)
+            }
+            #if canImport(Darwin)
+                try Kernel.Syscall.require(Darwin.close(descriptor.rawValue), .equals(0), orThrow: Error.current())
+            #elseif canImport(Glibc)
+                try Kernel.Syscall.require(Glibc.close(descriptor.rawValue), .equals(0), orThrow: Error.current())
+            #elseif canImport(Musl)
+                try Kernel.Syscall.require(Musl.close(descriptor.rawValue), .equals(0), orThrow: Error.current())
+            #endif
         }
-#if canImport(Darwin)
-        guard Darwin.close(descriptor.rawValue) == 0 else {
-            throw .current()
-        }
-#elseif canImport(Glibc)
-        guard Glibc.close(descriptor.rawValue) == 0 else {
-            throw .current()
-        }
-#elseif canImport(Musl)
-        guard Musl.close(descriptor.rawValue) == 0 else {
-            throw .current()
-        }
-#endif
     }
-}
 
 #endif
 
 // MARK: - Windows Implementation
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 
-extension Kernel.Close {
-    /// Closes a file handle.
-    @inlinable
-    public static func close(_ descriptor: Kernel.Descriptor) throws(Error) {
-        guard descriptor.isValid else {
-            throw .handle(.invalid)
-        }
-        if CloseHandle(descriptor.rawValue) == false {
-            throw .current()
+    extension Kernel.Close {
+        /// Closes a file handle.
+        @inlinable
+        public static func close(_ descriptor: Kernel.Descriptor) throws(Error) {
+            guard descriptor.isValid else {
+                throw .handle(.invalid)
+            }
+            try Kernel.Syscall.require(CloseHandle(descriptor.rawValue), .isTrue, orThrow: Error.current())
         }
     }
-}
 
 #endif

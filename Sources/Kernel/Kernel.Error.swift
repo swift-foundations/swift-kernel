@@ -84,45 +84,45 @@ extension Kernel.Error: CustomStringConvertible {
 }
 
 #if !os(Windows)
-import SystemPackage
+    import SystemPackage
 #endif
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 #endif
 
 extension Kernel.Error {
     public init?(
         _ code: Kernel.Error.Code
-    ){
+    ) {
         switch code {
         case .posix(let rawValue):
             #if !os(Windows)
-            let errno = Errno(rawValue: rawValue)
-            // Try each domain in priority order
-            if let e = Kernel.Path.Resolution.Error(errno: errno) { self = .path(e) }
-            if let e = Kernel.Permission.Error(errno: errno) { self = .permission(e) }
-            if let e = Kernel.Descriptor.Validity.Error(errno: errno) { self = .handle(e) }
-            if let e = Kernel.Signal.Error(errno: errno) { self = .signal(e) }
-            if let e = Kernel.IO.Blocking.Error(errno: errno) { self = .blocking(e) }
-            if let e = Kernel.Storage.Error(errno: errno) { self = .space(e) }
-            if let e = Kernel.Memory.Error(errno: errno) { self = .memory(e) }
-            if let e = Kernel.IO.Error(errno: errno) { self = .io(e) }
-            if let e = Kernel.Lock.Error(errno: errno) { self = .lock(e) }
+                let errno = Errno(rawValue: rawValue)
+                // Try each domain in priority order
+                if let e = Kernel.Path.Resolution.Error(errno: errno) { self = .path(e) }
+                if let e = Kernel.Permission.Error(errno: errno) { self = .permission(e) }
+                if let e = Kernel.Descriptor.Validity.Error(errno: errno) { self = .handle(e) }
+                if let e = Kernel.Signal.Error(errno: errno) { self = .signal(e) }
+                if let e = Kernel.IO.Blocking.Error(errno: errno) { self = .blocking(e) }
+                if let e = Kernel.Storage.Error(errno: errno) { self = .space(e) }
+                if let e = Kernel.Memory.Error(errno: errno) { self = .memory(e) }
+                if let e = Kernel.IO.Error(errno: errno) { self = .io(e) }
+                if let e = Kernel.Lock.Error(errno: errno) { self = .lock(e) }
             #endif
             return nil
 
         case .win32(let code):
             #if os(Windows)
-            // Explicit DWORD conversion to call existing mapping entry points
-            let dword = DWORD(code)
-            if let e = Kernel.Path.Resolution.Error(windowsError: dword) { self = .path(e) }
-            if let e = Kernel.Permission.Error(windowsError: dword) { self = .permission(e) }
-            if let e = Kernel.Descriptor.Validity.Error(windowsError: dword) { self = .handle(e) }
-            if let e = Kernel.Storage.Error(windowsError: dword) { self = .space(e) }
-            if let e = Kernel.Memory.Error(windowsError: dword) { self = .memory(e) }
-            if let e = Kernel.IO.Error(windowsError: dword) { self = .io(e) }
-            if let e = Kernel.Lock.Error(windowsError: dword) { self = .lock(e) }
+                // Explicit DWORD conversion to call existing mapping entry points
+                let dword = DWORD(code)
+                if let e = Kernel.Path.Resolution.Error(windowsError: dword) { self = .path(e) }
+                if let e = Kernel.Permission.Error(windowsError: dword) { self = .permission(e) }
+                if let e = Kernel.Descriptor.Validity.Error(windowsError: dword) { self = .handle(e) }
+                if let e = Kernel.Storage.Error(windowsError: dword) { self = .space(e) }
+                if let e = Kernel.Memory.Error(windowsError: dword) { self = .memory(e) }
+                if let e = Kernel.IO.Error(windowsError: dword) { self = .io(e) }
+                if let e = Kernel.Lock.Error(windowsError: dword) { self = .lock(e) }
             #endif
             return nil
         }
@@ -130,11 +130,11 @@ extension Kernel.Error {
 }
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif canImport(Musl)
-import Musl
+    import Musl
 #endif
 
 extension Kernel.Error {
@@ -149,42 +149,41 @@ extension Kernel.Error {
         switch code {
         case .posix(let rawValue):
             #if !os(Windows)
-            return String(cString: strerror(rawValue))
+                return String(cString: strerror(rawValue))
             #else
-            return nil
+                return nil
             #endif
 
         case .win32(let rawValue):
             #if os(Windows)
-            let flags: DWORD =
-                DWORD(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS)
+                let flags: DWORD =
+                    DWORD(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS)
 
-            var buffer: LPWSTR? = nil
+                var buffer: LPWSTR? = nil
 
-            let length: DWORD = withUnsafeMutablePointer(to: &buffer) { bufferPtr in
-                bufferPtr.withMemoryRebound(to: WCHAR.self, capacity: 1) { widePtr in
-                    FormatMessageW(
-                        flags,
-                        nil,
-                        rawValue,
-                        DWORD(MAKELANGID(WORD(LANG_NEUTRAL), WORD(SUBLANG_DEFAULT))),
-                        widePtr,
-                        0,
-                        nil
-                    )
+                let length: DWORD = withUnsafeMutablePointer(to: &buffer) { bufferPtr in
+                    bufferPtr.withMemoryRebound(to: WCHAR.self, capacity: 1) { widePtr in
+                        FormatMessageW(
+                            flags,
+                            nil,
+                            rawValue,
+                            DWORD(MAKELANGID(WORD(LANG_NEUTRAL), WORD(SUBLANG_DEFAULT))),
+                            widePtr,
+                            0,
+                            nil
+                        )
+                    }
                 }
-            }
 
-            guard length > 0, let buffer else { return nil }
-            defer { _ = LocalFree(buffer) }
+                guard length > 0, let buffer else { return nil }
+                defer { _ = LocalFree(buffer) }
 
-            let u16 = UnsafeBufferPointer(start: buffer, count: Int(length))
-            let message = String(decoding: u16, as: UTF16.self)
-            return message.trimmingCharacters(in: .whitespacesAndNewlines)
+                let u16 = UnsafeBufferPointer(start: buffer, count: Int(length))
+                let message = String(decoding: u16, as: UTF16.self)
+                return message.trimmingCharacters(in: .whitespacesAndNewlines)
             #else
-            return nil
+                return nil
             #endif
         }
     }
 }
-

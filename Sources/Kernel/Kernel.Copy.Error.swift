@@ -62,35 +62,35 @@ extension Kernel.Copy.Error: CustomStringConvertible {
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
+    #if canImport(Darwin)
+        import Darwin
+    #elseif canImport(Glibc)
+        import Glibc
+    #elseif canImport(Musl)
+        import Musl
+    #endif
 
-extension Kernel.Copy.Error {
-    @usableFromInline
-    init(posix code: Int32) {
-        switch code {
-        case EBADF:
-            self = .invalidDescriptor
-        case EXDEV:
-            self = .crossDevice
-        case EINVAL, ENOTSUP, EOPNOTSUPP:
-            self = .unsupported
-        case ENOSPC:
-            self = .noSpace
-        case EIO:
-            self = .io
-        case EACCES, EPERM:
-            self = .permissionDenied
-        default:
-            // Map unknown errors to unsupported as a fallback
-            self = .unsupported
+    extension Kernel.Copy.Error {
+        @usableFromInline
+        init(posix code: Int32) {
+            switch code {
+            case EBADF:
+                self = .invalidDescriptor
+            case EXDEV:
+                self = .crossDevice
+            case EINVAL, ENOTSUP, EOPNOTSUPP:
+                self = .unsupported
+            case ENOSPC:
+                self = .noSpace
+            case EIO:
+                self = .io
+            case EACCES, EPERM:
+                self = .permissionDenied
+            default:
+                // Map unknown errors to unsupported as a fallback
+                self = .unsupported
+            }
         }
     }
-}
 
 #endif

@@ -11,37 +11,37 @@
 
 #if canImport(Glibc) || canImport(Musl)
 
-#if canImport(Glibc)
-public import Glibc
-public import CLinuxShim
-#elseif canImport(Musl)
-internal import Musl
-#endif
+    #if canImport(Glibc)
+        public import Glibc
+        public import CLinuxShim
+    #elseif canImport(Musl)
+        internal import Musl
+    #endif
 
-extension Kernel.Event.Poll {
-    /// Flags for `epoll_create1`.
-    public struct CreateFlags: Sendable, Equatable, Hashable {
-        public let rawValue: Int32
+    extension Kernel.Event.Poll {
+        /// Flags for `epoll_create1`.
+        public struct CreateFlags: Sendable, Equatable, Hashable {
+            public let rawValue: Int32
 
-        @inlinable
-        public init(rawValue: Int32) {
-            self.rawValue = rawValue
+            @inlinable
+            public init(rawValue: Int32) {
+                self.rawValue = rawValue
+            }
         }
     }
-}
 
-extension Kernel.Event.Poll.CreateFlags {
-    /// No flags.
-    public static let none = Self(rawValue: 0)
+    extension Kernel.Event.Poll.CreateFlags {
+        /// No flags.
+        public static let none = Self(rawValue: 0)
 
-    /// Set close-on-exec flag on the new file descriptor.
-    public static let cloexec = Self(rawValue: Int32(EPOLL_CLOEXEC))
+        /// Set close-on-exec flag on the new file descriptor.
+        public static let cloexec = Self(rawValue: Int32(EPOLL_CLOEXEC))
 
-    /// Combines multiple flags.
-    @inlinable
-    public static func | (lhs: Self, rhs: Self) -> Self {
-        Self(rawValue: lhs.rawValue | rhs.rawValue)
+        /// Combines multiple flags.
+        @inlinable
+        public static func | (lhs: Self, rhs: Self) -> Self {
+            Self(rawValue: lhs.rawValue | rhs.rawValue)
+        }
     }
-}
 
 #endif

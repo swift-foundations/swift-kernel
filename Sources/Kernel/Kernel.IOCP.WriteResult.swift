@@ -11,14 +11,14 @@
 
 #if os(Windows)
 
-extension Kernel.IOCP {
-    /// Result of an overlapped write operation.
-    public enum WriteResult: Sendable, Equatable {
-        /// The operation is pending asynchronously.
-        case pending
-        /// The operation completed synchronously with the given byte count.
-        case completed(bytes: UInt32)
+    extension Kernel.IOCP {
+        /// Result of an overlapped write operation.
+        public enum WriteResult: Sendable, Equatable {
+            /// The operation is pending asynchronously.
+            case pending
+            /// The operation completed synchronously with the given byte count.
+            case completed(bytes: UInt32)
+        }
     }
-}
 
 #endif

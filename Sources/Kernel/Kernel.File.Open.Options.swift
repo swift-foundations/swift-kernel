@@ -84,102 +84,102 @@ extension Kernel.File.Open.Options {
 // MARK: - POSIX Conversion
 
 #if !os(Windows)
-#if canImport(Darwin)
-internal import Darwin
-#elseif canImport(Glibc)
-import Glibc
-import CLinuxShim
-#elseif canImport(Musl)
-internal import Musl
-#endif
+    #if canImport(Darwin)
+        internal import Darwin
+    #elseif canImport(Glibc)
+        import Glibc
+        import CLinuxShim
+    #elseif canImport(Musl)
+        internal import Musl
+    #endif
 
-extension Kernel.File.Open.Options {
-    /// Converts the options to POSIX open flags.
-    @usableFromInline
-    internal var posixFlags: Int32 {
-        var flags: Int32 = 0
+    extension Kernel.File.Open.Options {
+        /// Converts the options to POSIX open flags.
+        @usableFromInline
+        internal var posixFlags: Int32 {
+            var flags: Int32 = 0
 
-        if contains(.create) {
-            flags |= O_CREAT
-        }
-        if contains(.truncate) {
-            flags |= O_TRUNC
-        }
-        if contains(.append) {
-            flags |= O_APPEND
-        }
-        if contains(.exclusive) {
-            flags |= O_EXCL
-        }
-        if contains(.execClose) {
-            flags |= O_CLOEXEC
-        }
-        if contains(.blockingDisabled) {
-            flags |= O_NONBLOCK
-        }
-        #if os(Linux)
-        if contains(.direct) {
-            flags |= O_DIRECT
-        }
-        #endif
-        if contains(.noFollow) {
-            flags |= O_NOFOLLOW
-        }
+            if contains(.create) {
+                flags |= O_CREAT
+            }
+            if contains(.truncate) {
+                flags |= O_TRUNC
+            }
+            if contains(.append) {
+                flags |= O_APPEND
+            }
+            if contains(.exclusive) {
+                flags |= O_EXCL
+            }
+            if contains(.execClose) {
+                flags |= O_CLOEXEC
+            }
+            if contains(.blockingDisabled) {
+                flags |= O_NONBLOCK
+            }
+            #if os(Linux)
+                if contains(.direct) {
+                    flags |= O_DIRECT
+                }
+            #endif
+            if contains(.noFollow) {
+                flags |= O_NOFOLLOW
+            }
 
-        return flags
+            return flags
+        }
     }
-}
 #endif
 
 // MARK: - Windows Conversion
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 
-extension Kernel.File.Open.Options {
-    /// Converts the options to Windows creation disposition.
-    @usableFromInline
-    internal var windowsCreationDisposition: DWORD {
-        let hasCreate = contains(.create)
-        let hasExclusive = contains(.exclusive)
-        let hasTruncate = contains(.truncate)
+    extension Kernel.File.Open.Options {
+        /// Converts the options to Windows creation disposition.
+        @usableFromInline
+        internal var windowsCreationDisposition: DWORD {
+            let hasCreate = contains(.create)
+            let hasExclusive = contains(.exclusive)
+            let hasTruncate = contains(.truncate)
 
-        if hasCreate && hasExclusive {
-            return DWORD(CREATE_NEW)
-        } else if hasCreate && hasTruncate {
-            return DWORD(CREATE_ALWAYS)
-        } else if hasCreate {
-            return DWORD(OPEN_ALWAYS)
-        } else if hasTruncate {
-            return DWORD(TRUNCATE_EXISTING)
-        } else {
-            return DWORD(OPEN_EXISTING)
-        }
-    }
-
-    /// Converts the options to Windows flags and attributes.
-    @usableFromInline
-    internal var windowsFlagsAndAttributes: DWORD {
-        var flags: DWORD = DWORD(FILE_ATTRIBUTE_NORMAL)
-
-        if contains(.direct) {
-            flags |= DWORD(FILE_FLAG_NO_BUFFERING)
-        }
-        if contains(.noFollow) {
-            flags |= DWORD(FILE_FLAG_OPEN_REPARSE_POINT)
+            if hasCreate && hasExclusive {
+                return DWORD(CREATE_NEW)
+            } else if hasCreate && hasTruncate {
+                return DWORD(CREATE_ALWAYS)
+            } else if hasCreate {
+                return DWORD(OPEN_ALWAYS)
+            } else if hasTruncate {
+                return DWORD(TRUNCATE_EXISTING)
+            } else {
+                return DWORD(OPEN_EXISTING)
+            }
         }
 
-        return flags
-    }
+        /// Converts the options to Windows flags and attributes.
+        @usableFromInline
+        internal var windowsFlagsAndAttributes: DWORD {
+            var flags: DWORD = DWORD(FILE_ATTRIBUTE_NORMAL)
 
-    /// Windows share mode for open operations.
-    ///
-    /// Default: `FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE`
-    ///
-    /// This is a documented stability guarantee matching common POSIX expectations.
-    @usableFromInline
-    internal static var windowsShareMode: DWORD {
-        return DWORD(FILE_SHARE_READ) | DWORD(FILE_SHARE_WRITE) | DWORD(FILE_SHARE_DELETE)
+            if contains(.direct) {
+                flags |= DWORD(FILE_FLAG_NO_BUFFERING)
+            }
+            if contains(.noFollow) {
+                flags |= DWORD(FILE_FLAG_OPEN_REPARSE_POINT)
+            }
+
+            return flags
+        }
+
+        /// Windows share mode for open operations.
+        ///
+        /// Default: `FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE`
+        ///
+        /// This is a documented stability guarantee matching common POSIX expectations.
+        @usableFromInline
+        internal static var windowsShareMode: DWORD {
+            return DWORD(FILE_SHARE_READ) | DWORD(FILE_SHARE_WRITE) | DWORD(FILE_SHARE_DELETE)
+        }
     }
-}
 #endif

@@ -11,15 +11,15 @@
 
 // Platform imports for errno / GetLastError
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif canImport(Musl)
-import Musl
+    import Musl
 #endif
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 #endif
 
 extension Kernel.Error {
@@ -45,23 +45,23 @@ extension Kernel.Error {
 
 extension Kernel.Error.Code {
     #if !os(Windows)
-    /// Captures current errno (POSIX only).
-    ///
-    /// Must be called immediately after a failing syscall, before any other libc call.
-    @usableFromInline
-    internal static func captureErrno() -> Self {
-        .posix(errno)
-    }
+        /// Captures current errno (POSIX only).
+        ///
+        /// Must be called immediately after a failing syscall, before any other libc call.
+        @usableFromInline
+        internal static func captureErrno() -> Self {
+            .posix(errno)
+        }
     #endif
 
     #if os(Windows)
-    /// Captures current GetLastError (Windows only).
-    ///
-    /// Must be called immediately after a failing syscall.
-    @usableFromInline
-    internal static func captureLastError() -> Self {
-        .win32(UInt32(GetLastError()))
-    }
+        /// Captures current GetLastError (Windows only).
+        ///
+        /// Must be called immediately after a failing syscall.
+        @usableFromInline
+        internal static func captureLastError() -> Self {
+            .win32(UInt32(GetLastError()))
+        }
     #endif
 }
 

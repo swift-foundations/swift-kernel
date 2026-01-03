@@ -49,51 +49,51 @@ extension Kernel.Socket.Error: CustomStringConvertible {
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-public import Darwin
-#elseif canImport(Glibc)
-public import Glibc
-#elseif canImport(Musl)
-public import Musl
-#endif
+    #if canImport(Darwin)
+        public import Darwin
+    #elseif canImport(Glibc)
+        public import Glibc
+    #elseif canImport(Musl)
+        public import Musl
+    #endif
 
-extension Kernel.Socket.Error {
-    @inlinable
-    init(errno: Errno) {
-        if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
-            self = .handle(e)
-            return
+    extension Kernel.Socket.Error {
+        @inlinable
+        init(errno: Errno) {
+            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
+                self = .handle(e)
+                return
+            }
+            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
         }
-        self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
-    }
 
-    @inlinable
-    static func current() -> Self {
-        Self(errno: Errno(rawValue: errno))
+        @inlinable
+        static func current() -> Self {
+            Self(errno: Errno(rawValue: errno))
+        }
     }
-}
 
 #endif
 
 // MARK: - Windows Initialization
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 
-extension Kernel.Socket.Error {
-    @inlinable
-    init(windowsError error: DWORD) {
-        if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
-            self = .handle(e)
-            return
+    extension Kernel.Socket.Error {
+        @inlinable
+        init(windowsError error: DWORD) {
+            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
+                self = .handle(e)
+                return
+            }
+            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
         }
-        self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
-    }
 
-    @inlinable
-    static func current() -> Self {
-        Self(windowsError: DWORD(WSAGetLastError()))
+        @inlinable
+        static func current() -> Self {
+            Self(windowsError: DWORD(WSAGetLastError()))
+        }
     }
-}
 
 #endif

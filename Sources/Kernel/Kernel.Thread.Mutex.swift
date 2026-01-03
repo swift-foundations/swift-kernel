@@ -55,7 +55,7 @@ extension Kernel.Thread {
                 InitializeSRWLock(&srwlock)
             }
 
-            // SRWLOCK doesn't need destruction on Windows
+        // SRWLOCK doesn't need destruction on Windows
         #else
             @usableFromInline
             var mutex: pthread_mutex_t

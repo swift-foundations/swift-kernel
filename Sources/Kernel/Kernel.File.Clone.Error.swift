@@ -10,11 +10,11 @@
 // ===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif os(Windows)
-import WinSDK
+    import WinSDK
 #endif
 
 extension Kernel.File.Clone {
@@ -92,42 +92,42 @@ extension Kernel.File.Clone.Error {
         switch code {
         case .posix(let errno):
             #if !os(Windows)
-            switch errno {
-            case ENOENT:
-                self = .sourceNotFound
-            case EEXIST:
-                self = .destinationExists
-            case EACCES, EPERM:
-                self = .permissionDenied
-            case EXDEV:
-                self = .crossDevice
-            case EISDIR:
-                self = .isDirectory
-            case ENOTSUP, EOPNOTSUPP:
-                self = .notSupported
-            default:
-                self = .platform(code: code, operation: operation)
-            }
+                switch errno {
+                case ENOENT:
+                    self = .sourceNotFound
+                case EEXIST:
+                    self = .destinationExists
+                case EACCES, EPERM:
+                    self = .permissionDenied
+                case EXDEV:
+                    self = .crossDevice
+                case EISDIR:
+                    self = .isDirectory
+                case ENOTSUP, EOPNOTSUPP:
+                    self = .notSupported
+                default:
+                    self = .platform(code: code, operation: operation)
+                }
             #else
-            self = .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             #endif
 
         case .win32(let error):
             #if os(Windows)
-            switch error {
-            case 2:  // ERROR_FILE_NOT_FOUND
-                self = .sourceNotFound
-            case 80:  // ERROR_FILE_EXISTS
-                self = .destinationExists
-            case 5:  // ERROR_ACCESS_DENIED
-                self = .permissionDenied
-            case 17:  // ERROR_NOT_SAME_DEVICE
-                self = .crossDevice
-            default:
-                self = .platform(code: code, operation: operation)
-            }
+                switch error {
+                case 2:  // ERROR_FILE_NOT_FOUND
+                    self = .sourceNotFound
+                case 80:  // ERROR_FILE_EXISTS
+                    self = .destinationExists
+                case 5:  // ERROR_ACCESS_DENIED
+                    self = .permissionDenied
+                case 17:  // ERROR_NOT_SAME_DEVICE
+                    self = .crossDevice
+                default:
+                    self = .platform(code: code, operation: operation)
+                }
             #else
-            self = .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             #endif
         }
     }

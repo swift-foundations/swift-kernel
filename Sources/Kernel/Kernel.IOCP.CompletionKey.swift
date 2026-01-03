@@ -10,21 +10,21 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 
-extension Kernel.IOCP {
-    /// Completion key for identifying handles.
-    ///
-    /// The completion key is an application-defined value associated with
-    /// a file handle when it's registered with an IOCP.
-    public struct CompletionKey: RawRepresentable, Sendable, Equatable, Hashable {
-        public let rawValue: ULONG_PTR
+    extension Kernel.IOCP {
+        /// Completion key for identifying handles.
+        ///
+        /// The completion key is an application-defined value associated with
+        /// a file handle when it's registered with an IOCP.
+        public struct CompletionKey: RawRepresentable, Sendable, Equatable, Hashable {
+            public let rawValue: ULONG_PTR
 
-        @inlinable
-        public init(rawValue: ULONG_PTR) {
-            self.rawValue = rawValue
+            @inlinable
+            public init(rawValue: ULONG_PTR) {
+                self.rawValue = rawValue
+            }
         }
     }
-}
 
 #endif

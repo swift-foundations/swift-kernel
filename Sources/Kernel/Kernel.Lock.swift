@@ -17,7 +17,7 @@ extension Kernel {
 // MARK: - Error Mapping
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 #endif
 
 extension Kernel.Lock.Error {
@@ -27,29 +27,29 @@ extension Kernel.Lock.Error {
         switch code {
         case .posix(let errno):
             #if !os(Windows)
-            switch errno {
-            case EDEADLK:
-                self = .deadlock
-            case ENOLCK:
-                self = .unavailable
-            default:
-                // EAGAIN/EACCES are handled in tryLock, shouldn't reach here
-                self = .contention
-            }
+                switch errno {
+                case EDEADLK:
+                    self = .deadlock
+                case ENOLCK:
+                    self = .unavailable
+                default:
+                    // EAGAIN/EACCES are handled in tryLock, shouldn't reach here
+                    self = .contention
+                }
             #else
-            self = .contention
+                self = .contention
             #endif
 
         case .win32(let error):
             #if os(Windows)
-            switch DWORD(error) {
-            case DWORD(ERROR_LOCK_VIOLATION), DWORD(ERROR_SHARING_VIOLATION), DWORD(ERROR_LOCK_FAILED):
-                self = .contention
-            default:
-                self = .unavailable
-            }
+                switch DWORD(error) {
+                case DWORD(ERROR_LOCK_VIOLATION), DWORD(ERROR_SHARING_VIOLATION), DWORD(ERROR_LOCK_FAILED):
+                    self = .contention
+                default:
+                    self = .unavailable
+                }
             #else
-            self = .unavailable
+                self = .unavailable
             #endif
         }
     }

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
+import SystemPackage
 
 // MARK: - Socket Types
 
@@ -55,9 +55,7 @@ extension Kernel {
                 &len
             )
 
-            guard rc == 0 else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(rc, .equals(0), orThrow: Error.current())
 
             return err
         }
@@ -93,9 +91,7 @@ extension Kernel {
                 &len
             )
 
-            guard rc == 0 else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(rc, .equals(0), orThrow: Error.current())
 
             return err
         }

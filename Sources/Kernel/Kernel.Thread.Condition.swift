@@ -59,7 +59,7 @@ extension Kernel.Thread {
                 InitializeConditionVariable(&condvar)
             }
 
-            // CONDITION_VARIABLE doesn't need destruction on Windows
+        // CONDITION_VARIABLE doesn't need destruction on Windows
         #else
             @usableFromInline
             var cond: pthread_cond_t

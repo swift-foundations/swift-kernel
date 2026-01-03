@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
+import SystemPackage
 
 // MARK: - Read Type
 
@@ -52,16 +52,24 @@ extension Kernel.IO {
                 throw .handle(.invalid)
             }
             #if canImport(Darwin)
-            let result = Darwin.read(descriptor.rawValue, baseAddress, buffer.count)
+                return try Kernel.Syscall.require(
+                    Darwin.read(descriptor.rawValue, baseAddress, buffer.count),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #elseif canImport(Glibc)
-            let result = Glibc.read(descriptor.rawValue, baseAddress, buffer.count)
+                return try Kernel.Syscall.require(
+                    Glibc.read(descriptor.rawValue, baseAddress, buffer.count),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #elseif canImport(Musl)
-            let result = Musl.read(descriptor.rawValue, baseAddress, buffer.count)
+                return try Kernel.Syscall.require(
+                    Musl.read(descriptor.rawValue, baseAddress, buffer.count),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #endif
-            guard result >= 0 else {
-                throw .current()
-            }
-            return result
         }
 
         /// Reads bytes from a file descriptor at a specific offset.
@@ -85,16 +93,24 @@ extension Kernel.IO {
                 throw .handle(.invalid)
             }
             #if canImport(Darwin)
-            let result = Darwin.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+                return try Kernel.Syscall.require(
+                    Darwin.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #elseif canImport(Glibc)
-            let result = Glibc.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+                return try Kernel.Syscall.require(
+                    Glibc.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #elseif canImport(Musl)
-            let result = Musl.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+                return try Kernel.Syscall.require(
+                    Musl.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    .nonNegative,
+                    orThrow: Error.current()
+                )
             #endif
-            guard result >= 0 else {
-                throw .current()
-            }
-            return result
         }
     }
 

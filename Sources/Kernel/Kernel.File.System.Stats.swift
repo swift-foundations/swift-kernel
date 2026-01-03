@@ -142,10 +142,7 @@ extension Kernel.File.System {
         @inlinable
         public static func get(unsafePath: UnsafePointer<CChar>) throws(Error) -> Kernel.File.System.Stats {
             var buf = PlatformStatfs()
-            let result = statfs(unsafePath, &buf)
-            guard result == 0 else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(statfs(unsafePath, &buf), .equals(0), orThrow: Error.current())
             return Kernel.File.System.Stats(from: buf)
         }
 
@@ -160,10 +157,7 @@ extension Kernel.File.System {
                 throw .handle(.invalid)
             }
             var buf = PlatformStatfs()
-            let result = fstatfs(descriptor.rawValue, &buf)
-            guard result == 0 else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(fstatfs(descriptor.rawValue, &buf), .equals(0), orThrow: Error.current())
             return Kernel.File.System.Stats(from: buf)
         }
 
@@ -234,9 +228,11 @@ extension Kernel.File.System {
             var freeClusters: DWORD = 0
             var totalClusters: DWORD = 0
 
-            guard GetDiskFreeSpaceW(unsafePath, &sectorsPerCluster, &bytesPerSector, &freeClusters, &totalClusters) else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(
+                GetDiskFreeSpaceW(unsafePath, &sectorsPerCluster, &bytesPerSector, &freeClusters, &totalClusters),
+                .isTrue,
+                orThrow: Error.current()
+            )
 
             let blockSize = UInt64(sectorsPerCluster) * UInt64(bytesPerSector)
 

@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import SystemPackage
+
 /// Namespace for Direct I/O operations (cache bypass).
 ///
 /// Direct I/O bypasses the operating system's page cache, allowing data to flow
@@ -176,8 +178,6 @@ extension Kernel.File.Direct.Requirements {
         self = .known(Alignment(uniform: alignment))
     }
 }
-
-public import SystemPackage
 
 #if canImport(Darwin)
     import Darwin

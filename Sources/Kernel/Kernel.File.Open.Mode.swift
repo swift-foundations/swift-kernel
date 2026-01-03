@@ -35,67 +35,67 @@ extension Kernel.File.Open.Mode {
 // MARK: - POSIX Conversion
 
 #if !os(Windows)
-#if canImport(Darwin)
-internal import Darwin
-#elseif canImport(Glibc)
-import Glibc
-import CLinuxShim
-#elseif canImport(Musl)
-internal import Musl
-#endif
+    #if canImport(Darwin)
+        internal import Darwin
+    #elseif canImport(Glibc)
+        import Glibc
+        import CLinuxShim
+    #elseif canImport(Musl)
+        internal import Musl
+    #endif
 
-extension Kernel.File.Open.Mode {
-    /// Converts the mode to POSIX open flags.
-    @usableFromInline
-    internal var posixFlags: Int32 {
-        let hasRead = contains(.read)
-        let hasWrite = contains(.write)
+    extension Kernel.File.Open.Mode {
+        /// Converts the mode to POSIX open flags.
+        @usableFromInline
+        internal var posixFlags: Int32 {
+            let hasRead = contains(.read)
+            let hasWrite = contains(.write)
 
-        if hasRead && hasWrite {
-            return O_RDWR
-        } else if hasWrite {
-            return O_WRONLY
-        } else {
-            return O_RDONLY
+            if hasRead && hasWrite {
+                return O_RDWR
+            } else if hasWrite {
+                return O_WRONLY
+            } else {
+                return O_RDONLY
+            }
         }
     }
-}
 #endif
 
 // MARK: - Windows Conversion
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 
-extension Kernel.File.Open.Mode {
-    /// Converts the mode to Windows desired access flags.
-    @usableFromInline
-    internal func windowsDesiredAccess(options: Kernel.File.Open.Options) -> DWORD {
-        let hasRead = contains(.read)
-        let hasWrite = contains(.write)
-        let hasAppend = options.contains(.append)
+    extension Kernel.File.Open.Mode {
+        /// Converts the mode to Windows desired access flags.
+        @usableFromInline
+        internal func windowsDesiredAccess(options: Kernel.File.Open.Options) -> DWORD {
+            let hasRead = contains(.read)
+            let hasWrite = contains(.write)
+            let hasAppend = options.contains(.append)
 
-        var access: DWORD = 0
+            var access: DWORD = 0
 
-        if hasRead {
-            access |= DWORD(GENERIC_READ)
-        }
-        if hasWrite {
-            if hasAppend {
-                // Append mode: use FILE_APPEND_DATA instead of GENERIC_WRITE
-                // This ensures all writes go to the end of the file
-                access |= DWORD(FILE_APPEND_DATA)
-            } else {
-                access |= DWORD(GENERIC_WRITE)
+            if hasRead {
+                access |= DWORD(GENERIC_READ)
             }
-        }
+            if hasWrite {
+                if hasAppend {
+                    // Append mode: use FILE_APPEND_DATA instead of GENERIC_WRITE
+                    // This ensures all writes go to the end of the file
+                    access |= DWORD(FILE_APPEND_DATA)
+                } else {
+                    access |= DWORD(GENERIC_WRITE)
+                }
+            }
 
-        // If no mode specified, default to read
-        if access == 0 {
-            access = DWORD(GENERIC_READ)
-        }
+            // If no mode specified, default to read
+            if access == 0 {
+                access = DWORD(GENERIC_READ)
+            }
 
-        return access
+            return access
+        }
     }
-}
 #endif

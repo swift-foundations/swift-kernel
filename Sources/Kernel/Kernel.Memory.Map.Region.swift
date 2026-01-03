@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-public import WinSDK
+    public import WinSDK
 #endif
 
 extension Kernel.Memory.Map {
@@ -30,26 +30,26 @@ extension Kernel.Memory.Map {
         public let length: Int
 
         #if os(Windows)
-        /// The file mapping handle (Windows only).
-        ///
-        /// This handle must be closed after unmapping the view.
-        @usableFromInline
-        internal let mappingHandle: HANDLE
+            /// The file mapping handle (Windows only).
+            ///
+            /// This handle must be closed after unmapping the view.
+            @usableFromInline
+            internal let mappingHandle: HANDLE
 
-        /// Creates a mapped region with the given address, length, and Windows handle.
-        @inlinable
-        public init(base: Kernel.Memory.Address, length: Int, mappingHandle: HANDLE) {
-            self.base = base
-            self.length = length
-            self.mappingHandle = mappingHandle
-        }
+            /// Creates a mapped region with the given address, length, and Windows handle.
+            @inlinable
+            public init(base: Kernel.Memory.Address, length: Int, mappingHandle: HANDLE) {
+                self.base = base
+                self.length = length
+                self.mappingHandle = mappingHandle
+            }
         #else
-        /// Creates a mapped region with the given address and length.
-        @inlinable
-        public init(base: Kernel.Memory.Address, length: Int) {
-            self.base = base
-            self.length = length
-        }
+            /// Creates a mapped region with the given address and length.
+            @inlinable
+            public init(base: Kernel.Memory.Address, length: Int) {
+                self.base = base
+                self.length = length
+            }
         #endif
     }
 }

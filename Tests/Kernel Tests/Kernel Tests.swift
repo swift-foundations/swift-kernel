@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
+import SystemPackage
 import Testing
 
 @testable import Kernel
@@ -27,13 +28,6 @@ extension Kernel.Test.Unit {
         _ = Kernel.self
     }
 }
-
-
-import StandardsTestSupport
-import SystemPackage
-import Testing
-
-@testable import Kernel
 
 #if canImport(Darwin)
     import Darwin

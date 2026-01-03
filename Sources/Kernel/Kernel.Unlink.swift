@@ -41,16 +41,14 @@ extension Kernel {
         public static func unlink(_ path: FilePath) throws(Error) {
             let result = path.withPlatformString { cPath in
                 #if canImport(Darwin)
-                Darwin.unlink(cPath)
+                    Darwin.unlink(cPath)
                 #elseif canImport(Glibc)
-                Glibc.unlink(cPath)
+                    Glibc.unlink(cPath)
                 #elseif canImport(Musl)
-                Musl.unlink(cPath)
+                    Musl.unlink(cPath)
                 #endif
             }
-            guard result == 0 else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(result, .equals(0), orThrow: Error.current())
         }
 
         /// Removes a file or symbolic link.
@@ -60,17 +58,11 @@ extension Kernel {
         @inlinable
         public static func unlink(_ path: UnsafePointer<CChar>) throws(Error) {
             #if canImport(Darwin)
-            guard Darwin.unlink(path) == 0 else {
-                throw .current()
-            }
+                try Kernel.Syscall.require(Darwin.unlink(path), .equals(0), orThrow: Error.current())
             #elseif canImport(Glibc)
-            guard Glibc.unlink(path) == 0 else {
-                throw .current()
-            }
+                try Kernel.Syscall.require(Glibc.unlink(path), .equals(0), orThrow: Error.current())
             #elseif canImport(Musl)
-            guard Musl.unlink(path) == 0 else {
-                throw .current()
-            }
+                try Kernel.Syscall.require(Musl.unlink(path), .equals(0), orThrow: Error.current())
             #endif
         }
     }
@@ -92,9 +84,7 @@ extension Kernel {
             let result = path.withPlatformString { wPath in
                 DeleteFileW(wPath)
             }
-            guard result else {
-                throw .current()
-            }
+            try Kernel.Syscall.require(result, .isTrue, orThrow: Error.current())
         }
     }
 
