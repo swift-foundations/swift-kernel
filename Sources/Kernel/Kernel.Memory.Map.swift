@@ -46,13 +46,13 @@ extension Kernel.Memory {
         /// - Throws: `Error.map` on failure.
         @inlinable
         public static func map(
-            addr: UnsafeMutableRawPointer? = nil,
+            addr: Kernel.Memory.Address? = nil,
             length: Int,
             protection: Protection,
             flags: Flags,
             fd: Kernel.Descriptor = .invalid,
             offset: Int64 = 0
-        ) throws(Error) -> UnsafeMutableRawPointer {
+        ) throws(Error) -> Kernel.Memory.Address {
             guard length > 0 else {
                 throw .invalid(.length)
             }
@@ -81,7 +81,7 @@ extension Kernel.Memory {
         /// - Throws: `Error.unmap` on failure.
         @inlinable
         public static func unmap(
-            addr: UnsafeMutableRawPointer,
+            addr: Kernel.Memory.Address,
             length: Int
         ) throws(Error) {
             let result = munmap(addr, length)
@@ -96,7 +96,7 @@ extension Kernel.Memory {
         /// - Throws: `Error.unmap` on failure.
         @inlinable
         public static func unmap(_ region: Region) throws(Error) {
-            try unmap(addr: region.baseAddress, length: region.length)
+            try unmap(addr: region.base, length: region.length)
         }
 
         /// Synchronizes a mapped region to disk.
@@ -108,7 +108,7 @@ extension Kernel.Memory {
         /// - Throws: `Error.sync` on failure.
         @inlinable
         public static func sync(
-            addr: UnsafeMutableRawPointer,
+            addr: Kernel.Memory.Address,
             length: Int,
             flags: Sync.Flags = .sync
         ) throws(Error) {
@@ -127,7 +127,7 @@ extension Kernel.Memory {
         /// - Throws: `Error.protect` on failure.
         @inlinable
         public static func protect(
-            addr: UnsafeMutableRawPointer,
+            addr: Kernel.Memory.Address,
             length: Int,
             protection: Protection
         ) throws(Error) {
@@ -147,7 +147,7 @@ extension Kernel.Memory {
         ///   - advice: The advice type.
         @inlinable
         public static func advise(
-            addr: UnsafeMutableRawPointer,
+            addr: Kernel.Memory.Address,
             length: Int,
             advice: Advice
         ) {
@@ -168,7 +168,7 @@ extension Kernel.Memory {
         /// - Parameter region: The region to unmap.
         /// - Throws: `Error.unmap` on failure.
         public static func unmap(_ region: Region) throws(Error) {
-            let unmapResult = UnmapViewOfFile(region.baseAddress)
+            let unmapResult = UnmapViewOfFile(region.base)
             CloseHandle(region.mappingHandle)
 
             guard unmapResult else {
@@ -183,7 +183,7 @@ extension Kernel.Memory {
         ///   - length: The length of the region.
         /// - Throws: `Error.sync` on failure.
         public static func sync(
-            addr: UnsafeMutableRawPointer,
+            addr: Kernel.Memory.Address,
             length: Int
         ) throws(Error) {
             let result = FlushViewOfFile(addr, SIZE_T(length))
@@ -200,7 +200,7 @@ extension Kernel.Memory {
         ///   - protection: The new protection flags.
         /// - Throws: `Error.protect` on failure.
         public static func protect(
-            addr: UnsafeMutableRawPointer,
+            addr: Kernel.Memory.Address,
             length: Int,
             protection: Protection
         ) throws(Error) {
@@ -221,7 +221,7 @@ extension Kernel.Memory {
         /// Windows has limited madvise-equivalent functionality.
         /// This is currently a no-op.
         public static func advise(
-            addr: UnsafeMutableRawPointer,
+            addr: Kernel.Memory.Address,
             length: Int,
             advice: Advice
         ) {

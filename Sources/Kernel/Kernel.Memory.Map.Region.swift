@@ -24,7 +24,7 @@ extension Kernel.Memory.Map {
     /// Use `Kernel.Memory.Map.unmap(_:)` to release the region.
     public struct Region: @unchecked Sendable {
         /// The base address of the mapped region.
-        public let baseAddress: UnsafeMutableRawPointer
+        public let base: Kernel.Memory.Address
 
         /// The length of the mapped region in bytes.
         public let length: Int
@@ -38,16 +38,16 @@ extension Kernel.Memory.Map {
 
         /// Creates a mapped region with the given address, length, and Windows handle.
         @inlinable
-        public init(baseAddress: UnsafeMutableRawPointer, length: Int, mappingHandle: HANDLE) {
-            self.baseAddress = baseAddress
+        public init(base: Kernel.Memory.Address, length: Int, mappingHandle: HANDLE) {
+            self.base = base
             self.length = length
             self.mappingHandle = mappingHandle
         }
         #else
         /// Creates a mapped region with the given address and length.
         @inlinable
-        public init(baseAddress: UnsafeMutableRawPointer, length: Int) {
-            self.baseAddress = baseAddress
+        public init(base: Kernel.Memory.Address, length: Int) {
+            self.base = base
             self.length = length
         }
         #endif

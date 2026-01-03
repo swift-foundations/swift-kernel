@@ -48,8 +48,8 @@ extension Kernel.Memory.Map {
                 shared
                 ? .shared | .anonymous
                 : .private | .anonymous
-            let baseAddress = try Kernel.Memory.Map.map(length: length, protection: protection, flags: flags)
-            return Kernel.Memory.Map.Region(baseAddress: baseAddress, length: length)
+            let base = try Kernel.Memory.Map.map(length: length, protection: protection, flags: flags)
+            return Kernel.Memory.Map.Region(base: base, length: length)
         }
     }
 
@@ -108,7 +108,7 @@ extension Kernel.Memory.Map {
                 throw .map(.captureLastError())
             }
 
-            return Kernel.Memory.Map.Region(baseAddress: address, length: length, mappingHandle: mappingHandle)
+            return Kernel.Memory.Map.Region(base: address, length: length, mappingHandle: mappingHandle)
         }
     }
 
