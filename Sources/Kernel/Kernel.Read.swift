@@ -11,45 +11,12 @@
 
 public import SystemPackage
 
-// MARK: - Read Error Type
+// MARK: - Read Type
 
 extension Kernel {
+    /// Read operations.
     public enum Read: Sendable {
-        public enum Error: Swift.Error, Sendable {
-            case handle(Kernel.Handle.Error)
-            case signal(Kernel.Signal.Error)
-            case blocking(Kernel.Blocking.Error)
-            case io(Kernel.IO.Error)
-            case memory(Kernel.Memory.Error)
-            case platform(Kernel.Platform.Error)
-        }
-    }
-}
 
-extension Kernel.Read.Error: Equatable {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        switch (lhs, rhs) {
-        case (.handle(let l), .handle(let r)): return l == r
-        case (.signal(let l), .signal(let r)): return l == r
-        case (.blocking(let l), .blocking(let r)): return l == r
-        case (.io(let l), .io(let r)): return l == r
-        case (.memory(let l), .memory(let r)): return l == r
-        case (.platform(let l), .platform(let r)): return l == r
-        default: return false
-        }
-    }
-}
-
-extension Kernel.Read.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .handle(let e): return "handle: \(e)"
-        case .signal(let e): return "signal: \(e)"
-        case .blocking(let e): return "blocking: \(e)"
-        case .io(let e): return "io: \(e)"
-        case .memory(let e): return "memory: \(e)"
-        case .platform(let e): return "\(e)"
-        }
     }
 }
 
@@ -64,38 +31,6 @@ extension Kernel.Read.Error: CustomStringConvertible {
     #elseif canImport(Musl)
         public import Musl
     #endif
-
-    extension Kernel.Read.Error {
-        @inlinable
-        init(errno: Errno) {
-            if let e = Kernel.Handle.Error(errno: errno) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.Signal.Error(errno: errno) {
-                self = .signal(e)
-                return
-            }
-            if let e = Kernel.Blocking.Error(errno: errno) {
-                self = .blocking(e)
-                return
-            }
-            if let e = Kernel.IO.Error(errno: errno) {
-                self = .io(e)
-                return
-            }
-            if let e = Kernel.Memory.Error(errno: errno) {
-                self = .memory(e)
-                return
-            }
-            self = .platform(Kernel.Platform.Error(errno: errno))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(errno: Errno(rawValue: errno))
-        }
-    }
 
     extension Kernel.Read {
         /// Reads bytes from a file descriptor.
@@ -209,26 +144,6 @@ extension Kernel.Read {
 
 #if os(Windows)
     public import WinSDK
-
-    extension Kernel.Read.Error {
-        @inlinable
-        init(windowsError error: DWORD) {
-            if let e = Kernel.Handle.Error(windowsError: error) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.IO.Error(windowsError: error) {
-                self = .io(e)
-                return
-            }
-            self = .platform(Kernel.Platform.Error(windowsError: error))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(windowsError: GetLastError())
-        }
-    }
 
     extension Kernel.Read {
         /// Reads bytes from a file handle.

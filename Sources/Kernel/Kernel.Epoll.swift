@@ -29,184 +29,6 @@ extension Kernel.Event {
     public enum Poll {}
 }
 
-// MARK: - Error Type
-
-extension Kernel.Event.Poll {
-    /// Errors from epoll operations.
-    public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-        /// Failed to create epoll instance.
-        case create(Kernel.Error.Code)
-        
-        /// Failed to control epoll (add/modify/delete).
-        case ctl(Kernel.Error.Code)
-        
-        /// Failed to wait for events.
-        case wait(Kernel.Error.Code)
-        
-        /// Operation was interrupted by a signal.
-        case interrupted
-    }
-}
-
-extension Kernel.Event.Poll.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .create(let code):
-            return "epoll_create1 failed (\(code))"
-        case .ctl(let code):
-            return "epoll_ctl failed (\(code))"
-        case .wait(let code):
-            return "epoll_wait failed (\(code))"
-        case .interrupted:
-            return "operation interrupted"
-        }
-    }
-}
-
-// MARK: - Operation Constants
-
-extension Kernel.Event.Poll {
-    /// Operations for `epoll_ctl`.
-    public struct Operation: RawRepresentable, Sendable, Equatable, Hashable {
-        public let rawValue: Int32
-        
-        @inlinable
-        public init(rawValue: Int32) {
-            self.rawValue = rawValue
-        }
-        
-        /// Add a file descriptor to the epoll instance.
-        public static let add = Operation(rawValue: EPOLL_CTL_ADD)
-        
-        /// Modify the events for a file descriptor.
-        public static let modify = Operation(rawValue: EPOLL_CTL_MOD)
-        
-        /// Remove a file descriptor from the epoll instance.
-        public static let delete = Operation(rawValue: EPOLL_CTL_DEL)
-    }
-}
-
-// MARK: - Event Flags
-
-extension Kernel.Event.Poll {
-    /// Event flags for epoll.
-    public struct Events: Sendable, Equatable, Hashable {
-        public let rawValue: UInt32
-        
-        @inlinable
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
-        }
-        
-        /// The associated file is available for read operations.
-        public static let `in` = Events(rawValue: EPOLLIN.rawValue)
-        
-        /// The associated file is available for write operations.
-        public static let out = Events(rawValue: EPOLLOUT.rawValue)
-        
-        /// Stream socket peer closed connection, or shut down writing half.
-        public static let rdhup = Events(rawValue: EPOLLRDHUP.rawValue)
-        
-        /// Urgent data available for read.
-        public static let pri = Events(rawValue: EPOLLPRI.rawValue)
-        
-        /// Error condition happened.
-        public static let err = Events(rawValue: EPOLLERR.rawValue)
-        
-        /// Hang up happened.
-        public static let hup = Events(rawValue: EPOLLHUP.rawValue)
-        
-        /// Edge-triggered behavior.
-        public static let et = Events(rawValue: EPOLLET.rawValue)
-        
-        /// One-shot behavior: disable after one event delivery.
-        public static let oneshot = Events(rawValue: EPOLLONESHOT.rawValue)
-        
-        /// Combines multiple event flags.
-        @inlinable
-        public static func | (lhs: Events, rhs: Events) -> Events {
-            Events(rawValue: lhs.rawValue | rhs.rawValue)
-        }
-        
-        /// Checks if this contains another event flag.
-        @inlinable
-        public func contains(_ other: Events) -> Bool {
-            (rawValue & other.rawValue) == other.rawValue
-        }
-    }
-}
-
-// MARK: - Event Type
-
-extension Kernel.Event.Poll {
-    /// Swift wrapper for epoll_event C struct.
-    ///
-    /// Provides a Sendable, Swift-native interface to epoll events.
-    public struct Event: Sendable, Equatable, Hashable {
-        /// The event flags that occurred or are being monitored.
-        public var events: Events
-        
-        /// User data associated with the file descriptor.
-        ///
-        /// This is typically used to store an identifier that helps dispatch
-        /// the event to the appropriate handler.
-        public var data: UInt64
-        
-        /// Creates an epoll event.
-        ///
-        /// - Parameters:
-        ///   - events: The event flags to monitor.
-        ///   - data: User data to associate with the file descriptor.
-        @inlinable
-        public init(events: Events, data: UInt64 = 0) {
-            self.events = events
-            self.data = data
-        }
-        
-        /// Creates an epoll event from the C struct.
-        @usableFromInline
-        internal init(_ cEvent: epoll_event) {
-            self.events = Events(rawValue: cEvent.events)
-            self.data = cEvent.data.u64
-        }
-        
-        /// Converts to the C epoll_event struct.
-        @usableFromInline
-        internal var cValue: epoll_event {
-            var event = epoll_event()
-            event.events = events.rawValue
-            event.data.u64 = data
-            return event
-        }
-    }
-}
-
-// MARK: - Create Flags
-
-extension Kernel.Event.Poll {
-    /// Flags for `epoll_create1`.
-    public struct CreateFlags: Sendable, Equatable, Hashable {
-        public let rawValue: Int32
-        
-        @inlinable
-        public init(rawValue: Int32) {
-            self.rawValue = rawValue
-        }
-        
-        /// No flags.
-        public static let none = CreateFlags(rawValue: 0)
-        
-        /// Set close-on-exec flag on the new file descriptor.
-        public static let cloexec = CreateFlags(rawValue: Int32(EPOLL_CLOEXEC))
-        
-        /// Combines multiple flags.
-        @inlinable
-        public static func | (lhs: CreateFlags, rhs: CreateFlags) -> CreateFlags {
-            CreateFlags(rawValue: lhs.rawValue | rhs.rawValue)
-        }
-    }
-}
-
 // MARK: - Syscalls
 
 extension Kernel.Event.Poll {
@@ -223,7 +45,7 @@ extension Kernel.Event.Poll {
         }
         return Kernel.Descriptor(rawValue: epfd)
     }
-    
+
     /// Controls the epoll instance (add/modify/delete).
     ///
     /// - Parameters:
@@ -249,7 +71,7 @@ extension Kernel.Event.Poll {
             throw .ctl(.captureErrno())
         }
     }
-    
+
     /// Waits for events on the epoll instance.
     ///
     /// Low-level wait that writes events into a pre-allocated buffer.
@@ -267,7 +89,7 @@ extension Kernel.Event.Poll {
         timeout: Int32
     ) throws(Error) -> Int {
         guard !events.isEmpty else { return 0 }
-        
+
         // Use stack allocation for small buffers, heap for large ones
         let count = events.count
         let outcome: Result<Int, Error> = withUnsafeTemporaryAllocation(
@@ -282,7 +104,7 @@ extension Kernel.Event.Poll {
                 }
                 return .failure(.wait(code))
             }
-            
+
             // Convert C events to Swift events
             for i in 0..<Int(result) {
                 events[i] = Event(buffer[i])
@@ -291,7 +113,7 @@ extension Kernel.Event.Poll {
         }
         return try outcome.get()
     }
-    
+
     /// Waits for events with a Duration timeout.
     ///
     /// Convenience wrapper that converts Duration to milliseconds.

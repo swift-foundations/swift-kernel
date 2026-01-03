@@ -20,22 +20,6 @@ extension Kernel {
     /// Kernel does NOT automatically retry on `EINTR`. Higher layers
     /// decide retry policy based on their semantics.
     public enum Signal: Sendable {
-        /// Signal-related errors.
-        public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-            /// Operation interrupted by signal.
-            /// - POSIX: `EINTR`
-            case interrupted
-        }
-    }
-}
 
-// MARK: - CustomStringConvertible
-
-extension Kernel.Signal.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .interrupted:
-            return "interrupted by signal"
-        }
     }
 }

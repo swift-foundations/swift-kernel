@@ -16,33 +16,7 @@ public import SystemPackage
 extension Kernel {
     /// Socket operations.
     public enum Socket: Sendable {
-        /// Errors that can occur during socket operations.
-        public enum Error: Swift.Error, Sendable {
-            /// The descriptor is invalid.
-            case handle(Kernel.Handle.Error)
 
-            /// A platform-specific error.
-            case platform(Kernel.Platform.Error)
-        }
-    }
-}
-
-extension Kernel.Socket.Error: Equatable {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        switch (lhs, rhs) {
-        case (.handle(let l), .handle(let r)): return l == r
-        case (.platform(let l), .platform(let r)): return l == r
-        default: return false
-        }
-    }
-}
-
-extension Kernel.Socket.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .handle(let e): return "handle: \(e)"
-        case .platform(let e): return "\(e)"
-        }
     }
 }
 
@@ -57,22 +31,6 @@ extension Kernel.Socket.Error: CustomStringConvertible {
     #elseif canImport(Musl)
         public import Musl
     #endif
-
-    extension Kernel.Socket.Error {
-        @inlinable
-        init(errno: Errno) {
-            if let e = Kernel.Handle.Error(errno: errno) {
-                self = .handle(e)
-                return
-            }
-            self = .platform(Kernel.Platform.Error(errno: errno))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(errno: Errno(rawValue: errno))
-        }
-    }
 
     extension Kernel.Socket {
         /// Gets the pending socket error (SO_ERROR).
@@ -111,22 +69,6 @@ extension Kernel.Socket.Error: CustomStringConvertible {
 
 #if os(Windows)
     public import WinSDK
-
-    extension Kernel.Socket.Error {
-        @inlinable
-        init(windowsError error: DWORD) {
-            if let e = Kernel.Handle.Error(windowsError: error) {
-                self = .handle(e)
-                return
-            }
-            self = .platform(Kernel.Platform.Error(windowsError: error))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(windowsError: DWORD(WSAGetLastError()))
-        }
-    }
 
     extension Kernel.Socket {
         /// Gets the pending socket error (SO_ERROR).

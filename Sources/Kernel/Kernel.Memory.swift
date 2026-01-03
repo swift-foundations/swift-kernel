@@ -15,32 +15,6 @@ extension Kernel {
     /// These errors indicate problems with memory addresses
     /// or allocation.
     public enum Memory: Sendable {
-        /// Memory-related errors.
-        public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-            /// Bad address - pointer outside accessible address space.
-            /// - POSIX: `EFAULT`
-            ///
-            /// This typically indicates a programming error where
-            /// an invalid buffer pointer was passed to a syscall.
-            case fault
 
-            /// Not enough memory available.
-            /// - POSIX: `ENOMEM`
-            /// - Windows: `ERROR_NOT_ENOUGH_MEMORY`
-            case exhausted
-        }
-    }
-}
-
-// MARK: - CustomStringConvertible
-
-extension Kernel.Memory.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .fault:
-            return "bad address"
-        case .exhausted:
-            return "out of memory"
-        }
     }
 }
