@@ -9,14 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// File-related types and operations.
-    public enum File {}
-}
+extension Kernel.Lock {
+    /// Lock type (shared vs exclusive).
+    public enum Kind: Sendable, Equatable, Hashable {
+        /// Shared (read) lock. Multiple processes can hold shared locks.
+        case shared
 
-extension Kernel.File {
-    /// A file descriptor.
-    ///
-    /// Typealias to `Kernel.Descriptor` for semantic clarity within the File namespace.
-    public typealias Descriptor = Kernel.Descriptor
+        /// Exclusive (write) lock. Only one process can hold an exclusive lock.
+        case exclusive
+    }
 }

@@ -178,217 +178,241 @@
         }
     }
 
-    // MARK: - Operation Setters
+    // MARK: - Operation Preparation
 
     extension Kernel.IOUring.SQE {
-        /// Configures this SQE for a no-op operation.
+        /// Accessor for preparing SQE operations.
         ///
-        /// - Parameter userData: User data to return with completion.
+        /// ## Usage
+        ///
+        /// ```swift
+        /// var sqe = Kernel.IOUring.SQE()
+        /// sqe.prepare.read(fd: fd, buffer: buffer, length: len, offset: 0, userData: id)
+        /// ```
         @inlinable
-        public mutating func setNop(userData: UInt64) {
-            cValue = io_uring_sqe()
-            opcode = .nop
-            self.userData = userData
+        public var prepare: Prepare {
+            get { Prepare(sqe: self) }
+            set { self = newValue.sqe }
         }
 
-        /// Configures this SQE for a read operation.
-        ///
-        /// - Parameters:
-        ///   - fd: File descriptor to read from.
-        ///   - buffer: Buffer pointer to read into.
-        ///   - length: Number of bytes to read.
-        ///   - offset: File offset (-1 for current position).
-        ///   - userData: User data to return with completion.
-        @inlinable
-        public mutating func setRead(
-            fd: Int32,
-            buffer: UnsafeMutableRawPointer,
-            length: UInt32,
-            offset: Int64,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .read
-            self.fd = fd
-            self.addr = UInt64(UInt(bitPattern: buffer))
-            self.len = length
-            self.offset = offset >= 0 ? UInt64(bitPattern: offset) : UInt64.max
-            self.userData = userData
-        }
+        /// Helper for preparing SQE operations.
+        public struct Prepare {
+            public var sqe: SQE
 
-        /// Configures this SQE for a write operation.
-        ///
-        /// - Parameters:
-        ///   - fd: File descriptor to write to.
-        ///   - buffer: Buffer pointer containing data to write.
-        ///   - length: Number of bytes to write.
-        ///   - offset: File offset (-1 for current position).
-        ///   - userData: User data to return with completion.
-        @inlinable
-        public mutating func setWrite(
-            fd: Int32,
-            buffer: UnsafeRawPointer,
-            length: UInt32,
-            offset: Int64,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .write
-            self.fd = fd
-            self.addr = UInt64(UInt(bitPattern: buffer))
-            self.len = length
-            self.offset = offset >= 0 ? UInt64(bitPattern: offset) : UInt64.max
-            self.userData = userData
-        }
-
-        /// Configures this SQE for a cancel operation.
-        ///
-        /// - Parameters:
-        ///   - targetUserData: User data of the operation to cancel.
-        ///   - userData: User data to return with this cancel's completion.
-        @inlinable
-        public mutating func setCancel(
-            targetUserData: UInt64,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .asyncCancel
-            self.addr = targetUserData
-            self.userData = userData
-        }
-
-        /// Configures this SQE for an fsync operation.
-        ///
-        /// - Parameters:
-        ///   - fd: File descriptor to sync.
-        ///   - datasync: If true, only sync data (not metadata).
-        ///   - userData: User data to return with completion.
-        @inlinable
-        public mutating func setFsync(
-            fd: Int32,
-            datasync: Bool,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .fsync
-            self.fd = fd
-            if datasync {
-                self.opFlags = 1  // IORING_FSYNC_DATASYNC
+            @inlinable
+            init(sqe: SQE) {
+                self.sqe = sqe
             }
-            self.userData = userData
-        }
 
-        /// Configures this SQE for a close operation.
-        ///
-        /// - Parameters:
-        ///   - fd: File descriptor to close.
-        ///   - userData: User data to return with completion.
-        @inlinable
-        public mutating func setClose(
-            fd: Int32,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .close
-            self.fd = fd
-            self.userData = userData
-        }
+            /// Configures this SQE for a no-op operation.
+            ///
+            /// - Parameter userData: User data to return with completion.
+            @inlinable
+            public mutating func nop(userData: UInt64) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .nop
+                sqe.userData = userData
+            }
 
-        /// Configures this SQE for an accept operation.
-        ///
-        /// - Parameters:
-        ///   - fd: Listening socket file descriptor.
-        ///   - addr: Optional pointer to sockaddr buffer.
-        ///   - addrLen: Optional pointer to sockaddr length.
-        ///   - flags: Accept flags.
-        ///   - userData: User data to return with completion.
-        @inlinable
-        public mutating func setAccept(
-            fd: Int32,
-            addr: UnsafeMutableRawPointer?,
-            addrLen: UnsafeMutablePointer<UInt32>?,
-            flags: Int32,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .accept
-            self.fd = fd
-            self.addr = UInt64(UInt(bitPattern: addr))
-            self.offset = UInt64(UInt(bitPattern: addrLen))
-            self.opFlags = flags
-            self.userData = userData
-        }
+            /// Configures this SQE for a read operation.
+            ///
+            /// - Parameters:
+            ///   - fd: File descriptor to read from.
+            ///   - buffer: Buffer pointer to read into.
+            ///   - length: Number of bytes to read.
+            ///   - offset: File offset (-1 for current position).
+            ///   - userData: User data to return with completion.
+            @inlinable
+            public mutating func read(
+                fd: Int32,
+                buffer: UnsafeMutableRawPointer,
+                length: UInt32,
+                offset: Int64,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .read
+                sqe.fd = fd
+                sqe.addr = UInt64(UInt(bitPattern: buffer))
+                sqe.len = length
+                sqe.offset = offset >= 0 ? UInt64(bitPattern: offset) : UInt64.max
+                sqe.userData = userData
+            }
 
-        /// Configures this SQE for a connect operation.
-        ///
-        /// - Parameters:
-        ///   - fd: Socket file descriptor.
-        ///   - addr: Pointer to sockaddr.
-        ///   - addrLen: Length of sockaddr.
-        ///   - userData: User data to return with completion.
-        @inlinable
-        public mutating func setConnect(
-            fd: Int32,
-            addr: UnsafeRawPointer,
-            addrLen: UInt32,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .connect
-            self.fd = fd
-            self.addr = UInt64(UInt(bitPattern: addr))
-            self.offset = UInt64(addrLen)
-            self.userData = userData
-        }
+            /// Configures this SQE for a write operation.
+            ///
+            /// - Parameters:
+            ///   - fd: File descriptor to write to.
+            ///   - buffer: Buffer pointer containing data to write.
+            ///   - length: Number of bytes to write.
+            ///   - offset: File offset (-1 for current position).
+            ///   - userData: User data to return with completion.
+            @inlinable
+            public mutating func write(
+                fd: Int32,
+                buffer: UnsafeRawPointer,
+                length: UInt32,
+                offset: Int64,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .write
+                sqe.fd = fd
+                sqe.addr = UInt64(UInt(bitPattern: buffer))
+                sqe.len = length
+                sqe.offset = offset >= 0 ? UInt64(bitPattern: offset) : UInt64.max
+                sqe.userData = userData
+            }
 
-        /// Configures this SQE for a send operation.
-        ///
-        /// - Parameters:
-        ///   - fd: Socket file descriptor.
-        ///   - buffer: Buffer pointer containing data to send.
-        ///   - length: Number of bytes to send.
-        ///   - flags: Send flags.
-        ///   - userData: User data to return with completion.
-        @inlinable
-        public mutating func setSend(
-            fd: Int32,
-            buffer: UnsafeRawPointer,
-            length: UInt32,
-            flags: Int32,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .send
-            self.fd = fd
-            self.addr = UInt64(UInt(bitPattern: buffer))
-            self.len = length
-            self.opFlags = flags
-            self.userData = userData
-        }
+            /// Configures this SQE for a cancel operation.
+            ///
+            /// - Parameters:
+            ///   - targetUserData: User data of the operation to cancel.
+            ///   - userData: User data to return with this cancel's completion.
+            @inlinable
+            public mutating func cancel(
+                targetUserData: UInt64,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .asyncCancel
+                sqe.addr = targetUserData
+                sqe.userData = userData
+            }
 
-        /// Configures this SQE for a recv operation.
-        ///
-        /// - Parameters:
-        ///   - fd: Socket file descriptor.
-        ///   - buffer: Buffer pointer to receive into.
-        ///   - length: Maximum bytes to receive.
-        ///   - flags: Recv flags.
-        ///   - userData: User data to return with completion.
-        @inlinable
-        public mutating func setRecv(
-            fd: Int32,
-            buffer: UnsafeMutableRawPointer,
-            length: UInt32,
-            flags: Int32,
-            userData: UInt64
-        ) {
-            cValue = io_uring_sqe()
-            opcode = .recv
-            self.fd = fd
-            self.addr = UInt64(UInt(bitPattern: buffer))
-            self.len = length
-            self.opFlags = flags
-            self.userData = userData
+            /// Configures this SQE for an fsync operation.
+            ///
+            /// - Parameters:
+            ///   - fd: File descriptor to sync.
+            ///   - datasync: If true, only sync data (not metadata).
+            ///   - userData: User data to return with completion.
+            @inlinable
+            public mutating func fsync(
+                fd: Int32,
+                datasync: Bool,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .fsync
+                sqe.fd = fd
+                if datasync {
+                    sqe.opFlags = 1  // IORING_FSYNC_DATASYNC
+                }
+                sqe.userData = userData
+            }
+
+            /// Configures this SQE for a close operation.
+            ///
+            /// - Parameters:
+            ///   - fd: File descriptor to close.
+            ///   - userData: User data to return with completion.
+            @inlinable
+            public mutating func close(
+                fd: Int32,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .close
+                sqe.fd = fd
+                sqe.userData = userData
+            }
+
+            /// Configures this SQE for an accept operation.
+            ///
+            /// - Parameters:
+            ///   - fd: Listening socket file descriptor.
+            ///   - addr: Optional pointer to sockaddr buffer.
+            ///   - addrLen: Optional pointer to sockaddr length.
+            ///   - flags: Accept flags.
+            ///   - userData: User data to return with completion.
+            @inlinable
+            public mutating func accept(
+                fd: Int32,
+                addr: UnsafeMutableRawPointer?,
+                addrLen: UnsafeMutablePointer<UInt32>?,
+                flags: Int32,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .accept
+                sqe.fd = fd
+                sqe.addr = UInt64(UInt(bitPattern: addr))
+                sqe.offset = UInt64(UInt(bitPattern: addrLen))
+                sqe.opFlags = flags
+                sqe.userData = userData
+            }
+
+            /// Configures this SQE for a connect operation.
+            ///
+            /// - Parameters:
+            ///   - fd: Socket file descriptor.
+            ///   - addr: Pointer to sockaddr.
+            ///   - addrLen: Length of sockaddr.
+            ///   - userData: User data to return with completion.
+            @inlinable
+            public mutating func connect(
+                fd: Int32,
+                addr: UnsafeRawPointer,
+                addrLen: UInt32,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .connect
+                sqe.fd = fd
+                sqe.addr = UInt64(UInt(bitPattern: addr))
+                sqe.offset = UInt64(addrLen)
+                sqe.userData = userData
+            }
+
+            /// Configures this SQE for a send operation.
+            ///
+            /// - Parameters:
+            ///   - fd: Socket file descriptor.
+            ///   - buffer: Buffer pointer containing data to send.
+            ///   - length: Number of bytes to send.
+            ///   - flags: Send flags.
+            ///   - userData: User data to return with completion.
+            @inlinable
+            public mutating func send(
+                fd: Int32,
+                buffer: UnsafeRawPointer,
+                length: UInt32,
+                flags: Int32,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .send
+                sqe.fd = fd
+                sqe.addr = UInt64(UInt(bitPattern: buffer))
+                sqe.len = length
+                sqe.opFlags = flags
+                sqe.userData = userData
+            }
+
+            /// Configures this SQE for a recv operation.
+            ///
+            /// - Parameters:
+            ///   - fd: Socket file descriptor.
+            ///   - buffer: Buffer pointer to receive into.
+            ///   - length: Maximum bytes to receive.
+            ///   - flags: Recv flags.
+            ///   - userData: User data to return with completion.
+            @inlinable
+            public mutating func recv(
+                fd: Int32,
+                buffer: UnsafeMutableRawPointer,
+                length: UInt32,
+                flags: Int32,
+                userData: UInt64
+            ) {
+                sqe.cValue = io_uring_sqe()
+                sqe.opcode = .recv
+                sqe.fd = fd
+                sqe.addr = UInt64(UInt(bitPattern: buffer))
+                sqe.len = length
+                sqe.opFlags = flags
+                sqe.userData = userData
+            }
         }
     }
 

@@ -1,0 +1,246 @@
+// ===----------------------------------------------------------------------===//
+//
+// This source file is part of the swift-kernel open source project
+//
+// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE for license information
+//
+// ===----------------------------------------------------------------------===//
+
+#if canImport(Darwin)
+    public import Darwin
+#elseif canImport(Glibc)
+    public import Glibc
+#elseif os(Windows)
+    public import WinSDK
+#endif
+
+extension Kernel.Thread {
+    /// A low-level condition variable for thread synchronization.
+    ///
+    /// This is a policy-free wrapper around platform condition variable primitives:
+    /// - POSIX: `pthread_cond_t`
+    /// - Windows: `CONDITION_VARIABLE`
+    ///
+    /// ## Safety
+    /// This type is `@unchecked Sendable` because it provides internal synchronization.
+    ///
+    /// ## Usage
+    /// Condition variables are always used with a mutex:
+    /// ```swift
+    /// let mutex = Kernel.Thread.Mutex()
+    /// let condition = Kernel.Thread.Condition()
+    ///
+    /// // Waiting thread:
+    /// mutex.lock()
+    /// while !ready {
+    ///     condition.wait(mutex: mutex)
+    /// }
+    /// // ... process ...
+    /// mutex.unlock()
+    ///
+    /// // Signaling thread:
+    /// mutex.lock()
+    /// ready = true
+    /// condition.signal()
+    /// mutex.unlock()
+    /// ```
+    public final class Condition: @unchecked Sendable {
+        #if os(Windows)
+            @usableFromInline
+            var condvar: CONDITION_VARIABLE
+
+            /// Creates a new condition variable.
+            @inlinable
+            public init() {
+                self.condvar = CONDITION_VARIABLE()
+                InitializeConditionVariable(&condvar)
+            }
+
+            // CONDITION_VARIABLE doesn't need destruction on Windows
+        #else
+            @usableFromInline
+            var cond: pthread_cond_t
+
+            /// Creates a new condition variable.
+            ///
+            /// On Linux, configures the condition to use `CLOCK_MONOTONIC` for
+            /// timed waits, which is more robust than `CLOCK_REALTIME`.
+            @inlinable
+            public init() {
+                self.cond = pthread_cond_t()
+                var attr = pthread_condattr_t()
+                pthread_condattr_init(&attr)
+                #if !os(macOS) && !os(iOS) && !os(tvOS) && !os(watchOS)
+                    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC)
+                #endif
+                pthread_cond_init(&self.cond, &attr)
+                pthread_condattr_destroy(&attr)
+            }
+
+            deinit {
+                pthread_cond_destroy(&cond)
+            }
+        #endif
+    }
+}
+
+// MARK: - Wait Operations
+
+extension Kernel.Thread.Condition {
+    /// Waits on the condition variable.
+    ///
+    /// The mutex is atomically released while waiting and reacquired before returning.
+    ///
+    /// - Parameter mutex: The mutex to release while waiting.
+    /// - Precondition: The mutex must be held by the current thread.
+    @inlinable
+    public func wait(mutex: Kernel.Thread.Mutex) {
+        #if os(Windows)
+            _ = SleepConditionVariableSRW(&condvar, &mutex.srwlock, INFINITE, 0)
+        #else
+            pthread_cond_wait(&cond, &mutex.mutex)
+        #endif
+    }
+
+    /// Waits on the condition variable with a timeout.
+    ///
+    /// The mutex is atomically released while waiting and reacquired before returning.
+    ///
+    /// - Parameters:
+    ///   - mutex: The mutex to release while waiting.
+    ///   - timeout: Maximum time to wait.
+    /// - Returns: `true` if signaled, `false` if timed out.
+    /// - Precondition: The mutex must be held by the current thread.
+    @inlinable
+    public func wait(mutex: Kernel.Thread.Mutex, timeout: Duration) -> Bool {
+        #if os(Windows)
+            let ms = timeout.milliseconds
+            return SleepConditionVariableSRW(&condvar, &mutex.srwlock, DWORD(ms), 0)
+        #else
+            var ts = timespec()
+            #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+                // macOS uses absolute time from gettimeofday
+                var tv = timeval()
+                gettimeofday(&tv, nil)
+                ts.tv_sec = tv.tv_sec + Int(timeout.seconds)
+                ts.tv_nsec = Int(tv.tv_usec) * 1000 + Int(timeout.nanoseconds)
+                if ts.tv_nsec >= 1_000_000_000 {
+                    ts.tv_sec += 1
+                    ts.tv_nsec -= 1_000_000_000
+                }
+            #else
+                // Linux uses CLOCK_MONOTONIC (set in init)
+                clock_gettime(CLOCK_MONOTONIC, &ts)
+                ts.tv_sec += Int(timeout.seconds)
+                ts.tv_nsec += Int(timeout.nanoseconds)
+                if ts.tv_nsec >= 1_000_000_000 {
+                    ts.tv_sec += 1
+                    ts.tv_nsec -= 1_000_000_000
+                }
+            #endif
+            let result = pthread_cond_timedwait(&cond, &mutex.mutex, &ts)
+            return result == 0
+        #endif
+    }
+
+    /// Waits on the condition variable with a relative timeout in nanoseconds.
+    ///
+    /// This method uses platform-native relative wait where available:
+    /// - **Darwin**: `pthread_cond_timedwait_relative_np` (immune to wall-clock changes)
+    /// - **Linux**: Calculates absolute deadline using `CLOCK_MONOTONIC`
+    /// - **Windows**: `SleepConditionVariableSRW` with millisecond timeout
+    ///
+    /// The mutex is atomically released while waiting and reacquired before returning.
+    ///
+    /// - Parameters:
+    ///   - mutex: The mutex to release while waiting.
+    ///   - nanoseconds: Maximum time to wait in nanoseconds.
+    /// - Returns: `true` if signaled, `false` if timed out.
+    /// - Precondition: The mutex must be held by the current thread.
+    @inlinable
+    public func waitRelative(mutex: Kernel.Thread.Mutex, nanoseconds: UInt64) -> Bool {
+        #if os(Windows)
+            // Ceiling division to avoid under-waiting; clamp to DWORD.max
+            let milliseconds = (nanoseconds + 999_999) / 1_000_000
+            return SleepConditionVariableSRW(
+                &condvar,
+                &mutex.srwlock,
+                DWORD(min(milliseconds, UInt64(DWORD.max))),
+                0
+            )
+        #elseif os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+            // Darwin: use relative timed wait (immune to wall-clock changes)
+            var ts = timespec()
+            ts.tv_sec = Int(nanoseconds / 1_000_000_000)
+            ts.tv_nsec = Int(nanoseconds % 1_000_000_000)
+            let result = pthread_cond_timedwait_relative_np(&cond, &mutex.mutex, &ts)
+            return result == 0
+        #else
+            // Linux: calculate absolute deadline using CLOCK_MONOTONIC
+            var ts = timespec()
+            clock_gettime(CLOCK_MONOTONIC, &ts)
+            let currentNanos = UInt64(ts.tv_sec) * 1_000_000_000 + UInt64(ts.tv_nsec)
+            let deadlineNanos = currentNanos + nanoseconds
+            ts.tv_sec = Int(deadlineNanos / 1_000_000_000)
+            ts.tv_nsec = Int(deadlineNanos % 1_000_000_000)
+            let result = pthread_cond_timedwait(&cond, &mutex.mutex, &ts)
+            return result == 0
+        #endif
+    }
+}
+
+// MARK: - Signal Operations
+
+extension Kernel.Thread.Condition {
+    /// Signals one waiting thread.
+    ///
+    /// If multiple threads are waiting, one is unblocked (which one is unspecified).
+    @inlinable
+    public func signal() {
+        #if os(Windows)
+            WakeConditionVariable(&condvar)
+        #else
+            pthread_cond_signal(&cond)
+        #endif
+    }
+
+    /// Signals all waiting threads.
+    ///
+    /// All threads waiting on this condition variable are unblocked.
+    @inlinable
+    public func broadcast() {
+        #if os(Windows)
+            WakeAllConditionVariable(&condvar)
+        #else
+            pthread_cond_broadcast(&cond)
+        #endif
+    }
+}
+
+// MARK: - Duration Helpers
+
+extension Duration {
+    /// Total seconds component.
+    @usableFromInline
+    var seconds: Int64 {
+        let (s, _) = components
+        return s
+    }
+
+    /// Nanoseconds component (0..<1_000_000_000).
+    @usableFromInline
+    var nanoseconds: Int64 {
+        let (_, atto) = components
+        return atto / 1_000_000_000
+    }
+
+    /// Total milliseconds.
+    @usableFromInline
+    var milliseconds: Int64 {
+        let (s, atto) = components
+        return s * 1000 + atto / 1_000_000_000_000_000
+    }
+}

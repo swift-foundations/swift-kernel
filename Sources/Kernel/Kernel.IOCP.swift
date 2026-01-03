@@ -252,79 +252,82 @@
             }
         }
 
-        /// Dequeues a single completion packet.
-        ///
-        /// - Parameters:
-        ///   - port: The IOCP handle.
-        ///   - timeout: Timeout in milliseconds (`INFINITE` = 0xFFFFFFFF).
-        /// - Returns: Tuple of (bytes transferred, completion key, overlapped pointer).
-        /// - Throws: `Error.timeout` on timeout, `Error.dequeueFailed` on failure.
-        @inlinable
-        public static func dequeue(
-            _ port: Kernel.Descriptor,
-            timeout: DWORD
-        ) throws(Error) -> (bytesTransferred: DWORD, completionKey: CompletionKey, overlapped: LPOVERLAPPED?) {
-            var bytes: DWORD = 0
-            var key: ULONG_PTR = 0
-            var overlapped: LPOVERLAPPED? = nil
+        /// Dequeue operations.
+        public enum Dequeue {
+            /// Dequeues a single completion packet.
+            ///
+            /// - Parameters:
+            ///   - port: The IOCP handle.
+            ///   - timeout: Timeout in milliseconds (`INFINITE` = 0xFFFFFFFF).
+            /// - Returns: Tuple of (bytes transferred, completion key, overlapped pointer).
+            /// - Throws: `Error.timeout` on timeout, `Error.dequeueFailed` on failure.
+            @inlinable
+            public static func single(
+                _ port: Kernel.Descriptor,
+                timeout: DWORD
+            ) throws(Kernel.IOCP.Error) -> (bytesTransferred: DWORD, completionKey: CompletionKey, overlapped: LPOVERLAPPED?) {
+                var bytes: DWORD = 0
+                var key: ULONG_PTR = 0
+                var overlapped: LPOVERLAPPED? = nil
 
-            let result = GetQueuedCompletionStatus(
-                port.rawValue,
-                &bytes,
-                &key,
-                &overlapped,
-                timeout
-            )
+                let result = GetQueuedCompletionStatus(
+                    port.rawValue,
+                    &bytes,
+                    &key,
+                    &overlapped,
+                    timeout
+                )
 
-            if !result {
-                let error = GetLastError()
-                if error == WAIT_TIMEOUT {
-                    throw .timeout
+                if !result {
+                    let error = GetLastError()
+                    if error == WAIT_TIMEOUT {
+                        throw .timeout
+                    }
+                    throw .dequeueFailed(win32: error)
                 }
-                throw .dequeueFailed(win32: error)
+
+                return (bytes, CompletionKey(rawValue: key), overlapped)
             }
 
-            return (bytes, CompletionKey(rawValue: key), overlapped)
-        }
+            /// Dequeues multiple completion packets (batch).
+            ///
+            /// More efficient than calling `single` in a loop when multiple
+            /// completions are expected.
+            ///
+            /// - Parameters:
+            ///   - port: The IOCP handle.
+            ///   - entries: Buffer for completion entries.
+            ///   - timeout: Timeout in milliseconds.
+            /// - Returns: Number of entries dequeued (0 on timeout).
+            /// - Throws: `Error.dequeueFailed` on failure.
+            @inlinable
+            public static func batch(
+                _ port: Kernel.Descriptor,
+                entries: UnsafeMutableBufferPointer<OVERLAPPED_ENTRY>,
+                timeout: DWORD
+            ) throws(Kernel.IOCP.Error) -> Int {
+                guard let baseAddress = entries.baseAddress else { return 0 }
 
-        /// Dequeues multiple completion packets (batch).
-        ///
-        /// More efficient than calling `dequeue` in a loop when multiple
-        /// completions are expected.
-        ///
-        /// - Parameters:
-        ///   - port: The IOCP handle.
-        ///   - entries: Buffer for completion entries.
-        ///   - timeout: Timeout in milliseconds.
-        /// - Returns: Number of entries dequeued (0 on timeout).
-        /// - Throws: `Error.dequeueFailed` on failure.
-        @inlinable
-        public static func dequeueBatch(
-            _ port: Kernel.Descriptor,
-            entries: UnsafeMutableBufferPointer<OVERLAPPED_ENTRY>,
-            timeout: DWORD
-        ) throws(Error) -> Int {
-            guard let baseAddress = entries.baseAddress else { return 0 }
+                var removed: ULONG = 0
+                let result = GetQueuedCompletionStatusEx(
+                    port.rawValue,
+                    baseAddress,
+                    ULONG(entries.count),
+                    &removed,
+                    timeout,
+                    false  // Not alertable
+                )
 
-            var removed: ULONG = 0
-            let result = GetQueuedCompletionStatusEx(
-                port.rawValue,
-                baseAddress,
-                ULONG(entries.count),
-                &removed,
-                timeout,
-                false  // Not alertable
-            )
-
-            if !result {
-                let error = GetLastError()
-                if error == WAIT_TIMEOUT {
-                    return 0
+                if !result {
+                    let error = GetLastError()
+                    if error == WAIT_TIMEOUT {
+                        return 0
+                    }
+                    throw .dequeueFailed(win32: error)
                 }
-                throw .dequeueFailed(win32: error)
-            }
 
-            return Int(removed)
+                return Int(removed)
+            }
         }
 
         /// Posts a completion packet to the port.
@@ -356,20 +359,40 @@
             }
         }
 
-        /// Cancels pending I/O on a handle.
-        ///
-        /// Returns silently if the operation already completed (`ERROR_NOT_FOUND`).
-        ///
-        /// - Parameters:
-        ///   - fileHandle: The file handle with pending I/O.
-        ///   - overlapped: The overlapped structure for the operation to cancel.
-        @inlinable
-        public static func cancel(
-            fileHandle: HANDLE,
-            overlapped: LPOVERLAPPED
-        ) {
-            _ = CancelIoEx(fileHandle, overlapped)
-            // Ignore errors - if not found, already completed
+        /// Cancel operations.
+        public enum Cancel {
+            /// Cancels pending I/O on a handle (fire-and-forget).
+            ///
+            /// Returns silently if the operation already completed (`ERROR_NOT_FOUND`).
+            ///
+            /// - Parameters:
+            ///   - fileHandle: The file handle with pending I/O.
+            ///   - overlapped: The overlapped structure for the operation to cancel.
+            @inlinable
+            public static func pending(
+                fileHandle: HANDLE,
+                overlapped: LPOVERLAPPED
+            ) {
+                _ = CancelIoEx(fileHandle, overlapped)
+                // Ignore errors - if not found, already completed
+            }
+
+            /// Cancels an overlapped I/O operation with status.
+            ///
+            /// - Parameters:
+            ///   - handle: The file handle.
+            ///   - overlapped: The overlapped structure for the operation to cancel.
+            /// - Returns: `true` if cancelled, `false` if already completed (ERROR_NOT_FOUND).
+            @inlinable
+            public static func io(
+                _ handle: HANDLE,
+                overlapped: UnsafeMutablePointer<OVERLAPPED>
+            ) -> Bool {
+                if CancelIoEx(handle, overlapped) != 0 {
+                    return true
+                }
+                return GetLastError() != WindowsError.notFound
+            }
         }
 
         /// Closes the completion port.
@@ -452,23 +475,6 @@
             throw .writeFailed(win32: error)
         }
 
-        /// Cancels an overlapped I/O operation.
-        ///
-        /// - Parameters:
-        ///   - handle: The file handle.
-        ///   - overlapped: The overlapped structure for the operation to cancel.
-        /// - Returns: `true` if cancelled, `false` if already completed (ERROR_NOT_FOUND).
-        @inlinable
-        public static func cancelIO(
-            _ handle: HANDLE,
-            overlapped: UnsafeMutablePointer<OVERLAPPED>
-        ) -> Bool {
-            if CancelIoEx(handle, overlapped) != 0 {
-                return true
-            }
-            return GetLastError() != WindowsError.notFound
-        }
-
         /// Gets the result of a completed overlapped operation.
         ///
         /// - Parameters:
@@ -498,18 +504,19 @@
             throw .resultFailed(win32: GetLastError())
         }
 
-        /// Gets the last Windows error code.
-        ///
-        /// Exposed so swift-io doesn't need to import WinSDK.
-        @inlinable
-        public static func lastError() -> DWORD {
-            GetLastError()
-        }
     }
 
     // MARK: - Extended Error Cases
 
     extension Kernel.IOCP.Error {
+        /// Gets the last Windows error code.
+        ///
+        /// Exposed so swift-io doesn't need to import WinSDK.
+        @inlinable
+        public static func last() -> DWORD {
+            GetLastError()
+        }
+
         /// ReadFile failed.
         public static func readFailed(win32: DWORD) -> Self {
             .dequeueFailed(win32: win32)  // Reuse existing case for now

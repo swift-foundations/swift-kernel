@@ -63,6 +63,17 @@ extension Kernel.System {
             Int(sysconf(Int32(_SC_PAGESIZE)))
         }
 
+        /// Number of active/online processors.
+        ///
+        /// Uses `sysconf(_SC_NPROCESSORS_ONLN)` to get the count of
+        /// processors currently online (not just configured).
+        ///
+        /// Returns 1 as a fallback if the syscall fails.
+        public static var processorCount: Int {
+            let count = sysconf(Int32(_SC_NPROCESSORS_ONLN))
+            return count > 0 ? Int(count) : 1
+        }
+
         /// Allocation granularity in bytes.
         ///
         /// On POSIX systems, this equals `pageSize`.
@@ -106,6 +117,13 @@ extension Kernel.System {
         /// Memory mapping offsets must be aligned to this value.
         public static var allocationGranularity: Int {
             Int(cachedSystemInfo.dwAllocationGranularity)
+        }
+
+        /// Number of active processors.
+        ///
+        /// Uses the cached `SYSTEM_INFO` from `GetSystemInfo`.
+        public static var processorCount: Int {
+            Int(cachedSystemInfo.dwNumberOfProcessors)
         }
 
         /// Sleeps for the specified number of nanoseconds.

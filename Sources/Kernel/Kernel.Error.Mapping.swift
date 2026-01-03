@@ -65,8 +65,8 @@
         public init?(errno: Errno) {
             switch errno {
             case .badFileDescriptor: self = .invalid
-            case .tooManyOpenFiles: self = .processLimit
-            case .tooManyOpenFilesInSystem: self = .systemLimit
+            case .tooManyOpenFiles: self = .limit(.process)
+            case .tooManyOpenFilesInSystem: self = .limit(.system)
             default: return nil
             }
         }
@@ -198,7 +198,7 @@
         public init?(windowsError error: DWORD) {
             switch Int32(error) {
             case ERROR_INVALID_HANDLE: self = .invalid
-            case ERROR_TOO_MANY_OPEN_FILES: self = .processLimit
+            case ERROR_TOO_MANY_OPEN_FILES: self = .limit(.process)
             default: return nil
             }
         }
