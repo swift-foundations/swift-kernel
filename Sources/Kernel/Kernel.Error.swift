@@ -12,38 +12,45 @@
 extension Kernel {
     /// Unified error type for all kernel syscalls.
     ///
-    /// Maps platform errno (POSIX) and DWORD error codes (Windows) to semantic cases.
-    /// Used by all Kernel syscall operations.
+    /// Aggregates domain-specific leaf errors into a single type for use in
+    /// generic syscall contexts. Each case wraps the authoritative domain error.
     ///
     /// ## Design Principles
     /// - **Semantic, not platform-specific**: Cases represent user-actionable conditions.
     /// - **Typed throws**: No `rethrows`, no `any Error`.
-    /// - **Escape hatch**: `.platform(code:)` for unmapped platform errors.
+    /// - **Domain leaf errors**: Each case wraps the domain's own error type.
     /// - **EOF is NOT an error**: `read`/`pread` return 0 on EOF.
     public enum Error: Swift.Error, Sendable, Equatable {
-        /// Path-related errors.
-        case path(Path)
+        /// Path resolution errors.
+        case path(Kernel.Path.Resolution.Error)
 
-        /// File descriptor errors.
-        case descriptor(Descriptor)
+        /// File descriptor/handle errors.
+        case handle(Kernel.Handle.Error)
 
         /// I/O operation errors.
         /// Note: EOF is NOT an error. read/pread return 0 on EOF.
-        case io(IO)
+        case io(Kernel.IO.Error)
 
         /// File locking errors.
-        case lock(Lock)
+        case lock(Kernel.Lock.Error)
 
         /// Memory-related errors.
-        case memory(Memory)
+        case memory(Kernel.Memory.Error)
 
-        /// System resource errors.
-        case resource(Resource)
+        /// Permission errors.
+        case permission(Kernel.Permission.Error)
 
-        /// A platform-specific error code that is not mapped to a semantic case.
-        ///
-        /// - Parameter code: The raw error code (errno on POSIX, GetLastError() on Windows).
-        case platform(code: Int32)
+        /// Storage space errors.
+        case space(Kernel.Space.Error)
+
+        /// Signal interruption errors.
+        case signal(Kernel.Signal.Error)
+
+        /// Non-blocking operation errors.
+        case blocking(Kernel.Blocking.Error)
+
+        /// Unmapped platform-specific errors.
+        case platform(Kernel.Platform.Error)
     }
 }
 
@@ -52,20 +59,26 @@ extension Kernel {
 extension Kernel.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .path(let path):
-            return path.description
-        case .descriptor(let descriptor):
-            return descriptor.description
-        case .io(let io):
-            return io.description
-        case .lock(let lock):
-            return lock.description
-        case .memory(let memory):
-            return memory.description
-        case .resource(let resource):
-            return resource.description
-        case .platform(let code):
-            return "platform error \(code)"
+        case .path(let error):
+            return "path: \(error)"
+        case .handle(let error):
+            return "handle: \(error)"
+        case .io(let error):
+            return "io: \(error)"
+        case .lock(let error):
+            return "lock: \(error)"
+        case .memory(let error):
+            return "memory: \(error)"
+        case .permission(let error):
+            return "permission: \(error)"
+        case .space(let error):
+            return "space: \(error)"
+        case .signal(let error):
+            return "signal: \(error)"
+        case .blocking(let error):
+            return "blocking: \(error)"
+        case .platform(let error):
+            return "\(error)"
         }
     }
 }

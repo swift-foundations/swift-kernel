@@ -36,14 +36,18 @@ extension Kernel.Error.Test.Unit {
     @Test("error is Equatable")
     func isEquatable() {
         #expect(Kernel.Error.path(.notFound) == Kernel.Error.path(.notFound))
-        #expect(Kernel.Error.path(.notFound) != Kernel.Error.resource(.permission(.denied)))
+        #expect(Kernel.Error.path(.notFound) != Kernel.Error.permission(.denied))
     }
 
     @Test("platform error stores code")
     func platformError() {
-        let error = Kernel.Error.platform(code: 42)
-        if case .platform(let code) = error {
-            #expect(code == 42)
+        let error = Kernel.Error.platform(.unmapped(code: 42))
+        if case .platform(let platformError) = error {
+            if case .unmapped(let code) = platformError {
+                #expect(code == 42)
+            } else {
+                Issue.record("Expected unmapped platform error")
+            }
         } else {
             Issue.record("Expected platform error case")
         }
@@ -53,12 +57,15 @@ extension Kernel.Error.Test.Unit {
     func errorCategoriesDistinct() {
         let categories: [Kernel.Error] = [
             .path(.notFound),
-            .descriptor(.invalid),
+            .handle(.invalid),
             .io(.broken),
             .lock(.deadlock),
-            .memory(.address),
-            .resource(.permission(.denied)),
-            .platform(code: 0),
+            .memory(.fault),
+            .permission(.denied),
+            .space(.exhausted),
+            .signal(.interrupted),
+            .blocking(.wouldBlock),
+            .platform(.unmapped(code: 0)),
         ]
 
         for (i, a) in categories.enumerated() {
@@ -70,9 +77,9 @@ extension Kernel.Error.Test.Unit {
         }
     }
 
-    @Test("Path error cases are distinct")
+    @Test("Path.Resolution.Error cases are distinct")
     func pathCasesDistinct() {
-        let cases: [Kernel.Error.Path] = [.notFound, .exists, .isDirectory, .notDirectory, .notEmpty, .crossDevice]
+        let cases: [Kernel.Path.Resolution.Error] = [.notFound, .exists, .isDirectory, .notDirectory, .notEmpty, .crossDevice, .loop, .nameTooLong]
         for (i, a) in cases.enumerated() {
             for (j, b) in cases.enumerated() {
                 if i != j {
@@ -82,15 +89,15 @@ extension Kernel.Error.Test.Unit {
         }
     }
 
-    @Test("Descriptor error cases are distinct")
-    func descriptorCasesDistinct() {
-        #expect(Kernel.Error.Descriptor.invalid != Kernel.Error.Descriptor.limit(.process))
-        #expect(Kernel.Error.Descriptor.limit(.process) != Kernel.Error.Descriptor.limit(.system))
+    @Test("Handle.Error cases are distinct")
+    func handleCasesDistinct() {
+        #expect(Kernel.Handle.Error.invalid != Kernel.Handle.Error.limit(.process))
+        #expect(Kernel.Handle.Error.limit(.process) != Kernel.Handle.Error.limit(.system))
     }
 
-    @Test("IO error cases are distinct")
+    @Test("IO.Error cases are distinct")
     func ioCasesDistinct() {
-        let cases: [Kernel.Error.IO] = [.broken, .reset, .device(.unsupported), .device(.unavailable), .seek]
+        let cases: [Kernel.IO.Error] = [.broken, .reset, .hardware, .illegalSeek, .deviceUnsupported, .deviceUnavailable, .unsupported]
         for (i, a) in cases.enumerated() {
             for (j, b) in cases.enumerated() {
                 if i != j {
@@ -100,19 +107,20 @@ extension Kernel.Error.Test.Unit {
         }
     }
 
-    @Test("Lock error cases are distinct")
+    @Test("Lock.Error cases are distinct")
     func lockCasesDistinct() {
-        #expect(Kernel.Error.Lock.deadlock != Kernel.Error.Lock.unavailable)
+        #expect(Kernel.Lock.Error.deadlock != Kernel.Lock.Error.unavailable)
+        #expect(Kernel.Lock.Error.contention != Kernel.Lock.Error.deadlock)
     }
 
-    @Test("Memory error cases are distinct")
+    @Test("Memory.Error cases are distinct")
     func memoryCasesDistinct() {
-        #expect(Kernel.Error.Memory.address != Kernel.Error.Memory.exhausted)
+        #expect(Kernel.Memory.Error.fault != Kernel.Memory.Error.exhausted)
     }
 
-    @Test("Resource error cases are distinct")
-    func resourceCasesDistinct() {
-        let cases: [Kernel.Error.Resource] = [.permission(.denied), .permission(.notPermitted), .space, .interrupted, .blocked, .unsupported]
+    @Test("Permission.Error cases are distinct")
+    func permissionCasesDistinct() {
+        let cases: [Kernel.Permission.Error] = [.denied, .notPermitted, .readOnlyFilesystem]
         for (i, a) in cases.enumerated() {
             for (j, b) in cases.enumerated() {
                 if i != j {
@@ -120,6 +128,11 @@ extension Kernel.Error.Test.Unit {
                 }
             }
         }
+    }
+
+    @Test("Space.Error cases are distinct")
+    func spaceCasesDistinct() {
+        #expect(Kernel.Space.Error.exhausted != Kernel.Space.Error.quota)
     }
 }
 
@@ -135,25 +148,31 @@ extension Kernel.Error.Test.EdgeCase {
             .path(.notDirectory),
             .path(.notEmpty),
             .path(.crossDevice),
-            .descriptor(.invalid),
-            .descriptor(.limit(.process)),
-            .descriptor(.limit(.system)),
+            .path(.loop),
+            .path(.nameTooLong),
+            .handle(.invalid),
+            .handle(.limit(.process)),
+            .handle(.limit(.system)),
             .io(.broken),
             .io(.reset),
-            .io(.device(.unsupported)),
-            .io(.device(.unavailable)),
-            .io(.seek),
+            .io(.hardware),
+            .io(.illegalSeek),
+            .io(.deviceUnsupported),
+            .io(.deviceUnavailable),
+            .io(.unsupported),
             .lock(.deadlock),
             .lock(.unavailable),
-            .memory(.address),
+            .lock(.contention),
+            .memory(.fault),
             .memory(.exhausted),
-            .resource(.permission(.denied)),
-            .resource(.permission(.notPermitted)),
-            .resource(.space),
-            .resource(.interrupted),
-            .resource(.blocked),
-            .resource(.unsupported),
-            .platform(code: 0),
+            .permission(.denied),
+            .permission(.notPermitted),
+            .permission(.readOnlyFilesystem),
+            .space(.exhausted),
+            .space(.quota),
+            .signal(.interrupted),
+            .blocking(.wouldBlock),
+            .platform(.unmapped(code: 0)),
         ]
 
         for error in cases {
@@ -163,7 +182,7 @@ extension Kernel.Error.Test.EdgeCase {
 
     @Test("platform error description contains code")
     func platformErrorDescription() {
-        let error = Kernel.Error.platform(code: -1)
+        let error = Kernel.Error.platform(.unmapped(code: -1))
         #expect(error.description.contains("-1"))
     }
 }
