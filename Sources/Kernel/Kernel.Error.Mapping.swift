@@ -157,7 +157,7 @@
         /// Creates a platform error from an errno value.
         @inlinable
         public init(errno: Errno) {
-            self = .unmapped(code: errno.rawValue)
+            self = .unmapped(code: .posix(errno.rawValue), message: nil)
         }
     }
 
@@ -245,10 +245,10 @@
     }
 
     extension Kernel.Platform.Error {
+        /// Creates a platform error from a Windows error code.
         @inlinable
         public init(windowsError error: DWORD) {
-            // TODO: Use FormatMessageW for proper error messages
-            self = .unmapped(code: Int32(error), message: "Windows error \(error)")
+            self = .unmapped(code: .win32(UInt32(error)), message: nil)
         }
     }
 

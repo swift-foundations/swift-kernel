@@ -15,13 +15,13 @@
         /// Errors from io_uring operations.
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
             /// Failed to create io_uring instance.
-            case setup(errno: Int32)
+            case setup(Kernel.Error.Code)
 
             /// Failed to submit/wait (io_uring_enter).
-            case enter(errno: Int32)
+            case enter(Kernel.Error.Code)
 
             /// Failed to register resources.
-            case register(errno: Int32)
+            case register(Kernel.Error.Code)
 
             /// Operation was interrupted by a signal.
             case interrupted
@@ -31,12 +31,12 @@
     extension Kernel.IOUring.Error: CustomStringConvertible {
         public var description: String {
             switch self {
-            case .setup(let errno):
-                return "io_uring_setup failed (errno: \(errno))"
-            case .enter(let errno):
-                return "io_uring_enter failed (errno: \(errno))"
-            case .register(let errno):
-                return "io_uring_register failed (errno: \(errno))"
+            case .setup(let code):
+                return "io_uring_setup failed (\(code))"
+            case .enter(let code):
+                return "io_uring_enter failed (\(code))"
+            case .register(let code):
+                return "io_uring_register failed (\(code))"
             case .interrupted:
                 return "operation interrupted"
             }
@@ -45,20 +45,20 @@
 
     // MARK: - Kernel.Error Conversion
 
-    extension Kernel.IOUring.Error {
-        /// Converts this io_uring error to a `Kernel.Error`.
+    extension Kernel.Error {
+        /// Creates a semantic error from an io_uring error.
         ///
         /// Maps to semantic cases where possible, falls back to `.platform` otherwise.
-        public var asKernelError: Kernel.Error {
-            switch self {
-            case .setup(let errno):
-                return .platform(code: errno)
-            case .enter(let errno):
-                return .platform(code: errno)
-            case .register(let errno):
-                return .platform(code: errno)
+        public init(_ error: Kernel.IOUring.Error) {
+            switch error {
+            case .setup(let code):
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            case .enter(let code):
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+            case .register(let code):
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
             case .interrupted:
-                return .resource(.interrupted)
+                self = .signal(.interrupted)
             }
         }
     }

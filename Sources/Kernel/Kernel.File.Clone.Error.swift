@@ -9,6 +9,14 @@
 //
 // ===----------------------------------------------------------------------===//
 
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#elseif os(Windows)
+import WinSDK
+#endif
+
 extension Kernel.File.Clone {
     /// Errors that can occur during clone operations.
     public enum Error: Swift.Error, Sendable, Equatable, CustomStringConvertible {
@@ -39,7 +47,7 @@ extension Kernel.File.Clone {
         case isDirectory
 
         /// A platform-specific error occurred.
-        case platform(code: Int32, operation: Operation)
+        case platform(code: Kernel.Error.Code, operation: Operation)
 
         /// Operation types for error context.
         public enum Operation: String, Sendable, Equatable {
@@ -68,12 +76,10 @@ extension Kernel.File.Clone {
             case .isDirectory:
                 return "Source is a directory"
             case .platform(let code, let operation):
-                #if !os(Windows)
-                    let message = String(cString: strerror(code))
-                    return "Platform error \(code) during \(operation): \(message)"
-                #else
-                    return "Platform error \(code) during \(operation)"
-                #endif
+                if let message = Kernel.Error.message(for: code) {
+                    return "Platform error during \(operation): \(message)"
+                }
+                return "Platform error \(code) during \(operation)"
             }
         }
     }
@@ -87,14 +93,10 @@ extension Kernel.File.Clone.Error {
     /// This type captures the exact errno/win32 error code from syscalls.
     /// It is translated to the semantic `Kernel.File.Clone.Error` at API boundaries.
     package enum Syscall: Swift.Error, Sendable {
-        #if !os(Windows)
-            case posix(errno: Int32, operation: Operation)
-        #endif
+        /// Platform syscall failure.
+        case platform(code: Kernel.Error.Code, operation: Operation)
 
-        #if os(Windows)
-            case windows(code: UInt32, operation: Operation)
-        #endif
-
+        /// Operation not supported.
         case notSupported(operation: Operation)
     }
 }
@@ -108,49 +110,53 @@ extension Kernel.File.Clone.Error {
         case .notSupported:
             self = .notSupported
 
-        #if !os(Windows)
-            case .posix(let errno, let operation):
-                switch errno {
-                case ENOENT:
-                    self = .sourceNotFound
-                case EEXIST:
-                    self = .destinationExists
-                case EACCES, EPERM:
-                    self = .permissionDenied
-                case EXDEV:
-                    self = .crossDevice
-                case EISDIR:
-                    self = .isDirectory
-                case ENOTSUP, EOPNOTSUPP:
-                    self = .notSupported
-                default:
-                    self = .platform(code: errno, operation: operation)
-                }
-        #endif
+        case .platform(let code, let operation):
+            self = Self.fromCode(code, operation: operation)
+        }
+    }
 
-        #if os(Windows)
-            case .windows(let code, let operation):
-                switch code {
-                case 2:  // ERROR_FILE_NOT_FOUND
-                    self = .sourceNotFound
-                case 80:  // ERROR_FILE_EXISTS
-                    self = .destinationExists
-                case 5:  // ERROR_ACCESS_DENIED
-                    self = .permissionDenied
-                case 17:  // ERROR_NOT_SAME_DEVICE
-                    self = .crossDevice
-                default:
-                    self = .platform(code: Int32(code), operation: operation)
-                }
-        #endif
+    /// Maps platform error code to semantic error.
+    private static func fromCode(_ code: Kernel.Error.Code, operation: Operation) -> Self {
+        switch code {
+        case .posix(let errno):
+            #if !os(Windows)
+            switch errno {
+            case ENOENT:
+                return .sourceNotFound
+            case EEXIST:
+                return .destinationExists
+            case EACCES, EPERM:
+                return .permissionDenied
+            case EXDEV:
+                return .crossDevice
+            case EISDIR:
+                return .isDirectory
+            case ENOTSUP, EOPNOTSUPP:
+                return .notSupported
+            default:
+                return .platform(code: code, operation: operation)
+            }
+            #else
+            return .platform(code: code, operation: operation)
+            #endif
+
+        case .win32(let error):
+            #if os(Windows)
+            switch error {
+            case 2:  // ERROR_FILE_NOT_FOUND
+                return .sourceNotFound
+            case 80:  // ERROR_FILE_EXISTS
+                return .destinationExists
+            case 5:  // ERROR_ACCESS_DENIED
+                return .permissionDenied
+            case 17:  // ERROR_NOT_SAME_DEVICE
+                return .crossDevice
+            default:
+                return .platform(code: code, operation: operation)
+            }
+            #else
+            return .platform(code: code, operation: operation)
+            #endif
         }
     }
 }
-
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif os(Windows)
-    import WinSDK
-#endif

@@ -13,24 +13,19 @@ extension Kernel.Mmap {
     /// Errors from mmap operations.
     public enum Error: Swift.Error, Sendable, Equatable, Hashable {
         /// Failed to map memory.
-        case map(errno: Int32)
+        case map(Kernel.Error.Code)
 
         /// Failed to unmap memory.
-        case unmap(errno: Int32)
+        case unmap(Kernel.Error.Code)
 
         /// Failed to sync memory to disk.
-        case sync(errno: Int32)
+        case sync(Kernel.Error.Code)
 
         /// Failed to change memory protection.
-        case protect(errno: Int32)
+        case protect(Kernel.Error.Code)
 
         /// Invalid argument.
         case invalid(Validation)
-
-        #if os(Windows)
-            /// Windows-specific error.
-            case windows(code: UInt32, operation: Operation)
-        #endif
 
         /// Validation failure reasons.
         public enum Validation: Sendable, Equatable, Hashable {
@@ -41,39 +36,22 @@ extension Kernel.Mmap {
             /// Offset is invalid.
             case offset
         }
-
-        #if os(Windows)
-            /// Windows mmap operations.
-            public enum Operation: Sendable, Equatable, Hashable {
-                case createFileMapping
-                case mapViewOfFile
-                case unmapViewOfFile
-                case flushViewOfFile
-                case virtualAlloc
-                case virtualFree
-                case virtualProtect
-            }
-        #endif
     }
 }
 
 extension Kernel.Mmap.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .map(let errno):
-            return "mmap failed (errno: \(errno))"
-        case .unmap(let errno):
-            return "munmap failed (errno: \(errno))"
-        case .sync(let errno):
-            return "msync failed (errno: \(errno))"
-        case .protect(let errno):
-            return "mprotect failed (errno: \(errno))"
+        case .map(let code):
+            return "mmap failed (\(code))"
+        case .unmap(let code):
+            return "munmap failed (\(code))"
+        case .sync(let code):
+            return "msync failed (\(code))"
+        case .protect(let code):
+            return "mprotect failed (\(code))"
         case .invalid(let validation):
             return "invalid argument: \(validation)"
-        #if os(Windows)
-            case .windows(let code, let operation):
-                return "\(operation) failed (error: \(code))"
-        #endif
         }
     }
 }
@@ -87,19 +65,3 @@ extension Kernel.Mmap.Error.Validation: CustomStringConvertible {
         }
     }
 }
-
-#if os(Windows)
-extension Kernel.Mmap.Error.Operation: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .createFileMapping: return "CreateFileMapping"
-        case .mapViewOfFile: return "MapViewOfFile"
-        case .unmapViewOfFile: return "UnmapViewOfFile"
-        case .flushViewOfFile: return "FlushViewOfFile"
-        case .virtualAlloc: return "VirtualAlloc"
-        case .virtualFree: return "VirtualFree"
-        case .virtualProtect: return "VirtualProtect"
-        }
-    }
-}
-#endif

@@ -49,7 +49,7 @@
             var cParams = params.cValue
             let fd = _cIoUringSetup(entries, &cParams)
             guard fd >= 0 else {
-                throw .setup(errno: errno)
+                throw .setup(.captureErrno())
             }
             // Update params with kernel-filled values
             params = Params(cParams)
@@ -81,9 +81,9 @@
                 0
             )
             guard result >= 0 else {
-                let err = errno
-                if err == EINTR { throw .interrupted }
-                throw .enter(errno: err)
+                let code = Kernel.Error.Code.captureErrno()
+                if code.posix == EINTR { throw .interrupted }
+                throw .enter(code)
             }
             return Int(result)
         }
@@ -110,7 +110,7 @@
                 count
             )
             guard result >= 0 else {
-                throw .register(errno: errno)
+                throw .register(.captureErrno())
             }
         }
 

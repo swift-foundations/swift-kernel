@@ -16,13 +16,13 @@ extension Kernel.Thread {
         ///
         /// - On POSIX: The return value from `pthread_create` (e.g., EAGAIN, EPERM).
         /// - On Windows: The value from `GetLastError()`.
-        case create(code: Int32)
+        case create(Kernel.Error.Code)
 
         /// Thread join failed.
-        case join(code: Int32)
+        case join(Kernel.Error.Code)
 
         /// Thread detach failed.
-        case detach(code: Int32)
+        case detach(Kernel.Error.Code)
     }
 }
 
@@ -30,23 +30,37 @@ extension Kernel.Thread.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .create(let code):
-            #if os(Windows)
-                return "CreateThread failed with error code \(code)"
-            #else
-                return "pthread_create failed with error code \(code)"
-            #endif
+            if let message = Kernel.Error.message(for: code) {
+                return "thread creation failed: \(message)"
+            }
+            return "thread creation failed (\(code))"
         case .join(let code):
-            #if os(Windows)
-                return "WaitForSingleObject failed with error code \(code)"
-            #else
-                return "pthread_join failed with error code \(code)"
-            #endif
+            if let message = Kernel.Error.message(for: code) {
+                return "thread join failed: \(message)"
+            }
+            return "thread join failed (\(code))"
         case .detach(let code):
-            #if os(Windows)
-                return "CloseHandle failed with error code \(code)"
-            #else
-                return "pthread_detach failed with error code \(code)"
-            #endif
+            if let message = Kernel.Error.message(for: code) {
+                return "thread detach failed: \(message)"
+            }
+            return "thread detach failed (\(code))"
         }
+    }
+}
+
+// MARK: - Kernel.Error Conversion
+
+extension Kernel.Error {
+    /// Creates a semantic error from a thread error.
+    ///
+    /// Maps to semantic cases where possible, falls back to `.platform` otherwise.
+    public init(_ error: Kernel.Thread.Error) {
+        let code: Kernel.Error.Code
+        switch error {
+        case .create(let c): code = c
+        case .join(let c): code = c
+        case .detach(let c): code = c
+        }
+        self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
     }
 }

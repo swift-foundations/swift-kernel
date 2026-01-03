@@ -15,13 +15,13 @@ extension Kernel.Eventfd {
     /// Errors from eventfd operations.
     public enum Error: Swift.Error, Sendable, Equatable, Hashable {
         /// Failed to create eventfd.
-        case create(errno: Int32)
+        case create(Kernel.Error.Code)
 
         /// Failed to read from eventfd.
-        case read(errno: Int32)
+        case read(Kernel.Error.Code)
 
         /// Failed to write to eventfd.
-        case write(errno: Int32)
+        case write(Kernel.Error.Code)
 
         /// Operation would block (non-blocking mode).
         case wouldBlock
@@ -31,12 +31,12 @@ extension Kernel.Eventfd {
 extension Kernel.Eventfd.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .create(let errno):
-            return "eventfd creation failed (errno: \(errno))"
-        case .read(let errno):
-            return "eventfd read failed (errno: \(errno))"
-        case .write(let errno):
-            return "eventfd write failed (errno: \(errno))"
+        case .create(let code):
+            return "eventfd creation failed (\(code))"
+        case .read(let code):
+            return "eventfd read failed (\(code))"
+        case .write(let code):
+            return "eventfd write failed (\(code))"
         case .wouldBlock:
             return "operation would block"
         }
@@ -44,8 +44,8 @@ extension Kernel.Eventfd.Error: CustomStringConvertible {
 }
 
 extension Kernel.Eventfd.Error {
-    /// The errno value associated with this error, if any.
-    public var errno: Int32? {
+    /// The error code associated with this error, if any.
+    public var code: Kernel.Error.Code? {
         switch self {
         case .create(let code): return code
         case .read(let code): return code
@@ -53,18 +53,24 @@ extension Kernel.Eventfd.Error {
         case .wouldBlock: return nil
         }
     }
+}
 
-    /// Converts this eventfd error to a `Kernel.Error`.
-    public var asKernelError: Kernel.Error {
-        switch self {
-        case .create(let errno):
-            return .platform(code: errno)
-        case .read(let errno):
-            return .platform(code: errno)
-        case .write(let errno):
-            return .platform(code: errno)
+// MARK: - Kernel.Error Conversion
+
+extension Kernel.Error {
+    /// Creates a semantic error from an eventfd error.
+    ///
+    /// Maps to semantic cases where possible, falls back to `.platform` otherwise.
+    public init(_ error: Kernel.Eventfd.Error) {
+        switch error {
+        case .create(let code):
+            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+        case .read(let code):
+            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
+        case .write(let code):
+            self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
         case .wouldBlock:
-            return .resource(.blocked)
+            self = .blocking(.wouldBlock)
         }
     }
 }

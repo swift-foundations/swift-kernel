@@ -82,3 +82,76 @@ extension Kernel.Error: CustomStringConvertible {
         }
     }
 }
+
+#if !os(Windows)
+import SystemPackage
+#endif
+
+#if os(Windows)
+public import WinSDK
+#endif
+
+extension Kernel.Error {
+    public init?(
+        _ code: Kernel.Error.Code
+    ){
+        switch code {
+        case .posix(let rawValue):
+            #if !os(Windows)
+            let errno = Errno(rawValue: rawValue)
+            // Try each domain in priority order
+            if let e = Kernel.Path.Resolution.Error(errno: errno) { self = .path(e) }
+            if let e = Kernel.Permission.Error(errno: errno) { self = .permission(e) }
+            if let e = Kernel.Handle.Error(errno: errno) { self = .handle(e) }
+            if let e = Kernel.Signal.Error(errno: errno) { self = .signal(e) }
+            if let e = Kernel.Blocking.Error(errno: errno) { self = .blocking(e) }
+            if let e = Kernel.Space.Error(errno: errno) { self = .space(e) }
+            if let e = Kernel.Memory.Error(errno: errno) { self = .memory(e) }
+            if let e = Kernel.IO.Error(errno: errno) { self = .io(e) }
+            if let e = Kernel.Lock.Error(errno: errno) { self = .lock(e) }
+            #endif
+            return nil
+
+        case .win32(let code):
+            #if os(Windows)
+            // Explicit DWORD conversion to call existing mapping entry points
+            let dword = DWORD(code)
+            if let e = Kernel.Path.Resolution.Error(windowsError: dword) { self = .path(e) }
+            if let e = Kernel.Permission.Error(windowsError: dword) { self = .permission(e) }
+            if let e = Kernel.Handle.Error(windowsError: dword) { self = .handle(e) }
+            if let e = Kernel.Space.Error(windowsError: dword) { self = .space(e) }
+            if let e = Kernel.Memory.Error(windowsError: dword) { self = .memory(e) }
+            if let e = Kernel.IO.Error(windowsError: dword) { self = .io(e) }
+            if let e = Kernel.Lock.Error(windowsError: dword) { self = .lock(e) }
+            #endif
+            return nil
+        }
+    }
+}
+
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#endif
+
+extension Kernel.Error {
+    /// Returns the platform error message for a given error code.
+    ///
+    /// Cross-platform: returns `nil` on Windows (or when code is `.win32`).
+    /// On POSIX, calls `strerror` for `.posix` codes.
+    ///
+    /// - Parameter code: The unified error code.
+    /// - Returns: A human-readable error message, or `nil` if not available.
+    public static func message(for code: Code) -> String? {
+        #if !os(Windows)
+        if let posix = code.posix {
+            return String(cString: strerror(posix))
+        }
+        #endif
+        return nil
+    }
+}
+

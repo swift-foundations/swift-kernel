@@ -45,7 +45,7 @@
         ) throws(Error) -> Kernel.Descriptor {
             let efd = eventfd(initval, flags.rawValue)
             guard efd >= 0 else {
-                throw .create(errno: errno)
+                throw .create(.captureErrno())
             }
             return Kernel.Descriptor(rawValue: efd)
         }
@@ -64,11 +64,11 @@
                 Glibc.read(efd.rawValue, ptr, MemoryLayout<UInt64>.size)
             }
             guard result == MemoryLayout<UInt64>.size else {
-                let err = errno
-                if err == EAGAIN || err == EWOULDBLOCK {
+                let code = Kernel.Error.Code.captureErrno()
+                if let posix = code.posix, posix == EAGAIN || posix == EWOULDBLOCK {
                     throw .wouldBlock
                 }
-                throw .read(errno: err)
+                throw .read(code)
             }
             return value
         }
@@ -90,11 +90,11 @@
                 Glibc.write(efd.rawValue, ptr, MemoryLayout<UInt64>.size)
             }
             guard result == MemoryLayout<UInt64>.size else {
-                let err = errno
-                if err == EAGAIN || err == EWOULDBLOCK {
+                let code = Kernel.Error.Code.captureErrno()
+                if let posix = code.posix, posix == EAGAIN || posix == EWOULDBLOCK {
                     throw .wouldBlock
                 }
-                throw .write(errno: err)
+                throw .write(code)
             }
         }
 

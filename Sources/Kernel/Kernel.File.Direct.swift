@@ -208,7 +208,7 @@ public import SystemPackage
             let result = fcntl(descriptor.rawValue, F_NOCACHE, enabled ? 1 : 0)
             guard result != -1 else {
                 let operation: Error.Operation = enabled ? .setNoCache : .clearNoCache
-                throw .posix(errno: errno, operation: operation)
+                throw .platform(code: .posix(errno), operation: operation)
             }
         }
 

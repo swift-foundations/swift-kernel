@@ -66,7 +66,7 @@ extension Kernel.File.Clone.Capability {
             }
 
             guard result == 0 else {
-                throw .posix(errno: errno, operation: .statfs)
+                throw .platform(code: .posix(errno), operation: .statfs)
             }
 
             // APFS filesystem type
@@ -87,7 +87,7 @@ extension Kernel.File.Clone.Capability {
             do {
                 statfsBuf = try Kernel.Statfs.get(path: FilePath(path))
             } catch {
-                throw .posix(errno: errno, operation: .statfs)
+                throw .platform(code: .posix(errno), operation: .statfs)
             }
 
             // Known filesystems that support FICLONE
@@ -130,7 +130,7 @@ extension Kernel.File.Clone {
                 }
 
                 guard result == 0 else {
-                    throw .posix(errno: errno, operation: .stat)
+                    throw .platform(code: .posix(errno), operation: .stat)
                 }
 
                 return Int(statBuf.st_size)
@@ -143,7 +143,7 @@ extension Kernel.File.Clone {
                 }
 
                 guard result == 0 else {
-                    throw .posix(errno: errno, operation: .stat)
+                    throw .platform(code: .posix(errno), operation: .stat)
                 }
 
                 return Int(statBuf.st_size)
@@ -154,7 +154,7 @@ extension Kernel.File.Clone {
             package static func size(handle: HANDLE) throws(Kernel.File.Clone.Error.Syscall) -> UInt64 {
                 var size: LARGE_INTEGER = LARGE_INTEGER()
                 guard GetFileSizeEx(handle, &size) != 0 else {
-                    throw .windows(code: GetLastError(), operation: .stat)
+                    throw .platform(code: .win32(UInt32(GetLastError())), operation: .stat)
                 }
                 return UInt64(size.QuadPart)
             }
@@ -195,7 +195,7 @@ extension Kernel.File.Clone {
                     return false
                 }
 
-                throw .posix(errno: err, operation: .clonefile)
+                throw .platform(code: .posix(err), operation: .clonefile)
             }
         }
 
@@ -212,7 +212,7 @@ extension Kernel.File.Clone {
                 var statBuf = Darwin.stat()
                 let destExists = destination.withCString { stat($0, &statBuf) } == 0
                 if destExists {
-                    throw .posix(errno: EEXIST, operation: .copyfile)
+                    throw .platform(code: .posix(EEXIST), operation: .copyfile)
                 }
 
                 let result = source.withCString { src in
@@ -222,7 +222,7 @@ extension Kernel.File.Clone {
                 }
 
                 guard result == 0 else {
-                    throw .posix(errno: errno, operation: .copyfile)
+                    throw .platform(code: .posix(errno), operation: .copyfile)
                 }
             }
 
@@ -235,7 +235,7 @@ extension Kernel.File.Clone {
                 var statBuf = Darwin.stat()
                 let destExists = destination.withCString { stat($0, &statBuf) } == 0
                 if destExists {
-                    throw .posix(errno: EEXIST, operation: .copyfile)
+                    throw .platform(code: .posix(EEXIST), operation: .copyfile)
                 }
 
                 let result = source.withCString { src in
@@ -245,7 +245,7 @@ extension Kernel.File.Clone {
                 }
 
                 guard result == 0 else {
-                    throw .posix(errno: errno, operation: .copyfile)
+                    throw .platform(code: .posix(errno), operation: .copyfile)
                 }
             }
         }
@@ -284,7 +284,7 @@ extension Kernel.File.Clone {
                     return false
                 }
 
-                throw .posix(errno: err, operation: .ficlone)
+                throw .platform(code: .posix(err), operation: .ficlone)
             }
         }
 
@@ -313,7 +313,7 @@ extension Kernel.File.Clone {
                             length: remaining
                         )
                     } catch {
-                        throw .posix(errno: errno, operation: .copyFileRange)
+                        throw .platform(code: .posix(errno), operation: .copyFileRange)
                     }
 
                     if copied == 0 {
@@ -368,7 +368,7 @@ extension Kernel.File.Clone {
                 }
 
                 guard result != 0 else {
-                    throw .windows(code: GetLastError(), operation: .copy)
+                    throw .platform(code: .win32(UInt32(GetLastError())), operation: .copy)
                 }
             }
         }

@@ -51,7 +51,7 @@ extension Kernel.File.Direct {
         case invalidHandle
 
         /// Platform-specific error with error code.
-        case platform(code: Int32, operation: Operation)
+        case platform(code: Kernel.Error.Code, operation: Operation)
     }
 }
 
@@ -73,12 +73,10 @@ extension Kernel.File.Direct.Error: CustomStringConvertible {
         case .invalidHandle:
             return "Invalid file handle"
         case .platform(let code, let operation):
-            #if !os(Windows)
-                let message = String(cString: strerror(code))
-                return "Platform error \(code) during \(operation): \(message)"
-            #else
-                return "Platform error \(code) during \(operation)"
-            #endif
+            if let message = Kernel.Error.message(for: code) {
+                return "Platform error during \(operation): \(message)"
+            }
+            return "Platform error \(code) during \(operation)"
         }
     }
 }
@@ -105,15 +103,8 @@ extension Kernel.File.Direct.Error {
     /// This type captures the exact errno/win32 error code from syscalls.
     /// It is translated to the semantic `Kernel.File.Direct.Error` at API boundaries.
     package enum Syscall: Swift.Error, Sendable, Equatable {
-        #if !os(Windows)
-            /// POSIX syscall failure with errno.
-            case posix(errno: Int32, operation: Operation)
-        #endif
-
-        #if os(Windows)
-            /// Windows syscall failure with error code.
-            case windows(code: UInt32, operation: Operation)
-        #endif
+        /// Platform syscall failure.
+        case platform(code: Kernel.Error.Code, operation: Operation)
 
         /// Invalid file descriptor provided.
         case invalidDescriptor(operation: Operation)
@@ -137,57 +128,55 @@ extension Kernel.File.Direct.Error {
 
         case .alignmentViolation(let operation):
             // Alignment violation during the operation
-            self = .platform(code: -1, operation: operation)
+            self = .platform(code: .posix(-1), operation: operation)
 
         case .notSupported:
             self = .notSupported
 
-        #if !os(Windows)
-            case .posix(let errno, let operation):
-                self = Self.fromPosixErrno(errno, operation: operation)
-        #endif
-
-        #if os(Windows)
-            case .windows(let code, let operation):
-                self = Self.fromWindowsError(code, operation: operation)
-        #endif
+        case .platform(let code, let operation):
+            self = Self.fromCode(code, operation: operation)
         }
     }
 
-    #if !os(Windows)
-        /// Maps POSIX errno to semantic error.
-        private static func fromPosixErrno(_ errno: Int32, operation: Operation) -> Self {
+    /// Maps platform error code to semantic error.
+    private static func fromCode(_ code: Kernel.Error.Code, operation: Operation) -> Self {
+        switch code {
+        case .posix(let errno):
+            #if !os(Windows)
             switch errno {
             case EINVAL:
                 // EINVAL from O_DIRECT often means alignment violation
-                return .platform(code: errno, operation: operation)
+                return .platform(code: code, operation: operation)
             case EBADF:
                 return .invalidHandle
             case ENOTSUP, EOPNOTSUPP:
                 return .notSupported
             case EACCES, EPERM:
-                return .platform(code: errno, operation: operation)
+                return .platform(code: code, operation: operation)
             default:
-                return .platform(code: errno, operation: operation)
+                return .platform(code: code, operation: operation)
             }
-        }
-    #endif
+            #else
+            return .platform(code: code, operation: operation)
+            #endif
 
-    #if os(Windows)
-        /// Maps Windows error code to semantic error.
-        private static func fromWindowsError(_ error: UInt32, operation: Operation) -> Self {
+        case .win32(let error):
+            #if os(Windows)
             switch error {
-            case DWORD(ERROR_INVALID_PARAMETER):
-                return .platform(code: Int32(error), operation: operation)
-            case DWORD(ERROR_INVALID_HANDLE):
+            case UInt32(ERROR_INVALID_PARAMETER):
+                return .platform(code: code, operation: operation)
+            case UInt32(ERROR_INVALID_HANDLE):
                 return .invalidHandle
-            case DWORD(ERROR_NOT_SUPPORTED):
+            case UInt32(ERROR_NOT_SUPPORTED):
                 return .notSupported
-            case DWORD(ERROR_ACCESS_DENIED):
-                return .platform(code: Int32(error), operation: operation)
+            case UInt32(ERROR_ACCESS_DENIED):
+                return .platform(code: code, operation: operation)
             default:
-                return .platform(code: Int32(error), operation: operation)
+                return .platform(code: code, operation: operation)
             }
+            #else
+            return .platform(code: code, operation: operation)
+            #endif
         }
-    #endif
+    }
 }

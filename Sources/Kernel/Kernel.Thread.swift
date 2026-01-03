@@ -71,7 +71,7 @@ extension Kernel.Thread {
             guard let handle else {
                 context.deinitialize(count: 1)
                 context.deallocate()
-                throw .create(code: Int32(GetLastError()))
+                throw .create(.captureLastError())
             }
 
             return Handle(rawValue: handle)
@@ -95,7 +95,7 @@ extension Kernel.Thread {
             guard result == 0, let thread else {
                 context.deinitialize(count: 1)
                 context.deallocate()
-                throw .create(code: result)
+                throw .create(.posix(result))
             }
 
             return Handle(rawValue: thread)
@@ -121,7 +121,7 @@ extension Kernel.Thread {
             guard result == 0 else {
                 context.deinitialize(count: 1)
                 context.deallocate()
-                throw .create(code: result)
+                throw .create(.posix(result))
             }
 
             return Handle(rawValue: thread)

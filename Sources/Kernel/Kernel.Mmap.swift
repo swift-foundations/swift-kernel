@@ -67,7 +67,7 @@ extension Kernel {
             )
 
             guard result != MAP_FAILED else {
-                throw .map(errno: errno)
+                throw .map(.captureErrno())
             }
 
             return result!
@@ -86,7 +86,7 @@ extension Kernel {
         ) throws(Error) {
             let result = munmap(addr, length)
             guard result == 0 else {
-                throw .unmap(errno: errno)
+                throw .unmap(.captureErrno())
             }
         }
 
@@ -105,7 +105,7 @@ extension Kernel {
         ) throws(Error) {
             let result = msync(addr, length, flags.rawValue)
             guard result == 0 else {
-                throw .sync(errno: errno)
+                throw .sync(.captureErrno())
             }
         }
 
@@ -124,7 +124,7 @@ extension Kernel {
         ) throws(Error) {
             let result = mprotect(addr, length, protection.rawValue)
             guard result == 0 else {
-                throw .protect(errno: errno)
+                throw .protect(.captureErrno())
             }
         }
 
@@ -183,13 +183,13 @@ extension Kernel {
         /// Unmaps a view and closes the mapping handle on Windows.
         ///
         /// - Parameter mapping: The mapping to unmap.
-        /// - Throws: `Error.windows` on failure.
+        /// - Throws: `Error.unmap` on failure.
         public static func unmap(_ mapping: WindowsMapping) throws(Error) {
             let unmapResult = UnmapViewOfFile(mapping.baseAddress)
             CloseHandle(mapping.mappingHandle)
 
             guard unmapResult else {
-                throw .windows(code: GetLastError(), operation: .unmapViewOfFile)
+                throw .unmap(.captureLastError())
             }
         }
 
@@ -198,14 +198,14 @@ extension Kernel {
         /// - Parameters:
         ///   - addr: The base address.
         ///   - length: The length of the region.
-        /// - Throws: `Error.windows` on failure.
+        /// - Throws: `Error.sync` on failure.
         public static func sync(
             addr: UnsafeMutableRawPointer,
             length: Int
         ) throws(Error) {
             let result = FlushViewOfFile(addr, SIZE_T(length))
             guard result else {
-                throw .windows(code: GetLastError(), operation: .flushViewOfFile)
+                throw .sync(.captureLastError())
             }
         }
 
@@ -215,7 +215,7 @@ extension Kernel {
         ///   - addr: The base address.
         ///   - length: The length of the region.
         ///   - protection: The new protection flags.
-        /// - Throws: `Error.windows` on failure.
+        /// - Throws: `Error.protect` on failure.
         public static func protect(
             addr: UnsafeMutableRawPointer,
             length: Int,
@@ -229,7 +229,7 @@ extension Kernel {
                 &oldProtection
             )
             guard result else {
-                throw .windows(code: GetLastError(), operation: .virtualProtect)
+                throw .protect(.captureLastError())
             }
         }
 

@@ -29,25 +29,25 @@
         /// Errors from IOCP operations.
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
             /// Failed to create IOCP.
-            case create(win32: DWORD)
+            case create(Kernel.Error.Code)
 
             /// Failed to associate handle with IOCP.
-            case associate(win32: DWORD)
+            case associate(Kernel.Error.Code)
 
             /// Failed to dequeue completions.
-            case dequeue(win32: DWORD)
+            case dequeue(Kernel.Error.Code)
 
             /// Failed to post completion.
-            case post(win32: DWORD)
+            case post(Kernel.Error.Code)
 
             /// Failed to read.
-            case read(win32: DWORD)
+            case read(Kernel.Error.Code)
 
             /// Failed to write.
-            case write(win32: DWORD)
+            case write(Kernel.Error.Code)
 
             /// Failed to get result.
-            case result(win32: DWORD)
+            case result(Kernel.Error.Code)
 
             /// Poll timed out.
             case timeout
@@ -58,45 +58,49 @@
         public var description: String {
             switch self {
             case .create(let code):
-                return "CreateIoCompletionPort failed (error: \(code))"
+                return "CreateIoCompletionPort failed (\(code))"
             case .associate(let code):
-                return "associate failed (error: \(code))"
+                return "associate failed (\(code))"
             case .dequeue(let code):
-                return "GetQueuedCompletionStatus failed (error: \(code))"
+                return "GetQueuedCompletionStatus failed (\(code))"
             case .post(let code):
-                return "PostQueuedCompletionStatus failed (error: \(code))"
+                return "PostQueuedCompletionStatus failed (\(code))"
             case .read(let code):
-                return "ReadFile failed (error: \(code))"
+                return "ReadFile failed (\(code))"
             case .write(let code):
-                return "WriteFile failed (error: \(code))"
+                return "WriteFile failed (\(code))"
             case .result(let code):
-                return "GetOverlappedResult failed (error: \(code))"
+                return "GetOverlappedResult failed (\(code))"
             case .timeout:
                 return "operation timed out"
             }
         }
     }
 
-    extension Kernel.IOCP.Error {
-        /// Converts this IOCP error to a `Kernel.Error`.
-        public var asKernelError: Kernel.Error {
-            switch self {
+    // MARK: - Kernel.Error Conversion
+
+    extension Kernel.Error {
+        /// Creates a semantic error from an IOCP error.
+        ///
+        /// Maps to semantic cases where possible, falls back to `.platform` otherwise.
+        public init(_ error: Kernel.IOCP.Error) {
+            switch error {
             case .create(let code):
-                return .platform(code: Int32(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
             case .associate(let code):
-                return .platform(code: Int32(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
             case .dequeue(let code):
-                return .platform(code: Int32(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
             case .post(let code):
-                return .platform(code: Int32(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
             case .read(let code):
-                return .platform(code: Int32(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
             case .write(let code):
-                return .platform(code: Int32(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
             case .result(let code):
-                return .platform(code: Int32(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
             case .timeout:
-                return .resource(.blocked)
+                self = .blocking(.wouldBlock)
             }
         }
     }
@@ -242,7 +246,7 @@
                 DWORD(concurrentThreads)
             )
             guard let handle, handle != INVALID_HANDLE_VALUE else {
-                throw .create(win32: GetLastError())
+                throw .create(.captureLastError())
             }
             return Kernel.Descriptor(rawValue: handle)
         }
@@ -269,7 +273,7 @@
                 0
             )
             guard result != nil else {
-                throw .associate(win32: GetLastError())
+                throw .associate(.captureLastError())
             }
         }
 
@@ -304,7 +308,7 @@
                     if error == WAIT_TIMEOUT {
                         throw .timeout
                     }
-                    throw .dequeue(win32: error)
+                    throw .dequeue(.win32(UInt32(error)))
                 }
 
                 return (bytes, CompletionKey(rawValue: key), overlapped)
@@ -344,7 +348,7 @@
                     if error == WAIT_TIMEOUT {
                         return 0
                     }
-                    throw .dequeue(win32: error)
+                    throw .dequeue(.win32(UInt32(error)))
                 }
 
                 return Int(removed)
@@ -376,7 +380,7 @@
                 overlapped
             )
             guard result else {
-                throw .post(win32: GetLastError())
+                throw .post(.captureLastError())
             }
         }
 
@@ -458,7 +462,7 @@
                 return .pending
             }
 
-            throw .read(win32: error)
+            throw .read(.win32(UInt32(error)))
         }
 
         /// Initiates an overlapped write operation.
@@ -493,7 +497,7 @@
                 return .pending
             }
 
-            throw .write(win32: error)
+            throw .write(.win32(UInt32(error)))
         }
 
         /// Gets the result of a completed overlapped operation.
@@ -522,7 +526,7 @@
                 return bytesTransferred
             }
 
-            throw .result(win32: GetLastError())
+            throw .result(.captureLastError())
         }
 
     }

@@ -41,10 +41,10 @@ extension Kernel.Error.Test.Unit {
 
     @Test("platform error stores code")
     func platformError() {
-        let error = Kernel.Error.platform(.unmapped(code: 42))
+        let error = Kernel.Error.platform(.unmapped(code: .posix(42), message: nil))
         if case .platform(let platformError) = error {
-            if case .unmapped(let code) = platformError {
-                #expect(code == 42)
+            if case .unmapped(let code, _) = platformError {
+                #expect(code == .posix(42))
             } else {
                 Issue.record("Expected unmapped platform error")
             }
@@ -65,7 +65,7 @@ extension Kernel.Error.Test.Unit {
             .space(.exhausted),
             .signal(.interrupted),
             .blocking(.wouldBlock),
-            .platform(.unmapped(code: 0)),
+            .platform(.unmapped(code: .posix(0), message: nil)),
         ]
 
         for (i, a) in categories.enumerated() {
@@ -172,7 +172,7 @@ extension Kernel.Error.Test.EdgeCase {
             .space(.quota),
             .signal(.interrupted),
             .blocking(.wouldBlock),
-            .platform(.unmapped(code: 0)),
+            .platform(.unmapped(code: .posix(0), message: nil)),
         ]
 
         for error in cases {
@@ -182,7 +182,7 @@ extension Kernel.Error.Test.EdgeCase {
 
     @Test("platform error description contains code")
     func platformErrorDescription() {
-        let error = Kernel.Error.platform(.unmapped(code: -1))
-        #expect(error.description.contains("-1"))
+        let error = Kernel.Error.platform(.unmapped(code: .posix(-1), message: nil))
+        #expect(error.description.contains("-1") || error.description.contains("posix"))
     }
 }

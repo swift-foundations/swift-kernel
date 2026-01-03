@@ -35,13 +35,13 @@
         /// Errors from epoll operations.
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
             /// Failed to create epoll instance.
-            case create(errno: Int32)
+            case create(Kernel.Error.Code)
 
             /// Failed to control epoll (add/modify/delete).
-            case ctl(errno: Int32)
+            case ctl(Kernel.Error.Code)
 
             /// Failed to wait for events.
-            case wait(errno: Int32)
+            case wait(Kernel.Error.Code)
 
             /// Operation was interrupted by a signal.
             case interrupted
@@ -51,12 +51,12 @@
     extension Kernel.Epoll.Error: CustomStringConvertible {
         public var description: String {
             switch self {
-            case .create(let errno):
-                return "epoll_create1 failed (errno: \(errno))"
-            case .ctl(let errno):
-                return "epoll_ctl failed (errno: \(errno))"
-            case .wait(let errno):
-                return "epoll_wait failed (errno: \(errno))"
+            case .create(let code):
+                return "epoll_create1 failed (\(code))"
+            case .ctl(let code):
+                return "epoll_ctl failed (\(code))"
+            case .wait(let code):
+                return "epoll_wait failed (\(code))"
             case .interrupted:
                 return "operation interrupted"
             }
@@ -219,7 +219,7 @@
         public static func create(flags: CreateFlags = .cloexec) throws(Error) -> Kernel.Descriptor {
             let epfd = epoll_create1(flags.rawValue)
             guard epfd >= 0 else {
-                throw .create(errno: errno)
+                throw .create(.captureErrno())
             }
             return Kernel.Descriptor(rawValue: epfd)
         }
@@ -246,7 +246,7 @@
                 result = epoll_ctl(epfd.rawValue, op.rawValue, fd.rawValue, nil)
             }
             guard result == 0 else {
-                throw .ctl(errno: errno)
+                throw .ctl(.captureErrno())
             }
         }
 
@@ -276,11 +276,11 @@
             ) { buffer in
                 let result = epoll_wait(epfd.rawValue, buffer.baseAddress!, Int32(count), timeout)
                 guard result >= 0 else {
-                    let err = errno
-                    if err == EINTR {
+                    let code = Kernel.Error.Code.captureErrno()
+                    if code.posix == EINTR {
                         return .failure(.interrupted)
                     }
-                    return .failure(.wait(errno: err))
+                    return .failure(.wait(code))
                 }
 
                 // Convert C events to Swift events
