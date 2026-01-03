@@ -193,7 +193,7 @@ private func unlinkFile(at path: FilePath) throws {
             _ = DeleteFileW(wPath)
         }
     #else
-        try path.withPlatformString { cString in
+        path.withPlatformString { cString in
             _ = unlink(cString)
         }
     #endif
