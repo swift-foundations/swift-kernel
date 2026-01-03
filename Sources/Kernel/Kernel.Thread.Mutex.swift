@@ -110,7 +110,7 @@ extension Kernel.Thread.Mutex {
     @inlinable
     public func tryLock() -> Bool {
         #if os(Windows)
-            return TryAcquireSRWLockExclusive(&srwlock)
+            return TryAcquireSRWLockExclusive(&srwlock) != 0
         #else
             return pthread_mutex_trylock(&mutex) == 0
         #endif

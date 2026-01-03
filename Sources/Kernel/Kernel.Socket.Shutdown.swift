@@ -56,27 +56,6 @@ extension Kernel.Socket {
 
 // MARK: - Windows Implementation
 
-#if os(Windows)
-    public import WinSDK
-
-    extension Kernel.Socket.Shutdown {
-        /// Shuts down part of a full-duplex connection.
-        ///
-        /// - Parameters:
-        ///   - descriptor: The socket descriptor.
-        ///   - how: Which half of the connection to shut down.
-        /// - Throws: `Kernel.Socket.Shutdown.Error` on failure.
-        @inlinable
-        public static func shutdown(
-            _ descriptor: Kernel.Descriptor,
-            how: How
-        ) throws(Error) {
-            try Kernel.Syscall.require(
-                WinSDK.shutdown(descriptor.rawValue, how.windowsValue),
-                .equals(0),
-                orThrow: Error.current()
-            )
-        }
-    }
-
-#endif
+// NOTE: Windows socket code is disabled because Kernel.Descriptor uses HANDLE
+// (UnsafeMutableRawPointer) on Windows, but WinSock APIs expect SOCKET (UInt64).
+// See Kernel.Socket.swift for details.

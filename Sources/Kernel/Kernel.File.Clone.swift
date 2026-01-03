@@ -151,7 +151,7 @@ extension Kernel.File.Clone {
         #endif
 
         #if os(Windows)
-            package static func size(handle: HANDLE) throws(Kernel.File.Clone.Error.Syscall) -> UInt64 {
+            package static func size(handle: UnsafeMutableRawPointer?) throws(Kernel.File.Clone.Error.Syscall) -> UInt64 {
                 var size: LARGE_INTEGER = LARGE_INTEGER()
                 guard GetFileSizeEx(handle, &size) != 0 else {
                     throw .platform(code: .win32(UInt32(GetLastError())), operation: .stat)
@@ -338,8 +338,8 @@ extension Kernel.File.Clone {
             /// This is highly constrained: same volume, ReFS only, specific alignment.
             /// Returns `false` if unsupported rather than erroring.
             package static func attempt(
-                sourceHandle: HANDLE,
-                destHandle: HANDLE,
+                sourceHandle: UnsafeMutableRawPointer?,
+                destHandle: UnsafeMutableRawPointer?,
                 length: UInt64
             ) throws(Kernel.File.Clone.Error.Syscall) -> Bool {
                 // ReFS block cloning requires FSCTL_DUPLICATE_EXTENTS_TO_FILE
@@ -350,6 +350,9 @@ extension Kernel.File.Clone {
                 // - Verify both on same ReFS volume
                 // - Align to cluster size
                 // - Use DeviceIoControl with FSCTL_DUPLICATE_EXTENTS_TO_FILE
+                _ = sourceHandle
+                _ = destHandle
+                _ = length
                 return false
             }
         }
@@ -363,7 +366,7 @@ extension Kernel.File.Clone {
             ) throws(Kernel.File.Clone.Error.Syscall) {
                 let result = source.withCString(encodedAs: UTF16.self) { src in
                     destination.withCString(encodedAs: UTF16.self) { dst in
-                        CopyFileW(src, dst, true)  // true = fail if exists
+                        CopyFileW(src, dst, true)
                     }
                 }
 

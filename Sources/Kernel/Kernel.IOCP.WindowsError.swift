@@ -32,7 +32,7 @@
         public static let notFound: DWORD = DWORD(ERROR_NOT_FOUND)
 
         /// The wait operation timed out.
-        public static let timeout: DWORD = WAIT_TIMEOUT
+        public static let timeout: DWORD = DWORD(bitPattern: WAIT_TIMEOUT)
 
         /// Infinite timeout value.
         public static let infinite: DWORD = INFINITE

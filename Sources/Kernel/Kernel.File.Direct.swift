@@ -316,12 +316,12 @@ extension Kernel.File.Direct.Requirements {
 
 #if os(Windows)
     extension Kernel.File.Direct {
-        /// The FILE_FLAG_NO_BUFFERING open flag value.
+        /// The FILE_FLAG_NO_BUFFERING open flag value as UInt32.
         ///
         /// This is the flag to pass when opening a file for Direct I/O.
         /// Note: Must be set at CreateFile time, not after.
-        package static var openDirectFlag: DWORD {
-            DWORD(FILE_FLAG_NO_BUFFERING)
+        package static var openDirectFlag: UInt32 {
+            UInt32(FILE_FLAG_NO_BUFFERING)
         }
 
         /// Probes the Direct I/O capability for a path.
@@ -342,10 +342,10 @@ extension Kernel.File.Direct.Requirements {
         /// This is more complex on Windows as we need to get the file path
         /// from the handle first. For simplicity, we require the path to be
         /// provided at open time.
-        public static func getRequirements(
-            handle: HANDLE
+        package static func getRequirements(
+            handle: UnsafeMutableRawPointer?
         ) throws(Error.Syscall) -> Requirements {
-            guard handle != INVALID_HANDLE_VALUE else {
+            guard handle != nil, handle != INVALID_HANDLE_VALUE else {
                 throw .invalidDescriptor(operation: .getSectorSize)
             }
 

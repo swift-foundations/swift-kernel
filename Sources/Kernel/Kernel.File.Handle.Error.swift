@@ -92,7 +92,7 @@ extension Kernel.File.Handle {
 
     extension Kernel.File.Handle.Error {
         /// Creates an error from a Windows error code.
-        package init(windowsError: DWORD, operation: Kernel.File.Handle.Operation) {
+        package init(windowsError: UInt32, operation: Kernel.File.Handle.Operation) {
             switch windowsError {
             case DWORD(ERROR_INVALID_HANDLE):
                 self = .invalidHandle

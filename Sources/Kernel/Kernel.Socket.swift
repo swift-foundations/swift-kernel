@@ -65,36 +65,7 @@ extension Kernel {
 
 // MARK: - Windows Implementation
 
-#if os(Windows)
-    public import WinSDK
-
-    extension Kernel.Socket {
-        /// Gets the pending socket error (SO_ERROR).
-        ///
-        /// This retrieves and clears the pending error on a socket.
-        /// Commonly used after a non-blocking connect to check if the
-        /// connection succeeded.
-        ///
-        /// - Parameter descriptor: The socket descriptor.
-        /// - Returns: The error code (0 if no error).
-        /// - Throws: `Kernel.Socket.Error` if getsockopt fails.
-        @inlinable
-        public static func getError(_ descriptor: Kernel.Descriptor) throws(Error) -> Int32 {
-            var err: Int32 = 0
-            var len = Int32(MemoryLayout<Int32>.size)
-
-            let rc = getsockopt(
-                descriptor.rawValue,
-                Int32(SOL_SOCKET),
-                Int32(SO_ERROR),
-                UnsafeMutablePointer(&err),
-                &len
-            )
-
-            try Kernel.Syscall.require(rc, .equals(0), orThrow: Error.current())
-
-            return err
-        }
-    }
-
-#endif
+// NOTE: Windows socket code is disabled because Kernel.Descriptor uses HANDLE
+// (UnsafeMutableRawPointer) on Windows, but WinSock APIs expect SOCKET (UInt64).
+// A proper implementation would require a separate socket descriptor type.
+// For now, socket operations are only available on POSIX platforms.

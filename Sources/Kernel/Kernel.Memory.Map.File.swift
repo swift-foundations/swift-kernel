@@ -31,7 +31,7 @@ extension Kernel.Memory.Map {
         /// - Returns: The mapped region.
         /// - Throws: `Error.map` on failure.
         public static func map(
-            handle fileHandle: HANDLE,
+            handle fileHandle: UnsafeMutableRawPointer?,
             offset: Int64,
             length: Int,
             protection: Kernel.Memory.Map.Protection,
@@ -41,7 +41,7 @@ extension Kernel.Memory.Map {
                 throw .invalid(.length)
             }
 
-            guard fileHandle != INVALID_HANDLE_VALUE else {
+            guard let fileHandle, fileHandle != INVALID_HANDLE_VALUE else {
                 throw .map(.win32(UInt32(ERROR_INVALID_HANDLE)))
             }
 
