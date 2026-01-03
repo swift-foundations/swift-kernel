@@ -63,11 +63,25 @@ extension Kernel {
             let flags = mode.posixFlags | options.posixFlags
 
             let fd: Int32
+            #if canImport(Darwin)
             if options.contains(.create) {
-                fd = _cOpen(unsafePath, flags, mode_t(permissions))
+                fd = Darwin.open(unsafePath, flags, mode_t(permissions))
             } else {
-                fd = _cOpen(unsafePath, flags)
+                fd = Darwin.open(unsafePath, flags)
             }
+            #elseif canImport(Glibc)
+            if options.contains(.create) {
+                fd = Glibc.open(unsafePath, flags, mode_t(permissions))
+            } else {
+                fd = Glibc.open(unsafePath, flags)
+            }
+            #elseif canImport(Musl)
+            if options.contains(.create) {
+                fd = Musl.open(unsafePath, flags, mode_t(permissions))
+            } else {
+                fd = Musl.open(unsafePath, flags)
+            }
+            #endif
 
             guard fd >= 0 else {
                 throw .current()

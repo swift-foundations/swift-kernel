@@ -132,11 +132,20 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
 
     #if canImport(Darwin)
         public import Darwin
+
+        @usableFromInline
+        internal typealias PlatformStatfs = Darwin.statfs
     #elseif canImport(Glibc)
         public import Glibc
         public import CLinuxShim
+
+        @usableFromInline
+        internal typealias PlatformStatfs = statfs
     #elseif canImport(Musl)
         public import Musl
+
+        @usableFromInline
+        internal typealias PlatformStatfs = statfs
     #endif
 
     extension Kernel.Statfs.Error {
@@ -192,7 +201,7 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
         @inlinable
         public static func get(unsafePath: UnsafePointer<CChar>) throws(Error) -> Kernel.Statfs {
             var buf = PlatformStatfs()
-            let result = _cStatfs(unsafePath, &buf)
+            let result = statfs(unsafePath, &buf)
             guard result == 0 else {
                 throw .current()
             }
@@ -210,7 +219,7 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
                 throw .handle(.invalid)
             }
             var buf = PlatformStatfs()
-            let result = _cFstatfs(descriptor.rawValue, &buf)
+            let result = fstatfs(descriptor.rawValue, &buf)
             guard result == 0 else {
                 throw .current()
             }

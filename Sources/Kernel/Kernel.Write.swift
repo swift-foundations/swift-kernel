@@ -123,7 +123,13 @@ extension Kernel.Write.Error: CustomStringConvertible {
             guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            let result = _cWrite(descriptor.rawValue, baseAddress, buffer.count)
+            #if canImport(Darwin)
+            let result = Darwin.write(descriptor.rawValue, baseAddress, buffer.count)
+            #elseif canImport(Glibc)
+            let result = Glibc.write(descriptor.rawValue, baseAddress, buffer.count)
+            #elseif canImport(Musl)
+            let result = Musl.write(descriptor.rawValue, baseAddress, buffer.count)
+            #endif
             guard result >= 0 else {
                 throw .current()
             }
@@ -150,7 +156,13 @@ extension Kernel.Write.Error: CustomStringConvertible {
             guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            let result = _cPwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+            #if canImport(Darwin)
+            let result = Darwin.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+            #elseif canImport(Glibc)
+            let result = Glibc.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+            #elseif canImport(Musl)
+            let result = Musl.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+            #endif
             guard result >= 0 else {
                 throw .current()
             }

@@ -104,14 +104,14 @@ extension Kernel.Copy.Error: CustomStringConvertible {
                 var srcOff = off_t(sourceOffset)
                 var dstOff = off_t(destOffset)
 
-                let result = _cCopyFileRange(
+                let result = Int(swift_copy_file_range(
                     source.rawValue,
                     &srcOff,
                     destination.rawValue,
                     &dstOff,
-                    length,
+                    size_t(length),
                     0
-                )
+                ))
 
                 guard result >= 0 else {
                     throw Kernel.Copy.Error(posix: errno)
@@ -144,7 +144,7 @@ extension Kernel.Copy.Error: CustomStringConvertible {
                 guard source.isValid else { throw .invalidDescriptor }
                 guard destination.isValid else { throw .invalidDescriptor }
 
-                let result = _cFiclone(destination.rawValue, source.rawValue)
+                let result = swift_ficlone(destination.rawValue, source.rawValue)
                 guard result == 0 else {
                     throw Kernel.Copy.Error(posix: errno)
                 }

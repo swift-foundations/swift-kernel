@@ -116,7 +116,13 @@ extension Kernel.Read.Error: CustomStringConvertible {
             guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            let result = _cRead(descriptor.rawValue, baseAddress, buffer.count)
+            #if canImport(Darwin)
+            let result = Darwin.read(descriptor.rawValue, baseAddress, buffer.count)
+            #elseif canImport(Glibc)
+            let result = Glibc.read(descriptor.rawValue, baseAddress, buffer.count)
+            #elseif canImport(Musl)
+            let result = Musl.read(descriptor.rawValue, baseAddress, buffer.count)
+            #endif
             guard result >= 0 else {
                 throw .current()
             }
@@ -143,7 +149,13 @@ extension Kernel.Read.Error: CustomStringConvertible {
             guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
-            let result = _cPread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+            #if canImport(Darwin)
+            let result = Darwin.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+            #elseif canImport(Glibc)
+            let result = Glibc.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+            #elseif canImport(Musl)
+            let result = Musl.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset))
+            #endif
             guard result >= 0 else {
                 throw .current()
             }

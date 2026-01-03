@@ -47,7 +47,7 @@
             params: inout Params
         ) throws(Error) -> Kernel.Descriptor {
             var cParams = params.cValue
-            let fd = _cIoUringSetup(entries, &cParams)
+            let fd = swift_io_uring_setup(entries, &cParams)
             guard fd >= 0 else {
                 throw .setup(.captureErrno())
             }
@@ -72,7 +72,7 @@
             minComplete: UInt32,
             flags: EnterFlags
         ) throws(Error) -> Int {
-            let result = _cIoUringEnter(
+            let result = swift_io_uring_enter(
                 fd.rawValue,
                 toSubmit,
                 minComplete,
@@ -103,7 +103,7 @@
             argument: UnsafeMutableRawPointer?,
             count: UInt32
         ) throws(Error) {
-            let result = _cIoUringRegister(
+            let result = swift_io_uring_register(
                 fd.rawValue,
                 opcode.rawValue,
                 argument,

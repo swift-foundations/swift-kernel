@@ -46,12 +46,12 @@ extension Kernel.System {
 
 #if !os(Windows)
     #if canImport(Darwin)
-        internal import Darwin
+        public import Darwin
     #elseif canImport(Glibc)
-        import Glibc
-        import CLinuxShim
+        public import Glibc
+        public import CLinuxShim
     #elseif canImport(Musl)
-        internal import Musl
+        public import Musl
     #endif
 
     extension Kernel.System {
@@ -89,7 +89,10 @@ extension Kernel.System {
         /// - Parameter nanoseconds: The number of nanoseconds to sleep.
         @inlinable
         public static func sleep(nanoseconds: UInt64) {
-            _cNanosleep(Int(nanoseconds / 1_000_000_000), Int(nanoseconds % 1_000_000_000))
+            var ts = timespec()
+            ts.tv_sec = Int(nanoseconds / 1_000_000_000)
+            ts.tv_nsec = Int(nanoseconds % 1_000_000_000)
+            nanosleep(&ts, nil)
         }
     }
 #endif

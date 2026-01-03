@@ -91,7 +91,13 @@ extension Kernel.Unlink.Error: CustomStringConvertible {
         @inlinable
         public static func unlink(_ path: FilePath) throws(Error) {
             let result = path.withPlatformString { cPath in
-                _cUnlink(cPath)
+                #if canImport(Darwin)
+                Darwin.unlink(cPath)
+                #elseif canImport(Glibc)
+                Glibc.unlink(cPath)
+                #elseif canImport(Musl)
+                Musl.unlink(cPath)
+                #endif
             }
             guard result == 0 else {
                 throw .current()
@@ -104,9 +110,19 @@ extension Kernel.Unlink.Error: CustomStringConvertible {
         /// - Throws: `Kernel.Unlink.Error` on failure.
         @inlinable
         public static func unlink(_ path: UnsafePointer<CChar>) throws(Error) {
-            guard _cUnlink(path) == 0 else {
+            #if canImport(Darwin)
+            guard Darwin.unlink(path) == 0 else {
                 throw .current()
             }
+            #elseif canImport(Glibc)
+            guard Glibc.unlink(path) == 0 else {
+                throw .current()
+            }
+            #elseif canImport(Musl)
+            guard Musl.unlink(path) == 0 else {
+                throw .current()
+            }
+            #endif
         }
     }
 

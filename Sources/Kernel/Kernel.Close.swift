@@ -32,9 +32,19 @@ extension Kernel.Close {
         guard descriptor.isValid else {
             throw .handle(.invalid)
         }
-        guard _cClose(descriptor.rawValue) == 0 else {
+        #if canImport(Darwin)
+        guard Darwin.close(descriptor.rawValue) == 0 else {
             throw .current()
         }
+        #elseif canImport(Glibc)
+        guard Glibc.close(descriptor.rawValue) == 0 else {
+            throw .current()
+        }
+        #elseif canImport(Musl)
+        guard Musl.close(descriptor.rawValue) == 0 else {
+            throw .current()
+        }
+        #endif
     }
 }
 

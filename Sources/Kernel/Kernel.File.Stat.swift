@@ -15,11 +15,11 @@
     internal import SystemPackage
 
     #if canImport(Darwin)
-        import Darwin
+        public import Darwin
     #elseif canImport(Glibc)
-        import Glibc
+        public import Glibc
     #elseif canImport(Musl)
-        import Musl
+        public import Musl
     #endif
 #endif
 
@@ -42,10 +42,13 @@ extension Kernel.File {
 
 #if !os(Windows)
 
+    @usableFromInline
+    internal typealias PlatformStat = stat
+
     extension Kernel.File {
         internal static func statPosix(_ descriptor: Kernel.Descriptor) throws(Kernel.Stat.Error) -> Kernel.Stat {
             var sb = PlatformStat()
-            guard _cFstat(descriptor.rawValue, &sb) == 0 else {
+            guard fstat(descriptor.rawValue, &sb) == 0 else {
                 throw Kernel.Stat.Error(posixErrno: errno)
             }
             return Kernel.Stat(from: sb)
