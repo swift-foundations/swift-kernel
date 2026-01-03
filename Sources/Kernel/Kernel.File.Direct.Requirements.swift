@@ -124,7 +124,7 @@ extension Kernel.File.Direct {
                 )
             }
 
-            guard result != 0, bytesPerSector > 0 else {
+            guard result, bytesPerSector > 0 else {
                 self = .unknown(reason: .sectorSizeUndetermined)
                 return
             }

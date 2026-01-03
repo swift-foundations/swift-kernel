@@ -131,11 +131,7 @@ extension Kernel.File.Direct {
             // Fail closed - alignment not reliably discoverable
             return .unknown(reason: .sectorSizeUndetermined)
         #elseif os(Windows)
-            do {
-                return try getRequirements(at: path)
-            } catch {
-                return .unknown(reason: .sectorSizeUndetermined)
-            }
+            return Requirements(FilePath(path))
         #else
             return .unknown(reason: .platformUnsupported)
         #endif
