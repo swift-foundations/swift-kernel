@@ -140,18 +140,51 @@ import Musl
 extension Kernel.Error {
     /// Returns the platform error message for a given error code.
     ///
-    /// Cross-platform: returns `nil` on Windows (or when code is `.win32`).
     /// On POSIX, calls `strerror` for `.posix` codes.
+    /// On Windows, calls `FormatMessageW` for `.win32` codes.
     ///
     /// - Parameter code: The unified error code.
     /// - Returns: A human-readable error message, or `nil` if not available.
     public static func message(for code: Code) -> String? {
-        #if !os(Windows)
-        if let posix = code.posix {
-            return String(cString: strerror(posix))
+        switch code {
+        case .posix(let rawValue):
+            #if !os(Windows)
+            return String(cString: strerror(rawValue))
+            #else
+            return nil
+            #endif
+
+        case .win32(let rawValue):
+            #if os(Windows)
+            let flags: DWORD =
+                DWORD(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS)
+
+            var buffer: LPWSTR? = nil
+
+            let length: DWORD = withUnsafeMutablePointer(to: &buffer) { bufferPtr in
+                bufferPtr.withMemoryRebound(to: WCHAR.self, capacity: 1) { widePtr in
+                    FormatMessageW(
+                        flags,
+                        nil,
+                        rawValue,
+                        DWORD(MAKELANGID(WORD(LANG_NEUTRAL), WORD(SUBLANG_DEFAULT))),
+                        widePtr,
+                        0,
+                        nil
+                    )
+                }
+            }
+
+            guard length > 0, let buffer else { return nil }
+            defer { _ = LocalFree(buffer) }
+
+            let u16 = UnsafeBufferPointer(start: buffer, count: Int(length))
+            let message = String(decoding: u16, as: UTF16.self)
+            return message.trimmingCharacters(in: .whitespacesAndNewlines)
+            #else
+            return nil
+            #endif
         }
-        #endif
-        return nil
     }
 }
 
