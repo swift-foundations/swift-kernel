@@ -109,8 +109,8 @@ extension Kernel.File.System {
         @usableFromInline
         internal typealias PlatformStatfs = Darwin.statfs
     #elseif canImport(Glibc)
-        public import Glibc
-        public import CLinuxShim
+        import Glibc
+        import CLinuxShim
 
         @usableFromInline
         internal typealias PlatformStatfs = statfs

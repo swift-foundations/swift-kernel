@@ -161,13 +161,16 @@ extension Kernel.Error {
 
                 var buffer: LPWSTR? = nil
 
+                // MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT) = (1 << 10) | 0 = 0x0400
+                let langId: DWORD = 0x0400
+
                 let length: DWORD = withUnsafeMutablePointer(to: &buffer) { bufferPtr in
                     bufferPtr.withMemoryRebound(to: WCHAR.self, capacity: 1) { widePtr in
                         FormatMessageW(
                             flags,
                             nil,
                             rawValue,
-                            DWORD(MAKELANGID(WORD(LANG_NEUTRAL), WORD(SUBLANG_DEFAULT))),
+                            langId,
                             widePtr,
                             0,
                             nil
@@ -179,8 +182,15 @@ extension Kernel.Error {
                 defer { _ = LocalFree(buffer) }
 
                 let u16 = UnsafeBufferPointer(start: buffer, count: Int(length))
-                let message = String(decoding: u16, as: UTF16.self)
-                return message.trimmingCharacters(in: .whitespacesAndNewlines)
+                var message = String(decoding: u16, as: UTF16.self)
+
+                // Trim trailing whitespace/newlines without Foundation
+                while let last = message.unicodeScalars.last,
+                    last == "\r" || last == "\n" || last == " " || last == "\t"
+                {
+                    message.unicodeScalars.removeLast()
+                }
+                return message
             #else
                 return nil
             #endif

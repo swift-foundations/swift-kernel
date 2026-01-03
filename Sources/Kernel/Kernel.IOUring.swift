@@ -41,7 +41,6 @@
         ///   - params: Parameters struct (modified on return with ring offsets).
         /// - Returns: File descriptor for the io_uring instance.
         /// - Throws: `Error.setup` if creation fails.
-        @inlinable
         public static func setup(
             entries: UInt32,
             params: inout Params
