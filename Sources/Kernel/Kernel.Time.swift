@@ -117,7 +117,28 @@ extension Kernel.Time {
     }
 }
 
-#if !os(Windows)
+#if os(Windows)
+    public import WinSDK
+
+    extension Kernel.Time {
+        /// Gets the current monotonic time in nanoseconds.
+        ///
+        /// Uses `QueryPerformanceCounter` which provides high-resolution timing.
+        /// This is suitable for measuring elapsed time and deadlines.
+        ///
+        /// - Returns: Nanoseconds since an arbitrary fixed point in time.
+        @inlinable
+        public static func monotonicNanoseconds() -> Int64 {
+            var counter = LARGE_INTEGER()
+            var frequency = LARGE_INTEGER()
+            QueryPerformanceCounter(&counter)
+            QueryPerformanceFrequency(&frequency)
+            let seconds = counter.QuadPart / frequency.QuadPart
+            let remainder = counter.QuadPart % frequency.QuadPart
+            return Int64(seconds) * 1_000_000_000 + Int64(remainder * 1_000_000_000 / frequency.QuadPart)
+        }
+    }
+#else
     #if canImport(Darwin)
         public import Darwin
     #elseif canImport(Glibc)
@@ -146,6 +167,25 @@ extension Kernel.Time {
             #elseif canImport(Musl)
                 return Musl.timespec(tv_sec: Int(seconds), tv_nsec: Int(nanoseconds))
             #endif
+        }
+
+        /// Gets the current monotonic time in nanoseconds.
+        ///
+        /// Uses `CLOCK_MONOTONIC` which is not affected by system time changes.
+        /// This is suitable for measuring elapsed time and deadlines.
+        ///
+        /// - Returns: Nanoseconds since an arbitrary fixed point in time.
+        @inlinable
+        public static func monotonicNanoseconds() -> Int64 {
+            #if canImport(Darwin)
+                var ts = Darwin.timespec()
+            #elseif canImport(Glibc)
+                var ts = Glibc.timespec()
+            #elseif canImport(Musl)
+                var ts = Musl.timespec()
+            #endif
+            clock_gettime(CLOCK_MONOTONIC, &ts)
+            return Int64(ts.tv_sec) * 1_000_000_000 + Int64(ts.tv_nsec)
         }
     }
 #endif

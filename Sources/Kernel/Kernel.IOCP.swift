@@ -97,6 +97,110 @@
         }
     }
 
+    // MARK: - Overlapped Types
+
+    extension Kernel.IOCP {
+        /// Swift wrapper for Windows OVERLAPPED structure.
+        ///
+        /// The `OVERLAPPED` structure is used by Windows for asynchronous I/O
+        /// operations. This wrapper provides a Swift-friendly interface while
+        /// maintaining layout compatibility for the container-of pattern.
+        public struct Overlapped: @unchecked Sendable {
+            /// The underlying Windows OVERLAPPED structure.
+            public var raw: OVERLAPPED
+
+            /// Creates a zero-initialized overlapped structure.
+            @inlinable
+            public init() {
+                raw = OVERLAPPED()
+            }
+
+            /// The 64-bit file offset for positioned I/O.
+            @inlinable
+            public var offset: Int64 {
+                get { Int64(raw.Offset) | (Int64(raw.OffsetHigh) << 32) }
+                set {
+                    raw.Offset = DWORD(truncatingIfNeeded: newValue)
+                    raw.OffsetHigh = DWORD(truncatingIfNeeded: newValue >> 32)
+                }
+            }
+        }
+
+        /// Swift wrapper for Windows OVERLAPPED_ENTRY structure.
+        ///
+        /// Used with `GetQueuedCompletionStatusEx` for batched completion retrieval.
+        public struct Entry: @unchecked Sendable {
+            /// The underlying Windows OVERLAPPED_ENTRY structure.
+            public var raw: OVERLAPPED_ENTRY
+
+            /// Creates a zero-initialized entry.
+            @inlinable
+            public init() {
+                raw = OVERLAPPED_ENTRY()
+            }
+
+            /// Number of bytes transferred in the completed operation.
+            @inlinable
+            public var bytesTransferred: UInt32 {
+                raw.dwNumberOfBytesTransferred
+            }
+
+            /// Pointer to the OVERLAPPED structure for this completion.
+            @inlinable
+            public var overlapped: UnsafeMutablePointer<OVERLAPPED>? {
+                raw.lpOverlapped
+            }
+
+            /// The completion key associated with the file handle.
+            @inlinable
+            public var completionKey: UInt {
+                UInt(raw.lpCompletionKey)
+            }
+        }
+    }
+
+    // MARK: - Windows Error Constants
+
+    extension Kernel.IOCP {
+        /// Common Windows error codes used with IOCP operations.
+        public enum WindowsError: Sendable {
+            /// The I/O operation has been started but not yet completed.
+            public static let ioPending: DWORD = DWORD(ERROR_IO_PENDING)
+
+            /// The I/O operation was aborted due to cancellation.
+            public static let operationAborted: DWORD = DWORD(ERROR_OPERATION_ABORTED)
+
+            /// The specified operation was not found.
+            public static let notFound: DWORD = DWORD(ERROR_NOT_FOUND)
+
+            /// The wait operation timed out.
+            public static let timeout: DWORD = WAIT_TIMEOUT
+
+            /// Infinite timeout value.
+            public static let infinite: DWORD = INFINITE
+        }
+    }
+
+    // MARK: - Read/Write Results
+
+    extension Kernel.IOCP {
+        /// Result of an overlapped read operation.
+        public enum ReadResult: Sendable, Equatable {
+            /// The operation is pending asynchronously.
+            case pending
+            /// The operation completed synchronously with the given byte count.
+            case completed(bytes: UInt32)
+        }
+
+        /// Result of an overlapped write operation.
+        public enum WriteResult: Sendable, Equatable {
+            /// The operation is pending asynchronously.
+            case pending
+            /// The operation completed synchronously with the given byte count.
+            case completed(bytes: UInt32)
+        }
+    }
+
     // MARK: - Syscalls
 
     extension Kernel.IOCP {
@@ -276,6 +380,149 @@
         @inlinable
         public static func close(_ port: Kernel.Descriptor) {
             try? Kernel.Close.close(port)
+        }
+
+        /// Initiates an overlapped read operation.
+        ///
+        /// - Parameters:
+        ///   - handle: The file handle (must be opened with FILE_FLAG_OVERLAPPED).
+        ///   - buffer: The buffer to read into.
+        ///   - overlapped: The overlapped structure for this operation.
+        /// - Returns: `.pending` if async, `.completed(bytes:)` if sync completion.
+        /// - Throws: `Error` on failure (excluding ERROR_IO_PENDING).
+        @inlinable
+        public static func read(
+            _ handle: HANDLE,
+            into buffer: UnsafeMutableRawBufferPointer,
+            overlapped: UnsafeMutablePointer<OVERLAPPED>
+        ) throws(Error) -> ReadResult {
+            var bytesRead: DWORD = 0
+            let success = ReadFile(
+                handle,
+                buffer.baseAddress,
+                DWORD(buffer.count),
+                &bytesRead,
+                overlapped
+            )
+
+            if success {
+                return .completed(bytes: bytesRead)
+            }
+
+            let error = GetLastError()
+            if error == WindowsError.ioPending {
+                return .pending
+            }
+
+            throw .readFailed(win32: error)
+        }
+
+        /// Initiates an overlapped write operation.
+        ///
+        /// - Parameters:
+        ///   - handle: The file handle (must be opened with FILE_FLAG_OVERLAPPED).
+        ///   - buffer: The buffer to write from.
+        ///   - overlapped: The overlapped structure for this operation.
+        /// - Returns: `.pending` if async, `.completed(bytes:)` if sync completion.
+        /// - Throws: `Error` on failure (excluding ERROR_IO_PENDING).
+        @inlinable
+        public static func write(
+            _ handle: HANDLE,
+            from buffer: UnsafeRawBufferPointer,
+            overlapped: UnsafeMutablePointer<OVERLAPPED>
+        ) throws(Error) -> WriteResult {
+            var bytesWritten: DWORD = 0
+            let success = WriteFile(
+                handle,
+                buffer.baseAddress,
+                DWORD(buffer.count),
+                &bytesWritten,
+                overlapped
+            )
+
+            if success {
+                return .completed(bytes: bytesWritten)
+            }
+
+            let error = GetLastError()
+            if error == WindowsError.ioPending {
+                return .pending
+            }
+
+            throw .writeFailed(win32: error)
+        }
+
+        /// Cancels an overlapped I/O operation.
+        ///
+        /// - Parameters:
+        ///   - handle: The file handle.
+        ///   - overlapped: The overlapped structure for the operation to cancel.
+        /// - Returns: `true` if cancelled, `false` if already completed (ERROR_NOT_FOUND).
+        @inlinable
+        public static func cancelIO(
+            _ handle: HANDLE,
+            overlapped: UnsafeMutablePointer<OVERLAPPED>
+        ) -> Bool {
+            if CancelIoEx(handle, overlapped) != 0 {
+                return true
+            }
+            return GetLastError() != WindowsError.notFound
+        }
+
+        /// Gets the result of a completed overlapped operation.
+        ///
+        /// - Parameters:
+        ///   - handle: The file handle.
+        ///   - overlapped: The overlapped structure.
+        ///   - wait: If `true`, blocks until the operation completes.
+        /// - Returns: The number of bytes transferred.
+        /// - Throws: `Error` on failure.
+        @inlinable
+        public static func result(
+            _ handle: HANDLE,
+            overlapped: UnsafeMutablePointer<OVERLAPPED>,
+            wait: Bool = false
+        ) throws(Error) -> UInt32 {
+            var bytesTransferred: DWORD = 0
+            let success = GetOverlappedResult(
+                handle,
+                overlapped,
+                &bytesTransferred,
+                wait
+            )
+
+            if success {
+                return bytesTransferred
+            }
+
+            throw .resultFailed(win32: GetLastError())
+        }
+
+        /// Gets the last Windows error code.
+        ///
+        /// Exposed so swift-io doesn't need to import WinSDK.
+        @inlinable
+        public static func lastError() -> DWORD {
+            GetLastError()
+        }
+    }
+
+    // MARK: - Extended Error Cases
+
+    extension Kernel.IOCP.Error {
+        /// ReadFile failed.
+        public static func readFailed(win32: DWORD) -> Self {
+            .dequeueFailed(win32: win32)  // Reuse existing case for now
+        }
+
+        /// WriteFile failed.
+        public static func writeFailed(win32: DWORD) -> Self {
+            .dequeueFailed(win32: win32)  // Reuse existing case for now
+        }
+
+        /// GetOverlappedResult failed.
+        public static func resultFailed(win32: DWORD) -> Self {
+            .dequeueFailed(win32: win32)  // Reuse existing case for now
         }
     }
 
