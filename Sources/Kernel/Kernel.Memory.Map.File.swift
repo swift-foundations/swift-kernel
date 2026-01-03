@@ -28,15 +28,15 @@ extension Kernel.Memory.Map {
         ///   - length: Number of bytes to map.
         ///   - protection: Memory protection flags.
         ///   - copyOnWrite: If true, use copy-on-write semantics.
-        /// - Returns: A `WindowsMapping` containing the address and mapping handle.
-        /// - Throws: `Error.windows` on failure.
+        /// - Returns: The mapped region.
+        /// - Throws: `Error.map` on failure.
         public static func map(
             handle fileHandle: HANDLE,
             offset: Int64,
             length: Int,
             protection: Kernel.Memory.Map.Protection,
             copyOnWrite: Bool = false
-        ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.WindowsMapping {
+        ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.Region {
             guard length > 0 else {
                 throw .invalid(.length)
             }
@@ -92,7 +92,7 @@ extension Kernel.Memory.Map {
                 throw .map(.captureLastError())
             }
 
-            return Kernel.Memory.Map.WindowsMapping(baseAddress: address, mappingHandle: mappingHandle)
+            return Kernel.Memory.Map.Region(baseAddress: address, length: length, mappingHandle: mappingHandle)
         }
     }
 

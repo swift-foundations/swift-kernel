@@ -36,19 +36,20 @@ extension Kernel.Memory.Map {
         ///   - length: Number of bytes to map.
         ///   - protection: Memory protection flags.
         ///   - shared: If true, mapping is shared; otherwise private.
-        /// - Returns: Pointer to the mapped region.
+        /// - Returns: The mapped region.
         /// - Throws: `Error.map` on failure.
         @inlinable
         public static func map(
             length: Int,
             protection: Kernel.Memory.Map.Protection = .readWrite,
             shared: Bool = false
-        ) throws(Kernel.Memory.Map.Error) -> UnsafeMutableRawPointer {
+        ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.Region {
             let flags: Kernel.Memory.Map.Flags =
                 shared
                 ? .shared | .anonymous
                 : .private | .anonymous
-            return try Kernel.Memory.Map.map(length: length, protection: protection, flags: flags)
+            let baseAddress = try Kernel.Memory.Map.map(length: length, protection: protection, flags: flags)
+            return Kernel.Memory.Map.Region(baseAddress: baseAddress, length: length)
         }
     }
 
@@ -65,12 +66,12 @@ extension Kernel.Memory.Map {
         /// - Parameters:
         ///   - length: Number of bytes to map.
         ///   - protection: Memory protection flags.
-        /// - Returns: A `WindowsMapping` containing the address and mapping handle.
-        /// - Throws: `Error.windows` on failure.
+        /// - Returns: The mapped region.
+        /// - Throws: `Error.map` on failure.
         public static func map(
             length: Int,
             protection: Kernel.Memory.Map.Protection = .readWrite
-        ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.WindowsMapping {
+        ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.Region {
             guard length > 0 else {
                 throw .invalid(.length)
             }
@@ -107,7 +108,7 @@ extension Kernel.Memory.Map {
                 throw .map(.captureLastError())
             }
 
-            return Kernel.Memory.Map.WindowsMapping(baseAddress: address, mappingHandle: mappingHandle)
+            return Kernel.Memory.Map.Region(baseAddress: address, length: length, mappingHandle: mappingHandle)
         }
     }
 

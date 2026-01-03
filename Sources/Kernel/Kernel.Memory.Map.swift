@@ -90,6 +90,15 @@ extension Kernel.Memory {
             }
         }
 
+        /// Unmaps a mapped region.
+        ///
+        /// - Parameter region: The region to unmap.
+        /// - Throws: `Error.unmap` on failure.
+        @inlinable
+        public static func unmap(_ region: Region) throws(Error) {
+            try unmap(addr: region.baseAddress, length: region.length)
+        }
+
         /// Synchronizes a mapped region to disk.
         ///
         /// - Parameters:
@@ -154,13 +163,13 @@ extension Kernel.Memory {
     public import WinSDK
 
     extension Kernel.Memory.Map {
-        /// Unmaps a view and closes the mapping handle on Windows.
+        /// Unmaps a mapped region on Windows.
         ///
-        /// - Parameter mapping: The mapping to unmap.
+        /// - Parameter region: The region to unmap.
         /// - Throws: `Error.unmap` on failure.
-        public static func unmap(_ mapping: WindowsMapping) throws(Error) {
-            let unmapResult = UnmapViewOfFile(mapping.baseAddress)
-            CloseHandle(mapping.mappingHandle)
+        public static func unmap(_ region: Region) throws(Error) {
+            let unmapResult = UnmapViewOfFile(region.baseAddress)
+            CloseHandle(region.mappingHandle)
 
             guard unmapResult else {
                 throw .unmap(.captureLastError())
