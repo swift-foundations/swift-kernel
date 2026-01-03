@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Mmap {
+extension Kernel.Memory.Map {
     /// Errors from mmap operations.
     public enum Error: Swift.Error, Sendable, Equatable, Hashable {
         /// Failed to map memory.
@@ -39,7 +39,7 @@ extension Kernel.Mmap {
     }
 }
 
-extension Kernel.Mmap.Error: CustomStringConvertible {
+extension Kernel.Memory.Map.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .map(let code):
@@ -56,7 +56,7 @@ extension Kernel.Mmap.Error: CustomStringConvertible {
     }
 }
 
-extension Kernel.Mmap.Error.Validation: CustomStringConvertible {
+extension Kernel.Memory.Map.Error.Validation: CustomStringConvertible {
     public var description: String {
         switch self {
         case .length: return "length must be greater than zero"

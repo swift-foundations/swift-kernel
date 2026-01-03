@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Mmap {
+extension Kernel.Memory.Map {
     /// Flags controlling mapping behavior.
     public struct Flags: Sendable, Equatable, Hashable {
         public let rawValue: Int32
@@ -39,7 +39,7 @@ extension Kernel.Mmap {
         import Musl
     #endif
 
-    extension Kernel.Mmap.Flags {
+    extension Kernel.Memory.Map.Flags {
         /// Changes are shared with other processes.
         public static let shared = Self(rawValue: MAP_SHARED)
 
@@ -59,7 +59,7 @@ extension Kernel.Mmap {
 
 #if os(Windows)
 
-    extension Kernel.Mmap.Flags {
+    extension Kernel.Memory.Map.Flags {
         /// Changes are shared.
         public static let shared = Self(rawValue: 1)
 

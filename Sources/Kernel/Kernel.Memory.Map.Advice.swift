@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Mmap {
+extension Kernel.Memory.Map {
     /// Memory access advice for madvise.
     public struct Advice: Sendable, Equatable, Hashable {
         public let rawValue: Int32
@@ -33,7 +33,7 @@ extension Kernel.Mmap {
         import Musl
     #endif
 
-    extension Kernel.Mmap.Advice {
+    extension Kernel.Memory.Map.Advice {
         /// Normal access pattern.
         public static let normal = Self(rawValue: MADV_NORMAL)
 
@@ -56,7 +56,7 @@ extension Kernel.Mmap {
 
 #if os(Windows)
 
-    extension Kernel.Mmap.Advice {
+    extension Kernel.Memory.Map.Advice {
         public static let normal = Self(rawValue: 0)
         public static let sequential = Self(rawValue: 1)
         public static let random = Self(rawValue: 2)

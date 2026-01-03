@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Mmap {
+extension Kernel.Memory.Map {
     /// Anonymous memory mapping operations.
     public enum Anonymous {}
 }
@@ -27,7 +27,7 @@ extension Kernel.Mmap {
         import Musl
     #endif
 
-    extension Kernel.Mmap.Anonymous {
+    extension Kernel.Memory.Map.Anonymous {
         /// Maps anonymous memory.
         ///
         /// Convenience wrapper for anonymous mappings.
@@ -41,14 +41,14 @@ extension Kernel.Mmap {
         @inlinable
         public static func map(
             length: Int,
-            protection: Kernel.Mmap.Protection = .readWrite,
+            protection: Kernel.Memory.Map.Protection = .readWrite,
             shared: Bool = false
-        ) throws(Kernel.Mmap.Error) -> UnsafeMutableRawPointer {
-            let flags: Kernel.Mmap.Flags =
+        ) throws(Kernel.Memory.Map.Error) -> UnsafeMutableRawPointer {
+            let flags: Kernel.Memory.Map.Flags =
                 shared
                 ? .shared | .anonymous
                 : .private | .anonymous
-            return try Kernel.Mmap.map(length: length, protection: protection, flags: flags)
+            return try Kernel.Memory.Map.map(length: length, protection: protection, flags: flags)
         }
     }
 
@@ -59,7 +59,7 @@ extension Kernel.Mmap {
 #if os(Windows)
     import WinSDK
 
-    extension Kernel.Mmap.Anonymous {
+    extension Kernel.Memory.Map.Anonymous {
         /// Maps anonymous memory (pagefile-backed) on Windows.
         ///
         /// - Parameters:
@@ -69,8 +69,8 @@ extension Kernel.Mmap {
         /// - Throws: `Error.windows` on failure.
         public static func map(
             length: Int,
-            protection: Kernel.Mmap.Protection = .readWrite
-        ) throws(Kernel.Mmap.Error) -> Kernel.Mmap.WindowsMapping {
+            protection: Kernel.Memory.Map.Protection = .readWrite
+        ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.WindowsMapping {
             guard length > 0 else {
                 throw .invalid(.length)
             }
@@ -107,7 +107,7 @@ extension Kernel.Mmap {
                 throw .map(.captureLastError())
             }
 
-            return Kernel.Mmap.WindowsMapping(baseAddress: address, mappingHandle: mappingHandle)
+            return Kernel.Memory.Map.WindowsMapping(baseAddress: address, mappingHandle: mappingHandle)
         }
     }
 

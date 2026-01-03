@@ -25,7 +25,7 @@
         ///
         /// ```swift
         /// // Map the SQ ring
-        /// let sqRingPtr = try Kernel.Mmap.map(
+        /// let sqRingPtr = try Kernel.Memory.Map.map(
         ///     length: sqRingSize,
         ///     protection: .readWrite,
         ///     flags: .shared,

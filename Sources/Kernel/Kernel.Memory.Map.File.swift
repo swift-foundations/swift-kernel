@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Mmap {
+extension Kernel.Memory.Map {
     /// File memory mapping operations.
     public enum File {}
 }
@@ -19,7 +19,7 @@ extension Kernel.Mmap {
 #if os(Windows)
     import WinSDK
 
-    extension Kernel.Mmap.File {
+    extension Kernel.Memory.Map.File {
         /// Maps a file into memory using Windows APIs.
         ///
         /// - Parameters:
@@ -34,9 +34,9 @@ extension Kernel.Mmap {
             handle fileHandle: HANDLE,
             offset: Int64,
             length: Int,
-            protection: Kernel.Mmap.Protection,
+            protection: Kernel.Memory.Map.Protection,
             copyOnWrite: Bool = false
-        ) throws(Kernel.Mmap.Error) -> Kernel.Mmap.WindowsMapping {
+        ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.WindowsMapping {
             guard length > 0 else {
                 throw .invalid(.length)
             }
@@ -92,7 +92,7 @@ extension Kernel.Mmap {
                 throw .map(.captureLastError())
             }
 
-            return Kernel.Mmap.WindowsMapping(baseAddress: address, mappingHandle: mappingHandle)
+            return Kernel.Memory.Map.WindowsMapping(baseAddress: address, mappingHandle: mappingHandle)
         }
     }
 

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Mmap {
+extension Kernel.Memory.Map {
     /// Memory protection flags.
     ///
     /// This is a custom value type (not OptionSet) to stay faithful
@@ -51,7 +51,7 @@ extension Kernel.Mmap {
         import Musl
     #endif
 
-    extension Kernel.Mmap.Protection {
+    extension Kernel.Memory.Map.Protection {
         /// Pages may be read.
         public static let read = Self(rawValue: PROT_READ)
 
@@ -72,7 +72,7 @@ extension Kernel.Mmap {
 #if os(Windows)
     import WinSDK
 
-    extension Kernel.Mmap.Protection {
+    extension Kernel.Memory.Map.Protection {
         /// Pages may be read.
         public static let read = Self(rawValue: 1)
 

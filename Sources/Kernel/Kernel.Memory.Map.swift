@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
+extension Kernel.Memory {
     /// Raw memory mapping syscall wrappers.
     ///
     /// Memory mapping allows files and anonymous memory to be mapped
@@ -18,7 +18,7 @@ extension Kernel {
     /// This namespace provides policy-free syscall wrappers.
     /// Higher layers (swift-mmap, swift-io) build region management,
     /// lock coordination, and RAII semantics on top of these primitives.
-    public enum Mmap {}
+    public enum Map {}
 }
 
 #if !os(Windows)
@@ -32,7 +32,7 @@ extension Kernel {
         public import Musl
     #endif
 
-    extension Kernel.Mmap {
+    extension Kernel.Memory.Map {
         /// Maps memory into the process address space.
         ///
         /// - Parameters:
@@ -101,7 +101,7 @@ extension Kernel {
         public static func sync(
             addr: UnsafeMutableRawPointer,
             length: Int,
-            flags: SyncFlags = .sync
+            flags: Sync.Flags = .sync
         ) throws(Error) {
             let result = msync(addr, length, flags.rawValue)
             guard result == 0 else {
@@ -153,7 +153,7 @@ extension Kernel {
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.Mmap {
+    extension Kernel.Memory.Map {
         /// Result of a Windows memory mapping operation.
         ///
         /// ## Thread Safety
