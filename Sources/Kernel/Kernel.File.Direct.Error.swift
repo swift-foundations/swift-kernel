@@ -81,42 +81,6 @@ extension Kernel.File.Direct.Error: CustomStringConvertible {
     }
 }
 
-// MARK: - Operation
-
-extension Kernel.File.Direct.Error {
-    /// Direct I/O operation types for syscall error context.
-    public enum Operation: String, Sendable, Equatable {
-        case open
-        case setNoCache
-        case clearNoCache
-        case getSectorSize
-        case read
-        case write
-    }
-}
-
-// MARK: - Syscall
-
-extension Kernel.File.Direct.Error {
-    /// Raw syscall-level error with platform-specific details.
-    ///
-    /// This type captures the exact errno/win32 error code from syscalls.
-    /// It is translated to the semantic `Kernel.File.Direct.Error` at API boundaries.
-    package enum Syscall: Swift.Error, Sendable, Equatable {
-        /// Platform syscall failure.
-        case platform(code: Kernel.Error.Code, operation: Operation)
-
-        /// Invalid file descriptor provided.
-        case invalidDescriptor(operation: Operation)
-
-        /// Alignment validation failed.
-        case alignmentViolation(operation: Operation)
-
-        /// Operation not supported on this platform/filesystem.
-        case notSupported(operation: Operation)
-    }
-}
-
 // MARK: - Translation from Syscall
 
 extension Kernel.File.Direct.Error {

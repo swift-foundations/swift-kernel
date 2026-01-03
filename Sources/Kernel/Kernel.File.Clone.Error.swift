@@ -49,18 +49,6 @@ extension Kernel.File.Clone {
         /// A platform-specific error occurred.
         case platform(code: Kernel.Error.Code, operation: Operation)
 
-        /// Operation types for error context.
-        public enum Operation: String, Sendable, Equatable {
-            case clonefile
-            case copyfile
-            case ficlone
-            case copyFileRange
-            case duplicateExtents
-            case statfs
-            case stat
-            case copy
-        }
-
         public var description: String {
             switch self {
             case .notSupported:
@@ -82,22 +70,6 @@ extension Kernel.File.Clone {
                 return "Platform error \(code) during \(operation)"
             }
         }
-    }
-}
-
-// MARK: - Syscall Error
-
-extension Kernel.File.Clone.Error {
-    /// Raw syscall-level errors for clone operations.
-    ///
-    /// This type captures the exact errno/win32 error code from syscalls.
-    /// It is translated to the semantic `Kernel.File.Clone.Error` at API boundaries.
-    package enum Syscall: Swift.Error, Sendable {
-        /// Platform syscall failure.
-        case platform(code: Kernel.Error.Code, operation: Operation)
-
-        /// Operation not supported.
-        case notSupported(operation: Operation)
     }
 }
 

@@ -99,33 +99,6 @@ extension Kernel.File.System {
     }
 }
 
-// MARK: - Stats Error Type
-
-extension Kernel.File.System.Stats {
-    /// Error type for filesystem statistics operations.
-    public enum Error: Swift.Error, Sendable, Equatable {
-        case path(Kernel.Path.Resolution.Error)
-        case handle(Kernel.Handle.Error)
-        case permission(Kernel.Permission.Error)
-        case memory(Kernel.Memory.Error)
-        case io(Kernel.IO.Error)
-        case platform(Kernel.Platform.Error)
-    }
-}
-
-extension Kernel.File.System.Stats.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .path(let e): return "path: \(e)"
-        case .handle(let e): return "handle: \(e)"
-        case .permission(let e): return "permission: \(e)"
-        case .memory(let e): return "memory: \(e)"
-        case .io(let e): return "io: \(e)"
-        case .platform(let e): return "\(e)"
-        }
-    }
-}
-
 // MARK: - POSIX Implementation
 
 #if !os(Windows)
@@ -147,38 +120,6 @@ extension Kernel.File.System.Stats.Error: CustomStringConvertible {
         @usableFromInline
         internal typealias PlatformStatfs = statfs
     #endif
-
-    extension Kernel.File.System.Stats.Error {
-        @inlinable
-        init(errno: Errno) {
-            if let e = Kernel.Path.Resolution.Error(errno: errno) {
-                self = .path(e)
-                return
-            }
-            if let e = Kernel.Handle.Error(errno: errno) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.Permission.Error(errno: errno) {
-                self = .permission(e)
-                return
-            }
-            if let e = Kernel.Memory.Error(errno: errno) {
-                self = .memory(e)
-                return
-            }
-            if let e = Kernel.IO.Error(errno: errno) {
-                self = .io(e)
-                return
-            }
-            self = .platform(Kernel.Platform.Error(errno: errno))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(errno: Errno(rawValue: errno))
-        }
-    }
 
     extension Kernel.File.System.Stats {
         /// Gets filesystem statistics for a path.
@@ -267,38 +208,6 @@ extension Kernel.File.System.Stats.Error: CustomStringConvertible {
 
 #if os(Windows)
     public import WinSDK
-
-    extension Kernel.File.System.Stats.Error {
-        @inlinable
-        init(windowsError error: DWORD) {
-            if let e = Kernel.Path.Resolution.Error(windowsError: error) {
-                self = .path(e)
-                return
-            }
-            if let e = Kernel.Handle.Error(windowsError: error) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.Permission.Error(windowsError: error) {
-                self = .permission(e)
-                return
-            }
-            if let e = Kernel.Memory.Error(windowsError: error) {
-                self = .memory(e)
-                return
-            }
-            if let e = Kernel.IO.Error(windowsError: error) {
-                self = .io(e)
-                return
-            }
-            self = .platform(Kernel.Platform.Error(windowsError: error))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(windowsError: GetLastError())
-        }
-    }
 
     extension Kernel.File.System.Stats {
         /// Gets filesystem statistics for a path.

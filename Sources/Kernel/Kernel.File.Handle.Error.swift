@@ -55,14 +55,6 @@ extension Kernel.File.Handle {
         /// Platform-specific error.
         case platform(code: Kernel.Error.Code, operation: Operation)
     }
-
-    /// Operation type for error context.
-    public enum Operation: String, Sendable {
-        case read
-        case write
-        case seek
-        case sync
-    }
 }
 
 // MARK: - Error Construction

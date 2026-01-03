@@ -26,16 +26,6 @@ extension Kernel.Memory.Map {
 
         /// Invalid argument.
         case invalid(Validation)
-
-        /// Validation failure reasons.
-        public enum Validation: Sendable, Equatable, Hashable {
-            /// Length must be greater than zero.
-            case length
-            /// Address alignment is invalid.
-            case alignment
-            /// Offset is invalid.
-            case offset
-        }
     }
 }
 
@@ -52,16 +42,6 @@ extension Kernel.Memory.Map.Error: CustomStringConvertible {
             return "mprotect failed (\(code))"
         case .invalid(let validation):
             return "invalid argument: \(validation)"
-        }
-    }
-}
-
-extension Kernel.Memory.Map.Error.Validation: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .length: return "length must be greater than zero"
-        case .alignment: return "address alignment is invalid"
-        case .offset: return "offset is invalid"
         }
     }
 }

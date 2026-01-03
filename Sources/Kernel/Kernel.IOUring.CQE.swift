@@ -121,31 +121,9 @@
         }
     }
 
-    // MARK: - CQE Flags
+    // MARK: - Typed Flags Accessors
 
     extension Kernel.IOUring.CQE {
-        /// Flags returned with completion queue entries.
-        public struct Flags: OptionSet, Sendable {
-            public let rawValue: UInt32
-
-            @inlinable
-            public init(rawValue: UInt32) {
-                self.rawValue = rawValue
-            }
-
-            /// Buffer ID is valid (buffer was selected from buffer group).
-            public static let buffer = Flags(rawValue: 1 << 0)
-
-            /// More CQEs will follow for this SQE (multishot).
-            public static let more = Flags(rawValue: 1 << 1)
-
-            /// Socket is in a readable state (recv multishot).
-            public static let sockNonempty = Flags(rawValue: 1 << 2)
-
-            /// Notification CQE (not a completion).
-            public static let notif = Flags(rawValue: 1 << 3)
-        }
-
         /// The CQE flags as a typed value.
         @inlinable
         public var typedFlags: Flags {

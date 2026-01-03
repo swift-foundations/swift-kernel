@@ -19,60 +19,6 @@
     #endif
 
     extension Kernel.IOUring {
-        /// Flags for `io_uring_setup`.
-        public struct SetupFlags: OptionSet, Sendable {
-            public let rawValue: UInt32
-
-            @inlinable
-            public init(rawValue: UInt32) {
-                self.rawValue = rawValue
-            }
-
-            /// Perform busy-waiting for I/O completion instead of getting async notification.
-            public static let ioPoll = SetupFlags(rawValue: 1 << 0)
-
-            /// Create a kernel thread to poll the SQ ring (reduces syscalls).
-            public static let sqPoll = SetupFlags(rawValue: 1 << 1)
-
-            /// Pin the SQ poll thread to a specific CPU.
-            public static let sqAff = SetupFlags(rawValue: 1 << 2)
-
-            /// Allow specifying CQ ring size separately from SQ size.
-            public static let cqSize = SetupFlags(rawValue: 1 << 3)
-
-            /// Clamp SQ/CQ ring sizes to the maximum allowed.
-            public static let clamp = SetupFlags(rawValue: 1 << 4)
-
-            /// Share the async backend of an existing io_uring instance.
-            public static let attachWq = SetupFlags(rawValue: 1 << 5)
-
-            /// Start the ring in a disabled state.
-            public static let rDisabled = SetupFlags(rawValue: 1 << 6)
-
-            /// Let the kernel choose SQ thread CPU.
-            public static let submitAll = SetupFlags(rawValue: 1 << 7)
-
-            /// Cooperative task running (kernel 5.19+).
-            public static let coopTaskrun = SetupFlags(rawValue: 1 << 8)
-
-            /// Single-issuer mode for task running (kernel 5.19+).
-            public static let taskrunFlag = SetupFlags(rawValue: 1 << 9)
-
-            /// Use SQE128 format (kernel 5.19+).
-            public static let sqe128 = SetupFlags(rawValue: 1 << 10)
-
-            /// Use CQE32 format (kernel 5.19+).
-            public static let cqe32 = SetupFlags(rawValue: 1 << 11)
-
-            /// Single issuer hint (kernel 6.0+).
-            public static let singleIssuer = SetupFlags(rawValue: 1 << 12)
-
-            /// Defer taskrun until enter with flag (kernel 6.1+).
-            public static let deferTaskrun = SetupFlags(rawValue: 1 << 13)
-        }
-    }
-
-    extension Kernel.IOUring {
         /// Swift wrapper for io_uring_params C struct.
         ///
         /// Contains setup parameters passed to io_uring_setup, and ring offsets
@@ -85,7 +31,7 @@
             public private(set) var cqEntries: UInt32
 
             /// Setup flags.
-            public var flags: SetupFlags
+            public var flags: Setup.Flags
 
             /// SQ thread CPU affinity (when using .sqAff flag).
             public var sqThreadCPU: UInt32
@@ -109,7 +55,7 @@
             ///   - sqThreadCPU: CPU to pin SQ thread to (requires .sqAff flag).
             ///   - sqThreadIdle: SQ thread idle timeout in milliseconds.
             public init(
-                flags: SetupFlags = [],
+                flags: Setup.Flags = [],
                 sqThreadCPU: UInt32 = 0,
                 sqThreadIdle: UInt32 = 0
             ) {
@@ -128,7 +74,7 @@
             internal init(_ cParams: io_uring_params) {
                 self.sqEntries = cParams.sq_entries
                 self.cqEntries = cParams.cq_entries
-                self.flags = SetupFlags(rawValue: cParams.flags)
+                self.flags = Setup.Flags(rawValue: cParams.flags)
                 self.sqThreadCPU = cParams.sq_thread_cpu
                 self.sqThreadIdle = cParams.sq_thread_idle
                 self.features = cParams.features
