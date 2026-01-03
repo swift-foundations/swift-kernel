@@ -97,7 +97,7 @@ extension Kernel {
         _ path: FilePath,
         _ body: (UnsafePointer<CInterop.PlatformChar>) throws(E) -> R
     ) throws(E) -> R {
-        let ps = PlatformString(copying: path)
+        let ps = Kernel.Platform.String(copying: path)
         return try body(ps.pointer)
     }
 

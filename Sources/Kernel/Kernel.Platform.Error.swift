@@ -17,14 +17,14 @@ extension Kernel.Platform {
         /// - Parameters:
         ///   - code: The unified platform error code.
         ///   - message: Optional diagnostic message (computed lazily, not required for propagation).
-        case unmapped(code: Kernel.Error.Code, message: String?)
+        case unmapped(code: Kernel.Error.Code, message: Swift.String?)
     }
 }
 
 // MARK: - CustomStringConvertible
 
 extension Kernel.Platform.Error: CustomStringConvertible {
-    public var description: String {
+    public var description: Swift.String {
         switch self {
         case .unmapped(let code, let message):
             if let message { return message }

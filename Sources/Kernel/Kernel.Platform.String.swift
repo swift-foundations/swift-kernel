@@ -11,7 +11,7 @@
 
 public import SystemPackage
 
-extension Kernel {
+extension Kernel.Platform {
     /// An owned, null-terminated platform string buffer.
     ///
     /// This type copies a `FilePath`'s platform string into Kernel-owned storage,
@@ -19,7 +19,7 @@ extension Kernel {
     /// The copy happens in a non-throwing closure, and typed-throwing operations
     /// occur outside the rethrows boundary.
     @usableFromInline
-    internal struct PlatformString: ~Copyable {
+    internal struct String: ~Copyable {
         @usableFromInline
         let buffer: UnsafeMutableBufferPointer<CInterop.PlatformChar>
 
