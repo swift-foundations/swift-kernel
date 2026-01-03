@@ -9,9 +9,15 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// File copy operations.
-    public enum Copy: Sendable {
-
+extension Kernel.File.Open {
+    /// Cache behavior options.
+    public enum Cache: Sendable {
+        /// Disable caching (macOS only).
+        ///
+        /// - macOS: `F_NOCACHE` via `fcntl` after open
+        /// - Other platforms: Ignored
+        ///
+        /// - Note: This is a weaker hint than `.direct` on macOS.
+        case disabled
     }
 }

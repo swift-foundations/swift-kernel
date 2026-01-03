@@ -9,12 +9,16 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// Blocking domain - non-blocking operation semantics.
-    ///
-    /// When a descriptor is in non-blocking mode and an operation
-    /// cannot complete immediately, these errors are returned.
+extension Kernel.File.Open {
+    /// Blocking behavior options.
     public enum Blocking: Sendable {
-
+        /// Disable blocking I/O.
+        ///
+        /// - POSIX: `O_NONBLOCK`
+        /// - Windows: Requires async I/O with OVERLAPPED structures
+        ///
+        /// - Note: This flag is primarily for POSIX. On Windows, non-blocking
+        ///   semantics require a different I/O model (IOCP).
+        case disabled
     }
 }

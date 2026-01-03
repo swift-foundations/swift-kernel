@@ -9,9 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// File copy operations.
-    public enum Copy: Sendable {
+extension Kernel.Atomic.Store {
+    /// Ordering semantics for store operations.
+    public enum Ordering: Sendable {
+        /// No ordering guarantees.
+        case relaxed
 
+        /// Release semantics: prior reads/writes cannot be reordered after this store.
+        case releasing
     }
 }

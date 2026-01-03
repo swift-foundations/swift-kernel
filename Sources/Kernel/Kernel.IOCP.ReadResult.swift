@@ -9,9 +9,16 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// File copy operations.
-    public enum Copy: Sendable {
+#if os(Windows)
 
+extension Kernel.IOCP {
+    /// Result of an overlapped read operation.
+    public enum ReadResult: Sendable, Equatable {
+        /// The operation is pending asynchronously.
+        case pending
+        /// The operation completed synchronously with the given byte count.
+        case completed(bytes: UInt32)
     }
 }
+
+#endif

@@ -9,9 +9,16 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// File copy operations.
-    public enum Copy: Sendable {
+extension Kernel.Seek {
+    /// Reference point for seek operations.
+    public enum Origin: Sendable {
+        /// Seek from the beginning of the file.
+        case start
 
+        /// Seek from the current file offset.
+        case current
+
+        /// Seek from the end of the file.
+        case end
     }
 }

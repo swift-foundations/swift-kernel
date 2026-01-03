@@ -11,17 +11,7 @@
 
 extension Kernel {
     /// Seek origin for file offset operations.
-    public enum Seek {
-        /// Reference point for seek operations.
-        public enum Origin: Sendable {
-            /// Seek from the beginning of the file.
-            case start
+    public enum Seek: Sendable {
 
-            /// Seek from the current file offset.
-            case current
-
-            /// Seek from the end of the file.
-            case end
-        }
     }
 }

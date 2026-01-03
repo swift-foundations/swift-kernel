@@ -9,9 +9,12 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// File copy operations.
-    public enum Copy: Sendable {
+extension Kernel.Path {
+    /// Path resolution domain - errors during path lookup.
+    ///
+    /// These errors occur when the kernel attempts to resolve a path
+    /// to an actual filesystem object.
+    public enum Resolution: Sendable {
 
     }
 }

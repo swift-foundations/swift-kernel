@@ -9,9 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// File copy operations.
-    public enum Copy: Sendable {
+extension Kernel.File.Open {
+    /// Exec behavior options.
+    public enum Exec: Sendable {
 
     }
 }

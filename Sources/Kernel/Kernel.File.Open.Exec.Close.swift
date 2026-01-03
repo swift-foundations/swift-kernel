@@ -9,9 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
-    /// File copy operations.
-    public enum Copy: Sendable {
-
+extension Kernel.File.Open.Exec {
+    /// Close descriptor options.
+    public enum Close: Sendable {
+        /// Close the file descriptor on exec.
+        ///
+        /// - POSIX: `O_CLOEXEC`
+        /// - Windows: Non-inheritable handle (default behavior)
+        case enabled
     }
 }
