@@ -11,7 +11,7 @@
 
 public import SystemPackage
 
-extension Kernel {
+extension Kernel.File.System {
     /// Filesystem statistics.
     ///
     /// Used by higher layers (swift-io) for Direct I/O capability probing
@@ -27,7 +27,7 @@ extension Kernel {
     ///
     /// For cross-platform filesystem type detection, prefer `fsTypeName` when available,
     /// falling back to `type` magic number comparison on POSIX systems.
-    public struct Statfs: Sendable, Equatable, Hashable {
+    public struct Stats: Sendable, Equatable, Hashable {
         /// Filesystem type identifier.
         ///
         /// - POSIX: `f_type` — Filesystem magic number (e.g., 0x9123683E for Btrfs).
@@ -72,7 +72,7 @@ extension Kernel {
         /// This field is `nil` when the filesystem type name is not available.
         public let fsTypeName: String?
 
-        /// Creates a Statfs with the given values.
+        /// Creates filesystem statistics with the given values.
         public init(
             type: UInt64,
             blockSize: UInt64,
@@ -99,10 +99,10 @@ extension Kernel {
     }
 }
 
-// MARK: - Statfs Error Type
+// MARK: - Stats Error Type
 
-extension Kernel.Statfs {
-    /// Error type for statfs operations.
+extension Kernel.File.System.Stats {
+    /// Error type for filesystem statistics operations.
     public enum Error: Swift.Error, Sendable, Equatable {
         case path(Kernel.Path.Resolution.Error)
         case handle(Kernel.Handle.Error)
@@ -113,7 +113,7 @@ extension Kernel.Statfs {
     }
 }
 
-extension Kernel.Statfs.Error: CustomStringConvertible {
+extension Kernel.File.System.Stats.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .path(let e): return "path: \(e)"
@@ -148,7 +148,7 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
         internal typealias PlatformStatfs = statfs
     #endif
 
-    extension Kernel.Statfs.Error {
+    extension Kernel.File.System.Stats.Error {
         @inlinable
         init(errno: Errno) {
             if let e = Kernel.Path.Resolution.Error(errno: errno) {
@@ -180,15 +180,15 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
         }
     }
 
-    extension Kernel.Statfs {
+    extension Kernel.File.System.Stats {
         /// Gets filesystem statistics for a path.
         ///
         /// - Parameter path: The path to get statistics for.
         /// - Returns: The filesystem statistics.
-        /// - Throws: `Kernel.Statfs.Error` on failure.
+        /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(path: FilePath) throws(Error) -> Kernel.Statfs {
-            try Kernel.withPlatformString(path) { (cString: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.Statfs in
+        public static func get(path: FilePath) throws(Error) -> Kernel.File.System.Stats {
+            try Kernel.withPlatformString(path) { (cString: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.File.System.Stats in
                 try get(unsafePath: cString)
             }
         }
@@ -197,24 +197,24 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
         ///
         /// - Parameter unsafePath: A null-terminated C string path.
         /// - Returns: The filesystem statistics.
-        /// - Throws: `Kernel.Statfs.Error` on failure.
+        /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(unsafePath: UnsafePointer<CChar>) throws(Error) -> Kernel.Statfs {
+        public static func get(unsafePath: UnsafePointer<CChar>) throws(Error) -> Kernel.File.System.Stats {
             var buf = PlatformStatfs()
             let result = statfs(unsafePath, &buf)
             guard result == 0 else {
                 throw .current()
             }
-            return Kernel.Statfs(from: buf)
+            return Kernel.File.System.Stats(from: buf)
         }
 
         /// Gets filesystem statistics for a file descriptor.
         ///
         /// - Parameter descriptor: The file descriptor to get statistics for.
         /// - Returns: The filesystem statistics.
-        /// - Throws: `Kernel.Statfs.Error` on failure.
+        /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(descriptor: Kernel.Descriptor) throws(Error) -> Kernel.Statfs {
+        public static func get(descriptor: Kernel.Descriptor) throws(Error) -> Kernel.File.System.Stats {
             guard descriptor.isValid else {
                 throw .handle(.invalid)
             }
@@ -223,10 +223,10 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
             guard result == 0 else {
                 throw .current()
             }
-            return Kernel.Statfs(from: buf)
+            return Kernel.File.System.Stats(from: buf)
         }
 
-        /// Creates a Statfs from the platform's statfs struct.
+        /// Creates filesystem statistics from the platform's statfs struct.
         @usableFromInline
         init(from buf: PlatformStatfs) {
             #if canImport(Darwin)
@@ -268,7 +268,7 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.Statfs.Error {
+    extension Kernel.File.System.Stats.Error {
         @inlinable
         init(windowsError error: DWORD) {
             if let e = Kernel.Path.Resolution.Error(windowsError: error) {
@@ -300,15 +300,15 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
         }
     }
 
-    extension Kernel.Statfs {
+    extension Kernel.File.System.Stats {
         /// Gets filesystem statistics for a path.
         ///
         /// - Parameter path: The path to get statistics for.
         /// - Returns: The filesystem statistics.
-        /// - Throws: `Kernel.Statfs.Error` on failure.
+        /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(path: FilePath) throws(Error) -> Kernel.Statfs {
-            try Kernel.withPlatformString(path) { (wpath: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.Statfs in
+        public static func get(path: FilePath) throws(Error) -> Kernel.File.System.Stats {
+            try Kernel.withPlatformString(path) { (wpath: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.File.System.Stats in
                 try get(unsafePath: wpath)
             }
         }
@@ -317,9 +317,9 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
         ///
         /// - Parameter unsafePath: A null-terminated wide string path.
         /// - Returns: The filesystem statistics.
-        /// - Throws: `Kernel.Statfs.Error` on failure.
+        /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(unsafePath: UnsafePointer<WCHAR>) throws(Error) -> Kernel.Statfs {
+        public static func get(unsafePath: UnsafePointer<WCHAR>) throws(Error) -> Kernel.File.System.Stats {
             var sectorsPerCluster: DWORD = 0
             var bytesPerSector: DWORD = 0
             var freeClusters: DWORD = 0
@@ -357,7 +357,7 @@ extension Kernel.Statfs.Error: CustomStringConvertible {
                     return String(decoding: fsNameBuffer, as: UTF16.self)
                 }() : nil
 
-            return Kernel.Statfs(
+            return Kernel.File.System.Stats(
                 type: UInt64(volumeSerial),
                 blockSize: blockSize,
                 blocks: UInt64(totalClusters),

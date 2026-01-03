@@ -23,17 +23,17 @@
     #endif
 #endif
 
-extension Kernel.File {
+extension Kernel.File.Stats {
     /// Gets file metadata for an open file descriptor.
     ///
     /// - Parameter descriptor: The file descriptor to stat.
     /// - Returns: File metadata.
-    /// - Throws: `Kernel.Stat.Error` if the syscall fails.
-    public static func stat(_ descriptor: Kernel.Descriptor) throws(Kernel.Stat.Error) -> Kernel.Stat {
+    /// - Throws: `Kernel.File.Stats.Error` if the syscall fails.
+    public static func get(descriptor: Kernel.Descriptor) throws(Error) -> Kernel.File.Stats {
         #if os(Windows)
-            return try statWindows(descriptor)
+            return try getWindows(descriptor)
         #else
-            return try statPosix(descriptor)
+            return try getPosix(descriptor)
         #endif
     }
 }
@@ -45,17 +45,17 @@ extension Kernel.File {
     @usableFromInline
     internal typealias PlatformStat = stat
 
-    extension Kernel.File {
-        internal static func statPosix(_ descriptor: Kernel.Descriptor) throws(Kernel.Stat.Error) -> Kernel.Stat {
+    extension Kernel.File.Stats {
+        internal static func getPosix(_ descriptor: Kernel.Descriptor) throws(Error) -> Kernel.File.Stats {
             var sb = PlatformStat()
             guard fstat(descriptor.rawValue, &sb) == 0 else {
-                throw Kernel.Stat.Error(posixErrno: errno)
+                throw Error(posixErrno: errno)
             }
-            return Kernel.Stat(from: sb)
+            return Kernel.File.Stats(from: sb)
         }
     }
 
-    extension Kernel.Stat.Error {
+    extension Kernel.File.Stats.Error {
         internal init(posixErrno code: Int32) {
             let errno = Errno(rawValue: code)
             if let e = Kernel.Handle.Error(errno: errno) {
@@ -70,8 +70,8 @@ extension Kernel.File {
         }
     }
 
-    extension Kernel.Stat {
-        /// Creates a Kernel.Stat from a POSIX stat structure.
+    extension Kernel.File.Stats {
+        /// Creates a Kernel.File.Stats from a POSIX stat structure.
         internal init(from sb: PlatformStat) {
             #if canImport(Darwin)
                 let atime = Kernel.Time(seconds: Int64(sb.st_atimespec.tv_sec), nanoseconds: Int32(sb.st_atimespec.tv_nsec))
@@ -99,7 +99,7 @@ extension Kernel.File {
         }
     }
 
-    extension Kernel.Stat.Kind {
+    extension Kernel.File.Stats.Kind {
         /// Creates a file type from POSIX st_mode.
         internal init(mode: mode_t) {
             let fileType = mode & S_IFMT
@@ -130,16 +130,16 @@ extension Kernel.File {
 
 #if os(Windows)
 
-    extension Kernel.File {
-        internal static func statWindows(_ descriptor: Kernel.Descriptor) throws(Kernel.Stat.Error) -> Kernel.Stat {
+    extension Kernel.File.Stats {
+        internal static func getWindows(_ descriptor: Kernel.Descriptor) throws(Error) -> Kernel.File.Stats {
             var info = BY_HANDLE_FILE_INFORMATION()
             guard GetFileInformationByHandle(descriptor.rawValue, &info) else {
-                throw Kernel.Stat.Error(windowsError: GetLastError())
+                throw Error(windowsError: GetLastError())
             }
 
             let size = (Int64(info.nFileSizeHigh) << 32) | Int64(info.nFileSizeLow)
 
-            let type: Kernel.Stat.Kind
+            let type: Kernel.File.Stats.Kind
             if (info.dwFileAttributes & DWORD(FILE_ATTRIBUTE_DIRECTORY)) != 0 {
                 type = .directory
             } else if (info.dwFileAttributes & DWORD(FILE_ATTRIBUTE_REPARSE_POINT)) != 0 {
@@ -160,7 +160,7 @@ extension Kernel.File {
 
             let inode = (UInt64(info.nFileIndexHigh) << 32) | UInt64(info.nFileIndexLow)
 
-            return Kernel.Stat(
+            return Kernel.File.Stats(
                 size: size,
                 type: type,
                 permissions: permissions,
@@ -176,7 +176,7 @@ extension Kernel.File {
         }
     }
 
-    extension Kernel.Stat.Error {
+    extension Kernel.File.Stats.Error {
         internal init(windowsError error: DWORD) {
             if let e = Kernel.Handle.Error(windowsError: error) {
                 self = .handle(e)

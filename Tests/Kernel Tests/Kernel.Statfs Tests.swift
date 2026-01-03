@@ -14,16 +14,16 @@ import Testing
 
 @testable import Kernel
 
-extension Kernel.Statfs {
+extension Kernel.File.System.Stats {
     #TestSuites
 }
 
 // MARK: - Unit Tests
 
-extension Kernel.Statfs.Test.Unit {
+extension Kernel.File.System.Stats.Test.Unit {
     @Test("Statfs memberwise init")
     func memberwiseInit() {
-        let fs = Kernel.Statfs(
+        let fs = Kernel.File.System.Stats(
             type: 0x1234,
             blockSize: 4096,
             blocks: 1_000_000,
@@ -49,7 +49,7 @@ extension Kernel.Statfs.Test.Unit {
 
     @Test("Statfs with fsTypeName")
     func withFsTypeName() {
-        let fs = Kernel.Statfs(
+        let fs = Kernel.File.System.Stats(
             type: 0x1234,
             blockSize: 4096,
             blocks: 1_000_000,
@@ -67,7 +67,7 @@ extension Kernel.Statfs.Test.Unit {
 
     @Test("Statfs is equatable")
     func equatable() {
-        let fs1 = Kernel.Statfs(
+        let fs1 = Kernel.File.System.Stats(
             type: 1,
             blockSize: 4096,
             blocks: 1000,
@@ -79,7 +79,7 @@ extension Kernel.Statfs.Test.Unit {
             nameMax: 255
         )
 
-        let fs2 = Kernel.Statfs(
+        let fs2 = Kernel.File.System.Stats(
             type: 1,
             blockSize: 4096,
             blocks: 1000,
@@ -91,7 +91,7 @@ extension Kernel.Statfs.Test.Unit {
             nameMax: 255
         )
 
-        let fs3 = Kernel.Statfs(
+        let fs3 = Kernel.File.System.Stats(
             type: 2,  // Different type
             blockSize: 4096,
             blocks: 1000,
@@ -109,7 +109,7 @@ extension Kernel.Statfs.Test.Unit {
 
     @Test("Statfs is hashable")
     func hashable() {
-        let fs1 = Kernel.Statfs(
+        let fs1 = Kernel.File.System.Stats(
             type: 1,
             blockSize: 4096,
             blocks: 1000,
@@ -121,7 +121,7 @@ extension Kernel.Statfs.Test.Unit {
             nameMax: 255
         )
 
-        let fs2 = Kernel.Statfs(
+        let fs2 = Kernel.File.System.Stats(
             type: 2,
             blockSize: 4096,
             blocks: 1000,
@@ -133,7 +133,7 @@ extension Kernel.Statfs.Test.Unit {
             nameMax: 255
         )
 
-        var set = Set<Kernel.Statfs>()
+        var set = Set<Kernel.File.System.Stats>()
         set.insert(fs1)
         set.insert(fs1)  // Duplicate
         set.insert(fs2)
@@ -144,12 +144,12 @@ extension Kernel.Statfs.Test.Unit {
 
 // MARK: - Computed Property Tests
 
-extension Kernel.Statfs.Test.Unit {
+extension Kernel.File.System.Stats.Test.Unit {
     @Test("availableBlocks <= freeBlocks (typical)")
     func availableVsFree() {
         // In real filesystems, availableBlocks is typically <= freeBlocks
         // (root-reserved blocks)
-        let fs = Kernel.Statfs(
+        let fs = Kernel.File.System.Stats(
             type: 1,
             blockSize: 4096,
             blocks: 1000,

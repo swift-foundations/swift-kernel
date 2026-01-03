@@ -14,17 +14,17 @@ import Testing
 
 @testable import Kernel
 
-extension Kernel.Stat {
+extension Kernel.File.Stats {
     #TestSuites
 }
 
 // MARK: - Unit Tests
 
-extension Kernel.Stat.Test.Unit {
+extension Kernel.File.Stats.Test.Unit {
     @Test("Stat stores all fields")
     func storesAllFields() {
         let time = Kernel.Time(seconds: 1000)
-        let stat = Kernel.Stat(
+        let stat = Kernel.File.Stats(
             size: 1024,
             type: .regular,
             permissions: 0o644,
@@ -51,7 +51,7 @@ extension Kernel.Stat.Test.Unit {
     @Test("Stat is Sendable")
     func isSendable() {
         let time = Kernel.Time(seconds: 0)
-        let stat: any Sendable = Kernel.Stat(
+        let stat: any Sendable = Kernel.File.Stats(
             size: 0,
             type: .regular,
             permissions: 0,
@@ -64,13 +64,13 @@ extension Kernel.Stat.Test.Unit {
             modificationTime: time,
             changeTime: time
         )
-        #expect(stat is Kernel.Stat)
+        #expect(stat is Kernel.File.Stats)
     }
 
     @Test("Stat is Equatable")
     func isEquatable() {
         let time = Kernel.Time(seconds: 0)
-        let a = Kernel.Stat(
+        let a = Kernel.File.Stats(
             size: 100,
             type: .regular,
             permissions: 0o644,
@@ -83,7 +83,7 @@ extension Kernel.Stat.Test.Unit {
             modificationTime: time,
             changeTime: time
         )
-        let b = Kernel.Stat(
+        let b = Kernel.File.Stats(
             size: 100,
             type: .regular,
             permissions: 0o644,
@@ -103,10 +103,10 @@ extension Kernel.Stat.Test.Unit {
 
 // MARK: - Kind Unit Tests
 
-extension Kernel.Stat.Test.Unit {
+extension Kernel.File.Stats.Test.Unit {
     @Test("Kind cases are distinct")
     func kindCasesDistinct() {
-        let cases: [Kernel.Stat.Kind] = [
+        let cases: [Kernel.File.Stats.Kind] = [
             .regular,
             .directory,
             .link(.symbolic),
@@ -128,39 +128,39 @@ extension Kernel.Stat.Test.Unit {
 
     @Test("Kind is Sendable")
     func kindIsSendable() {
-        let kind: any Sendable = Kernel.Stat.Kind.regular
-        #expect(kind is Kernel.Stat.Kind)
+        let kind: any Sendable = Kernel.File.Stats.Kind.regular
+        #expect(kind is Kernel.File.Stats.Kind)
     }
 
     @Test("Kind is Hashable")
     func kindIsHashable() {
-        let a = Kernel.Stat.Kind.regular
-        let b = Kernel.Stat.Kind.regular
+        let a = Kernel.File.Stats.Kind.regular
+        let b = Kernel.File.Stats.Kind.regular
 
         #expect(a.hashValue == b.hashValue)
     }
 
     @Test("Kind.Link cases")
     func kindLinkCases() {
-        let symbolic = Kernel.Stat.Kind.Link.symbolic
+        let symbolic = Kernel.File.Stats.Kind.Link.symbolic
         #expect(symbolic == .symbolic)
     }
 
     @Test("Kind.Device cases are distinct")
     func kindDeviceCases() {
-        let block = Kernel.Stat.Kind.Device.block
-        let character = Kernel.Stat.Kind.Device.character
+        let block = Kernel.File.Stats.Kind.Device.block
+        let character = Kernel.File.Stats.Kind.Device.character
         #expect(block != character)
     }
 }
 
 // MARK: - Edge Cases
 
-extension Kernel.Stat.Test.EdgeCase {
+extension Kernel.File.Stats.Test.EdgeCase {
     @Test("zero size file")
     func zeroSize() {
         let time = Kernel.Time(seconds: 0)
-        let stat = Kernel.Stat(
+        let stat = Kernel.File.Stats(
             size: 0,
             type: .regular,
             permissions: 0,
@@ -180,7 +180,7 @@ extension Kernel.Stat.Test.EdgeCase {
     @Test("maximum permissions")
     func maxPermissions() {
         let time = Kernel.Time(seconds: 0)
-        let stat = Kernel.Stat(
+        let stat = Kernel.File.Stats(
             size: 0,
             type: .regular,
             permissions: 0o7777,

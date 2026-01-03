@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Stat {
+extension Kernel.File.Stats {
     /// Errors that can occur during stat operations.
     public enum Error: Swift.Error, Sendable, Equatable {
         /// The file descriptor or handle is invalid.
@@ -23,9 +23,9 @@ extension Kernel.Stat {
     }
 }
 
-// MARK: - Stat.Error CustomStringConvertible
+// MARK: - Stats.Error CustomStringConvertible
 
-extension Kernel.Stat.Error: CustomStringConvertible {
+extension Kernel.File.Stats.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .handle(let e): return "handle: \(e)"

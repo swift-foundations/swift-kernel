@@ -9,12 +9,12 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel {
+extension Kernel.File {
     /// File metadata from stat/fstat syscalls.
     ///
     /// This is a minimal, cross-platform representation of file metadata.
     /// Platform-specific fields are normalized to common types.
-    public struct Stat: Sendable, Equatable {
+    public struct Stats: Sendable, Equatable {
         /// File size in bytes.
         public let size: Int64
 

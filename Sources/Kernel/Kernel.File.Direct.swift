@@ -253,9 +253,9 @@ public import SystemPackage
         /// The main exceptions are network filesystems and some FUSE implementations.
         public static func probeCapability(at path: FilePath) -> Capability {
             // Get filesystem type via statfs
-            let statfsBuf: Kernel.Statfs
+            let statfsBuf: Kernel.File.System.Stats
             do {
-                statfsBuf = try Kernel.Statfs.get(path: path)
+                statfsBuf = try Kernel.File.System.Stats.get(path: path)
             } catch {
                 return .bufferedOnly
             }

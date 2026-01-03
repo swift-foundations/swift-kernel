@@ -83,9 +83,9 @@ extension Kernel.File.Clone.Capability {
         }
     #elseif os(Linux)
         package static func probe(at path: String) throws(Kernel.File.Clone.Error.Syscall) -> Kernel.File.Clone.Capability {
-            let statfsBuf: Kernel.Statfs
+            let statfsBuf: Kernel.File.System.Stats
             do {
-                statfsBuf = try Kernel.Statfs.get(path: FilePath(path))
+                statfsBuf = try Kernel.File.System.Stats.get(path: FilePath(path))
             } catch {
                 throw .platform(code: .posix(errno), operation: .statfs)
             }

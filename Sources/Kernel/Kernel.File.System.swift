@@ -9,13 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Stat.Kind {
-    /// Device types.
-    public enum Device: Sendable, Equatable, Hashable {
-        /// Block device.
-        case block
-
-        /// Character device.
-        case character
-    }
+extension Kernel.File {
+    /// Filesystem-related types and operations.
+    public enum System {}
 }
