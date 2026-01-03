@@ -12,10 +12,10 @@
 #if canImport(Glibc) || canImport(Musl)
 
     #if canImport(Glibc)
-        import Glibc
-        import CLinuxShim
+        public import Glibc
+        public import CLinuxShim
     #elseif canImport(Musl)
-        import Musl
+        public import Musl
     #endif
 
     extension Kernel.Event.Poll {
@@ -49,12 +49,14 @@
 
     extension Kernel.Event.Poll.Event {
         /// Creates an epoll event from the C struct.
+        @usableFromInline
         internal init(_ cEvent: epoll_event) {
             self.events = Kernel.Event.Poll.Events(rawValue: cEvent.events)
             self.data = cEvent.data.u64
         }
 
         /// Converts to the C epoll_event struct.
+        @usableFromInline
         internal var cValue: epoll_event {
             var event = epoll_event()
             event.events = events.rawValue
