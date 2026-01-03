@@ -27,7 +27,7 @@ extension Kernel.Kqueue {
         public var flags: Flags
 
         /// Filter-specific flags.
-        public var fflags: FilterFlags
+        public var fflags: Filter.Flags
 
         /// Filter-specific data (e.g., bytes available for read).
         public var data: Int
@@ -51,7 +51,7 @@ extension Kernel.Kqueue {
             ident: UInt,
             filter: Filter,
             flags: Flags,
-            fflags: FilterFlags = .none,
+            fflags: Filter.Flags = .none,
             data: Int = 0,
             udata: UInt64 = 0
         ) {
@@ -74,7 +74,7 @@ extension Kernel.Kqueue.Event {
         self.ident = cEvent.ident
         self.filter = Kernel.Kqueue.Filter(rawValue: cEvent.filter)
         self.flags = Kernel.Kqueue.Flags(rawValue: cEvent.flags)
-        self.fflags = Kernel.Kqueue.FilterFlags(rawValue: cEvent.fflags)
+        self.fflags = Kernel.Kqueue.Filter.Flags(rawValue: cEvent.fflags)
         self.data = cEvent.data
         self.udata = UInt64(UInt(bitPattern: cEvent.udata))
     }

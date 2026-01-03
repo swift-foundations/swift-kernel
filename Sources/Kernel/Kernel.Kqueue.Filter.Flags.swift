@@ -12,11 +12,11 @@
 #if canImport(Darwin)
 public import Darwin
 
-extension Kernel.Kqueue {
+extension Kernel.Kqueue.Filter {
     /// Filter-specific flags (fflags field).
     ///
     /// Used with EVFILT_USER for triggering user events.
-    public struct FilterFlags: Sendable, Equatable, Hashable {
+    public struct Flags: Sendable, Equatable, Hashable {
         public let rawValue: UInt32
 
         @inlinable
@@ -26,7 +26,7 @@ extension Kernel.Kqueue {
     }
 }
 
-extension Kernel.Kqueue.FilterFlags {
+extension Kernel.Kqueue.Filter.Flags {
     /// Trigger the user event immediately.
     public static let trigger = Self(rawValue: UInt32(NOTE_TRIGGER))
 
