@@ -41,12 +41,12 @@ extension Kernel.Atomic {
         public enum Ordering: Sendable {
             /// No ordering guarantees.
             case relaxed
-
+            
             /// Acquire semantics: subsequent reads/writes cannot be reordered before this load.
             case acquiring
         }
     }
-
+    
     /// Performs a load with the specified memory ordering.
     ///
     /// - Parameters:
@@ -78,12 +78,12 @@ extension Kernel.Atomic {
         public enum Ordering: Sendable {
             /// No ordering guarantees.
             case relaxed
-
+            
             /// Release semantics: prior reads/writes cannot be reordered after this store.
             case releasing
         }
     }
-
+    
     /// Performs a store with the specified memory ordering.
     ///
     /// - Parameters:

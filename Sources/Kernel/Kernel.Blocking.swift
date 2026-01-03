@@ -15,15 +15,19 @@ extension Kernel {
     /// When a descriptor is in non-blocking mode and an operation
     /// cannot complete immediately, these errors are returned.
     public enum Blocking: Sendable {
-        /// Blocking-related errors.
-        public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-            /// Operation would block on a non-blocking descriptor.
-            /// - POSIX: `EAGAIN`, `EWOULDBLOCK`
-            ///
-            /// The caller should wait for the descriptor to become ready
-            /// (e.g., via poll/select/kqueue/epoll) and retry.
-            case wouldBlock
-        }
+        
+    }
+}
+
+extension Kernel.Blocking {
+    /// Blocking-related errors.
+    public enum Error: Swift.Error, Sendable, Equatable, Hashable {
+        /// Operation would block on a non-blocking descriptor.
+        /// - POSIX: `EAGAIN`, `EWOULDBLOCK`
+        ///
+        /// The caller should wait for the descriptor to become ready
+        /// (e.g., via poll/select/kqueue/epoll) and retry.
+        case wouldBlock
     }
 }
 
