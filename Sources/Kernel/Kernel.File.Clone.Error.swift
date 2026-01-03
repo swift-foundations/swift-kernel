@@ -111,51 +111,51 @@ extension Kernel.File.Clone.Error {
             self = .notSupported
 
         case .platform(let code, let operation):
-            self = Self.fromCode(code, operation: operation)
+            self.init(code: code, operation: operation)
         }
     }
 
     /// Maps platform error code to semantic error.
-    private static func fromCode(_ code: Kernel.Error.Code, operation: Operation) -> Self {
+    private init(code: Kernel.Error.Code, operation: Operation) {
         switch code {
         case .posix(let errno):
             #if !os(Windows)
             switch errno {
             case ENOENT:
-                return .sourceNotFound
+                self = .sourceNotFound
             case EEXIST:
-                return .destinationExists
+                self = .destinationExists
             case EACCES, EPERM:
-                return .permissionDenied
+                self = .permissionDenied
             case EXDEV:
-                return .crossDevice
+                self = .crossDevice
             case EISDIR:
-                return .isDirectory
+                self = .isDirectory
             case ENOTSUP, EOPNOTSUPP:
-                return .notSupported
+                self = .notSupported
             default:
-                return .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             }
             #else
-            return .platform(code: code, operation: operation)
+            self = .platform(code: code, operation: operation)
             #endif
 
         case .win32(let error):
             #if os(Windows)
             switch error {
             case 2:  // ERROR_FILE_NOT_FOUND
-                return .sourceNotFound
+                self = .sourceNotFound
             case 80:  // ERROR_FILE_EXISTS
-                return .destinationExists
+                self = .destinationExists
             case 5:  // ERROR_ACCESS_DENIED
-                return .permissionDenied
+                self = .permissionDenied
             case 17:  // ERROR_NOT_SAME_DEVICE
-                return .crossDevice
+                self = .crossDevice
             default:
-                return .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             }
             #else
-            return .platform(code: code, operation: operation)
+            self = .platform(code: code, operation: operation)
             #endif
         }
     }

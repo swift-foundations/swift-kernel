@@ -134,48 +134,48 @@ extension Kernel.File.Direct.Error {
             self = .notSupported
 
         case .platform(let code, let operation):
-            self = Self.fromCode(code, operation: operation)
+            self.init(code: code, operation: operation)
         }
     }
 
     /// Maps platform error code to semantic error.
-    private static func fromCode(_ code: Kernel.Error.Code, operation: Operation) -> Self {
+    private init(code: Kernel.Error.Code, operation: Operation) {
         switch code {
         case .posix(let errno):
             #if !os(Windows)
             switch errno {
             case EINVAL:
                 // EINVAL from O_DIRECT often means alignment violation
-                return .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             case EBADF:
-                return .invalidHandle
+                self = .invalidHandle
             case ENOTSUP, EOPNOTSUPP:
-                return .notSupported
+                self = .notSupported
             case EACCES, EPERM:
-                return .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             default:
-                return .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             }
             #else
-            return .platform(code: code, operation: operation)
+            self = .platform(code: code, operation: operation)
             #endif
 
         case .win32(let error):
             #if os(Windows)
             switch error {
             case UInt32(ERROR_INVALID_PARAMETER):
-                return .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             case UInt32(ERROR_INVALID_HANDLE):
-                return .invalidHandle
+                self = .invalidHandle
             case UInt32(ERROR_NOT_SUPPORTED):
-                return .notSupported
+                self = .notSupported
             case UInt32(ERROR_ACCESS_DENIED):
-                return .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             default:
-                return .platform(code: code, operation: operation)
+                self = .platform(code: code, operation: operation)
             }
             #else
-            return .platform(code: code, operation: operation)
+            self = .platform(code: code, operation: operation)
             #endif
         }
     }

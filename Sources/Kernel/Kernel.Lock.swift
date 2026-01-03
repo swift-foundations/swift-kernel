@@ -14,6 +14,47 @@ extension Kernel {
     public enum Lock {}
 }
 
+// MARK: - Error Mapping
+
+#if os(Windows)
+public import WinSDK
+#endif
+
+extension Kernel.Lock.Error {
+    /// Creates a lock error from a platform error code.
+    @inlinable
+    init(_ code: Kernel.Error.Code) {
+        switch code {
+        case .posix(let errno):
+            #if !os(Windows)
+            switch errno {
+            case EDEADLK:
+                self = .deadlock
+            case ENOLCK:
+                self = .unavailable
+            default:
+                // EAGAIN/EACCES are handled in tryLock, shouldn't reach here
+                self = .contention
+            }
+            #else
+            self = .contention
+            #endif
+
+        case .win32(let error):
+            #if os(Windows)
+            switch DWORD(error) {
+            case DWORD(ERROR_LOCK_VIOLATION), DWORD(ERROR_SHARING_VIOLATION), DWORD(ERROR_LOCK_FAILED):
+                self = .contention
+            default:
+                self = .unavailable
+            }
+            #else
+            self = .unavailable
+            #endif
+        }
+    }
+}
+
 // MARK: - POSIX Implementation
 
 #if !os(Windows)
@@ -48,7 +89,7 @@ extension Kernel {
 
             let result = fcntl(descriptor.rawValue, F_SETLKW, &fl)
             guard result != -1 else {
-                throw Error.fromErrno(errno)
+                throw Error(.captureErrno())
             }
         }
 
@@ -75,7 +116,7 @@ extension Kernel {
                 if errno == EAGAIN || errno == EACCES {
                     return false
                 }
-                throw Error.fromErrno(errno)
+                throw Error(.captureErrno())
             }
             return true
         }
@@ -106,7 +147,7 @@ extension Kernel {
 
             let result = fcntl(descriptor.rawValue, F_SETLK, &fl)
             guard result != -1 else {
-                throw Error.fromErrno(errno)
+                throw Error(.captureErrno())
             }
         }
 
@@ -132,28 +173,11 @@ extension Kernel {
         }
     }
 
-    extension Kernel.Lock.Error {
-        /// Maps errno to lock error.
-        @inlinable
-        static func fromErrno(_ errno: Int32) -> Self {
-            switch errno {
-            case EDEADLK:
-                return .deadlock
-            case ENOLCK:
-                return .unavailable
-            default:
-                // EAGAIN/EACCES are handled in tryLock, shouldn't reach here
-                return .contention
-            }
-        }
-    }
-
 #endif
 
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    public import WinSDK
 
     extension Kernel.Lock {
         /// Acquires a lock on a byte range (blocking).
@@ -187,7 +211,7 @@ extension Kernel {
             )
 
             guard result else {
-                throw Error.fromWindowsError(GetLastError())
+                throw Error(.captureLastError())
             }
         }
 
@@ -227,7 +251,7 @@ extension Kernel {
                 if error == DWORD(ERROR_LOCK_VIOLATION) || error == DWORD(ERROR_LOCK_FAILED) {
                     return false
                 }
-                throw Error.fromWindowsError(error)
+                throw Error(.win32(UInt32(error)))
             }
             return true
         }
@@ -255,7 +279,7 @@ extension Kernel {
             )
 
             guard result else {
-                throw Error.fromWindowsError(GetLastError())
+                throw Error(.captureLastError())
             }
         }
 
@@ -288,19 +312,6 @@ extension Kernel {
             case .bytes(let start, let end):
                 let length = end - start
                 return (DWORD(length & 0xFFFF_FFFF), DWORD(length >> 32))
-            }
-        }
-    }
-
-    extension Kernel.Lock.Error {
-        /// Maps Windows error code to lock error.
-        @inlinable
-        static func fromWindowsError(_ error: DWORD) -> Self {
-            switch error {
-            case DWORD(ERROR_LOCK_VIOLATION), DWORD(ERROR_SHARING_VIOLATION), DWORD(ERROR_LOCK_FAILED):
-                return .contention
-            default:
-                return .unavailable
             }
         }
     }
