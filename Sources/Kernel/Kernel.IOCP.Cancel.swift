@@ -49,7 +49,7 @@
             _ handle: HANDLE,
             overlapped: UnsafeMutablePointer<OVERLAPPED>
         ) -> Bool {
-            if CancelIoEx(handle, overlapped) != 0 {
+            if CancelIoEx(handle, overlapped) {
                 return true
             }
             return GetLastError() != Kernel.IOCP.WindowsError.notFound

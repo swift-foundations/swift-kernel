@@ -153,7 +153,7 @@ extension Kernel.File.Clone {
         #if os(Windows)
             package static func size(handle: UnsafeMutableRawPointer?) throws(Kernel.File.Clone.Error.Syscall) -> UInt64 {
                 var size: LARGE_INTEGER = LARGE_INTEGER()
-                guard GetFileSizeEx(handle, &size) != 0 else {
+                guard GetFileSizeEx(handle, &size) else {
                     throw .platform(code: .win32(UInt32(GetLastError())), operation: .stat)
                 }
                 return UInt64(size.QuadPart)
@@ -370,7 +370,7 @@ extension Kernel.File.Clone {
                     }
                 }
 
-                guard result != 0 else {
+                guard result else {
                     throw .platform(code: .win32(UInt32(GetLastError())), operation: .copy)
                 }
             }
