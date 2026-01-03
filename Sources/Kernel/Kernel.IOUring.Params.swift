@@ -70,7 +70,6 @@
             }
 
             /// Creates params from the C struct (after setup).
-            @usableFromInline
             internal init(_ cParams: io_uring_params) {
                 self.sqEntries = cParams.sq_entries
                 self.cqEntries = cParams.cq_entries
@@ -83,7 +82,6 @@
             }
 
             /// Converts to the C io_uring_params struct.
-            @usableFromInline
             internal var cValue: io_uring_params {
                 var params = io_uring_params()
                 params.flags = flags.rawValue

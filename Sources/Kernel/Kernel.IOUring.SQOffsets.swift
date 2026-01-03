@@ -40,7 +40,6 @@
                 self.array = 0
             }
 
-            @usableFromInline
             internal init(_ off: io_sqring_offsets) {
                 self.head = off.head
                 self.tail = off.tail

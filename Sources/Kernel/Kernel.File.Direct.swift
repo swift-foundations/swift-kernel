@@ -183,6 +183,7 @@ extension Kernel.File.Direct.Requirements {
     import Darwin
 #elseif canImport(Glibc)
     import Glibc
+    import CLinuxShim
 #elseif os(Windows)
     import WinSDK
 #endif
@@ -298,7 +299,7 @@ extension Kernel.File.Direct.Requirements {
         /// - 512 bytes: Legacy HDDs, some older filesystems
         /// - 4096 bytes: Modern SSDs, NVMe, most ext4/XFS configurations
         /// - Page size: Conservative fallback (typically 4096)
-        public static func getRequirements(
+        package static func getRequirements(
             descriptor: Int32
         ) throws(Error.Syscall) -> Requirements {
             // Linux O_DIRECT alignment is not reliably discoverable.

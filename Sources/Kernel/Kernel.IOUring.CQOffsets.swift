@@ -40,7 +40,6 @@
                 self.flags = 0
             }
 
-            @usableFromInline
             internal init(_ off: io_cqring_offsets) {
                 self.head = off.head
                 self.tail = off.tail
