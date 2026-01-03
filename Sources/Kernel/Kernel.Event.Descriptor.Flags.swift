@@ -18,8 +18,8 @@
         public import Musl
     #endif
 
-extension Kernel.Eventfd {
-    /// Flags for eventfd creation.
+extension Kernel.Event.Descriptor {
+    /// Flags for event descriptor creation.
     public struct Flags: Sendable, Equatable, Hashable {
         public let rawValue: Int32
 

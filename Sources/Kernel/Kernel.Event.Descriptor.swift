@@ -18,19 +18,19 @@
         public import Musl
     #endif
 
-    extension Kernel {
-        /// Raw eventfd syscall wrappers (Linux only).
+    extension Kernel.Event {
+        /// Event file descriptor operations (Linux only).
         ///
-        /// Eventfd provides a simple file descriptor for event notification.
+        /// Event descriptors provide a simple mechanism for event notification.
         /// Common uses include waking up poll loops and inter-thread signaling.
         ///
         /// This namespace provides policy-free syscall wrappers.
-        public enum Eventfd {}
+        public enum Descriptor {}
     }
 
-    // MARK: - Syscalls
+    // MARK: - Operations
 
-    extension Kernel.Eventfd {
+    extension Kernel.Event.Descriptor {
         /// Creates a new eventfd descriptor.
         ///
         /// - Parameters:

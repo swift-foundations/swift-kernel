@@ -11,16 +11,16 @@
 
 #if canImport(Glibc) || canImport(Musl)
 
-extension Kernel.Eventfd {
-    /// Errors from eventfd operations.
+extension Kernel.Event.Descriptor {
+    /// Errors from event descriptor operations.
     public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-        /// Failed to create eventfd.
+        /// Failed to create event descriptor.
         case create(Kernel.Error.Code)
 
-        /// Failed to read from eventfd.
+        /// Failed to read from event descriptor.
         case read(Kernel.Error.Code)
 
-        /// Failed to write to eventfd.
+        /// Failed to write to event descriptor.
         case write(Kernel.Error.Code)
 
         /// Operation would block (non-blocking mode).
@@ -28,22 +28,22 @@ extension Kernel.Eventfd {
     }
 }
 
-extension Kernel.Eventfd.Error: CustomStringConvertible {
+extension Kernel.Event.Descriptor.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .create(let code):
-            return "eventfd creation failed (\(code))"
+            return "event descriptor creation failed (\(code))"
         case .read(let code):
-            return "eventfd read failed (\(code))"
+            return "event descriptor read failed (\(code))"
         case .write(let code):
-            return "eventfd write failed (\(code))"
+            return "event descriptor write failed (\(code))"
         case .wouldBlock:
             return "operation would block"
         }
     }
 }
 
-extension Kernel.Eventfd.Error {
+extension Kernel.Event.Descriptor.Error {
     /// The error code associated with this error, if any.
     public var code: Kernel.Error.Code? {
         switch self {
@@ -58,10 +58,10 @@ extension Kernel.Eventfd.Error {
 // MARK: - Kernel.Error Conversion
 
 extension Kernel.Error {
-    /// Creates a semantic error from an eventfd error.
+    /// Creates a semantic error from an event descriptor error.
     ///
     /// Maps to semantic cases where possible, falls back to `.platform` otherwise.
-    public init(_ error: Kernel.Eventfd.Error) {
+    public init(_ error: Kernel.Event.Descriptor.Error) {
         switch error {
         case .create(let code):
             self = Kernel.Error(code) ?? .platform(Kernel.Platform.Error(code))
