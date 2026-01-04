@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 public import Kernel_Primitives
 
-
 #if canImport(Glibc) || canImport(Musl)
 
     #if canImport(Glibc)
@@ -32,12 +31,12 @@ public import Kernel_Primitives
 
             /// Configures this entry for a no-op operation.
             ///
-            /// - Parameter userData: User data to return with completion.
+            /// - Parameter data: Operation data to return with completion.
             @inlinable
-            public mutating func nop(userData: Kernel.IOUring.UserData) {
+            public mutating func nop(data: Kernel.IOUring.Operation.Data) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .nop
-                entry.userData = userData
+                entry.data = data
             }
 
             /// Configures this entry for a read operation.
@@ -47,14 +46,14 @@ public import Kernel_Primitives
             ///   - buffer: Buffer pointer to read into.
             ///   - length: Number of bytes to read.
             ///   - offset: File offset (use `.current` for current position).
-            ///   - userData: User data to return with completion.
+            ///   - data: Operation data to return with completion.
             @inlinable
             public mutating func read(
                 fd: Kernel.Descriptor,
                 buffer: UnsafeMutableRawPointer,
                 length: Kernel.IOUring.Length,
                 offset: Kernel.IOUring.Offset,
-                userData: Kernel.IOUring.UserData
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .read
@@ -62,7 +61,7 @@ public import Kernel_Primitives
                 entry.addr = UInt64(UInt(bitPattern: buffer))
                 entry.len = length
                 entry.offset = offset
-                entry.userData = userData
+                entry.data = data
             }
 
             /// Configures this entry for a write operation.
@@ -72,14 +71,14 @@ public import Kernel_Primitives
             ///   - buffer: Buffer pointer containing data to write.
             ///   - length: Number of bytes to write.
             ///   - offset: File offset (use `.current` for current position).
-            ///   - userData: User data to return with completion.
+            ///   - data: Operation data to return with completion.
             @inlinable
             public mutating func write(
                 fd: Kernel.Descriptor,
                 buffer: UnsafeRawPointer,
                 length: Kernel.IOUring.Length,
                 offset: Kernel.IOUring.Offset,
-                userData: Kernel.IOUring.UserData
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .write
@@ -87,23 +86,23 @@ public import Kernel_Primitives
                 entry.addr = UInt64(UInt(bitPattern: buffer))
                 entry.len = length
                 entry.offset = offset
-                entry.userData = userData
+                entry.data = data
             }
 
             /// Configures this entry for a cancel operation.
             ///
             /// - Parameters:
-            ///   - targetUserData: User data of the operation to cancel.
-            ///   - userData: User data to return with this cancel's completion.
+            ///   - target: Operation data of the operation to cancel.
+            ///   - data: Operation data to return with this cancel's completion.
             @inlinable
             public mutating func cancel(
-                targetUserData: Kernel.IOUring.UserData,
-                userData: Kernel.IOUring.UserData
+                target: Kernel.IOUring.Operation.Data,
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .asyncCancel
-                entry.addr = targetUserData.rawValue
-                entry.userData = userData
+                entry.addr = target._rawValue
+                entry.data = data
             }
 
             /// Configures this entry for an fsync operation.
@@ -111,12 +110,12 @@ public import Kernel_Primitives
             /// - Parameters:
             ///   - fd: File descriptor to sync.
             ///   - datasync: If true, only sync data (not metadata).
-            ///   - userData: User data to return with completion.
+            ///   - data: Operation data to return with completion.
             @inlinable
             public mutating func fsync(
                 fd: Kernel.Descriptor,
                 datasync: Bool,
-                userData: Kernel.IOUring.UserData
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .fsync
@@ -124,23 +123,23 @@ public import Kernel_Primitives
                 if datasync {
                     entry.opFlags = 1  // IORING_FSYNC_DATASYNC
                 }
-                entry.userData = userData
+                entry.data = data
             }
 
             /// Configures this entry for a close operation.
             ///
             /// - Parameters:
             ///   - fd: File descriptor to close.
-            ///   - userData: User data to return with completion.
+            ///   - data: Operation data to return with completion.
             @inlinable
             public mutating func close(
                 fd: Kernel.Descriptor,
-                userData: Kernel.IOUring.UserData
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .close
                 entry.fd = fd
-                entry.userData = userData
+                entry.data = data
             }
 
             /// Configures this entry for an accept operation.
@@ -150,14 +149,14 @@ public import Kernel_Primitives
             ///   - addr: Optional pointer to sockaddr buffer.
             ///   - addrLen: Optional pointer to sockaddr length.
             ///   - flags: Accept flags.
-            ///   - userData: User data to return with completion.
+            ///   - data: Operation data to return with completion.
             @inlinable
             public mutating func accept(
                 fd: Kernel.Descriptor,
                 addr: UnsafeMutableRawPointer?,
                 addrLen: UnsafeMutablePointer<UInt32>?,
                 flags: Int32,
-                userData: Kernel.IOUring.UserData
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .accept
@@ -165,7 +164,7 @@ public import Kernel_Primitives
                 entry.addr = UInt64(UInt(bitPattern: addr))
                 entry.offset = Kernel.IOUring.Offset(rawValue: UInt64(UInt(bitPattern: addrLen)))
                 entry.opFlags = flags
-                entry.userData = userData
+                entry.data = data
             }
 
             /// Configures this entry for a connect operation.
@@ -174,20 +173,20 @@ public import Kernel_Primitives
             ///   - fd: Socket file descriptor.
             ///   - addr: Pointer to sockaddr.
             ///   - addrLen: Length of sockaddr.
-            ///   - userData: User data to return with completion.
+            ///   - data: Operation data to return with completion.
             @inlinable
             public mutating func connect(
                 fd: Kernel.Descriptor,
                 addr: UnsafeRawPointer,
                 addrLen: UInt32,
-                userData: Kernel.IOUring.UserData
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .connect
                 entry.fd = fd
                 entry.addr = UInt64(UInt(bitPattern: addr))
                 entry.offset = Kernel.IOUring.Offset(rawValue: UInt64(addrLen))
-                entry.userData = userData
+                entry.data = data
             }
 
             /// Configures this entry for a send operation.
@@ -197,14 +196,14 @@ public import Kernel_Primitives
             ///   - buffer: Buffer pointer containing data to send.
             ///   - length: Number of bytes to send.
             ///   - flags: Send flags.
-            ///   - userData: User data to return with completion.
+            ///   - data: Operation data to return with completion.
             @inlinable
             public mutating func send(
                 fd: Kernel.Descriptor,
                 buffer: UnsafeRawPointer,
                 length: Kernel.IOUring.Length,
                 flags: Int32,
-                userData: Kernel.IOUring.UserData
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .send
@@ -212,7 +211,7 @@ public import Kernel_Primitives
                 entry.addr = UInt64(UInt(bitPattern: buffer))
                 entry.len = length
                 entry.opFlags = flags
-                entry.userData = userData
+                entry.data = data
             }
 
             /// Configures this entry for a recv operation.
@@ -222,14 +221,14 @@ public import Kernel_Primitives
             ///   - buffer: Buffer pointer to receive into.
             ///   - length: Maximum bytes to receive.
             ///   - flags: Recv flags.
-            ///   - userData: User data to return with completion.
+            ///   - data: Operation data to return with completion.
             @inlinable
             public mutating func recv(
                 fd: Kernel.Descriptor,
                 buffer: UnsafeMutableRawPointer,
                 length: Kernel.IOUring.Length,
                 flags: Int32,
-                userData: Kernel.IOUring.UserData
+                data: Kernel.IOUring.Operation.Data
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .recv
@@ -237,7 +236,7 @@ public import Kernel_Primitives
                 entry.addr = UInt64(UInt(bitPattern: buffer))
                 entry.len = length
                 entry.opFlags = flags
-                entry.userData = userData
+                entry.data = data
             }
         }
     }
@@ -251,7 +250,7 @@ public import Kernel_Primitives
         ///
         /// ```swift
         /// var entry = Kernel.IOUring.Submission.Queue.Entry()
-        /// entry.prepare.read(fd: fd, buffer: buffer, length: len, offset: 0, userData: id)
+        /// entry.prepare.read(fd: fd, buffer: buffer, length: len, offset: 0, data: id)
         /// ```
         @inlinable
         public var prepare: Prepare {

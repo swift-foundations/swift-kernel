@@ -56,13 +56,13 @@ public import Kernel_Primitives
     // MARK: - Accessors
 
     extension Kernel.IOUring.Completion.Queue.Entry {
-        /// User data from the corresponding submission queue entry.
+        /// Operation data from the corresponding submission queue entry.
         ///
-        /// This is the value set via `entry.userData` when the operation was submitted.
+        /// This is the value set via `entry.data` when the operation was submitted.
         /// Typically used to recover the operation context (e.g., a pointer to Storage).
         @inlinable
-        public var userData: Kernel.IOUring.UserData {
-            Kernel.IOUring.UserData(rawValue: cValue.user_data)
+        public var data: Kernel.IOUring.Operation.Data {
+            Kernel.IOUring.Operation.Data(cValue.user_data)
         }
 
         /// Result of the operation.

@@ -19,8 +19,13 @@ public import Kernel_Primitives
         ///
         /// Provides a Sendable, Swift-native interface to kqueue events.
         public struct Event: Sendable, Equatable, Hashable {
-            /// Identifier for this event (typically a file descriptor).
-            public var ident: UInt
+            /// Identifier for this event.
+            ///
+            /// The meaning depends on the filter type:
+            /// - `EVFILT_READ`, `EVFILT_WRITE`: file descriptor
+            /// - `EVFILT_SIGNAL`: signal number
+            /// - `EVFILT_PROC`: process ID
+            public var id: Kernel.Event.ID
 
             /// Filter type (read, write, user, etc.).
             public var filter: Filter
@@ -32,37 +37,37 @@ public import Kernel_Primitives
             public var fflags: Filter.Flags
 
             /// Filter-specific data (e.g., bytes available for read).
-            public var data: Int
+            public var filterData: Filter.Data
 
-            /// User-defined data for event routing.
+            /// Event data for event routing.
             ///
             /// Typically stores an ID to dispatch the event to the correct handler.
-            public var udata: UInt64
+            public var data: Data
 
             /// Creates a kqueue event.
             ///
             /// - Parameters:
-            ///   - ident: Event identifier (typically a file descriptor).
+            ///   - id: Event source identifier.
             ///   - filter: Filter type determining what triggers the event.
             ///   - flags: Action and behavior flags.
             ///   - fflags: Filter-specific flags.
-            ///   - data: Filter-specific data.
-            ///   - udata: User data for event routing.
+            ///   - filterData: Filter-specific data.
+            ///   - data: Event data for event routing.
             @inlinable
             public init(
-                ident: UInt,
+                id: Kernel.Event.ID,
                 filter: Filter,
                 flags: Flags,
                 fflags: Filter.Flags = .none,
-                data: Int = 0,
-                udata: UInt64 = 0
+                filterData: Filter.Data = .zero,
+                data: Data = .zero
             ) {
-                self.ident = ident
+                self.id = id
                 self.filter = filter
                 self.flags = flags
                 self.fflags = fflags
+                self.filterData = filterData
                 self.data = data
-                self.udata = udata
             }
         }
     }
@@ -73,24 +78,24 @@ public import Kernel_Primitives
         /// Creates an Event from the Darwin kevent struct.
         @usableFromInline
         internal init(_ cEvent: Darwin.kevent) {
-            self.ident = cEvent.ident
+            self.id = Kernel.Event.ID(cEvent.ident)
             self.filter = Kernel.Kqueue.Filter(rawValue: cEvent.filter)
             self.flags = Kernel.Kqueue.Flags(rawValue: cEvent.flags)
             self.fflags = Kernel.Kqueue.Filter.Flags(rawValue: cEvent.fflags)
-            self.data = cEvent.data
-            self.udata = UInt64(UInt(bitPattern: cEvent.udata))
+            self.filterData = Kernel.Kqueue.Filter.Data(cEvent.data)
+            self.data = Data(cEvent.udata)
         }
 
         /// Converts to the Darwin kevent struct.
         @usableFromInline
         internal var cValue: Darwin.kevent {
             var ev = Darwin.kevent()
-            ev.ident = ident
+            ev.ident = id._rawValue
             ev.filter = filter.rawValue
             ev.flags = flags.rawValue
             ev.fflags = fflags.rawValue
-            ev.data = data
-            ev.udata = UnsafeMutableRawPointer(bitPattern: UInt(udata))
+            ev.data = filterData._rawValue
+            ev.udata = UnsafeMutableRawPointer(data)
             return ev
         }
     }

@@ -47,8 +47,8 @@ public import Kernel_Primitives
 
         /// The completion key associated with the file handle.
         @inlinable
-        public var completionKey: UInt {
-            UInt(raw.lpCompletionKey)
+        public var key: Kernel.IOCP.Completion.Key {
+            Kernel.IOCP.Completion.Key(rawValue: raw.lpCompletionKey)
         }
     }
 

@@ -36,13 +36,17 @@ let package = Package(
         ),
         .target(
             name: "Kernel Darwin",
-            dependencies: ["Kernel Primitives"]
+            dependencies: [
+                "Kernel Primitives",
+                .product(name: "Dimension", package: "swift-standards"),
+            ]
         ),
         .target(
             name: "Kernel Linux",
             dependencies: [
                 "Kernel Primitives",
-                .target(name: "CLinuxShim", condition: .when(platforms: [.linux]))
+                .target(name: "CLinuxShim", condition: .when(platforms: [.linux])),
+                .product(name: "Dimension", package: "swift-standards"),
             ]
         ),
         .target(

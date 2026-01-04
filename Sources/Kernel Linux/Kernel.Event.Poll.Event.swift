@@ -28,19 +28,19 @@ public import Kernel_Primitives
             /// The event flags that occurred or are being monitored.
             public var events: Events
 
-            /// User data associated with the file descriptor.
+            /// Data associated with the file descriptor.
             ///
             /// This is typically used to store an identifier that helps dispatch
             /// the event to the appropriate handler.
-            public var data: UInt64
+            public var data: Kernel.Event.Poll.Data
 
             /// Creates an epoll event.
             ///
             /// - Parameters:
             ///   - events: The event flags to monitor.
-            ///   - data: User data to associate with the file descriptor.
+            ///   - data: Data to associate with the file descriptor.
             @inlinable
-            public init(events: Events, data: UInt64 = 0) {
+            public init(events: Events, data: Kernel.Event.Poll.Data = .zero) {
                 self.events = events
                 self.data = data
             }
@@ -54,7 +54,7 @@ public import Kernel_Primitives
         @usableFromInline
         internal init(_ cEvent: epoll_event) {
             self.events = Kernel.Event.Poll.Events(rawValue: cEvent.events)
-            self.data = cEvent.data.u64
+            self.data = Kernel.Event.Poll.Data(cEvent.data.u64)
         }
 
         /// Converts to the C epoll_event struct.
@@ -62,7 +62,7 @@ public import Kernel_Primitives
         internal var cValue: epoll_event {
             var event = epoll_event()
             event.events = events.rawValue
-            event.data.u64 = data
+            event.data.u64 = data._rawValue
             return event
         }
     }

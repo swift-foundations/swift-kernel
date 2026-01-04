@@ -35,7 +35,7 @@ public import Kernel_Primitives
         public static func single(
             _ port: Kernel.Descriptor,
             timeout: DWORD
-        ) throws(Kernel.IOCP.Error) -> (bytesTransferred: DWORD, completionKey: Kernel.IOCP.CompletionKey, overlapped: LPOVERLAPPED?) {
+        ) throws(Kernel.IOCP.Error) -> (bytesTransferred: DWORD, key: Kernel.IOCP.Completion.Key, overlapped: LPOVERLAPPED?) {
             var bytes: DWORD = 0
             var key: ULONG_PTR = 0
             var overlapped: LPOVERLAPPED? = nil
@@ -56,7 +56,7 @@ public import Kernel_Primitives
                 throw .dequeue(.win32(UInt32(error)))
             }
 
-            return (bytes, Kernel.IOCP.CompletionKey(rawValue: key), overlapped)
+            return (bytes, Kernel.IOCP.Completion.Key(rawValue: key), overlapped)
         }
 
         /// Dequeues multiple completion packets (batch).

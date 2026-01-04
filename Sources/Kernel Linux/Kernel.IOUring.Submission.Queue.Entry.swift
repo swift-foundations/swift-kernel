@@ -32,7 +32,7 @@ public import Kernel_Primitives
         /// ```swift
         /// let entryPtr = ring.sqes.advanced(by: index)
         /// var entry = Kernel.IOUring.Submission.Queue.Entry()
-        /// entry.setRead(fd: fd, buffer: buffer, offset: 0, userData: id)
+        /// entry.setRead(fd: fd, buffer: buffer, offset: 0, data: id)
         /// entryPtr.pointee = entry.cValue
         /// ```
         ///
@@ -119,11 +119,11 @@ public import Kernel_Primitives
             set { cValue.rw_flags = newValue }
         }
 
-        /// User data returned with completion.
+        /// Operation data returned with completion.
         @inlinable
-        public var userData: Kernel.IOUring.UserData {
-            get { Kernel.IOUring.UserData(rawValue: cValue.user_data) }
-            set { cValue.user_data = newValue.rawValue }
+        public var data: Kernel.IOUring.Operation.Data {
+            get { Kernel.IOUring.Operation.Data(cValue.user_data) }
+            set { cValue.user_data = newValue._rawValue }
         }
 
         /// Buffer index (for registered buffers).

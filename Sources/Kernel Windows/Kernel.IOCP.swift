@@ -59,18 +59,18 @@ public import Kernel_Primitives
         /// - Parameters:
         ///   - port: The IOCP handle.
         ///   - fileHandle: The file handle to associate.
-        ///   - completionKey: Application-defined value returned with completions.
+        ///   - key: Application-defined value returned with completions.
         /// - Throws: `Error.associate` if association fails.
         @inlinable
         public static func associate(
             _ port: Kernel.Descriptor,
             fileHandle: HANDLE,
-            completionKey: CompletionKey
+            key: Completion.Key
         ) throws(Error) {
             let result = CreateIoCompletionPort(
                 fileHandle,
                 port.rawValue,
-                completionKey.rawValue,
+                key.rawValue,
                 0
             )
             guard result != nil else {
@@ -86,20 +86,20 @@ public import Kernel_Primitives
         /// - Parameters:
         ///   - port: The IOCP handle.
         ///   - bytesTransferred: Number of bytes to report.
-        ///   - completionKey: The completion key to return.
+        ///   - key: The completion key to return.
         ///   - overlapped: The overlapped pointer to return (can be nil).
         /// - Throws: `Error.post` on failure.
         @inlinable
         public static func post(
             _ port: Kernel.Descriptor,
             bytesTransferred: DWORD = 0,
-            completionKey: CompletionKey = CompletionKey(rawValue: 0),
+            key: Completion.Key = .zero,
             overlapped: LPOVERLAPPED? = nil
         ) throws(Error) {
             let result = PostQueuedCompletionStatus(
                 port.rawValue,
                 bytesTransferred,
-                completionKey.rawValue,
+                key.rawValue,
                 overlapped
             )
             guard result else {
