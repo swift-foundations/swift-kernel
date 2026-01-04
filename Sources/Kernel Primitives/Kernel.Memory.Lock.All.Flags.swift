@@ -19,12 +19,12 @@ extension Kernel.Memory.Lock {
 #if !os(Windows)
 
     #if canImport(Darwin)
-        public import Darwin
+        internal import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
+        internal import Glibc
         public import CLinuxShim
     #elseif canImport(Musl)
-        public import Musl
+        internal import Musl
     #endif
 
     extension Kernel.Memory.Lock.All {

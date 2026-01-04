@@ -158,7 +158,7 @@ extension Kernel.Memory.Map {
             do {
                 _ = try Kernel.Memory.Map.Anonymous.map(length: .zero)
                 Issue.record("Expected error to be thrown")
-            } catch let error as Kernel.Memory.Map.Error {
+            } catch {
                 if case .invalid(.length) = error {
                     // Expected
                 } else {

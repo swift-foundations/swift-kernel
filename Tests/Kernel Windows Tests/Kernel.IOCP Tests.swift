@@ -145,7 +145,7 @@
             do {
                 _ = try Kernel.IOCP.Dequeue.single(port, timeout: 10)
                 Issue.record("Expected timeout error")
-            } catch let error as Kernel.IOCP.Error {
+            } catch {
                 if case .timeout = error {
                     // Expected
                 } else {

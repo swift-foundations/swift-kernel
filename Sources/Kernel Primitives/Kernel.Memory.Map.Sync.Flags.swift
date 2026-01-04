@@ -32,11 +32,11 @@ extension Kernel.Memory.Map.Sync {
 #if !os(Windows)
 
     #if canImport(Darwin)
-        public import Darwin
+        internal import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
+        internal import Glibc
     #elseif canImport(Musl)
-        public import Musl
+        internal import Musl
     #endif
 
     extension Kernel.Memory.Map.Sync.Flags {

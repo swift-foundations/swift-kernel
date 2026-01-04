@@ -44,11 +44,11 @@ extension Kernel.Memory.Map {
 #if !os(Windows)
 
     #if canImport(Darwin)
-        public import Darwin
+        internal import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
+        internal import Glibc
     #elseif canImport(Musl)
-        public import Musl
+        internal import Musl
     #endif
 
     extension Kernel.Memory.Map.Protection {
@@ -70,7 +70,7 @@ extension Kernel.Memory.Map {
 // MARK: - Windows Constants
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 
     extension Kernel.Memory.Map.Protection {
         /// Pages may be read.

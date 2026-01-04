@@ -84,11 +84,11 @@ extension Kernel.Error: CustomStringConvertible {
 }
 
 #if !os(Windows)
-    public import SystemPackage
+    internal import SystemPackage
 #endif
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 #endif
 
 extension Kernel.Error {
@@ -130,11 +130,11 @@ extension Kernel.Error {
 }
 
 #if canImport(Darwin)
-    public import Darwin
+    internal import Darwin
 #elseif canImport(Glibc)
-    public import Glibc
+    internal import Glibc
 #elseif canImport(Musl)
-    public import Musl
+    internal import Musl
 #endif
 
 extension Kernel.Error {

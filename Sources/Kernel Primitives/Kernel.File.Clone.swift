@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
+internal import SystemPackage
 
 /// Namespace for file cloning (copy-on-write reflink) operations.
 ///
@@ -47,11 +47,11 @@ extension Kernel.File {
 }
 
 #if canImport(Darwin)
-    public import Darwin
+    internal import Darwin
 #elseif canImport(Glibc)
-    public import Glibc
+    internal import Glibc
 #elseif os(Windows)
-    public import WinSDK
+    internal import WinSDK
 #endif
 
 // MARK: - Capability Probing

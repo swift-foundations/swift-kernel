@@ -11,7 +11,7 @@
 public import Kernel_Primitives
 
 #if canImport(Darwin)
-    public import Darwin
+    internal import Darwin
 
     extension Kernel.Kqueue {
         /// Action and status flags for kqueue events.

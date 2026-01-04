@@ -63,11 +63,11 @@ extension Kernel.Copy.Error: CustomStringConvertible {
 #if !os(Windows)
 
     #if canImport(Darwin)
-        public import Darwin
+        internal import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
+        internal import Glibc
     #elseif canImport(Musl)
-        public import Musl
+        internal import Musl
     #endif
 
     extension Kernel.Copy.Error {

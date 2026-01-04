@@ -13,7 +13,7 @@
     internal import WinSDK
 #else
     internal import SystemPackage
-    public import Dimension
+    internal import Dimension
 
     #if canImport(Darwin)
         public import Darwin

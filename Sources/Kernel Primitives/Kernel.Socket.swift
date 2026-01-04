@@ -27,9 +27,9 @@ extension Kernel {
     #if canImport(Darwin)
         public import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
+        internal import Glibc
     #elseif canImport(Musl)
-        public import Musl
+        internal import Musl
     #endif
 
     extension Kernel.Socket {
@@ -66,7 +66,7 @@ extension Kernel {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 
     extension Kernel.Socket {
         /// Gets the pending socket error (SO_ERROR).

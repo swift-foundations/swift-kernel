@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Binary
+internal import Binary
 
 extension Kernel.File.Direct.Requirements.Alignment {
     /// Accessor for offset alignment validation.

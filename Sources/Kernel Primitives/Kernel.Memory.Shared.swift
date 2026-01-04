@@ -150,15 +150,15 @@ extension Kernel.Memory {
         ) throws(Error) -> Kernel.Descriptor {
             // Convert size to high/low DWORD parts
             let sizeValue = UInt64(size._rawValue)
-            let sizeHigh = DWORD((sizeValue >> 32) & 0xFFFFFFFF)
-            let sizeLow = DWORD(sizeValue & 0xFFFFFFFF)
+            let sizeHigh = DWORD((sizeValue >> 32) & 0xFFFF_FFFF)
+            let sizeLow = DWORD(sizeValue & 0xFFFF_FFFF)
 
             let handle: HANDLE? = name.withCString(encodedAs: UTF16.self) { namePtr in
                 if options.contains(.create) {
                     // Create new or open existing
                     return CreateFileMappingW(
                         HANDLE(bitPattern: -1),  // INVALID_HANDLE_VALUE - pagefile backed
-                        nil,                      // default security
+                        nil,  // default security
                         access.windowsPageProtection,
                         sizeHigh,
                         sizeLow,

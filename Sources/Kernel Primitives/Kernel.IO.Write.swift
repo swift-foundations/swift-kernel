@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Dimension
-public import SystemPackage
+internal import Dimension
+internal import SystemPackage
 
 // MARK: - Write Type
 
@@ -28,9 +28,9 @@ extension Kernel.IO {
     #if canImport(Darwin)
         public import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
+        internal import Glibc
     #elseif canImport(Musl)
-        public import Musl
+        internal import Musl
     #endif
 
     extension Kernel.IO.Write {
@@ -160,7 +160,7 @@ extension Kernel.IO.Write {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 
     extension Kernel.IO.Write {
         /// Writes bytes to a file handle.

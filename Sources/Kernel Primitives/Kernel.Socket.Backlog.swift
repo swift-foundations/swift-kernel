@@ -98,7 +98,7 @@ extension Kernel.Socket.Backlog: CustomStringConvertible {
 
 #if !os(Windows)
     #if canImport(Darwin)
-        public import Darwin
+        internal import Darwin
     #elseif canImport(Glibc)
         public import Glibc
     #elseif canImport(Musl)

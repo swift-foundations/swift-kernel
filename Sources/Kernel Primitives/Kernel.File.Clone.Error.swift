@@ -10,11 +10,11 @@
 // ===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-    public import Darwin
+    internal import Darwin
 #elseif canImport(Glibc)
-    public import Glibc
+    internal import Glibc
 #elseif os(Windows)
-    public import WinSDK
+    internal import WinSDK
 #endif
 
 extension Kernel.File.Clone {

@@ -358,15 +358,19 @@ extension Kernel.Thread.Condition.Test.Unit {
             // Wait for waiter to be in wait state
             try harness.wait(until: { $0.phase == .isWaiting })
 
-            // Yield to ensure waiter has actually entered wait syscall
-            #if canImport(Darwin)
-                sched_yield()
-            #else
-                pthread_yield()
-            #endif
-
-            // If wait properly releases mutex, we should be able to acquire it
-            let acquired = mutex.tryLock()
+            // Poll tryLock with retries - the waiter needs time to actually enter
+            // the wait syscall after setting the phase flag
+            var acquired = false
+            for _ in 0..<100 {
+                acquired = mutex.tryLock()
+                if acquired { break }
+                // Small delay between retries (1ms)
+                #if canImport(Darwin)
+                    usleep(1000)
+                #else
+                    usleep(1000)
+                #endif
+            }
             harness.update { $0.mainAcquiredMutex = acquired }
 
             #expect(acquired == true, "Mutex should be released while thread is waiting on condition")

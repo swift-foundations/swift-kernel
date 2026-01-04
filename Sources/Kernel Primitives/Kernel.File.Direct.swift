@@ -177,7 +177,7 @@ extension Kernel.File.Direct.Requirements {
 }
 
 #if canImport(Darwin)
-    public import Darwin
+    internal import Darwin
 #elseif canImport(Glibc)
     public import Glibc
     public import CLinuxShim
