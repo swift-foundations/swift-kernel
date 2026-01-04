@@ -73,27 +73,27 @@ extension Kernel.Socket {
 
 #if !os(Windows)
 
-extension Kernel.Socket.Descriptor {
-    /// Creates a socket descriptor from a file descriptor.
-    ///
-    /// On POSIX, socket FDs and file FDs are interchangeable (both `Int32`).
-    @inlinable
-    public init(_ descriptor: Kernel.Descriptor) {
-        self.init(rawValue: descriptor.rawValue)
+    extension Kernel.Socket.Descriptor {
+        /// Creates a socket descriptor from a file descriptor.
+        ///
+        /// On POSIX, socket FDs and file FDs are interchangeable (both `Int32`).
+        @inlinable
+        public init(_ descriptor: Kernel.Descriptor) {
+            self.init(rawValue: descriptor.rawValue)
+        }
+
     }
 
-}
+    // MARK: - Kernel.Descriptor from Socket.Descriptor
 
-// MARK: - Kernel.Descriptor from Socket.Descriptor
-
-extension Kernel.Descriptor {
-    /// Creates a file descriptor from a socket descriptor.
-    ///
-    /// On POSIX, socket FDs and file FDs are interchangeable (both `Int32`).
-    @inlinable
-    public init(_ socket: Kernel.Socket.Descriptor) {
-        self.init(rawValue: socket.rawValue)
+    extension Kernel.Descriptor {
+        /// Creates a file descriptor from a socket descriptor.
+        ///
+        /// On POSIX, socket FDs and file FDs are interchangeable (both `Int32`).
+        @inlinable
+        public init(_ socket: Kernel.Socket.Descriptor) {
+            self.init(rawValue: socket.rawValue)
+        }
     }
-}
 
 #endif

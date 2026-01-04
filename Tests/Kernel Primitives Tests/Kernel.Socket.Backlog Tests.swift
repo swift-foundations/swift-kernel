@@ -58,11 +58,11 @@ extension Kernel.Socket.Backlog.Test.Unit {
     }
 
     #if !os(Windows)
-    @Test("Backlog.max uses SOMAXCONN")
-    func maxConstant() {
-        let max = Kernel.Socket.Backlog.max
-        #expect(max.rawValue > 0)
-    }
+        @Test("Backlog.max uses SOMAXCONN")
+        func maxConstant() {
+            let max = Kernel.Socket.Backlog.max
+            #expect(max.rawValue > 0)
+        }
     #endif
 }
 
@@ -99,7 +99,7 @@ extension Kernel.Socket.Backlog.Test.Unit {
         var set = Set<Kernel.Socket.Backlog>()
         set.insert(.default)
         set.insert(.small)
-        set.insert(.default) // duplicate
+        set.insert(.default)  // duplicate
         #expect(set.count == 2)
     }
 }

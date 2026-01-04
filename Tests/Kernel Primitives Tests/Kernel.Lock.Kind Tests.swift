@@ -65,7 +65,7 @@ extension Kernel.Lock.Kind.Test.Unit {
         var set = Set<Kernel.Lock.Kind>()
         set.insert(.shared)
         set.insert(.exclusive)
-        set.insert(.shared) // duplicate
+        set.insert(.shared)  // duplicate
         #expect(set.count == 2)
     }
 }

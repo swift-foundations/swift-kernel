@@ -90,7 +90,7 @@ extension Kernel.Permission.Error.Test.Unit {
         set.insert(.denied)
         set.insert(.notPermitted)
         set.insert(.readOnlyFilesystem)
-        set.insert(.denied) // duplicate
+        set.insert(.denied)  // duplicate
 
         #expect(set.count == 3)
         #expect(set.contains(.denied))

@@ -100,7 +100,7 @@ extension Kernel.File.Clone.Error.Operation.Test.Unit {
         var set = Set<Kernel.File.Clone.Error.Operation>()
         set.insert(.clonefile)
         set.insert(.copyfile)
-        set.insert(.clonefile) // duplicate
+        set.insert(.clonefile)  // duplicate
         #expect(set.count == 2)
     }
 }

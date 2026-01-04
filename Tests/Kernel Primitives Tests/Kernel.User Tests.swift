@@ -76,7 +76,7 @@ extension Kernel.User.Test.Unit {
         var set = Set<Kernel.User.ID>()
         set.insert(Kernel.User.ID(501))
         set.insert(Kernel.User.ID(502))
-        set.insert(Kernel.User.ID(501)) // duplicate
+        set.insert(Kernel.User.ID(501))  // duplicate
         #expect(set.count == 2)
     }
 }

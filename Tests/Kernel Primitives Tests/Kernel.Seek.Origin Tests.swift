@@ -74,21 +74,21 @@ extension Kernel.Seek.Origin.Test.EdgeCase {
         // Pattern matching confirms distinctness
         switch start {
         case .start:
-            break // expected
+            break  // expected
         case .current, .end:
             Issue.record("start should not match current or end")
         }
 
         switch current {
         case .current:
-            break // expected
+            break  // expected
         case .start, .end:
             Issue.record("current should not match start or end")
         }
 
         switch end {
         case .end:
-            break // expected
+            break  // expected
         case .start, .current:
             Issue.record("end should not match start or current")
         }

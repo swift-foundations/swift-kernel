@@ -35,27 +35,27 @@ extension Kernel.Memory.Map.File.Test.Unit {
 // MARK: - Windows Tests
 
 #if os(Windows)
-extension Kernel.Memory.Map.File.Test.Unit {
-    @Test("map function signature exists on Windows")
-    func mapSignatureExists() {
-        // Verify the function exists with correct signature
-        typealias MapFunc = (
-            UnsafeMutableRawPointer?,
-            Int64,
-            Int,
-            Kernel.Memory.Map.Protection,
-            Bool
-        ) throws -> Kernel.Memory.Map.Region
+    extension Kernel.Memory.Map.File.Test.Unit {
+        @Test("map function signature exists on Windows")
+        func mapSignatureExists() {
+            // Verify the function exists with correct signature
+            typealias MapFunc = (
+                UnsafeMutableRawPointer?,
+                Int64,
+                Int,
+                Kernel.Memory.Map.Protection,
+                Bool
+            ) throws -> Kernel.Memory.Map.Region
 
-        let _: MapFunc = { handle, offset, length, protection, cow in
-            try Kernel.Memory.Map.File.map(
-                handle: handle,
-                offset: offset,
-                length: length,
-                protection: protection,
-                copyOnWrite: cow
-            )
+            let _: MapFunc = { handle, offset, length, protection, cow in
+                try Kernel.Memory.Map.File.map(
+                    handle: handle,
+                    offset: offset,
+                    length: length,
+                    protection: protection,
+                    copyOnWrite: cow
+                )
+            }
         }
     }
-}
 #endif

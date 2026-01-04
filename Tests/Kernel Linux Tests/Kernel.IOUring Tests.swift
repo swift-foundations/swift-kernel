@@ -10,84 +10,84 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Linux)
-#if canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
-import StandardsTestSupport
-import Testing
+    #if canImport(Glibc)
+        import Glibc
+    #elseif canImport(Musl)
+        import Musl
+    #endif
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Linux
-import Kernel_Primitives
+    @testable import Kernel_Linux
+    import Kernel_Primitives
 
-extension Kernel.IOUring {
-    #TestSuites
-}
-
-// MARK: - Syscall Unit Tests
-
-extension Kernel.IOUring.Test.Unit {
-
-    @Test("isSupported returns boolean")
-    func isSupportedReturnsBool() {
-        // This should return a boolean without crashing
-        let supported = Kernel.IOUring.isSupported
-        // Just verify it's a boolean (can be either true or false depending on kernel)
-        #expect(supported == true || supported == false)
+    extension Kernel.IOUring {
+        #TestSuites
     }
 
-    @Test("setup returns descriptor and updates params")
-    func setupReturnsDescriptorAndUpdatesParams() throws {
-        try #require(Kernel.IOUring.isSupported)
+    // MARK: - Syscall Unit Tests
 
-        var params = Kernel.IOUring.Params()
-        let fd = try Kernel.IOUring.setup(entries: 1, params: &params)
-        defer { Kernel.IOUring.close(fd) }
+    extension Kernel.IOUring.Test.Unit {
 
-        #expect(fd.rawValue >= 0)
-        // Kernel should have updated sqEntries
-        #expect(params.sqEntries > 0)
-    }
+        @Test("isSupported returns boolean")
+        func isSupportedReturnsBool() {
+            // This should return a boolean without crashing
+            let supported = Kernel.IOUring.isSupported
+            // Just verify it's a boolean (can be either true or false depending on kernel)
+            #expect(supported == true || supported == false)
+        }
 
-    @Test("enter with zero submit returns immediately")
-    func enterWithZeroReturnsImmediately() throws {
-        try #require(Kernel.IOUring.isSupported)
+        @Test("setup returns descriptor and updates params")
+        func setupReturnsDescriptorAndUpdatesParams() throws {
+            try #require(Kernel.IOUring.isSupported)
 
-        var params = Kernel.IOUring.Params()
-        let fd = try Kernel.IOUring.setup(entries: 1, params: &params)
-        defer { Kernel.IOUring.close(fd) }
+            var params = Kernel.IOUring.Params()
+            let fd = try Kernel.IOUring.setup(entries: 1, params: &params)
+            defer { Kernel.IOUring.close(fd) }
 
-        // Enter with nothing to submit or wait for should return immediately
-        let result = try Kernel.IOUring.enter(fd, toSubmit: 0, minComplete: 0, flags: [])
-        #expect(result >= 0)
-    }
+            #expect(fd.rawValue >= 0)
+            // Kernel should have updated sqEntries
+            #expect(params.sqEntries > 0)
+        }
 
-    @Test("close does not crash")
-    func closeDoesNotCrash() throws {
-        try #require(Kernel.IOUring.isSupported)
+        @Test("enter with zero submit returns immediately")
+        func enterWithZeroReturnsImmediately() throws {
+            try #require(Kernel.IOUring.isSupported)
 
-        var params = Kernel.IOUring.Params()
-        let fd = try Kernel.IOUring.setup(entries: 1, params: &params)
+            var params = Kernel.IOUring.Params()
+            let fd = try Kernel.IOUring.setup(entries: 1, params: &params)
+            defer { Kernel.IOUring.close(fd) }
 
-        // Close should not throw (it's non-throwing)
-        Kernel.IOUring.close(fd)
+            // Enter with nothing to submit or wait for should return immediately
+            let result = try Kernel.IOUring.enter(fd, toSubmit: 0, minComplete: 0, flags: [])
+            #expect(result >= 0)
+        }
 
-        // Double close should also not crash
-        Kernel.IOUring.close(fd)
-    }
+        @Test("close does not crash")
+        func closeDoesNotCrash() throws {
+            try #require(Kernel.IOUring.isSupported)
 
-    @Test("setup with invalid entries throws")
-    func setupWithInvalidEntriesThrows() throws {
-        try #require(Kernel.IOUring.isSupported)
+            var params = Kernel.IOUring.Params()
+            let fd = try Kernel.IOUring.setup(entries: 1, params: &params)
 
-        var params = Kernel.IOUring.Params()
+            // Close should not throw (it's non-throwing)
+            Kernel.IOUring.close(fd)
 
-        // 0 entries should fail
-        #expect(throws: Kernel.IOUring.Error.self) {
-            _ = try Kernel.IOUring.setup(entries: 0, params: &params)
+            // Double close should also not crash
+            Kernel.IOUring.close(fd)
+        }
+
+        @Test("setup with invalid entries throws")
+        func setupWithInvalidEntriesThrows() throws {
+            try #require(Kernel.IOUring.isSupported)
+
+            var params = Kernel.IOUring.Params()
+
+            // 0 entries should fail
+            #expect(throws: Kernel.IOUring.Error.self) {
+                _ = try Kernel.IOUring.setup(entries: 0, params: &params)
+            }
         }
     }
-}
 
 #endif

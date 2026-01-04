@@ -44,29 +44,29 @@ extension Kernel.File.System {
         // MARK: - Common Filesystem Types (Linux)
 
         #if os(Linux)
-        /// ext4 filesystem magic number.
-        public static let ext4 = Kind(rawValue: 0xEF53)
+            /// ext4 filesystem magic number.
+            public static let ext4 = Kind(rawValue: 0xEF53)
 
-        /// Btrfs filesystem magic number.
-        public static let btrfs = Kind(rawValue: 0x9123683E)
+            /// Btrfs filesystem magic number.
+            public static let btrfs = Kind(rawValue: 0x9123_683E)
 
-        /// XFS filesystem magic number.
-        public static let xfs = Kind(rawValue: 0x58465342)
+            /// XFS filesystem magic number.
+            public static let xfs = Kind(rawValue: 0x5846_5342)
 
-        /// tmpfs filesystem magic number.
-        public static let tmpfs = Kind(rawValue: 0x01021994)
+            /// tmpfs filesystem magic number.
+            public static let tmpfs = Kind(rawValue: 0x0102_1994)
 
-        /// proc filesystem magic number.
-        public static let proc = Kind(rawValue: 0x9FA0)
+            /// proc filesystem magic number.
+            public static let proc = Kind(rawValue: 0x9FA0)
 
-        /// sysfs filesystem magic number.
-        public static let sysfs = Kind(rawValue: 0x62656572)
+            /// sysfs filesystem magic number.
+            public static let sysfs = Kind(rawValue: 0x6265_6572)
 
-        /// NFS filesystem magic number.
-        public static let nfs = Kind(rawValue: 0x6969)
+            /// NFS filesystem magic number.
+            public static let nfs = Kind(rawValue: 0x6969)
 
-        /// CIFS/SMB filesystem magic number.
-        public static let cifs = Kind(rawValue: 0xFF534D42)
+            /// CIFS/SMB filesystem magic number.
+            public static let cifs = Kind(rawValue: 0xFF53_4D42)
         #endif
     }
 }
@@ -76,19 +76,19 @@ extension Kernel.File.System {
 extension Kernel.File.System.Kind: CustomStringConvertible {
     public var description: String {
         #if os(Linux)
-        switch self {
-        case .ext4: return "ext4"
-        case .btrfs: return "btrfs"
-        case .xfs: return "xfs"
-        case .tmpfs: return "tmpfs"
-        case .proc: return "proc"
-        case .sysfs: return "sysfs"
-        case .nfs: return "nfs"
-        case .cifs: return "cifs"
-        default: return "0x\(String(rawValue, radix: 16))"
-        }
+            switch self {
+            case .ext4: return "ext4"
+            case .btrfs: return "btrfs"
+            case .xfs: return "xfs"
+            case .tmpfs: return "tmpfs"
+            case .proc: return "proc"
+            case .sysfs: return "sysfs"
+            case .nfs: return "nfs"
+            case .cifs: return "cifs"
+            default: return "0x\(String(rawValue, radix: 16))"
+            }
         #else
-        return "\(rawValue)"
+            return "\(rawValue)"
         #endif
     }
 }

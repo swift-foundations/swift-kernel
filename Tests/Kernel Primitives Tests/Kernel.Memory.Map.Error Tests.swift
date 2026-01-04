@@ -141,7 +141,7 @@ extension Kernel.Memory.Map.Error.Test.Unit {
         var set = Set<Kernel.Memory.Map.Error>()
         set.insert(.map(.posix(1)))
         set.insert(.unmap(.posix(1)))
-        set.insert(.map(.posix(1))) // duplicate
+        set.insert(.map(.posix(1)))  // duplicate
         #expect(set.count == 2)
     }
 }

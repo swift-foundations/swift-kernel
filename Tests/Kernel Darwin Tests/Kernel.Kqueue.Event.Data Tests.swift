@@ -10,156 +10,156 @@
 // ===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-import Darwin
-import StandardsTestSupport
-import Testing
+    import Darwin
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Darwin
-import Kernel_Primitives
+    @testable import Kernel_Darwin
+    import Kernel_Primitives
 
-// Kernel.Kqueue.Event.Data is a typealias to Tagged<Kernel.Kqueue.Event, UInt64>
-// Use a custom test suite since #TestSuites cannot be used on typealiases
+    // Kernel.Kqueue.Event.Data is a typealias to Tagged<Kernel.Kqueue.Event, UInt64>
+    // Use a custom test suite since #TestSuites cannot be used on typealiases
 
-@Suite("Kernel.Kqueue.Event.Data Tests")
-struct KqueueEventDataTests {
+    @Suite("Kernel.Kqueue.Event.Data Tests")
+    struct KqueueEventDataTests {
 
-    // MARK: - Unit Tests
+        // MARK: - Unit Tests
 
-    @Test("zero constant equals 0")
-    func zeroConstant() {
-        let zero = Kernel.Kqueue.Event.Data.zero
-        #expect(zero._rawValue == 0)
-    }
-
-    @Test("init from UInt64 stores value")
-    func initFromUInt64() {
-        let data = Kernel.Kqueue.Event.Data(42)
-        #expect(data._rawValue == 42)
-    }
-
-    @Test("literal initialization works")
-    func literalInit() {
-        let data: Kernel.Kqueue.Event.Data = 100
-        #expect(data._rawValue == 100)
-    }
-
-    // MARK: - Pointer Conversion Tests
-
-    @Test("init from optional mutable raw pointer preserves bitPattern")
-    func initFromOptionalMutableRawPointer() {
-        var value: Int = 42
-        let pointer: UnsafeMutableRawPointer? = withUnsafeMutablePointer(to: &value) {
-            UnsafeMutableRawPointer($0)
+        @Test("zero constant equals 0")
+        func zeroConstant() {
+            let zero = Kernel.Kqueue.Event.Data.zero
+            #expect(zero._rawValue == 0)
         }
-        let data = Kernel.Kqueue.Event.Data(pointer)
-        #expect(data._rawValue == UInt64(UInt(bitPattern: pointer)))
-    }
 
-    @Test("init from nil pointer gives zero")
-    func initFromNilPointer() {
-        let pointer: UnsafeMutableRawPointer? = nil
-        let data = Kernel.Kqueue.Event.Data(pointer)
-        #expect(data._rawValue == 0)
-    }
-
-    @Test("init from raw pointer preserves bitPattern")
-    func initFromRawPointer() {
-        var value: Int = 42
-        let data = withUnsafePointer(to: &value) { ptr in
-            Kernel.Kqueue.Event.Data(UnsafeRawPointer(ptr))
+        @Test("init from UInt64 stores value")
+        func initFromUInt64() {
+            let data = Kernel.Kqueue.Event.Data(42)
+            #expect(data._rawValue == 42)
         }
-        #expect(data._rawValue != 0)
-    }
 
-    @Test("init from typed pointer preserves bitPattern")
-    func initFromTypedPointer() {
-        var value: Int = 42
-        let data = withUnsafePointer(to: &value) { ptr in
-            Kernel.Kqueue.Event.Data(pointer: ptr)
+        @Test("literal initialization works")
+        func literalInit() {
+            let data: Kernel.Kqueue.Event.Data = 100
+            #expect(data._rawValue == 100)
         }
-        #expect(data._rawValue != 0)
-    }
 
-    @Test("init from mutable typed pointer preserves bitPattern")
-    func initFromMutableTypedPointer() {
-        var value: Int = 42
-        let data = withUnsafeMutablePointer(to: &value) { ptr in
-            Kernel.Kqueue.Event.Data(pointer: ptr)
+        // MARK: - Pointer Conversion Tests
+
+        @Test("init from optional mutable raw pointer preserves bitPattern")
+        func initFromOptionalMutableRawPointer() {
+            var value: Int = 42
+            let pointer: UnsafeMutableRawPointer? = withUnsafeMutablePointer(to: &value) {
+                UnsafeMutableRawPointer($0)
+            }
+            let data = Kernel.Kqueue.Event.Data(pointer)
+            #expect(data._rawValue == UInt64(UInt(bitPattern: pointer)))
         }
-        #expect(data._rawValue != 0)
-    }
 
-    // MARK: - Pointer Extraction Tests
+        @Test("init from nil pointer gives zero")
+        func initFromNilPointer() {
+            let pointer: UnsafeMutableRawPointer? = nil
+            let data = Kernel.Kqueue.Event.Data(pointer)
+            #expect(data._rawValue == 0)
+        }
 
-    @Test("UnsafeMutableRawPointer init from non-zero data returns pointer")
-    func pointerExtractionNonZero() {
-        var value: Int = 42
-        withUnsafeMutablePointer(to: &value) { ptr in
-            let originalPtr = UnsafeMutableRawPointer(ptr)
-            let data = Kernel.Kqueue.Event.Data(originalPtr)
+        @Test("init from raw pointer preserves bitPattern")
+        func initFromRawPointer() {
+            var value: Int = 42
+            let data = withUnsafePointer(to: &value) { ptr in
+                Kernel.Kqueue.Event.Data(UnsafeRawPointer(ptr))
+            }
+            #expect(data._rawValue != 0)
+        }
+
+        @Test("init from typed pointer preserves bitPattern")
+        func initFromTypedPointer() {
+            var value: Int = 42
+            let data = withUnsafePointer(to: &value) { ptr in
+                Kernel.Kqueue.Event.Data(pointer: ptr)
+            }
+            #expect(data._rawValue != 0)
+        }
+
+        @Test("init from mutable typed pointer preserves bitPattern")
+        func initFromMutableTypedPointer() {
+            var value: Int = 42
+            let data = withUnsafeMutablePointer(to: &value) { ptr in
+                Kernel.Kqueue.Event.Data(pointer: ptr)
+            }
+            #expect(data._rawValue != 0)
+        }
+
+        // MARK: - Pointer Extraction Tests
+
+        @Test("UnsafeMutableRawPointer init from non-zero data returns pointer")
+        func pointerExtractionNonZero() {
+            var value: Int = 42
+            withUnsafeMutablePointer(to: &value) { ptr in
+                let originalPtr = UnsafeMutableRawPointer(ptr)
+                let data = Kernel.Kqueue.Event.Data(originalPtr)
+                let extractedPtr = UnsafeMutableRawPointer(data)
+                #expect(extractedPtr == originalPtr)
+            }
+        }
+
+        @Test("UnsafeMutableRawPointer init from zero data returns nil")
+        func pointerExtractionZero() {
+            let data = Kernel.Kqueue.Event.Data.zero
             let extractedPtr = UnsafeMutableRawPointer(data)
-            #expect(extractedPtr == originalPtr)
+            #expect(extractedPtr == nil)
+        }
+
+        @Test("pointer roundtrip preserves address")
+        func pointerRoundtrip() {
+            var value: Int = 42
+            withUnsafeMutablePointer(to: &value) { ptr in
+                let originalPtr = UnsafeMutableRawPointer(ptr)
+                let data = Kernel.Kqueue.Event.Data(originalPtr)
+                let extractedPtr = UnsafeMutableRawPointer(data)
+                #expect(extractedPtr == originalPtr)
+            }
+        }
+
+        // MARK: - Conformance Tests
+
+        @Test("Data is Sendable")
+        func isSendable() {
+            let data: any Sendable = Kernel.Kqueue.Event.Data.zero
+            #expect(data is Kernel.Kqueue.Event.Data)
+        }
+
+        @Test("Data is Equatable")
+        func isEquatable() {
+            let a = Kernel.Kqueue.Event.Data(42)
+            let b = Kernel.Kqueue.Event.Data(42)
+            let c = Kernel.Kqueue.Event.Data(0)
+            #expect(a == b)
+            #expect(a != c)
+        }
+
+        @Test("Data is Hashable")
+        func isHashable() {
+            var set = Set<Kernel.Kqueue.Event.Data>()
+            set.insert(Kernel.Kqueue.Event.Data(1))
+            set.insert(Kernel.Kqueue.Event.Data(2))
+            set.insert(Kernel.Kqueue.Event.Data(1))  // duplicate
+            #expect(set.count == 2)
+        }
+
+        // MARK: - Edge Cases
+
+        @Test("UInt64.max is preserved")
+        func uint64MaxPreserved() {
+            let data = Kernel.Kqueue.Event.Data(UInt64.max)
+            #expect(data._rawValue == UInt64.max)
+        }
+
+        @Test("large pointer values are preserved")
+        func largePointerValues() {
+            // Create data from a large value simulating a high memory address
+            let largeValue: UInt64 = 0x7FFF_FFFF_FFFF_FFFF
+            let data = Kernel.Kqueue.Event.Data(largeValue)
+            #expect(data._rawValue == largeValue)
         }
     }
-
-    @Test("UnsafeMutableRawPointer init from zero data returns nil")
-    func pointerExtractionZero() {
-        let data = Kernel.Kqueue.Event.Data.zero
-        let extractedPtr = UnsafeMutableRawPointer(data)
-        #expect(extractedPtr == nil)
-    }
-
-    @Test("pointer roundtrip preserves address")
-    func pointerRoundtrip() {
-        var value: Int = 42
-        withUnsafeMutablePointer(to: &value) { ptr in
-            let originalPtr = UnsafeMutableRawPointer(ptr)
-            let data = Kernel.Kqueue.Event.Data(originalPtr)
-            let extractedPtr = UnsafeMutableRawPointer(data)
-            #expect(extractedPtr == originalPtr)
-        }
-    }
-
-    // MARK: - Conformance Tests
-
-    @Test("Data is Sendable")
-    func isSendable() {
-        let data: any Sendable = Kernel.Kqueue.Event.Data.zero
-        #expect(data is Kernel.Kqueue.Event.Data)
-    }
-
-    @Test("Data is Equatable")
-    func isEquatable() {
-        let a = Kernel.Kqueue.Event.Data(42)
-        let b = Kernel.Kqueue.Event.Data(42)
-        let c = Kernel.Kqueue.Event.Data(0)
-        #expect(a == b)
-        #expect(a != c)
-    }
-
-    @Test("Data is Hashable")
-    func isHashable() {
-        var set = Set<Kernel.Kqueue.Event.Data>()
-        set.insert(Kernel.Kqueue.Event.Data(1))
-        set.insert(Kernel.Kqueue.Event.Data(2))
-        set.insert(Kernel.Kqueue.Event.Data(1)) // duplicate
-        #expect(set.count == 2)
-    }
-
-    // MARK: - Edge Cases
-
-    @Test("UInt64.max is preserved")
-    func uint64MaxPreserved() {
-        let data = Kernel.Kqueue.Event.Data(UInt64.max)
-        #expect(data._rawValue == UInt64.max)
-    }
-
-    @Test("large pointer values are preserved")
-    func largePointerValues() {
-        // Create data from a large value simulating a high memory address
-        let largeValue: UInt64 = 0x7FFF_FFFF_FFFF_FFFF
-        let data = Kernel.Kqueue.Event.Data(largeValue)
-        #expect(data._rawValue == largeValue)
-    }
-}
 #endif

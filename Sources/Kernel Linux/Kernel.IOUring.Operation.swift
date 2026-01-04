@@ -12,9 +12,9 @@ public import Kernel_Primitives
 
 #if canImport(Glibc) || canImport(Musl)
 
-extension Kernel.IOUring {
-    /// Operation-related types for io_uring.
-    public enum Operation {}
-}
+    extension Kernel.IOUring {
+        /// Operation-related types for io_uring.
+        public enum Operation {}
+    }
 
 #endif

@@ -132,12 +132,12 @@ extension Kernel.Thread.Mutex {
     /// - Parameter body: A closure that receives the pointer.
     /// - Returns: The value returned by `body`.
     #if os(Windows)
-    func withUnsafeMutablePointer<T>(_ body: (UnsafeMutablePointer<SRWLOCK>) -> T) -> T {
-        Swift.withUnsafeMutablePointer(to: &srwlock, body)
-    }
+        func withUnsafeMutablePointer<T>(_ body: (UnsafeMutablePointer<SRWLOCK>) -> T) -> T {
+            Swift.withUnsafeMutablePointer(to: &srwlock, body)
+        }
     #else
-    func withUnsafeMutablePointer<T>(_ body: (UnsafeMutablePointer<pthread_mutex_t>) -> T) -> T {
-        Swift.withUnsafeMutablePointer(to: &mutex, body)
-    }
+        func withUnsafeMutablePointer<T>(_ body: (UnsafeMutablePointer<pthread_mutex_t>) -> T) -> T {
+            Swift.withUnsafeMutablePointer(to: &mutex, body)
+        }
     #endif
 }

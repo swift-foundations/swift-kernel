@@ -65,10 +65,10 @@ extension Kernel.Atomic.Test.Unit {
 
     @Test("load preserves value")
     func loadPreservesValue() {
-        var value: UInt64 = 0xDEADBEEF
+        var value: UInt64 = 0xDEAD_BEEF
         let loaded = Kernel.Atomic.load(&value, ordering: .relaxed)
-        #expect(loaded == 0xDEADBEEF)
-        #expect(value == 0xDEADBEEF)
+        #expect(loaded == 0xDEAD_BEEF)
+        #expect(value == 0xDEAD_BEEF)
     }
 }
 
@@ -91,9 +91,9 @@ extension Kernel.Atomic.Test.Unit {
 
     @Test("store overwrites previous value")
     func storeOverwrites() {
-        var value: UInt64 = 0xDEADBEEF
-        Kernel.Atomic.store(&value, 0xCAFEBABE, ordering: .relaxed)
-        #expect(value == 0xCAFEBABE)
+        var value: UInt64 = 0xDEAD_BEEF
+        Kernel.Atomic.store(&value, 0xCAFE_BABE, ordering: .relaxed)
+        #expect(value == 0xCAFE_BABE)
     }
 }
 

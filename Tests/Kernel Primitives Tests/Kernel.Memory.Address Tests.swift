@@ -42,10 +42,10 @@ struct MemoryAddressTests {
         defer { address.deallocate() }
 
         // Write a value
-        address.storeBytes(of: UInt64(0xDEADBEEF), as: UInt64.self)
+        address.storeBytes(of: UInt64(0xDEAD_BEEF), as: UInt64.self)
 
         // Read it back
         let value = address.load(as: UInt64.self)
-        #expect(value == 0xDEADBEEF)
+        #expect(value == 0xDEAD_BEEF)
     }
 }

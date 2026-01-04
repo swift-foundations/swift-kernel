@@ -65,7 +65,7 @@ extension Kernel.File.Stats.Kind.Device.Test.Unit {
         var set = Set<Kernel.File.Stats.Kind.Device>()
         set.insert(.block)
         set.insert(.character)
-        set.insert(.block) // duplicate
+        set.insert(.block)  // duplicate
         #expect(set.count == 2)
     }
 }

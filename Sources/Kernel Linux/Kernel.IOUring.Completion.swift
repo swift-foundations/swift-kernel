@@ -10,12 +10,11 @@
 // ===----------------------------------------------------------------------===//
 public import Kernel_Primitives
 
-
 #if canImport(Glibc) || canImport(Musl)
 
-extension Kernel.IOUring {
-    /// Completion-related types for io_uring.
-    public enum Completion {}
-}
+    extension Kernel.IOUring {
+        /// Completion-related types for io_uring.
+        public enum Completion {}
+    }
 
 #endif

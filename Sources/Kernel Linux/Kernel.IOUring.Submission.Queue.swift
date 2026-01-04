@@ -10,12 +10,11 @@
 // ===----------------------------------------------------------------------===//
 public import Kernel_Primitives
 
-
 #if canImport(Glibc) || canImport(Musl)
 
-extension Kernel.IOUring.Submission {
-    /// Submission queue types.
-    public enum Queue {}
-}
+    extension Kernel.IOUring.Submission {
+        /// Submission queue types.
+        public enum Queue {}
+    }
 
 #endif

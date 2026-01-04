@@ -16,52 +16,52 @@ import Testing
 
 #if os(Linux) || canImport(Darwin)
 
-extension Kernel.Copy.Clone {
-    #TestSuites
-}
-
-// MARK: - Unit Tests
-
-extension Kernel.Copy.Clone.Test.Unit {
-    @Test("Clone namespace exists")
-    func namespaceExists() {
-        // Kernel.Copy.Clone is a public enum namespace
-        _ = Kernel.Copy.Clone.self
+    extension Kernel.Copy.Clone {
+        #TestSuites
     }
 
-    @Test("Clone is an enum")
-    func isEnum() {
-        let _: Kernel.Copy.Clone.Type = Kernel.Copy.Clone.self
-    }
-}
+    // MARK: - Unit Tests
 
-// MARK: - Platform-Specific API Tests
+    extension Kernel.Copy.Clone.Test.Unit {
+        @Test("Clone namespace exists")
+        func namespaceExists() {
+            // Kernel.Copy.Clone is a public enum namespace
+            _ = Kernel.Copy.Clone.self
+        }
 
-#if os(Linux)
-extension Kernel.Copy.Clone.Test.Unit {
-    @Test("perform function signature exists on Linux")
-    func performSignatureExists() {
-        // Verify the function exists with correct signature
-        // (cannot actually call it without valid descriptors)
-        let _: (Kernel.Descriptor, Kernel.Descriptor) throws -> Void = {
-            (source: Kernel.Descriptor, dest: Kernel.Descriptor) throws(Kernel.Copy.Error) in
-            try Kernel.Copy.Clone.perform(from: source, to: dest)
+        @Test("Clone is an enum")
+        func isEnum() {
+            let _: Kernel.Copy.Clone.Type = Kernel.Copy.Clone.self
         }
     }
-}
-#endif
 
-#if canImport(Darwin)
-extension Kernel.Copy.Clone.Test.Unit {
-    @Test("file function signature exists on Darwin")
-    func fileSignatureExists() {
-        // Verify the function exists with correct signature
-        let _: (String, String) throws -> Void = {
-            (source: String, dest: String) throws(Kernel.Copy.Error) in
-            try Kernel.Copy.Clone.file(from: source, to: dest)
+    // MARK: - Platform-Specific API Tests
+
+    #if os(Linux)
+        extension Kernel.Copy.Clone.Test.Unit {
+            @Test("perform function signature exists on Linux")
+            func performSignatureExists() {
+                // Verify the function exists with correct signature
+                // (cannot actually call it without valid descriptors)
+                let _: (Kernel.Descriptor, Kernel.Descriptor) throws -> Void = {
+                    (source: Kernel.Descriptor, dest: Kernel.Descriptor) throws(Kernel.Copy.Error) in
+                    try Kernel.Copy.Clone.perform(from: source, to: dest)
+                }
+            }
         }
-    }
-}
-#endif
+    #endif
+
+    #if canImport(Darwin)
+        extension Kernel.Copy.Clone.Test.Unit {
+            @Test("file function signature exists on Darwin")
+            func fileSignatureExists() {
+                // Verify the function exists with correct signature
+                let _: (String, String) throws -> Void = {
+                    (source: String, dest: String) throws(Kernel.Copy.Error) in
+                    try Kernel.Copy.Clone.file(from: source, to: dest)
+                }
+            }
+        }
+    #endif
 
 #endif

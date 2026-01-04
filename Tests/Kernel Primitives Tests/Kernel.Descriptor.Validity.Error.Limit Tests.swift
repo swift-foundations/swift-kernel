@@ -70,7 +70,7 @@ extension Kernel.Descriptor.Validity.Error.Limit.Test.Unit {
         var set = Set<Kernel.Descriptor.Validity.Error.Limit>()
         set.insert(.process)
         set.insert(.system)
-        set.insert(.process) // duplicate
+        set.insert(.process)  // duplicate
         #expect(set.count == 2)
     }
 }

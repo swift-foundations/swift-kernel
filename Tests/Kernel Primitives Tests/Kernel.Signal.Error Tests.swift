@@ -55,7 +55,7 @@ extension Kernel.Signal.Error.Test.Unit {
     func isHashable() {
         var set = Set<Kernel.Signal.Error>()
         set.insert(.interrupted)
-        set.insert(.interrupted) // duplicate
+        set.insert(.interrupted)  // duplicate
 
         #expect(set.count == 1)
         #expect(set.contains(.interrupted))

@@ -36,51 +36,51 @@ extension Kernel.Memory.Map.Region.Test.Unit {
 // MARK: - Property Tests
 
 #if !os(Windows)
-extension Kernel.Memory.Map.Region.Test.Unit {
-    @Test("Region stores base address")
-    func storesBase() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
-        defer { try? Kernel.Memory.Map.unmap(region) }
+    extension Kernel.Memory.Map.Region.Test.Unit {
+        @Test("Region stores base address")
+        func storesBase() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
+            defer { try? Kernel.Memory.Map.unmap(region) }
 
-        #expect(region.base != nil)
+            #expect(region.base != nil)
+        }
+
+        @Test("Region stores length")
+        func storesLength() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
+            defer { try? Kernel.Memory.Map.unmap(region) }
+
+            #expect(region.length == pageSize)
+        }
+
+        @Test("Region init sets values correctly")
+        func initSetsValues() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
+            defer { try? Kernel.Memory.Map.unmap(region) }
+
+            // Create a new region with same values
+            let copy = Kernel.Memory.Map.Region(base: region.base, length: region.length)
+            #expect(copy.base == region.base)
+            #expect(copy.length == region.length)
+        }
     }
-
-    @Test("Region stores length")
-    func storesLength() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
-        defer { try? Kernel.Memory.Map.unmap(region) }
-
-        #expect(region.length == pageSize)
-    }
-
-    @Test("Region init sets values correctly")
-    func initSetsValues() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
-        defer { try? Kernel.Memory.Map.unmap(region) }
-
-        // Create a new region with same values
-        let copy = Kernel.Memory.Map.Region(base: region.base, length: region.length)
-        #expect(copy.base == region.base)
-        #expect(copy.length == region.length)
-    }
-}
 #endif
 
 // MARK: - Windows Tests
 
 #if os(Windows)
-extension Kernel.Memory.Map.Region.Test.Unit {
-    @Test("Region stores mappingHandle on Windows")
-    func storesMappingHandle() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
-        defer { try? Kernel.Memory.Map.unmap(region) }
+    extension Kernel.Memory.Map.Region.Test.Unit {
+        @Test("Region stores mappingHandle on Windows")
+        func storesMappingHandle() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
+            defer { try? Kernel.Memory.Map.unmap(region) }
 
-        // The mapping handle should be set
-        #expect(region.mappingHandle != nil)
+            // The mapping handle should be set
+            #expect(region.mappingHandle != nil)
+        }
     }
-}
 #endif

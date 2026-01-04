@@ -82,7 +82,7 @@ extension Kernel.Memory.Map.Sync.Flags.Test.Unit {
         var set = Set<Kernel.Memory.Map.Sync.Flags>()
         set.insert(.sync)
         set.insert(.async)
-        set.insert(.sync) // duplicate
+        set.insert(.sync)  // duplicate
         #expect(set.count == 2)
     }
 }

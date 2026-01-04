@@ -28,9 +28,9 @@
 //    3  Error (invalid arguments, file not found, etc.)
 //
 
+import Binary
 import Kernel
 public import SystemPackage
-import Binary
 
 #if canImport(Darwin)
     public import Darwin

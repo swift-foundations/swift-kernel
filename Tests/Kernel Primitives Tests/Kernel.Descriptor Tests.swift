@@ -71,7 +71,7 @@ extension Kernel.Descriptor.Test.Unit {
             var set = Set<Kernel.Descriptor>()
             set.insert(Kernel.Descriptor(rawValue: 1))
             set.insert(Kernel.Descriptor(rawValue: 2))
-            set.insert(Kernel.Descriptor(rawValue: 1)) // duplicate
+            set.insert(Kernel.Descriptor(rawValue: 1))  // duplicate
 
             #expect(set.count == 2)
         #endif

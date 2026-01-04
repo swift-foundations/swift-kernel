@@ -128,7 +128,7 @@ struct FileOffsetTests {
         var set = Set<Kernel.File.Offset>()
         set.insert(Kernel.File.Offset(1000))
         set.insert(Kernel.File.Offset(2000))
-        set.insert(Kernel.File.Offset(1000)) // duplicate
+        set.insert(Kernel.File.Offset(1000))  // duplicate
         #expect(set.count == 2)
     }
 

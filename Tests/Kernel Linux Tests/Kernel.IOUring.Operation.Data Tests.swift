@@ -10,111 +10,111 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Linux)
-import StandardsTestSupport
-import Testing
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Linux
-import Kernel_Primitives
+    @testable import Kernel_Linux
+    import Kernel_Primitives
 
-extension Kernel.IOUring.Operation.Data {
-    #TestSuites
-}
-
-// MARK: - Unit Tests
-
-extension Kernel.IOUring.Operation.Data.Test.Unit {
-    @Test("Data type exists")
-    func typeExists() {
-        let _: Kernel.IOUring.Operation.Data.Type = Kernel.IOUring.Operation.Data.self
+    extension Kernel.IOUring.Operation.Data {
+        #TestSuites
     }
 
-    @Test("Data from UInt64")
-    func fromUInt64() {
-        let data = Kernel.IOUring.Operation.Data(42)
-        #expect(data.rawValue == 42)
-    }
+    // MARK: - Unit Tests
 
-    @Test("Data.zero constant")
-    func zeroConstant() {
-        let zero = Kernel.IOUring.Operation.Data.zero
-        #expect(zero.rawValue == 0)
-    }
-}
+    extension Kernel.IOUring.Operation.Data.Test.Unit {
+        @Test("Data type exists")
+        func typeExists() {
+            let _: Kernel.IOUring.Operation.Data.Type = Kernel.IOUring.Operation.Data.self
+        }
 
-// MARK: - Pointer Conversion Tests
+        @Test("Data from UInt64")
+        func fromUInt64() {
+            let data = Kernel.IOUring.Operation.Data(42)
+            #expect(data.rawValue == 42)
+        }
 
-extension Kernel.IOUring.Operation.Data.Test.Unit {
-    @Test("Data from UnsafeRawPointer")
-    func fromRawPointer() {
-        var value: Int = 42
-        withUnsafePointer(to: &value) { ptr in
-            let data = Kernel.IOUring.Operation.Data(ptr)
-            #expect(data.rawValue == UInt64(UInt(bitPattern: ptr)))
+        @Test("Data.zero constant")
+        func zeroConstant() {
+            let zero = Kernel.IOUring.Operation.Data.zero
+            #expect(zero.rawValue == 0)
         }
     }
 
-    @Test("Data from typed pointer")
-    func fromTypedPointer() {
-        var value: Int = 42
-        withUnsafePointer(to: &value) { ptr in
-            let data = Kernel.IOUring.Operation.Data(pointer: ptr)
-            #expect(data.rawValue == UInt64(UInt(bitPattern: ptr)))
+    // MARK: - Pointer Conversion Tests
+
+    extension Kernel.IOUring.Operation.Data.Test.Unit {
+        @Test("Data from UnsafeRawPointer")
+        func fromRawPointer() {
+            var value: Int = 42
+            withUnsafePointer(to: &value) { ptr in
+                let data = Kernel.IOUring.Operation.Data(ptr)
+                #expect(data.rawValue == UInt64(UInt(bitPattern: ptr)))
+            }
+        }
+
+        @Test("Data from typed pointer")
+        func fromTypedPointer() {
+            var value: Int = 42
+            withUnsafePointer(to: &value) { ptr in
+                let data = Kernel.IOUring.Operation.Data(pointer: ptr)
+                #expect(data.rawValue == UInt64(UInt(bitPattern: ptr)))
+            }
+        }
+
+        @Test("Data from mutable typed pointer")
+        func fromMutableTypedPointer() {
+            var value: Int = 42
+            withUnsafeMutablePointer(to: &value) { ptr in
+                let data = Kernel.IOUring.Operation.Data(pointer: ptr)
+                #expect(data.rawValue == UInt64(UInt(bitPattern: ptr)))
+            }
         }
     }
 
-    @Test("Data from mutable typed pointer")
-    func fromMutableTypedPointer() {
-        var value: Int = 42
-        withUnsafeMutablePointer(to: &value) { ptr in
-            let data = Kernel.IOUring.Operation.Data(pointer: ptr)
-            #expect(data.rawValue == UInt64(UInt(bitPattern: ptr)))
+    // MARK: - Conformance Tests
+
+    extension Kernel.IOUring.Operation.Data.Test.Unit {
+        @Test("Data is Sendable")
+        func isSendable() {
+            let data: any Sendable = Kernel.IOUring.Operation.Data.zero
+            #expect(data is Kernel.IOUring.Operation.Data)
+        }
+
+        @Test("Data is Equatable")
+        func isEquatable() {
+            let a = Kernel.IOUring.Operation.Data(100)
+            let b = Kernel.IOUring.Operation.Data(100)
+            let c = Kernel.IOUring.Operation.Data(200)
+            #expect(a == b)
+            #expect(a != c)
+        }
+
+        @Test("Data is Hashable")
+        func isHashable() {
+            var set = Set<Kernel.IOUring.Operation.Data>()
+            set.insert(.zero)
+            set.insert(Kernel.IOUring.Operation.Data(1))
+            set.insert(.zero)  // duplicate
+            #expect(set.count == 2)
         }
     }
-}
 
-// MARK: - Conformance Tests
+    // MARK: - Edge Cases
 
-extension Kernel.IOUring.Operation.Data.Test.Unit {
-    @Test("Data is Sendable")
-    func isSendable() {
-        let data: any Sendable = Kernel.IOUring.Operation.Data.zero
-        #expect(data is Kernel.IOUring.Operation.Data)
-    }
+    extension Kernel.IOUring.Operation.Data.Test.EdgeCase {
+        @Test("Data max value")
+        func maxValue() {
+            let data = Kernel.IOUring.Operation.Data(UInt64.max)
+            #expect(data.rawValue == UInt64.max)
+        }
 
-    @Test("Data is Equatable")
-    func isEquatable() {
-        let a = Kernel.IOUring.Operation.Data(100)
-        let b = Kernel.IOUring.Operation.Data(100)
-        let c = Kernel.IOUring.Operation.Data(200)
-        #expect(a == b)
-        #expect(a != c)
-    }
-
-    @Test("Data is Hashable")
-    func isHashable() {
-        var set = Set<Kernel.IOUring.Operation.Data>()
-        set.insert(.zero)
-        set.insert(Kernel.IOUring.Operation.Data(1))
-        set.insert(.zero) // duplicate
-        #expect(set.count == 2)
-    }
-}
-
-// MARK: - Edge Cases
-
-extension Kernel.IOUring.Operation.Data.Test.EdgeCase {
-    @Test("Data max value")
-    func maxValue() {
-        let data = Kernel.IOUring.Operation.Data(UInt64.max)
-        #expect(data.rawValue == UInt64.max)
-    }
-
-    @Test("Data rawValue roundtrip")
-    func rawValueRoundtrip() {
-        for value: UInt64 in [0, 1, 100, 0xDEADBEEF, UInt64.max] {
-            let data = Kernel.IOUring.Operation.Data(value)
-            #expect(data.rawValue == value)
+        @Test("Data rawValue roundtrip")
+        func rawValueRoundtrip() {
+            for value: UInt64 in [0, 1, 100, 0xDEAD_BEEF, UInt64.max] {
+                let data = Kernel.IOUring.Operation.Data(value)
+                #expect(data.rawValue == value)
+            }
         }
     }
-}
 #endif

@@ -68,7 +68,7 @@ extension Kernel.IO.Blocking.Error.Test.Unit {
     func isHashable() {
         var set = Set<Kernel.IO.Blocking.Error>()
         set.insert(.wouldBlock)
-        set.insert(.wouldBlock) // duplicate
+        set.insert(.wouldBlock)  // duplicate
         #expect(set.count == 1)
     }
 }

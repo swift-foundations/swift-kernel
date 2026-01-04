@@ -87,7 +87,7 @@ extension Kernel.Errno.Unmapped.Error.Test.Unit {
         var set = Set<Kernel.Errno.Unmapped.Error>()
         set.insert(Kernel.Errno.Unmapped.Error(.posix(1)))
         set.insert(Kernel.Errno.Unmapped.Error(.posix(2)))
-        set.insert(Kernel.Errno.Unmapped.Error(.posix(1))) // duplicate
+        set.insert(Kernel.Errno.Unmapped.Error(.posix(1)))  // duplicate
         #expect(set.count == 2)
     }
 }
@@ -127,16 +127,16 @@ extension Kernel.Errno.Unmapped.Error.Test.EdgeCase {
     }
 
     #if os(Windows)
-    @Test("Windows error code")
-    func windowsErrorCode() {
-        let error = Kernel.Errno.Unmapped.Error(.win32(5))
-        if case .unmapped(let code, _) = error {
-            if case .win32(let value) = code {
-                #expect(value == 5)
-            } else {
-                Issue.record("Expected .win32 code")
+        @Test("Windows error code")
+        func windowsErrorCode() {
+            let error = Kernel.Errno.Unmapped.Error(.win32(5))
+            if case .unmapped(let code, _) = error {
+                if case .win32(let value) = code {
+                    #expect(value == 5)
+                } else {
+                    Issue.record("Expected .win32 code")
+                }
             }
         }
-    }
     #endif
 }

@@ -61,8 +61,8 @@ extension Kernel.Atomic.Store.Test.Unit {
     @Test("store function works with UInt64")
     func storeUInt64() {
         var value: UInt64 = 0
-        Kernel.Atomic.store(&value, 0xDEADBEEFCAFEBABE, ordering: .relaxed)
-        #expect(value == 0xDEADBEEFCAFEBABE)
+        Kernel.Atomic.store(&value, 0xDEAD_BEEF_CAFE_BABE, ordering: .relaxed)
+        #expect(value == 0xDEAD_BEEF_CAFE_BABE)
     }
 
     @Test("store function works with Bool")

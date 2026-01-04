@@ -10,36 +10,36 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Linux)
-import StandardsTestSupport
-import Testing
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Linux
-import Kernel_Primitives
+    @testable import Kernel_Linux
+    import Kernel_Primitives
 
-extension Kernel.IOUring.Completion {
-    #TestSuites
-}
-
-// MARK: - Unit Tests
-
-extension Kernel.IOUring.Completion.Test.Unit {
-    @Test("Completion namespace exists")
-    func namespaceExists() {
-        _ = Kernel.IOUring.Completion.self
+    extension Kernel.IOUring.Completion {
+        #TestSuites
     }
 
-    @Test("Completion is an enum")
-    func isEnum() {
-        let _: Kernel.IOUring.Completion.Type = Kernel.IOUring.Completion.self
-    }
-}
+    // MARK: - Unit Tests
 
-// MARK: - Nested Types
+    extension Kernel.IOUring.Completion.Test.Unit {
+        @Test("Completion namespace exists")
+        func namespaceExists() {
+            _ = Kernel.IOUring.Completion.self
+        }
 
-extension Kernel.IOUring.Completion.Test.Unit {
-    @Test("Completion.Queue type exists")
-    func queueTypeExists() {
-        let _: Kernel.IOUring.Completion.Queue.Type = Kernel.IOUring.Completion.Queue.self
+        @Test("Completion is an enum")
+        func isEnum() {
+            let _: Kernel.IOUring.Completion.Type = Kernel.IOUring.Completion.self
+        }
     }
-}
+
+    // MARK: - Nested Types
+
+    extension Kernel.IOUring.Completion.Test.Unit {
+        @Test("Completion.Queue type exists")
+        func queueTypeExists() {
+            let _: Kernel.IOUring.Completion.Queue.Type = Kernel.IOUring.Completion.Queue.self
+        }
+    }
 #endif

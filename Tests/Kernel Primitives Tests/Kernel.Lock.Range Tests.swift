@@ -82,7 +82,7 @@ extension Kernel.Lock.Range.Test.Unit {
         set.insert(.file)
         set.insert(.bytes(start: 0, end: 100))
         set.insert(.bytes(start: 100, end: 200))
-        set.insert(.file) // duplicate
+        set.insert(.file)  // duplicate
         #expect(set.count == 3)
     }
 }

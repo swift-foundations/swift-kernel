@@ -72,7 +72,7 @@ extension Kernel.Device.Test.Unit {
         var set = Set<Kernel.Device>()
         set.insert(Kernel.Device(1))
         set.insert(Kernel.Device(2))
-        set.insert(Kernel.Device(1)) // duplicate
+        set.insert(Kernel.Device(1))  // duplicate
         #expect(set.count == 2)
     }
 }
@@ -80,24 +80,24 @@ extension Kernel.Device.Test.Unit {
 // MARK: - Major/Minor Tests (POSIX only)
 
 #if !os(Windows)
-extension Kernel.Device.Test.Unit {
-    @Test("Device major/minor extraction")
-    func majorMinorExtraction() {
-        // Create a device with known major/minor
-        let device = Kernel.Device(major: 8, minor: 1)
-        #expect(device.major == 8)
-        #expect(device.minor == 1)
-    }
+    extension Kernel.Device.Test.Unit {
+        @Test("Device major/minor extraction")
+        func majorMinorExtraction() {
+            // Create a device with known major/minor
+            let device = Kernel.Device(major: 8, minor: 1)
+            #expect(device.major == 8)
+            #expect(device.minor == 1)
+        }
 
-    @Test("Device major/minor roundtrip")
-    func majorMinorRoundtrip() {
-        let major: UInt32 = 253
-        let minor: UInt32 = 42
-        let device = Kernel.Device(major: major, minor: minor)
-        #expect(device.major == major)
-        #expect(device.minor == minor)
+        @Test("Device major/minor roundtrip")
+        func majorMinorRoundtrip() {
+            let major: UInt32 = 253
+            let minor: UInt32 = 42
+            let device = Kernel.Device(major: major, minor: minor)
+            #expect(device.major == major)
+            #expect(device.minor == minor)
+        }
     }
-}
 #endif
 
 // MARK: - CustomStringConvertible Tests
@@ -110,11 +110,11 @@ extension Kernel.Device.Test.Unit {
     }
 
     #if !os(Windows)
-    @Test("Device description contains colon")
-    func descriptionContainsColon() {
-        let device = Kernel.Device(major: 8, minor: 1)
-        #expect(device.description.contains(":"))
-    }
+        @Test("Device description contains colon")
+        func descriptionContainsColon() {
+            let device = Kernel.Device(major: 8, minor: 1)
+            #expect(device.description.contains(":"))
+        }
     #endif
 }
 
@@ -135,7 +135,7 @@ extension Kernel.Device.Test.EdgeCase {
 
     @Test("Device rawValue roundtrip")
     func rawValueRoundtrip() {
-        for value: UInt64 in [0, 1, 100, 0xDEADBEEF, UInt64.max] {
+        for value: UInt64 in [0, 1, 100, 0xDEAD_BEEF, UInt64.max] {
             let device = Kernel.Device(rawValue: value)
             #expect(device.rawValue == value)
         }

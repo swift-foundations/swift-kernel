@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 public import Kernel_Primitives
 
-
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring.Submission.Queue.Entry {

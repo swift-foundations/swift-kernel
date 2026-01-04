@@ -35,7 +35,7 @@ extension Kernel.File.System.Kind.Test.Unit {
 
     @Test("rawValue roundtrip")
     func rawValueRoundtrip() {
-        let original: UInt64 = 0x9123683E
+        let original: UInt64 = 0x9123_683E
         let kind = Kernel.File.System.Kind(rawValue: original)
         #expect(kind.rawValue == original)
     }
@@ -64,7 +64,7 @@ extension Kernel.File.System.Kind.Test.Unit {
         var set = Set<Kernel.File.System.Kind>()
         set.insert(Kernel.File.System.Kind(0x1234))
         set.insert(Kernel.File.System.Kind(0x5678))
-        set.insert(Kernel.File.System.Kind(0x1234)) // duplicate
+        set.insert(Kernel.File.System.Kind(0x1234))  // duplicate
         #expect(set.count == 2)
     }
 
@@ -85,63 +85,63 @@ extension Kernel.File.System.Kind.Test.Unit {
 // MARK: - Linux-specific Tests
 
 #if os(Linux)
-extension Kernel.File.System.Kind.Test.Unit {
-    @Test("ext4 constant exists")
-    func ext4Constant() {
-        let kind = Kernel.File.System.Kind.ext4
-        #expect(kind.rawValue == 0xEF53)
-    }
+    extension Kernel.File.System.Kind.Test.Unit {
+        @Test("ext4 constant exists")
+        func ext4Constant() {
+            let kind = Kernel.File.System.Kind.ext4
+            #expect(kind.rawValue == 0xEF53)
+        }
 
-    @Test("btrfs constant exists")
-    func btrfsConstant() {
-        let kind = Kernel.File.System.Kind.btrfs
-        #expect(kind.rawValue == 0x9123683E)
-    }
+        @Test("btrfs constant exists")
+        func btrfsConstant() {
+            let kind = Kernel.File.System.Kind.btrfs
+            #expect(kind.rawValue == 0x9123_683E)
+        }
 
-    @Test("xfs constant exists")
-    func xfsConstant() {
-        let kind = Kernel.File.System.Kind.xfs
-        #expect(kind.rawValue == 0x58465342)
-    }
+        @Test("xfs constant exists")
+        func xfsConstant() {
+            let kind = Kernel.File.System.Kind.xfs
+            #expect(kind.rawValue == 0x5846_5342)
+        }
 
-    @Test("tmpfs constant exists")
-    func tmpfsConstant() {
-        let kind = Kernel.File.System.Kind.tmpfs
-        #expect(kind.rawValue == 0x01021994)
-    }
+        @Test("tmpfs constant exists")
+        func tmpfsConstant() {
+            let kind = Kernel.File.System.Kind.tmpfs
+            #expect(kind.rawValue == 0x0102_1994)
+        }
 
-    @Test("proc constant exists")
-    func procConstant() {
-        let kind = Kernel.File.System.Kind.proc
-        #expect(kind.rawValue == 0x9FA0)
-    }
+        @Test("proc constant exists")
+        func procConstant() {
+            let kind = Kernel.File.System.Kind.proc
+            #expect(kind.rawValue == 0x9FA0)
+        }
 
-    @Test("sysfs constant exists")
-    func sysfsConstant() {
-        let kind = Kernel.File.System.Kind.sysfs
-        #expect(kind.rawValue == 0x62656572)
-    }
+        @Test("sysfs constant exists")
+        func sysfsConstant() {
+            let kind = Kernel.File.System.Kind.sysfs
+            #expect(kind.rawValue == 0x6265_6572)
+        }
 
-    @Test("nfs constant exists")
-    func nfsConstant() {
-        let kind = Kernel.File.System.Kind.nfs
-        #expect(kind.rawValue == 0x6969)
-    }
+        @Test("nfs constant exists")
+        func nfsConstant() {
+            let kind = Kernel.File.System.Kind.nfs
+            #expect(kind.rawValue == 0x6969)
+        }
 
-    @Test("cifs constant exists")
-    func cifsConstant() {
-        let kind = Kernel.File.System.Kind.cifs
-        #expect(kind.rawValue == 0xFF534D42)
-    }
+        @Test("cifs constant exists")
+        func cifsConstant() {
+            let kind = Kernel.File.System.Kind.cifs
+            #expect(kind.rawValue == 0xFF53_4D42)
+        }
 
-    @Test("known filesystems have descriptive names")
-    func knownDescriptions() {
-        #expect(Kernel.File.System.Kind.ext4.description == "ext4")
-        #expect(Kernel.File.System.Kind.btrfs.description == "btrfs")
-        #expect(Kernel.File.System.Kind.xfs.description == "xfs")
-        #expect(Kernel.File.System.Kind.tmpfs.description == "tmpfs")
+        @Test("known filesystems have descriptive names")
+        func knownDescriptions() {
+            #expect(Kernel.File.System.Kind.ext4.description == "ext4")
+            #expect(Kernel.File.System.Kind.btrfs.description == "btrfs")
+            #expect(Kernel.File.System.Kind.xfs.description == "xfs")
+            #expect(Kernel.File.System.Kind.tmpfs.description == "tmpfs")
+        }
     }
-}
 #endif
 
 // MARK: - Edge Cases

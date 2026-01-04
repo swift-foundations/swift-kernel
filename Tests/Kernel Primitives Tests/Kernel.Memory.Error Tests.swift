@@ -83,7 +83,7 @@ extension Kernel.Memory.Error.Test.Unit {
         var set = Set<Kernel.Memory.Error>()
         set.insert(.fault)
         set.insert(.exhausted)
-        set.insert(.fault) // duplicate
+        set.insert(.fault)  // duplicate
         #expect(set.count == 2)
     }
 }

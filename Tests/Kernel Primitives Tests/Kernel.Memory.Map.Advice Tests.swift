@@ -82,7 +82,7 @@ extension Kernel.Memory.Map.Advice.Test.Unit {
         var set = Set<Kernel.Memory.Map.Advice>()
         set.insert(.normal)
         set.insert(.sequential)
-        set.insert(.normal) // duplicate
+        set.insert(.normal)  // duplicate
         #expect(set.count == 2)
     }
 }

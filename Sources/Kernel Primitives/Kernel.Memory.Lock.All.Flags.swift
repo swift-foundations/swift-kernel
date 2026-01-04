@@ -18,50 +18,50 @@ extension Kernel.Memory.Lock {
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-    public import Darwin
-#elseif canImport(Glibc)
-    public import Glibc
-    public import CLinuxShim
-#elseif canImport(Musl)
-    public import Musl
-#endif
+    #if canImport(Darwin)
+        public import Darwin
+    #elseif canImport(Glibc)
+        public import Glibc
+        public import CLinuxShim
+    #elseif canImport(Musl)
+        public import Musl
+    #endif
 
-extension Kernel.Memory.Lock.All {
-    /// Flags for mlockall().
-    public struct Flags: Sendable, Equatable, Hashable {
-        public let rawValue: Int32
+    extension Kernel.Memory.Lock.All {
+        /// Flags for mlockall().
+        public struct Flags: Sendable, Equatable, Hashable {
+            public let rawValue: Int32
 
-        @inlinable
-        public init(rawValue: Int32) {
-            self.rawValue = rawValue
-        }
+            @inlinable
+            public init(rawValue: Int32) {
+                self.rawValue = rawValue
+            }
 
-        /// Lock all pages currently mapped into the address space.
-        public static let current = Flags(rawValue: MCL_CURRENT)
+            /// Lock all pages currently mapped into the address space.
+            public static let current = Flags(rawValue: MCL_CURRENT)
 
-        /// Lock all pages that become mapped in the future.
-        public static let future = Flags(rawValue: MCL_FUTURE)
+            /// Lock all pages that become mapped in the future.
+            public static let future = Flags(rawValue: MCL_FUTURE)
 
-        #if os(Linux)
-        /// Lock pages when they are faulted in (Linux 4.4+).
-        ///
-        /// This avoids the overhead of faulting in all pages immediately.
-        public static let onFault = Flags(rawValue: MCL_ONFAULT)
-        #endif
+            #if os(Linux)
+                /// Lock pages when they are faulted in (Linux 4.4+).
+                ///
+                /// This avoids the overhead of faulting in all pages immediately.
+                public static let onFault = Flags(rawValue: MCL_ONFAULT)
+            #endif
 
-        /// Combines multiple flags.
-        @inlinable
-        public static func | (lhs: Flags, rhs: Flags) -> Flags {
-            Flags(rawValue: lhs.rawValue | rhs.rawValue)
-        }
+            /// Combines multiple flags.
+            @inlinable
+            public static func | (lhs: Flags, rhs: Flags) -> Flags {
+                Flags(rawValue: lhs.rawValue | rhs.rawValue)
+            }
 
-        /// Checks if this contains another flag.
-        @inlinable
-        public func contains(_ other: Flags) -> Bool {
-            (rawValue & other.rawValue) == other.rawValue
+            /// Checks if this contains another flag.
+            @inlinable
+            public func contains(_ other: Flags) -> Bool {
+                (rawValue & other.rawValue) == other.rawValue
+            }
         }
     }
-}
 
 #endif

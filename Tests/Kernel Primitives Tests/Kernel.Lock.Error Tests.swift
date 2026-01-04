@@ -123,7 +123,7 @@ extension Kernel.Lock.Error.Test.Unit {
         set.insert(.contention)
         set.insert(.deadlock)
         set.insert(.unavailable)
-        set.insert(.contention) // duplicate
+        set.insert(.contention)  // duplicate
         #expect(set.count == 3)
     }
 

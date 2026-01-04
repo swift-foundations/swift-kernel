@@ -9,18 +9,18 @@
 //
 // ===----------------------------------------------------------------------===//
 
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
-
 import StandardsTestSupport
 import Testing
 
 @testable import Kernel_Primitives
+
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#elseif canImport(Musl)
+    import Musl
+#endif
 
 extension Kernel.Error.Code {
     #TestSuites
@@ -115,7 +115,7 @@ extension Kernel.Error.Code.Test.Unit {
         var set = Set<Kernel.Error.Code>()
         set.insert(.posix(1))
         set.insert(.win32(1))
-        set.insert(.posix(1)) // duplicate
+        set.insert(.posix(1))  // duplicate
         #expect(set.count == 2)
     }
 }
@@ -157,17 +157,17 @@ extension Kernel.Error.Code.Test.EdgeCase {
 // MARK: - Platform-Specific Tests
 
 #if !os(Windows)
-extension Kernel.Error.Code.Test.Unit {
-    @Test("common POSIX errno values")
-    func commonPosixErrno() {
-        let ebadf = Kernel.Error.Code.posix(EBADF)
-        #expect(ebadf.posix == EBADF)
+    extension Kernel.Error.Code.Test.Unit {
+        @Test("common POSIX errno values")
+        func commonPosixErrno() {
+            let ebadf = Kernel.Error.Code.posix(EBADF)
+            #expect(ebadf.posix == EBADF)
 
-        let einval = Kernel.Error.Code.posix(EINVAL)
-        #expect(einval.posix == EINVAL)
+            let einval = Kernel.Error.Code.posix(EINVAL)
+            #expect(einval.posix == EINVAL)
 
-        let enoent = Kernel.Error.Code.posix(ENOENT)
-        #expect(enoent.posix == ENOENT)
+            let enoent = Kernel.Error.Code.posix(ENOENT)
+            #expect(enoent.posix == ENOENT)
+        }
     }
-}
 #endif

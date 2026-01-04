@@ -60,9 +60,9 @@ extension Kernel.Atomic.Load.Test.Unit {
 
     @Test("load function works with UInt64")
     func loadUInt64() {
-        var value: UInt64 = 0xDEADBEEFCAFEBABE
+        var value: UInt64 = 0xDEAD_BEEF_CAFE_BABE
         let loaded = Kernel.Atomic.load(&value, ordering: .relaxed)
-        #expect(loaded == 0xDEADBEEFCAFEBABE)
+        #expect(loaded == 0xDEAD_BEEF_CAFE_BABE)
     }
 
     @Test("load function works with Bool")

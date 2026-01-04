@@ -159,7 +159,7 @@ extension Kernel.IO.Error.Test.Unit {
         set.insert(.broken)
         set.insert(.reset)
         set.insert(.hardware)
-        set.insert(.broken) // duplicate
+        set.insert(.broken)  // duplicate
         #expect(set.count == 3)
     }
 }
@@ -171,7 +171,7 @@ extension Kernel.IO.Error.Test.EdgeCase {
     func allCasesDistinct() {
         let cases: [Kernel.IO.Error] = [
             .broken, .reset, .hardware, .illegalSeek,
-            .deviceUnsupported, .deviceUnavailable, .unsupported
+            .deviceUnsupported, .deviceUnavailable, .unsupported,
         ]
 
         // Verify all pairs are distinct

@@ -76,7 +76,7 @@ extension Kernel.Storage.Error.Test.Unit {
         var set = Set<Kernel.Storage.Error>()
         set.insert(.exhausted)
         set.insert(.quota)
-        set.insert(.exhausted) // duplicate
+        set.insert(.exhausted)  // duplicate
         #expect(set.count == 2)
     }
 }

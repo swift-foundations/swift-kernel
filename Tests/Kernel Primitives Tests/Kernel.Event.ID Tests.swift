@@ -45,33 +45,33 @@ struct EventIDTests {
     @Test("ID from descriptor")
     func fromDescriptor() {
         #if os(Windows)
-        // Windows uses HANDLE
+            // Windows uses HANDLE
         #else
-        let descriptor = Kernel.Descriptor(rawValue: 5)
-        let id = Kernel.Event.ID(descriptor: descriptor)
-        #expect(id._rawValue == 5)
+            let descriptor = Kernel.Descriptor(rawValue: 5)
+            let id = Kernel.Event.ID(descriptor: descriptor)
+            #expect(id._rawValue == 5)
         #endif
     }
 
     @Test("Descriptor from ID roundtrip")
     func descriptorRoundtrip() {
         #if os(Windows)
-        // Windows uses HANDLE
+            // Windows uses HANDLE
         #else
-        let descriptor = Kernel.Descriptor(rawValue: 10)
-        let id = Kernel.Event.ID(descriptor: descriptor)
-        let recovered = Kernel.Descriptor(id)
-        #expect(recovered?.rawValue == 10)
+            let descriptor = Kernel.Descriptor(rawValue: 10)
+            let id = Kernel.Event.ID(descriptor: descriptor)
+            let recovered = Kernel.Descriptor(id)
+            #expect(recovered?.rawValue == 10)
         #endif
     }
 
     @Test("Descriptor from ID fails for large values")
     func descriptorFromLargeIDFails() {
         #if !os(Windows)
-        // Values larger than Int32.max cannot be converted to a descriptor
-        let largeID = Kernel.Event.ID(UInt(Int32.max) + 1)
-        let descriptor = Kernel.Descriptor(largeID)
-        #expect(descriptor == nil)
+            // Values larger than Int32.max cannot be converted to a descriptor
+            let largeID = Kernel.Event.ID(UInt(Int32.max) + 1)
+            let descriptor = Kernel.Descriptor(largeID)
+            #expect(descriptor == nil)
         #endif
     }
 
@@ -95,11 +95,11 @@ struct EventIDTests {
     @Test("ID from socket descriptor")
     func fromSocketDescriptor() {
         #if os(Windows)
-        // Windows sockets use SOCKET type
+            // Windows sockets use SOCKET type
         #else
-        let socket = Kernel.Socket.Descriptor(rawValue: 7)
-        let id = Kernel.Event.ID(socket: socket)
-        #expect(id._rawValue == 7)
+            let socket = Kernel.Socket.Descriptor(rawValue: 7)
+            let id = Kernel.Event.ID(socket: socket)
+            #expect(id._rawValue == 7)
         #endif
     }
 
@@ -119,7 +119,7 @@ struct EventIDTests {
         var set = Set<Kernel.Event.ID>()
         set.insert(1)
         set.insert(2)
-        set.insert(1) // duplicate
+        set.insert(1)  // duplicate
         #expect(set.count == 2)
     }
 

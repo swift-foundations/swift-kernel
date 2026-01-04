@@ -76,7 +76,7 @@ extension Kernel.Group.Test.Unit {
         var set = Set<Kernel.Group.ID>()
         set.insert(Kernel.Group.ID(1))
         set.insert(Kernel.Group.ID(2))
-        set.insert(Kernel.Group.ID(1)) // duplicate
+        set.insert(Kernel.Group.ID(1))  // duplicate
         #expect(set.count == 2)
     }
 }

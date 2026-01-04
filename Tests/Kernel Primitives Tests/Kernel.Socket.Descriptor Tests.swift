@@ -29,11 +29,11 @@ extension Kernel.Socket.Descriptor.Test.Unit {
     @Test("Descriptor from rawValue")
     func fromRawValue() {
         #if os(Windows)
-        let descriptor = Kernel.Socket.Descriptor(rawValue: 42)
-        #expect(descriptor.rawValue == 42)
+            let descriptor = Kernel.Socket.Descriptor(rawValue: 42)
+            #expect(descriptor.rawValue == 42)
         #else
-        let descriptor = Kernel.Socket.Descriptor(rawValue: 42)
-        #expect(descriptor.rawValue == 42)
+            let descriptor = Kernel.Socket.Descriptor(rawValue: 42)
+            #expect(descriptor.rawValue == 42)
         #endif
     }
 
@@ -41,9 +41,9 @@ extension Kernel.Socket.Descriptor.Test.Unit {
     func invalidSentinel() {
         let invalid = Kernel.Socket.Descriptor.invalid
         #if os(Windows)
-        #expect(invalid.rawValue == UInt64.max)
+            #expect(invalid.rawValue == UInt64.max)
         #else
-        #expect(invalid.rawValue == -1)
+            #expect(invalid.rawValue == -1)
         #endif
     }
 
@@ -83,7 +83,7 @@ extension Kernel.Socket.Descriptor.Test.Unit {
         var set = Set<Kernel.Socket.Descriptor>()
         set.insert(Kernel.Socket.Descriptor(rawValue: 1))
         set.insert(Kernel.Socket.Descriptor(rawValue: 2))
-        set.insert(Kernel.Socket.Descriptor(rawValue: 1)) // duplicate
+        set.insert(Kernel.Socket.Descriptor(rawValue: 1))  // duplicate
         #expect(set.count == 2)
     }
 }
@@ -91,46 +91,46 @@ extension Kernel.Socket.Descriptor.Test.Unit {
 // MARK: - Kernel.Descriptor Interop Tests (POSIX only)
 
 #if !os(Windows)
-extension Kernel.Socket.Descriptor.Test.Unit {
-    @Test("Descriptor from Kernel.Descriptor")
-    func fromKernelDescriptor() {
-        let fileDescriptor = Kernel.Descriptor(rawValue: 7)
-        let socketDescriptor = Kernel.Socket.Descriptor(fileDescriptor)
-        #expect(socketDescriptor.rawValue == 7)
-    }
+    extension Kernel.Socket.Descriptor.Test.Unit {
+        @Test("Descriptor from Kernel.Descriptor")
+        func fromKernelDescriptor() {
+            let fileDescriptor = Kernel.Descriptor(rawValue: 7)
+            let socketDescriptor = Kernel.Socket.Descriptor(fileDescriptor)
+            #expect(socketDescriptor.rawValue == 7)
+        }
 
-    @Test("Kernel.Descriptor from Socket.Descriptor")
-    func toKernelDescriptor() {
-        let socketDescriptor = Kernel.Socket.Descriptor(rawValue: 8)
-        let fileDescriptor = Kernel.Descriptor(socketDescriptor)
-        #expect(fileDescriptor.rawValue == 8)
+        @Test("Kernel.Descriptor from Socket.Descriptor")
+        func toKernelDescriptor() {
+            let socketDescriptor = Kernel.Socket.Descriptor(rawValue: 8)
+            let fileDescriptor = Kernel.Descriptor(socketDescriptor)
+            #expect(fileDescriptor.rawValue == 8)
+        }
     }
-}
 #endif
 
 // MARK: - Edge Cases
 
 extension Kernel.Socket.Descriptor.Test.EdgeCase {
     #if !os(Windows)
-    @Test("Descriptor zero is valid on POSIX")
-    func zeroIsValid() {
-        let descriptor = Kernel.Socket.Descriptor(rawValue: 0)
-        #expect(descriptor.isValid)
-    }
+        @Test("Descriptor zero is valid on POSIX")
+        func zeroIsValid() {
+            let descriptor = Kernel.Socket.Descriptor(rawValue: 0)
+            #expect(descriptor.isValid)
+        }
 
-    @Test("Descriptor negative is invalid on POSIX")
-    func negativeIsInvalid() {
-        let descriptor = Kernel.Socket.Descriptor(rawValue: -1)
-        #expect(!descriptor.isValid)
-    }
+        @Test("Descriptor negative is invalid on POSIX")
+        func negativeIsInvalid() {
+            let descriptor = Kernel.Socket.Descriptor(rawValue: -1)
+            #expect(!descriptor.isValid)
+        }
     #endif
 
     @Test("Descriptor rawValue roundtrip")
     func rawValueRoundtrip() {
         #if os(Windows)
-        let values: [UInt64] = [0, 1, 100, 1000]
+            let values: [UInt64] = [0, 1, 100, 1000]
         #else
-        let values: [Int32] = [0, 1, 100, 1000]
+            let values: [Int32] = [0, 1, 100, 1000]
         #endif
         for value in values {
             let descriptor = Kernel.Socket.Descriptor(rawValue: value)

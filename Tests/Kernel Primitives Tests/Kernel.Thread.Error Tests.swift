@@ -107,7 +107,7 @@ extension Kernel.Thread.Error.Test.Unit {
         set.insert(.create(.posix(1)))
         set.insert(.join(.posix(2)))
         set.insert(.detach(.posix(3)))
-        set.insert(.create(.posix(1))) // duplicate
+        set.insert(.create(.posix(1)))  // duplicate
         #expect(set.count == 3)
     }
 
@@ -171,18 +171,18 @@ extension Kernel.Thread.Error.Test.EdgeCase {
     }
 
     #if os(Windows)
-    @Test("win32 error code")
-    func win32ErrorCode() {
-        let error = Kernel.Thread.Error.create(.win32(5))
-        if case .create(let code) = error {
-            if case .win32(let value) = code {
-                #expect(value == 5)
+        @Test("win32 error code")
+        func win32ErrorCode() {
+            let error = Kernel.Thread.Error.create(.win32(5))
+            if case .create(let code) = error {
+                if case .win32(let value) = code {
+                    #expect(value == 5)
+                } else {
+                    Issue.record("Expected .win32 code")
+                }
             } else {
-                Issue.record("Expected .win32 code")
+                Issue.record("Expected .create case")
             }
-        } else {
-            Issue.record("Expected .create case")
         }
-    }
     #endif
 }

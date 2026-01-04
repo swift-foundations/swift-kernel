@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
 public import Binary
+public import SystemPackage
 
 /// Namespace for Direct I/O operations (cache bypass).
 ///

@@ -56,9 +56,9 @@ extension Kernel.Socket.Test.Unit {
     }
 
     #if !os(Windows)
-    @Test("Socket.Flags type exists")
-    func flagsTypeExists() {
-        let _: Kernel.Socket.Flags.Type = Kernel.Socket.Flags.self
-    }
+        @Test("Socket.Flags type exists")
+        func flagsTypeExists() {
+            let _: Kernel.Socket.Flags.Type = Kernel.Socket.Flags.self
+        }
     #endif
 }

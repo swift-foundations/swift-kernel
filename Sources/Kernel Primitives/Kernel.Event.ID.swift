@@ -40,9 +40,9 @@ extension Tagged where Tag == Kernel.Event, RawValue == UInt {
     @inlinable
     public init(descriptor: Kernel.Descriptor) {
         #if os(Windows)
-        self.init(UInt(bitPattern: descriptor.rawValue))
+            self.init(UInt(bitPattern: descriptor.rawValue))
         #else
-        self.init(UInt(bitPattern: Int(descriptor.rawValue)))
+            self.init(UInt(bitPattern: Int(descriptor.rawValue)))
         #endif
     }
 
@@ -50,9 +50,9 @@ extension Tagged where Tag == Kernel.Event, RawValue == UInt {
     @inlinable
     public init(socket: Kernel.Socket.Descriptor) {
         #if os(Windows)
-        self.init(UInt(socket.rawValue))
+            self.init(UInt(socket.rawValue))
         #else
-        self.init(UInt(bitPattern: Int(socket.rawValue)))
+            self.init(UInt(bitPattern: Int(socket.rawValue)))
         #endif
     }
 
@@ -73,10 +73,10 @@ extension Kernel.Descriptor {
     @inlinable
     public init?(_ id: Kernel.Event.ID) {
         #if os(Windows)
-        self.init(rawValue: HANDLE(bitPattern: Int(id._rawValue)))
+            self.init(rawValue: HANDLE(bitPattern: Int(id._rawValue)))
         #else
-        guard id._rawValue <= UInt(Int32.max) else { return nil }
-        self.init(rawValue: Int32(id._rawValue))
+            guard id._rawValue <= UInt(Int32.max) else { return nil }
+            self.init(rawValue: Int32(id._rawValue))
         #endif
     }
 }

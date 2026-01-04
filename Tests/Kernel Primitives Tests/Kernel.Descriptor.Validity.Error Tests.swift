@@ -77,7 +77,7 @@ extension Kernel.Descriptor.Validity.Error.Test.Unit {
         set.insert(.invalid)
         set.insert(.limit(.process))
         set.insert(.limit(.system))
-        set.insert(.invalid) // duplicate
+        set.insert(.invalid)  // duplicate
         #expect(set.count == 3)
     }
 }

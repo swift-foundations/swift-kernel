@@ -10,55 +10,55 @@
 // ===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-import Darwin
-import StandardsTestSupport
-import Testing
+    import Darwin
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Darwin
-import Kernel_Primitives
+    @testable import Kernel_Darwin
+    import Kernel_Primitives
 
-extension Kernel.Kqueue.Flags {
-    #TestSuites
-}
-
-// MARK: - Bridging Unit Tests
-
-extension Kernel.Kqueue.Flags.Test.Unit {
-
-    @Test("add and delete flags are distinct")
-    func addAndDeleteAreDistinct() {
-        #expect(Kernel.Kqueue.Flags.add != .delete)
-        #expect(Kernel.Kqueue.Flags.add.rawValue != Kernel.Kqueue.Flags.delete.rawValue)
+    extension Kernel.Kqueue.Flags {
+        #TestSuites
     }
 
-    @Test("flags combine with OR operator")
-    func flagsCombineWithOrOperator() {
-        let combined = Kernel.Kqueue.Flags.add | .enable
-        #expect(combined.contains(.add))
-        #expect(combined.contains(.enable))
-        #expect(!combined.contains(.delete))
-    }
+    // MARK: - Bridging Unit Tests
 
-    @Test("contains detects single flag")
-    func containsDetectsSingleFlag() {
-        #expect(Kernel.Kqueue.Flags.add.contains(.add))
-        #expect(!Kernel.Kqueue.Flags.add.contains(.delete))
-    }
+    extension Kernel.Kqueue.Flags.Test.Unit {
 
-    @Test("none has rawValue zero")
-    func noneHasRawValueZero() {
-        #expect(Kernel.Kqueue.Flags.none.rawValue == 0)
-    }
+        @Test("add and delete flags are distinct")
+        func addAndDeleteAreDistinct() {
+            #expect(Kernel.Kqueue.Flags.add != .delete)
+            #expect(Kernel.Kqueue.Flags.add.rawValue != Kernel.Kqueue.Flags.delete.rawValue)
+        }
 
-    @Test("add flag rawValue matches EV_ADD")
-    func addRawValueMatchesEVADD() {
-        #expect(Kernel.Kqueue.Flags.add.rawValue == UInt16(EV_ADD))
-    }
+        @Test("flags combine with OR operator")
+        func flagsCombineWithOrOperator() {
+            let combined = Kernel.Kqueue.Flags.add | .enable
+            #expect(combined.contains(.add))
+            #expect(combined.contains(.enable))
+            #expect(!combined.contains(.delete))
+        }
 
-    @Test("delete flag rawValue matches EV_DELETE")
-    func deleteRawValueMatchesEVDELETE() {
-        #expect(Kernel.Kqueue.Flags.delete.rawValue == UInt16(EV_DELETE))
+        @Test("contains detects single flag")
+        func containsDetectsSingleFlag() {
+            #expect(Kernel.Kqueue.Flags.add.contains(.add))
+            #expect(!Kernel.Kqueue.Flags.add.contains(.delete))
+        }
+
+        @Test("none has rawValue zero")
+        func noneHasRawValueZero() {
+            #expect(Kernel.Kqueue.Flags.none.rawValue == 0)
+        }
+
+        @Test("add flag rawValue matches EV_ADD")
+        func addRawValueMatchesEVADD() {
+            #expect(Kernel.Kqueue.Flags.add.rawValue == UInt16(EV_ADD))
+        }
+
+        @Test("delete flag rawValue matches EV_DELETE")
+        func deleteRawValueMatchesEVDELETE() {
+            #expect(Kernel.Kqueue.Flags.delete.rawValue == UInt16(EV_DELETE))
+        }
     }
-}
 
 #endif

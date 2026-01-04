@@ -60,19 +60,19 @@ extension Kernel.Socket {
         public static let large = Backlog(4096)
 
         #if !os(Windows)
-        /// System maximum backlog.
-        ///
-        /// Uses `SOMAXCONN` which typically maps to the system's maximum
-        /// allowed backlog value.
-        public static var max: Backlog {
-            #if canImport(Darwin)
-                return Backlog(Darwin.SOMAXCONN)
-            #elseif canImport(Glibc)
-                return Backlog(Glibc.SOMAXCONN)
-            #elseif canImport(Musl)
-                return Backlog(Musl.SOMAXCONN)
-            #endif
-        }
+            /// System maximum backlog.
+            ///
+            /// Uses `SOMAXCONN` which typically maps to the system's maximum
+            /// allowed backlog value.
+            public static var max: Backlog {
+                #if canImport(Darwin)
+                    return Backlog(Darwin.SOMAXCONN)
+                #elseif canImport(Glibc)
+                    return Backlog(Glibc.SOMAXCONN)
+                #elseif canImport(Musl)
+                    return Backlog(Musl.SOMAXCONN)
+                #endif
+            }
         #endif
     }
 }

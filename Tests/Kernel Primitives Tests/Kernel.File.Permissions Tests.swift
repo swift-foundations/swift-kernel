@@ -237,7 +237,7 @@ extension Kernel.File.Permissions.Test.Unit {
         var set = Set<Kernel.File.Permissions>()
         set.insert(.standard)
         set.insert(.executable)
-        set.insert(.standard) // duplicate
+        set.insert(.standard)  // duplicate
         #expect(set.count == 2)
     }
 }
@@ -247,7 +247,8 @@ extension Kernel.File.Permissions.Test.Unit {
 extension Kernel.File.Permissions.Test.EdgeCase {
     @Test("combining all individual permissions equals 0o777")
     func combineAll() {
-        let all = Kernel.File.Permissions.ownerRead
+        let all =
+            Kernel.File.Permissions.ownerRead
             | .ownerWrite
             | .ownerExecute
             | .groupRead

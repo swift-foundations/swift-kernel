@@ -66,7 +66,7 @@ extension Kernel.Socket.Shutdown.How.Test.Unit {
         set.insert(.read)
         set.insert(.write)
         set.insert(.both)
-        set.insert(.read) // duplicate
+        set.insert(.read)  // duplicate
         #expect(set.count == 3)
     }
 }

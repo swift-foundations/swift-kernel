@@ -12,9 +12,9 @@ public import Kernel_Primitives
 
 #if os(Windows)
 
-extension Kernel.IOCP {
-    /// Completion-related types for IOCP.
-    public enum Completion {}
-}
+    extension Kernel.IOCP {
+        /// Completion-related types for IOCP.
+        public enum Completion {}
+    }
 
 #endif

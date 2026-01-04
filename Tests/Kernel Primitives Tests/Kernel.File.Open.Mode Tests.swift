@@ -75,39 +75,39 @@ extension Kernel.File.Open.Mode.Test.Unit {
 // MARK: - POSIX Conversion Tests
 
 #if !os(Windows)
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
+    #if canImport(Darwin)
+        import Darwin
+    #elseif canImport(Glibc)
+        import Glibc
+    #elseif canImport(Musl)
+        import Musl
+    #endif
 
-extension Kernel.File.Open.Mode.Test.Unit {
-    @Test("read mode converts to O_RDONLY")
-    func readPosixFlags() {
-        let mode: Kernel.File.Open.Mode = [.read]
-        #expect(mode.posixFlags == O_RDONLY)
-    }
+    extension Kernel.File.Open.Mode.Test.Unit {
+        @Test("read mode converts to O_RDONLY")
+        func readPosixFlags() {
+            let mode: Kernel.File.Open.Mode = [.read]
+            #expect(mode.posixFlags == O_RDONLY)
+        }
 
-    @Test("write mode converts to O_WRONLY")
-    func writePosixFlags() {
-        let mode: Kernel.File.Open.Mode = [.write]
-        #expect(mode.posixFlags == O_WRONLY)
-    }
+        @Test("write mode converts to O_WRONLY")
+        func writePosixFlags() {
+            let mode: Kernel.File.Open.Mode = [.write]
+            #expect(mode.posixFlags == O_WRONLY)
+        }
 
-    @Test("read/write mode converts to O_RDWR")
-    func readWritePosixFlags() {
-        let mode: Kernel.File.Open.Mode = [.read, .write]
-        #expect(mode.posixFlags == O_RDWR)
-    }
+        @Test("read/write mode converts to O_RDWR")
+        func readWritePosixFlags() {
+            let mode: Kernel.File.Open.Mode = [.read, .write]
+            #expect(mode.posixFlags == O_RDWR)
+        }
 
-    @Test("empty mode defaults to O_RDONLY")
-    func emptyPosixFlags() {
-        let mode = Kernel.File.Open.Mode()
-        #expect(mode.posixFlags == O_RDONLY)
+        @Test("empty mode defaults to O_RDONLY")
+        func emptyPosixFlags() {
+            let mode = Kernel.File.Open.Mode()
+            #expect(mode.posixFlags == O_RDONLY)
+        }
     }
-}
 #endif
 
 // MARK: - Conformances
@@ -133,7 +133,7 @@ extension Kernel.File.Open.Mode.Test.Unit {
         var set = Set<Kernel.File.Open.Mode>()
         set.insert([.read])
         set.insert([.write])
-        set.insert([.read]) // duplicate
+        set.insert([.read])  // duplicate
         #expect(set.count == 2)
     }
 }

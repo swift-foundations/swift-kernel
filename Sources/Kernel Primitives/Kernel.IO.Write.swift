@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
 public import Dimension
+public import SystemPackage
 
 // MARK: - Write Type
 

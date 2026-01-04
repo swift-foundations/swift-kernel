@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 public import Kernel_Primitives
 
-
 #if os(Windows)
     public import WinSDK
 

@@ -10,50 +10,50 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Linux)
-import StandardsTestSupport
-import Testing
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Primitives
+    @testable import Kernel_Primitives
 
-extension Kernel.Copy.Range {
-    #TestSuites
-}
-
-// MARK: - Unit Tests
-
-extension Kernel.Copy.Range.Test.Unit {
-    @Test("Range namespace exists")
-    func namespaceExists() {
-        // Kernel.Copy.Range is a public enum namespace (Linux only)
-        _ = Kernel.Copy.Range.self
+    extension Kernel.Copy.Range {
+        #TestSuites
     }
 
-    @Test("Range is an enum")
-    func isEnum() {
-        let _: Kernel.Copy.Range.Type = Kernel.Copy.Range.self
-    }
+    // MARK: - Unit Tests
 
-    @Test("copy function signature exists")
-    func copySignatureExists() {
-        // Verify the function exists with correct signature
-        // This is a compile-time check only
-        typealias CopyFunc = (
-            Kernel.Descriptor,
-            inout Kernel.File.Offset,
-            Kernel.Descriptor,
-            inout Kernel.File.Offset,
-            Kernel.File.Size
-        ) throws -> Kernel.File.Size
+    extension Kernel.Copy.Range.Test.Unit {
+        @Test("Range namespace exists")
+        func namespaceExists() {
+            // Kernel.Copy.Range is a public enum namespace (Linux only)
+            _ = Kernel.Copy.Range.self
+        }
 
-        let _: CopyFunc = { source, sourceOffset, dest, destOffset, length in
-            try Kernel.Copy.Range.copy(
-                from: source,
-                sourceOffset: &sourceOffset,
-                to: dest,
-                destOffset: &destOffset,
-                length: length
-            )
+        @Test("Range is an enum")
+        func isEnum() {
+            let _: Kernel.Copy.Range.Type = Kernel.Copy.Range.self
+        }
+
+        @Test("copy function signature exists")
+        func copySignatureExists() {
+            // Verify the function exists with correct signature
+            // This is a compile-time check only
+            typealias CopyFunc = (
+                Kernel.Descriptor,
+                inout Kernel.File.Offset,
+                Kernel.Descriptor,
+                inout Kernel.File.Offset,
+                Kernel.File.Size
+            ) throws -> Kernel.File.Size
+
+            let _: CopyFunc = { source, sourceOffset, dest, destOffset, length in
+                try Kernel.Copy.Range.copy(
+                    from: source,
+                    sourceOffset: &sourceOffset,
+                    to: dest,
+                    destOffset: &destOffset,
+                    length: length
+                )
+            }
         }
     }
-}
 #endif

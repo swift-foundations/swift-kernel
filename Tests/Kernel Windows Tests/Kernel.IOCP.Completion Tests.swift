@@ -10,38 +10,38 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-import WinSDK
-import StandardsTestSupport
-import Testing
+    import WinSDK
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Windows
-import Kernel_Primitives
+    @testable import Kernel_Windows
+    import Kernel_Primitives
 
-extension Kernel.IOCP.Completion {
-    #TestSuites
-}
-
-// MARK: - Unit Tests
-
-extension Kernel.IOCP.Completion.Test.Unit {
-    @Test("Completion namespace exists")
-    func namespaceExists() {
-        _ = Kernel.IOCP.Completion.self
+    extension Kernel.IOCP.Completion {
+        #TestSuites
     }
 
-    @Test("Completion is an enum")
-    func isEnum() {
-        let _: Kernel.IOCP.Completion.Type = Kernel.IOCP.Completion.self
-    }
-}
+    // MARK: - Unit Tests
 
-// MARK: - Nested Types
+    extension Kernel.IOCP.Completion.Test.Unit {
+        @Test("Completion namespace exists")
+        func namespaceExists() {
+            _ = Kernel.IOCP.Completion.self
+        }
 
-extension Kernel.IOCP.Completion.Test.Unit {
-    @Test("Completion.Key type exists")
-    func keyTypeExists() {
-        let _: Kernel.IOCP.Completion.Key.Type = Kernel.IOCP.Completion.Key.self
+        @Test("Completion is an enum")
+        func isEnum() {
+            let _: Kernel.IOCP.Completion.Type = Kernel.IOCP.Completion.self
+        }
     }
-}
+
+    // MARK: - Nested Types
+
+    extension Kernel.IOCP.Completion.Test.Unit {
+        @Test("Completion.Key type exists")
+        func keyTypeExists() {
+            let _: Kernel.IOCP.Completion.Key.Type = Kernel.IOCP.Completion.Key.self
+        }
+    }
 
 #endif

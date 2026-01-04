@@ -116,68 +116,68 @@ extension Kernel.File.Open.Options.Test.Unit {
 // MARK: - POSIX Conversion Tests
 
 #if !os(Windows)
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
-
-extension Kernel.File.Open.Options.Test.Unit {
-    @Test("create maps to O_CREAT")
-    func createPosixFlags() {
-        let options: Kernel.File.Open.Options = [.create]
-        #expect(options.posixFlags & O_CREAT != 0)
-    }
-
-    @Test("truncate maps to O_TRUNC")
-    func truncatePosixFlags() {
-        let options: Kernel.File.Open.Options = [.truncate]
-        #expect(options.posixFlags & O_TRUNC != 0)
-    }
-
-    @Test("append maps to O_APPEND")
-    func appendPosixFlags() {
-        let options: Kernel.File.Open.Options = [.append]
-        #expect(options.posixFlags & O_APPEND != 0)
-    }
-
-    @Test("exclusive maps to O_EXCL")
-    func exclusivePosixFlags() {
-        let options: Kernel.File.Open.Options = [.exclusive]
-        #expect(options.posixFlags & O_EXCL != 0)
-    }
-
-    @Test("noFollow maps to O_NOFOLLOW")
-    func noFollowPosixFlags() {
-        let options: Kernel.File.Open.Options = [.noFollow]
-        #expect(options.posixFlags & O_NOFOLLOW != 0)
-    }
-
-    @Test("combined options map correctly")
-    func combinedPosixFlags() {
-        let options: Kernel.File.Open.Options = [.create, .truncate, .exclusive]
-        let flags = options.posixFlags
-        #expect(flags & O_CREAT != 0)
-        #expect(flags & O_TRUNC != 0)
-        #expect(flags & O_EXCL != 0)
-    }
-
-    @Test("empty options have zero flags")
-    func emptyPosixFlags() {
-        let options = Kernel.File.Open.Options()
-        #expect(options.posixFlags == 0)
-    }
-
-    #if os(Linux)
-    @Test("direct maps to O_DIRECT on Linux")
-    func directPosixFlags() {
-        let options: Kernel.File.Open.Options = [.direct]
-        #expect(options.posixFlags & O_DIRECT != 0)
-    }
+    #if canImport(Darwin)
+        import Darwin
+    #elseif canImport(Glibc)
+        import Glibc
+    #elseif canImport(Musl)
+        import Musl
     #endif
-}
+
+    extension Kernel.File.Open.Options.Test.Unit {
+        @Test("create maps to O_CREAT")
+        func createPosixFlags() {
+            let options: Kernel.File.Open.Options = [.create]
+            #expect(options.posixFlags & O_CREAT != 0)
+        }
+
+        @Test("truncate maps to O_TRUNC")
+        func truncatePosixFlags() {
+            let options: Kernel.File.Open.Options = [.truncate]
+            #expect(options.posixFlags & O_TRUNC != 0)
+        }
+
+        @Test("append maps to O_APPEND")
+        func appendPosixFlags() {
+            let options: Kernel.File.Open.Options = [.append]
+            #expect(options.posixFlags & O_APPEND != 0)
+        }
+
+        @Test("exclusive maps to O_EXCL")
+        func exclusivePosixFlags() {
+            let options: Kernel.File.Open.Options = [.exclusive]
+            #expect(options.posixFlags & O_EXCL != 0)
+        }
+
+        @Test("noFollow maps to O_NOFOLLOW")
+        func noFollowPosixFlags() {
+            let options: Kernel.File.Open.Options = [.noFollow]
+            #expect(options.posixFlags & O_NOFOLLOW != 0)
+        }
+
+        @Test("combined options map correctly")
+        func combinedPosixFlags() {
+            let options: Kernel.File.Open.Options = [.create, .truncate, .exclusive]
+            let flags = options.posixFlags
+            #expect(flags & O_CREAT != 0)
+            #expect(flags & O_TRUNC != 0)
+            #expect(flags & O_EXCL != 0)
+        }
+
+        @Test("empty options have zero flags")
+        func emptyPosixFlags() {
+            let options = Kernel.File.Open.Options()
+            #expect(options.posixFlags == 0)
+        }
+
+        #if os(Linux)
+            @Test("direct maps to O_DIRECT on Linux")
+            func directPosixFlags() {
+                let options: Kernel.File.Open.Options = [.direct]
+                #expect(options.posixFlags & O_DIRECT != 0)
+            }
+        #endif
+    }
 #endif
 
 // MARK: - Conformances
@@ -203,7 +203,7 @@ extension Kernel.File.Open.Options.Test.Unit {
         var set = Set<Kernel.File.Open.Options>()
         set.insert([.create])
         set.insert([.truncate])
-        set.insert([.create]) // duplicate
+        set.insert([.create])  // duplicate
         #expect(set.count == 2)
     }
 }
@@ -214,7 +214,7 @@ extension Kernel.File.Open.Options.Test.EdgeCase {
     @Test("all standard options are distinct bits")
     func distinctBits() {
         let options: [Kernel.File.Open.Options] = [
-            .create, .truncate, .append, .exclusive, .direct, .noFollow
+            .create, .truncate, .append, .exclusive, .direct, .noFollow,
         ]
         for i in 0..<options.count {
             for j in (i + 1)..<options.count {

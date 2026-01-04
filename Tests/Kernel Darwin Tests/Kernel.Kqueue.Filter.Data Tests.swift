@@ -10,83 +10,83 @@
 // ===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-import Darwin
-import StandardsTestSupport
-import Testing
+    import Darwin
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Darwin
-import Kernel_Primitives
+    @testable import Kernel_Darwin
+    import Kernel_Primitives
 
-// Kernel.Kqueue.Filter.Data is a typealias to Tagged<Kernel.Kqueue.Filter, Int>
-// Use a custom test suite since #TestSuites cannot be used on typealiases
+    // Kernel.Kqueue.Filter.Data is a typealias to Tagged<Kernel.Kqueue.Filter, Int>
+    // Use a custom test suite since #TestSuites cannot be used on typealiases
 
-@Suite("Kernel.Kqueue.Filter.Data Tests")
-struct KqueueFilterDataTests {
+    @Suite("Kernel.Kqueue.Filter.Data Tests")
+    struct KqueueFilterDataTests {
 
-    // MARK: - Unit Tests
+        // MARK: - Unit Tests
 
-    @Test("zero constant equals 0")
-    func zeroConstant() {
-        let zero = Kernel.Kqueue.Filter.Data.zero
-        #expect(zero._rawValue == 0)
+        @Test("zero constant equals 0")
+        func zeroConstant() {
+            let zero = Kernel.Kqueue.Filter.Data.zero
+            #expect(zero._rawValue == 0)
+        }
+
+        @Test("init from Int stores value")
+        func initFromInt() {
+            let data = Kernel.Kqueue.Filter.Data(42)
+            #expect(data._rawValue == 42)
+        }
+
+        @Test("literal initialization works")
+        func literalInit() {
+            let data: Kernel.Kqueue.Filter.Data = 100
+            #expect(data._rawValue == 100)
+        }
+
+        @Test("negative values are preserved")
+        func negativeValues() {
+            let data = Kernel.Kqueue.Filter.Data(-1)
+            #expect(data._rawValue == -1)
+        }
+
+        // MARK: - Conformance Tests
+
+        @Test("Data is Sendable")
+        func isSendable() {
+            let data: any Sendable = Kernel.Kqueue.Filter.Data.zero
+            #expect(data is Kernel.Kqueue.Filter.Data)
+        }
+
+        @Test("Data is Equatable")
+        func isEquatable() {
+            let a = Kernel.Kqueue.Filter.Data(42)
+            let b = Kernel.Kqueue.Filter.Data(42)
+            let c = Kernel.Kqueue.Filter.Data(0)
+            #expect(a == b)
+            #expect(a != c)
+        }
+
+        @Test("Data is Hashable")
+        func isHashable() {
+            var set = Set<Kernel.Kqueue.Filter.Data>()
+            set.insert(Kernel.Kqueue.Filter.Data(1))
+            set.insert(Kernel.Kqueue.Filter.Data(2))
+            set.insert(Kernel.Kqueue.Filter.Data(1))  // duplicate
+            #expect(set.count == 2)
+        }
+
+        // MARK: - Edge Cases
+
+        @Test("Int.max is preserved")
+        func intMaxPreserved() {
+            let data = Kernel.Kqueue.Filter.Data(Int.max)
+            #expect(data._rawValue == Int.max)
+        }
+
+        @Test("Int.min is preserved")
+        func intMinPreserved() {
+            let data = Kernel.Kqueue.Filter.Data(Int.min)
+            #expect(data._rawValue == Int.min)
+        }
     }
-
-    @Test("init from Int stores value")
-    func initFromInt() {
-        let data = Kernel.Kqueue.Filter.Data(42)
-        #expect(data._rawValue == 42)
-    }
-
-    @Test("literal initialization works")
-    func literalInit() {
-        let data: Kernel.Kqueue.Filter.Data = 100
-        #expect(data._rawValue == 100)
-    }
-
-    @Test("negative values are preserved")
-    func negativeValues() {
-        let data = Kernel.Kqueue.Filter.Data(-1)
-        #expect(data._rawValue == -1)
-    }
-
-    // MARK: - Conformance Tests
-
-    @Test("Data is Sendable")
-    func isSendable() {
-        let data: any Sendable = Kernel.Kqueue.Filter.Data.zero
-        #expect(data is Kernel.Kqueue.Filter.Data)
-    }
-
-    @Test("Data is Equatable")
-    func isEquatable() {
-        let a = Kernel.Kqueue.Filter.Data(42)
-        let b = Kernel.Kqueue.Filter.Data(42)
-        let c = Kernel.Kqueue.Filter.Data(0)
-        #expect(a == b)
-        #expect(a != c)
-    }
-
-    @Test("Data is Hashable")
-    func isHashable() {
-        var set = Set<Kernel.Kqueue.Filter.Data>()
-        set.insert(Kernel.Kqueue.Filter.Data(1))
-        set.insert(Kernel.Kqueue.Filter.Data(2))
-        set.insert(Kernel.Kqueue.Filter.Data(1)) // duplicate
-        #expect(set.count == 2)
-    }
-
-    // MARK: - Edge Cases
-
-    @Test("Int.max is preserved")
-    func intMaxPreserved() {
-        let data = Kernel.Kqueue.Filter.Data(Int.max)
-        #expect(data._rawValue == Int.max)
-    }
-
-    @Test("Int.min is preserved")
-    func intMinPreserved() {
-        let data = Kernel.Kqueue.Filter.Data(Int.min)
-        #expect(data._rawValue == Int.min)
-    }
-}
 #endif

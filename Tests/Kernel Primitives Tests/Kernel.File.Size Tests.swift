@@ -148,7 +148,7 @@ struct FileSizeTests {
         var set = Set<Kernel.File.Size>()
         set.insert(Kernel.File.Size(1024))
         set.insert(Kernel.File.Size(2048))
-        set.insert(Kernel.File.Size(1024)) // duplicate
+        set.insert(Kernel.File.Size(1024))  // duplicate
         #expect(set.count == 2)
     }
 
@@ -170,28 +170,28 @@ struct FileSizeTests {
 // MARK: - IOUring.Length Conversion Tests
 
 #if os(Linux)
-@Suite("Kernel.File.Size IOUring Conversion Tests")
-struct FileSizeIOUringTests {
+    @Suite("Kernel.File.Size IOUring Conversion Tests")
+    struct FileSizeIOUringTests {
 
-    @Test("Length from small Size")
-    func lengthFromSmallSize() {
-        let size: Kernel.File.Size = 4096
-        let length = Kernel.IOUring.Length(size)
-        #expect(length.rawValue == 4096)
-    }
+        @Test("Length from small Size")
+        func lengthFromSmallSize() {
+            let size: Kernel.File.Size = 4096
+            let length = Kernel.IOUring.Length(size)
+            #expect(length.rawValue == 4096)
+        }
 
-    @Test("Length saturates at UInt32.max")
-    func lengthSaturates() {
-        let size = Kernel.File.Size(Int64(UInt32.max) + 1000)
-        let length = Kernel.IOUring.Length(size)
-        #expect(length.rawValue == UInt32.max)
-    }
+        @Test("Length saturates at UInt32.max")
+        func lengthSaturates() {
+            let size = Kernel.File.Size(Int64(UInt32.max) + 1000)
+            let length = Kernel.IOUring.Length(size)
+            #expect(length.rawValue == UInt32.max)
+        }
 
-    @Test("Length from negative Size is zero")
-    func lengthFromNegative() {
-        let size = Kernel.File.Size(Int64(-100))
-        let length = Kernel.IOUring.Length(size)
-        #expect(length.rawValue == 0)
+        @Test("Length from negative Size is zero")
+        func lengthFromNegative() {
+            let size = Kernel.File.Size(Int64(-100))
+            let length = Kernel.IOUring.Length(size)
+            #expect(length.rawValue == 0)
+        }
     }
-}
 #endif

@@ -10,12 +10,12 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Linux)
-import StandardsTestSupport
-import Testing
+    import StandardsTestSupport
+    import Testing
 
-@testable import Kernel_Primitives
+    @testable import Kernel_Primitives
 
-extension Kernel.Event.Descriptor {
-    #TestSuites
-}
+    extension Kernel.Event.Descriptor {
+        #TestSuites
+    }
 #endif

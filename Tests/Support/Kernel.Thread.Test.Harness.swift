@@ -10,11 +10,11 @@
 // ===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif canImport(Musl)
-import Musl
+    import Musl
 #endif
 
 /// Test harness utilities for threading tests.
@@ -141,14 +141,14 @@ public enum KernelThreadTest {
     /// Gets the current realtime clock value.
     internal static func clockRealtime(_ out: inout timespec) {
         #if canImport(Darwin)
-        var tv = timeval()
-        gettimeofday(&tv, nil)
-        out.tv_sec = tv.tv_sec
-        out.tv_nsec = Int(tv.tv_usec) * 1_000
+            var tv = timeval()
+            gettimeofday(&tv, nil)
+            out.tv_sec = tv.tv_sec
+            out.tv_nsec = Int(tv.tv_usec) * 1_000
         #else
-        var ts = timespec()
-        clock_gettime(CLOCK_REALTIME, &ts)
-        out = ts
+            var ts = timespec()
+            clock_gettime(CLOCK_REALTIME, &ts)
+            out = ts
         #endif
     }
 

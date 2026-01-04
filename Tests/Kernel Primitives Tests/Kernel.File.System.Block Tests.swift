@@ -107,7 +107,7 @@ extension Kernel.File.System.Block.Test.Unit {
         var set = Set<Kernel.File.System.Block.Size>()
         set.insert(Kernel.File.System.Block.Size(512))
         set.insert(Kernel.File.System.Block.Size(4096))
-        set.insert(Kernel.File.System.Block.Size(512)) // duplicate
+        set.insert(Kernel.File.System.Block.Size(512))  // duplicate
         #expect(set.count == 2)
     }
 

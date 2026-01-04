@@ -9,15 +9,15 @@
 //
 // ===----------------------------------------------------------------------===//
 
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
-
 public import Kernel_Primitives
+
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#elseif canImport(Musl)
+    import Musl
+#endif
 
 extension Kernel.Event {
     /// Test utilities for eventing operations (kqueue, epoll, io_uring).

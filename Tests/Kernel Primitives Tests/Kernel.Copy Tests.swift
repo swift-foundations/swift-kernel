@@ -47,16 +47,16 @@ extension Kernel.Copy.Test.Unit {
     }
 
     #if os(Linux) || canImport(Darwin)
-    @Test("Copy.Clone namespace exists")
-    func cloneNamespaceExists() {
-        let _: Kernel.Copy.Clone.Type = Kernel.Copy.Clone.self
-    }
+        @Test("Copy.Clone namespace exists")
+        func cloneNamespaceExists() {
+            let _: Kernel.Copy.Clone.Type = Kernel.Copy.Clone.self
+        }
     #endif
 
     #if os(Linux)
-    @Test("Copy.Range namespace exists on Linux")
-    func rangeNamespaceExists() {
-        let _: Kernel.Copy.Range.Type = Kernel.Copy.Range.self
-    }
+        @Test("Copy.Range namespace exists on Linux")
+        func rangeNamespaceExists() {
+            let _: Kernel.Copy.Range.Type = Kernel.Copy.Range.self
+        }
     #endif
 }

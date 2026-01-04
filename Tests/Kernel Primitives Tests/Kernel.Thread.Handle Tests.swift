@@ -73,21 +73,21 @@ extension Kernel.Thread.Handle.Test.Unit {
 // MARK: - Platform-Specific Tests
 
 #if os(Windows)
-extension Kernel.Thread.Handle.Test.Unit {
-    @Test("Handle wraps HANDLE on Windows")
-    func wrapsWindowsHandle() {
-        // On Windows, Handle wraps a HANDLE
-        // rawValue is of type HANDLE
+    extension Kernel.Thread.Handle.Test.Unit {
+        @Test("Handle wraps HANDLE on Windows")
+        func wrapsWindowsHandle() {
+            // On Windows, Handle wraps a HANDLE
+            // rawValue is of type HANDLE
+        }
     }
-}
 #else
-extension Kernel.Thread.Handle.Test.Unit {
-    @Test("Handle wraps pthread_t on POSIX")
-    func wrapsPthreadT() {
-        // On POSIX, Handle wraps a pthread_t
-        // rawValue is of type pthread_t
+    extension Kernel.Thread.Handle.Test.Unit {
+        @Test("Handle wraps pthread_t on POSIX")
+        func wrapsPthreadT() {
+            // On POSIX, Handle wraps a pthread_t
+            // rawValue is of type pthread_t
+        }
     }
-}
 #endif
 
 // MARK: - Edge Cases

@@ -45,30 +45,30 @@ extension Kernel {
         // MARK: - Major/Minor Extraction (POSIX)
 
         #if !os(Windows)
-        /// The major device number (identifies device type/driver).
-        ///
-        /// This uses the standard Linux encoding for dev_t.
-        @inlinable
-        public var major: UInt32 {
-            UInt32((rawValue >> 8) & 0xFFF)
-        }
+            /// The major device number (identifies device type/driver).
+            ///
+            /// This uses the standard Linux encoding for dev_t.
+            @inlinable
+            public var major: UInt32 {
+                UInt32((rawValue >> 8) & 0xFFF)
+            }
 
-        /// The minor device number (identifies specific device instance).
-        ///
-        /// This uses the standard Linux encoding for dev_t.
-        @inlinable
-        public var minor: UInt32 {
-            UInt32((rawValue & 0xFF) | ((rawValue >> 12) & 0xFFF00))
-        }
+            /// The minor device number (identifies specific device instance).
+            ///
+            /// This uses the standard Linux encoding for dev_t.
+            @inlinable
+            public var minor: UInt32 {
+                UInt32((rawValue & 0xFF) | ((rawValue >> 12) & 0xFFF00))
+            }
 
-        /// Creates a device ID from major and minor numbers.
-        @inlinable
-        public init(major: UInt32, minor: UInt32) {
-            let majorPart = UInt64(major & 0xFFF) << 8
-            let minorLow = UInt64(minor & 0xFF)
-            let minorHigh = UInt64((minor & 0xFFF00)) << 12
-            self.rawValue = majorPart | minorLow | minorHigh
-        }
+            /// Creates a device ID from major and minor numbers.
+            @inlinable
+            public init(major: UInt32, minor: UInt32) {
+                let majorPart = UInt64(major & 0xFFF) << 8
+                let minorLow = UInt64(minor & 0xFF)
+                let minorHigh = UInt64((minor & 0xFFF00)) << 12
+                self.rawValue = majorPart | minorLow | minorHigh
+            }
         #endif
     }
 }
@@ -87,9 +87,9 @@ extension Kernel.Device: ExpressibleByIntegerLiteral {
 extension Kernel.Device: CustomStringConvertible {
     public var description: String {
         #if os(Windows)
-        return "\(rawValue)"
+            return "\(rawValue)"
         #else
-        return "\(major):\(minor)"
+            return "\(major):\(minor)"
         #endif
     }
 }

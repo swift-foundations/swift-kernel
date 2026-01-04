@@ -82,7 +82,7 @@ extension Kernel.Link.Test.Unit {
         var set = Set<Kernel.Link.Count>()
         set.insert(.zero)
         set.insert(.one)
-        set.insert(.zero) // duplicate
+        set.insert(.zero)  // duplicate
         #expect(set.count == 2)
     }
 }

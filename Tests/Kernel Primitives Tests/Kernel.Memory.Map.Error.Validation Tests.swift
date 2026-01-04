@@ -97,7 +97,7 @@ extension Kernel.Memory.Map.Error.Validation.Test.Unit {
         var set = Set<Kernel.Memory.Map.Error.Validation>()
         set.insert(.length)
         set.insert(.alignment)
-        set.insert(.length) // duplicate
+        set.insert(.length)  // duplicate
         #expect(set.count == 2)
     }
 }

@@ -129,7 +129,7 @@ extension Kernel.File.Stats.Kind.Test.Unit {
         var set = Set<Kernel.File.Stats.Kind>()
         set.insert(.regular)
         set.insert(.directory)
-        set.insert(.regular) // duplicate
+        set.insert(.regular)  // duplicate
         #expect(set.count == 2)
     }
 }

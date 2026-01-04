@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 public import Kernel_Primitives
 
-
 #if canImport(Darwin)
 
     extension Kernel.Kqueue {

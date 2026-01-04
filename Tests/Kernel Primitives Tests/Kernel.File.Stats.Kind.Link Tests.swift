@@ -65,7 +65,7 @@ extension Kernel.File.Stats.Kind.Link.Test.Unit {
         var set = Set<Kernel.File.Stats.Kind.Link>()
         set.insert(.symbolic)
         set.insert(.junction)
-        set.insert(.symbolic) // duplicate
+        set.insert(.symbolic)  // duplicate
         #expect(set.count == 2)
     }
 }

@@ -35,65 +35,65 @@ extension Kernel.Memory.Map.Anonymous.Test.Unit {
 // MARK: - Functional Tests
 
 #if !os(Windows)
-extension Kernel.Memory.Map.Anonymous.Test.Unit {
-    @Test("map creates a valid region")
-    func mapCreatesRegion() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
-        defer { try? Kernel.Memory.Map.unmap(region) }
+    extension Kernel.Memory.Map.Anonymous.Test.Unit {
+        @Test("map creates a valid region")
+        func mapCreatesRegion() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
+            defer { try? Kernel.Memory.Map.unmap(region) }
 
-        #expect(region.base != nil)
-        #expect(region.length == pageSize)
+            #expect(region.base != nil)
+            #expect(region.length == pageSize)
+        }
+
+        @Test("map with custom protection")
+        func mapWithCustomProtection() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(
+                length: pageSize,
+                protection: .read
+            )
+            defer { try? Kernel.Memory.Map.unmap(region) }
+
+            #expect(region.base != nil)
+        }
+
+        @Test("map private by default")
+        func mapPrivateByDefault() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
+            defer { try? Kernel.Memory.Map.unmap(region) }
+
+            // Should succeed (private is default)
+            #expect(region.base != nil)
+        }
+
+        @Test("map shared when specified")
+        func mapSharedWhenSpecified() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(
+                length: pageSize,
+                shared: true
+            )
+            defer { try? Kernel.Memory.Map.unmap(region) }
+
+            #expect(region.base != nil)
+        }
     }
-
-    @Test("map with custom protection")
-    func mapWithCustomProtection() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(
-            length: pageSize,
-            protection: .read
-        )
-        defer { try? Kernel.Memory.Map.unmap(region) }
-
-        #expect(region.base != nil)
-    }
-
-    @Test("map private by default")
-    func mapPrivateByDefault() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
-        defer { try? Kernel.Memory.Map.unmap(region) }
-
-        // Should succeed (private is default)
-        #expect(region.base != nil)
-    }
-
-    @Test("map shared when specified")
-    func mapSharedWhenSpecified() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(
-            length: pageSize,
-            shared: true
-        )
-        defer { try? Kernel.Memory.Map.unmap(region) }
-
-        #expect(region.base != nil)
-    }
-}
 #endif
 
 // MARK: - Windows Tests
 
 #if os(Windows)
-extension Kernel.Memory.Map.Anonymous.Test.Unit {
-    @Test("map creates a valid region on Windows")
-    func mapCreatesRegionWindows() throws {
-        let pageSize = Kernel.File.Size.page
-        let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
-        defer { try? Kernel.Memory.Map.unmap(region) }
+    extension Kernel.Memory.Map.Anonymous.Test.Unit {
+        @Test("map creates a valid region on Windows")
+        func mapCreatesRegionWindows() throws {
+            let pageSize = Kernel.File.Size.page
+            let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
+            defer { try? Kernel.Memory.Map.unmap(region) }
 
-        #expect(region.base != nil)
-        #expect(region.length == pageSize)
+            #expect(region.base != nil)
+            #expect(region.length == pageSize)
+        }
     }
-}
 #endif

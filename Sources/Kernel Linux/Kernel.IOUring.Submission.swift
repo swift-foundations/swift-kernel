@@ -10,12 +10,11 @@
 // ===----------------------------------------------------------------------===//
 public import Kernel_Primitives
 
-
 #if canImport(Glibc) || canImport(Musl)
 
-extension Kernel.IOUring {
-    /// Submission-related types for io_uring.
-    public enum Submission {}
-}
+    extension Kernel.IOUring {
+        /// Submission-related types for io_uring.
+        public enum Submission {}
+    }
 
 #endif

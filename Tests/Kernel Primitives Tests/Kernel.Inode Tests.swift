@@ -72,7 +72,7 @@ extension Kernel.Inode.Test.Unit {
         var set = Set<Kernel.Inode>()
         set.insert(Kernel.Inode(1))
         set.insert(Kernel.Inode(2))
-        set.insert(Kernel.Inode(1)) // duplicate
+        set.insert(Kernel.Inode(1))  // duplicate
         #expect(set.count == 2)
     }
 }
@@ -104,7 +104,7 @@ extension Kernel.Inode.Test.EdgeCase {
 
     @Test("Inode rawValue roundtrip")
     func rawValueRoundtrip() {
-        for value: UInt64 in [0, 1, 100, 12345678, UInt64.max] {
+        for value: UInt64 in [0, 1, 100, 12_345_678, UInt64.max] {
             let inode = Kernel.Inode(rawValue: value)
             #expect(inode.rawValue == value)
         }
