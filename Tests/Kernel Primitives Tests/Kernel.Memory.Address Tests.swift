@@ -32,8 +32,8 @@ struct MemoryAddressTests {
         let address: Kernel.Memory.Address = .allocate(byteCount: 8, alignment: 8)
         defer { address.deallocate() }
 
-        // Should be a valid pointer
-        #expect(address != nil)
+        // Verify we got a valid allocation (non-zero address)
+        #expect(Int(bitPattern: address) != 0)
     }
 
     @Test("Address can be used to read and write")

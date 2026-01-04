@@ -37,6 +37,7 @@ let package = Package(
                 .product(name: "SystemPackage", package: "swift-system"),
                 .product(name: "Binary", package: "swift-standards"),
                 .target(name: "CDarwinShim", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
+                .target(name: "CLinuxShim", condition: .when(platforms: [.linux])),
             ]
         ),
         .target(

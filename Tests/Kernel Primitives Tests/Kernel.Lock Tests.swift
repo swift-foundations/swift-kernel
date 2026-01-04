@@ -364,7 +364,12 @@ extension Kernel.Lock.Test.Unit {
             struct TempFileError: Error {}
             throw TempFileError()
         }
-        let path = String(cString: templateBytes)
+        let path: String
+        if let nullIndex = templateBytes.firstIndex(of: 0) {
+            path = String(decoding: templateBytes[..<nullIndex], as: UTF8.self)
+        } else {
+            path = String(decoding: templateBytes, as: UTF8.self)
+        }
         // Write some content (POSIX locks work on empty files too, but this is clearer for byte-range tests)
         var buf = [UInt8](repeating: 0x78, count: 1024)
         _ = buf.withUnsafeMutableBytes { ptr in

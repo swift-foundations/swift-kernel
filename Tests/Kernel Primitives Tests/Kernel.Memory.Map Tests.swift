@@ -29,7 +29,7 @@ extension Kernel.Memory.Map {
             let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
             defer { try? Kernel.Memory.Map.unmap(region) }
 
-            #expect(region.base != nil)
+            #expect(Int(bitPattern: region.base) != 0)
             #expect(region.length == pageSize)
         }
 
@@ -138,7 +138,7 @@ extension Kernel.Memory.Map {
             defer { try? Kernel.Memory.Map.unmap(region) }
 
             // Verify region fields
-            #expect(region.base != nil)
+            #expect(Int(bitPattern: region.base) != 0)
             #expect(region.length == pageSize)
         }
     }
