@@ -82,16 +82,16 @@
 
         /// File descriptor for the operation.
         @inlinable
-        public var fd: Int32 {
-            get { cValue.fd }
-            set { cValue.fd = newValue }
+        public var fd: Kernel.Descriptor {
+            get { Kernel.Descriptor(rawValue: cValue.fd) }
+            set { cValue.fd = newValue.rawValue }
         }
 
-        /// File offset (or flags for some operations).
+        /// File offset for read/write operations.
         @inlinable
-        public var offset: UInt64 {
-            get { cValue.off }
-            set { cValue.off = newValue }
+        public var offset: Offset {
+            get { Offset(rawValue: cValue.off) }
+            set { cValue.off = newValue.rawValue }
         }
 
         /// Buffer address or other address field.
@@ -103,9 +103,9 @@
 
         /// Buffer length.
         @inlinable
-        public var len: UInt32 {
-            get { cValue.len }
-            set { cValue.len = newValue }
+        public var len: Length {
+            get { Length(rawValue: cValue.len) }
+            set { cValue.len = newValue.rawValue }
         }
 
         /// Operation-specific flags.
@@ -119,9 +119,9 @@
 
         /// User data returned with completion.
         @inlinable
-        public var userData: UInt64 {
-            get { cValue.user_data }
-            set { cValue.user_data = newValue }
+        public var userData: UserData {
+            get { UserData(rawValue: cValue.user_data) }
+            set { cValue.user_data = newValue.rawValue }
         }
 
         /// Buffer index (for registered buffers).

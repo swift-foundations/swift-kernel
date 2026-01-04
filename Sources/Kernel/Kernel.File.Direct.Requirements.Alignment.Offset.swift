@@ -19,7 +19,7 @@ extension Kernel.File.Direct.Requirements.Alignment {
         /// - Parameter offset: The file offset to validate.
         /// - Returns: `true` if the offset is a multiple of `offsetAlignment`.
         public func isAligned(_ offset: Int64) -> Bool {
-            Int(offset) % alignment.offsetAlignment == 0
+            alignment.offsetAlignment.isAligned(offset)
         }
     }
 

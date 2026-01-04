@@ -51,9 +51,9 @@ extension Kernel.Lock.Test.Unit {
 
     @Test("Range.bytes is equatable")
     func rangeBytesEquatable() {
-        let r1 = Kernel.Lock.Range.bytes(start: 10, end: 110)
-        let r2 = Kernel.Lock.Range.bytes(start: 10, end: 110)
-        let r3 = Kernel.Lock.Range.bytes(start: 20, end: 120)
+        let r1 = Kernel.Lock.Range.bytes(start: Kernel.File.Offset(10), end: Kernel.File.Offset(110))
+        let r2 = Kernel.Lock.Range.bytes(start: Kernel.File.Offset(10), end: Kernel.File.Offset(110))
+        let r3 = Kernel.Lock.Range.bytes(start: Kernel.File.Offset(20), end: Kernel.File.Offset(120))
 
         #expect(r1 == r2)
         #expect(r1 != r3)
@@ -62,17 +62,15 @@ extension Kernel.Lock.Test.Unit {
     @Test("Range.file and Range.bytes are not equal")
     func rangeFileVsBytes() {
         let file = Kernel.Lock.Range.file
-        let bytes = Kernel.Lock.Range.bytes(start: 0, end: 0)
+        let bytes = Kernel.Lock.Range.bytes(start: .zero, end: .zero)
 
         #expect(file != bytes)
     }
 
-    @Test("Range can be created from Swift Range")
-    func rangeFromSwiftRange() {
-        let swiftRange: Range<UInt64> = 100..<200
-        let lockRange = Kernel.Lock.Range(swiftRange)
-
-        #expect(lockRange == .bytes(start: 100, end: 200))
+    @Test("Range.bytes with length convenience")
+    func rangeBytesWithLength() {
+        let range = Kernel.Lock.Range.bytes(start: Kernel.File.Offset(100), length: Kernel.ByteCount(unchecked: 100))
+        #expect(range == .bytes(start: Kernel.File.Offset(100), end: Kernel.File.Offset(200)))
     }
 }
 
@@ -97,8 +95,8 @@ extension Kernel.Lock.Test.Unit {
     func rangeHashable() {
         var set = Set<Kernel.Lock.Range>()
         set.insert(.file)
-        set.insert(.bytes(start: 10, end: 30))
-        set.insert(.bytes(start: 10, end: 30))  // Duplicate
+        set.insert(.bytes(start: Kernel.File.Offset(10), end: Kernel.File.Offset(30)))
+        set.insert(.bytes(start: Kernel.File.Offset(10), end: Kernel.File.Offset(30)))  // Duplicate
 
         #expect(set.count == 2)
     }
@@ -396,7 +394,7 @@ extension Kernel.Lock.Test.Unit {
             // Acquire exclusive lock on bytes 0-100 in this process
             let token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
-                range: .bytes(start: 0, end: 100),
+                range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(100)),
                 kind: .exclusive,
                 acquire: .wait
             )
@@ -434,7 +432,7 @@ extension Kernel.Lock.Test.Unit {
             // Acquire exclusive lock on bytes 0-200 in this process
             let token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
-                range: .bytes(start: 0, end: 200),
+                range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(200)),
                 kind: .exclusive,
                 acquire: .wait
             )

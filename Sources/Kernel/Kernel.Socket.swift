@@ -40,10 +40,10 @@ extension Kernel {
         /// connection succeeded.
         ///
         /// - Parameter descriptor: The socket descriptor.
-        /// - Returns: The error code (0 if no error).
+        /// - Returns: The error code (`.posix(0)` if no error).
         /// - Throws: `Kernel.Socket.Error` if getsockopt fails.
         @inlinable
-        public static func getError(_ descriptor: Kernel.Descriptor) throws(Error) -> Int32 {
+        public static func getError(_ descriptor: Descriptor) throws(Error) -> Kernel.Error.Code {
             var err: Int32 = 0
             var len = socklen_t(MemoryLayout<Int32>.size)
 
@@ -57,7 +57,7 @@ extension Kernel {
 
             try Kernel.Syscall.require(rc, .equals(0), orThrow: Error.current())
 
-            return err
+            return .posix(err)
         }
     }
 
@@ -65,7 +65,36 @@ extension Kernel {
 
 // MARK: - Windows Implementation
 
-// NOTE: Windows socket code is disabled because Kernel.Descriptor uses HANDLE
-// (UnsafeMutableRawPointer) on Windows, but WinSock APIs expect SOCKET (UInt64).
-// A proper implementation would require a separate socket descriptor type.
-// For now, socket operations are only available on POSIX platforms.
+#if os(Windows)
+    public import WinSDK
+
+    extension Kernel.Socket {
+        /// Gets the pending socket error (SO_ERROR).
+        ///
+        /// This retrieves and clears the pending error on a socket.
+        /// Commonly used after a non-blocking connect to check if the
+        /// connection succeeded.
+        ///
+        /// - Parameter descriptor: The socket descriptor.
+        /// - Returns: The error code (`.win32(0)` if no error).
+        /// - Throws: `Kernel.Socket.Error` if getsockopt fails.
+        @inlinable
+        public static func getError(_ descriptor: Descriptor) throws(Error) -> Kernel.Error.Code {
+            var err: Int32 = 0
+            var len: Int32 = Int32(MemoryLayout<Int32>.size)
+
+            let rc = getsockopt(
+                SOCKET(descriptor.rawValue),
+                SOL_SOCKET,
+                SO_ERROR,
+                UnsafeMutableRawPointer(&err).assumingMemoryBound(to: CChar.self),
+                &len
+            )
+
+            try Kernel.Syscall.require(rc, .equals(0), orThrow: Error.current())
+
+            return .win32(UInt32(bitPattern: err))
+        }
+    }
+
+#endif

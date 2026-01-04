@@ -32,7 +32,7 @@
             ///
             /// - Parameter userData: User data to return with completion.
             @inlinable
-            public mutating func nop(userData: UInt64) {
+            public mutating func nop(userData: UserData) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .nop
                 sqe.userData = userData
@@ -44,22 +44,22 @@
             ///   - fd: File descriptor to read from.
             ///   - buffer: Buffer pointer to read into.
             ///   - length: Number of bytes to read.
-            ///   - offset: File offset (-1 for current position).
+            ///   - offset: File offset (use `.current` for current position).
             ///   - userData: User data to return with completion.
             @inlinable
             public mutating func read(
-                fd: Int32,
+                fd: Kernel.Descriptor,
                 buffer: UnsafeMutableRawPointer,
-                length: UInt32,
-                offset: Int64,
-                userData: UInt64
+                length: Length,
+                offset: Offset,
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .read
                 sqe.fd = fd
                 sqe.addr = UInt64(UInt(bitPattern: buffer))
                 sqe.len = length
-                sqe.offset = offset >= 0 ? UInt64(bitPattern: offset) : UInt64.max
+                sqe.offset = offset
                 sqe.userData = userData
             }
 
@@ -69,22 +69,22 @@
             ///   - fd: File descriptor to write to.
             ///   - buffer: Buffer pointer containing data to write.
             ///   - length: Number of bytes to write.
-            ///   - offset: File offset (-1 for current position).
+            ///   - offset: File offset (use `.current` for current position).
             ///   - userData: User data to return with completion.
             @inlinable
             public mutating func write(
-                fd: Int32,
+                fd: Kernel.Descriptor,
                 buffer: UnsafeRawPointer,
-                length: UInt32,
-                offset: Int64,
-                userData: UInt64
+                length: Length,
+                offset: Offset,
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .write
                 sqe.fd = fd
                 sqe.addr = UInt64(UInt(bitPattern: buffer))
                 sqe.len = length
-                sqe.offset = offset >= 0 ? UInt64(bitPattern: offset) : UInt64.max
+                sqe.offset = offset
                 sqe.userData = userData
             }
 
@@ -95,12 +95,12 @@
             ///   - userData: User data to return with this cancel's completion.
             @inlinable
             public mutating func cancel(
-                targetUserData: UInt64,
-                userData: UInt64
+                targetUserData: UserData,
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .asyncCancel
-                sqe.addr = targetUserData
+                sqe.addr = targetUserData.rawValue
                 sqe.userData = userData
             }
 
@@ -112,9 +112,9 @@
             ///   - userData: User data to return with completion.
             @inlinable
             public mutating func fsync(
-                fd: Int32,
+                fd: Kernel.Descriptor,
                 datasync: Bool,
-                userData: UInt64
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .fsync
@@ -132,8 +132,8 @@
             ///   - userData: User data to return with completion.
             @inlinable
             public mutating func close(
-                fd: Int32,
-                userData: UInt64
+                fd: Kernel.Descriptor,
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .close
@@ -151,11 +151,11 @@
             ///   - userData: User data to return with completion.
             @inlinable
             public mutating func accept(
-                fd: Int32,
+                fd: Kernel.Descriptor,
                 addr: UnsafeMutableRawPointer?,
                 addrLen: UnsafeMutablePointer<UInt32>?,
                 flags: Int32,
-                userData: UInt64
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .accept
@@ -175,10 +175,10 @@
             ///   - userData: User data to return with completion.
             @inlinable
             public mutating func connect(
-                fd: Int32,
+                fd: Kernel.Descriptor,
                 addr: UnsafeRawPointer,
                 addrLen: UInt32,
-                userData: UInt64
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .connect
@@ -198,11 +198,11 @@
             ///   - userData: User data to return with completion.
             @inlinable
             public mutating func send(
-                fd: Int32,
+                fd: Kernel.Descriptor,
                 buffer: UnsafeRawPointer,
-                length: UInt32,
+                length: Length,
                 flags: Int32,
-                userData: UInt64
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .send
@@ -223,11 +223,11 @@
             ///   - userData: User data to return with completion.
             @inlinable
             public mutating func recv(
-                fd: Int32,
+                fd: Kernel.Descriptor,
                 buffer: UnsafeMutableRawPointer,
-                length: UInt32,
+                length: Length,
                 flags: Int32,
-                userData: UInt64
+                userData: UserData
             ) {
                 sqe.cValue = io_uring_sqe()
                 sqe.opcode = .recv

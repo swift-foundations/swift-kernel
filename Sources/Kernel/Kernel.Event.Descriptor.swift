@@ -34,16 +34,16 @@
         /// Creates a new eventfd descriptor.
         ///
         /// - Parameters:
-        ///   - initval: Initial value of the counter (typically 0).
+        ///   - initval: Initial value of the counter (typically `.zero`).
         ///   - flags: Flags for the eventfd.
         /// - Returns: A file descriptor for the new eventfd.
         /// - Throws: `Error.create` if creation fails.
         @inlinable
         public static func create(
-            initval: UInt32 = 0,
+            initval: Counter = .zero,
             flags: Flags = .cloexec | .nonblock
         ) throws(Error) -> Kernel.Descriptor {
-            let efd = eventfd(initval, flags.rawValue)
+            let efd = eventfd(initval.initValue, flags.rawValue)
             guard efd >= 0 else {
                 throw .create(.captureErrno())
             }
@@ -58,7 +58,7 @@
         /// - Returns: The counter value.
         /// - Throws: `Error.read` on failure, `Error.wouldBlock` in non-blocking mode.
         @inlinable
-        public static func read(_ efd: Kernel.Descriptor) throws(Error) -> UInt64 {
+        public static func read(_ efd: Kernel.Descriptor) throws(Error) -> Counter {
             var value: UInt64 = 0
             let result = withUnsafeMutablePointer(to: &value) { ptr in
                 Glibc.read(efd.rawValue, ptr, MemoryLayout<UInt64>.size)
@@ -70,7 +70,7 @@
                 }
                 throw .read(code)
             }
-            return value
+            return Counter(rawValue: value)
         }
 
         /// Writes to an eventfd (increments counter).
@@ -84,8 +84,8 @@
         ///   - value: The value to add to the counter (must not be UInt64.max).
         /// - Throws: `Error.write` on failure, `Error.wouldBlock` in non-blocking mode.
         @inlinable
-        public static func write(_ efd: Kernel.Descriptor, value: UInt64 = 1) throws(Error) {
-            var val = value
+        public static func write(_ efd: Kernel.Descriptor, value: Counter = .one) throws(Error) {
+            var val = value.rawValue
             let result = withUnsafePointer(to: &val) { ptr in
                 Glibc.write(efd.rawValue, ptr, MemoryLayout<UInt64>.size)
             }

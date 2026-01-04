@@ -84,7 +84,7 @@ extension Kernel.IO {
         public static func pwrite(
             _ descriptor: Kernel.Descriptor,
             from buffer: UnsafeRawBufferPointer,
-            at offset: Int64
+            at offset: Kernel.File.Offset
         ) throws(Error) -> Int {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
@@ -94,19 +94,19 @@ extension Kernel.IO {
             }
             #if canImport(Darwin)
                 return try Kernel.Syscall.require(
-                    Darwin.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    Darwin.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
             #elseif canImport(Glibc)
                 return try Kernel.Syscall.require(
-                    Glibc.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    Glibc.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
             #elseif canImport(Musl)
                 return try Kernel.Syscall.require(
-                    Musl.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    Musl.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
@@ -148,7 +148,7 @@ extension Kernel.IO.Write {
     public static func pwrite(
         _ descriptor: Kernel.Descriptor,
         from span: Span<UInt8>,
-        at offset: Int64
+        at offset: Kernel.File.Offset
     ) throws(Error) -> Int {
         try span.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) throws(Error) -> Int in
             try pwrite(descriptor, from: buffer, at: offset)
@@ -193,7 +193,7 @@ extension Kernel.IO.Write {
         public static func pwrite(
             _ descriptor: Kernel.Descriptor,
             from buffer: UnsafeRawBufferPointer,
-            at offset: Int64
+            at offset: Kernel.File.Offset
         ) throws(Error) -> Int {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
@@ -203,8 +203,8 @@ extension Kernel.IO.Write {
             }
 
             var overlapped = OVERLAPPED()
-            overlapped.Offset = DWORD(offset & 0xFFFF_FFFF)
-            overlapped.OffsetHigh = DWORD(offset >> 32)
+            overlapped.Offset = DWORD(offset.rawValue & 0xFFFF_FFFF)
+            overlapped.OffsetHigh = DWORD(offset.rawValue >> 32)
 
             var bytesWritten: DWORD = 0
             let result = WriteFile(

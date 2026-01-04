@@ -152,9 +152,9 @@ extension Kernel.File.Direct.Requirements {
     ///   - offsetAlignment: Required alignment for file offsets.
     ///   - lengthMultiple: Required multiple for I/O lengths.
     public init(
-        bufferAlignment: Int,
-        offsetAlignment: Int,
-        lengthMultiple: Int
+        bufferAlignment: Kernel.Alignment,
+        offsetAlignment: Kernel.Alignment,
+        lengthMultiple: Kernel.Alignment
     ) {
         self = .known(
             Alignment(
@@ -170,7 +170,7 @@ extension Kernel.File.Direct.Requirements {
     /// Convenience for when buffer, offset, and length all use the same alignment.
     ///
     /// - Parameter alignment: The uniform alignment value.
-    public init(uniformAlignment alignment: Int) {
+    public init(uniformAlignment alignment: Kernel.Alignment) {
         self = .known(Alignment(uniform: alignment))
     }
 }

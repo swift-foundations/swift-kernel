@@ -75,7 +75,7 @@
             eventlist: UnsafeMutablePointer<Darwin.kevent>?,
             nevents: Int32,
             timeout: UnsafePointer<timespec>?
-        ) throws(Error) -> Int {
+        ) throws(Kernel.Kqueue.Error) -> Int {
             let result = _kevent(kq.rawValue, changelist, nchanges, eventlist, nevents, timeout)
             guard result >= 0 else {
                 let code = Kernel.Error.Code.captureErrno()
@@ -207,36 +207,35 @@
         public static func register(
             _ kq: Kernel.Descriptor,
             events: [Event]
-        ) throws(Error) {
+        ) throws(Kernel.Kqueue.Error) {
             guard !events.isEmpty else { return }
 
             // Convert Swift events to C events using stack allocation
-            var registerError: Error? = nil
-            withUnsafeTemporaryAllocation(
+            let outcome: Result<Void, Kernel.Kqueue.Error> = withUnsafeTemporaryAllocation(
                 of: Darwin.kevent.self,
                 capacity: events.count
             ) { buffer in
                 for i in 0..<events.count {
                     buffer[i] = events[i].cValue
                 }
-                do {
-                    _ = try kevent(
-                        kq,
-                        changelist: buffer.baseAddress,
-                        nchanges: Int32(events.count),
-                        eventlist: nil,
-                        nevents: 0,
-                        timeout: nil
-                    )
-                } catch let error as Error {
-                    registerError = error
-                } catch {
-                    // Should never reach here with typed throws
+                let result = _kevent(
+                    kq.rawValue,
+                    buffer.baseAddress,
+                    Int32(events.count),
+                    nil,
+                    0,
+                    nil
+                )
+                guard result >= 0 else {
+                    let code = Kernel.Error.Code.captureErrno()
+                    if code.posix == EINTR {
+                        return .failure(.interrupted)
+                    }
+                    return .failure(.kevent(code))
                 }
+                return .success(())
             }
-            if let error = registerError {
-                throw error
-            }
+            try outcome.get()
         }
 
         /// Waits for events (Swift-native interface).

@@ -72,7 +72,7 @@
             }
         }
 
-        /// Waits for events on the epoll instance.
+        /// Waits for events on the epoll instance (internal).
         ///
         /// Low-level wait that writes events into a pre-allocated buffer.
         ///
@@ -83,7 +83,8 @@
         /// - Returns: Number of events written to buffer, or 0 on timeout.
         /// - Throws: `Error.wait` on failure, `Error.interrupted` on EINTR.
         @inlinable
-        public static func wait(
+        @usableFromInline
+        internal static func wait(
             _ epfd: Kernel.Descriptor,
             events: inout [Event],
             timeout: Int32

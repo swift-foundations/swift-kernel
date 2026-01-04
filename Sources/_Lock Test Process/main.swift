@@ -122,13 +122,13 @@ func parseArguments() -> Arguments? {
             let rangeStr = args[i]
             let parts = rangeStr.split(separator: "-")
             guard parts.count == 2,
-                let start = UInt64(parts[0]),
-                let end = UInt64(parts[1])
+                let start = Int64(parts[0]),
+                let end = Int64(parts[1])
             else {
                 writeStderr("Invalid range format. Use: start-end\n")
                 return nil
             }
-            result.range = .bytes(start: start, end: end)
+            result.range = .bytes(start: Kernel.File.Offset(start), end: Kernel.File.Offset(end))
 
         case "--hold":
             guard i + 1 < args.count else {
@@ -344,8 +344,8 @@ func printUsage() {
                 kind: kind,
                 acquire: acquire
             )
-        } catch let lockError as Kernel.Lock.Error {
-            switch lockError {
+        } catch {
+            switch error {
             case .contention:
                 if case .try = acquire {
                     writeStdout("WOULD_BLOCK\n")
@@ -358,9 +358,6 @@ func printUsage() {
                 writeStderr("Failed to acquire lock: \(lockError)\n")
                 return 3
             }
-        } catch {
-            writeStderr("Failed to acquire lock: \(error)\n")
-            return 3
         }
 
         // Signal ready if requested

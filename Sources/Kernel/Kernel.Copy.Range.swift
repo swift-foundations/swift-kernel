@@ -44,16 +44,16 @@
         @inlinable
         public static func copy(
             from source: Kernel.Descriptor,
-            sourceOffset: inout Int64,
+            sourceOffset: inout Kernel.File.Offset,
             to destination: Kernel.Descriptor,
-            destOffset: inout Int64,
-            length: Int
-        ) throws(Kernel.Copy.Error) -> Int {
+            destOffset: inout Kernel.File.Offset,
+            length: Kernel.ByteCount
+        ) throws(Kernel.Copy.Error) -> Kernel.ByteCount {
             guard source.isValid else { throw .invalidDescriptor }
             guard destination.isValid else { throw .invalidDescriptor }
 
-            var srcOff = off_t(sourceOffset)
-            var dstOff = off_t(destOffset)
+            var srcOff = off_t(sourceOffset.rawValue)
+            var dstOff = off_t(destOffset.rawValue)
 
             let result = Int(
                 swift_copy_file_range(
@@ -61,7 +61,7 @@
                     &srcOff,
                     destination.rawValue,
                     &dstOff,
-                    size_t(length),
+                    size_t(length.rawValue),
                     0
                 )
             )
@@ -70,9 +70,9 @@
                 throw Kernel.Copy.Error(posix: errno)
             }
 
-            sourceOffset = Int64(srcOff)
-            destOffset = Int64(dstOff)
-            return result
+            sourceOffset = Kernel.File.Offset(rawValue: Int64(srcOff))
+            destOffset = Kernel.File.Offset(rawValue: Int64(dstOff))
+            return Kernel.ByteCount(unchecked: result)
         }
     }
 

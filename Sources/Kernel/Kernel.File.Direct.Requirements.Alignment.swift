@@ -18,7 +18,7 @@ extension Kernel.File.Direct.Requirements {
         /// that is a multiple of this value.
         ///
         /// Typical values: 512 (legacy), 4096 (modern SSDs/NVMe).
-        public let bufferAlignment: Int
+        public let bufferAlignment: Kernel.Alignment
 
         /// Required alignment for file offsets.
         ///
@@ -26,7 +26,7 @@ extension Kernel.File.Direct.Requirements {
         /// of this value.
         ///
         /// Usually matches `bufferAlignment` but may differ on some systems.
-        public let offsetAlignment: Int
+        public let offsetAlignment: Kernel.Alignment
 
         /// Required multiple for I/O transfer lengths.
         ///
@@ -34,12 +34,12 @@ extension Kernel.File.Direct.Requirements {
         /// Partial sector I/O is not allowed in Direct mode.
         ///
         /// Usually matches `bufferAlignment`.
-        public let lengthMultiple: Int
+        public let lengthMultiple: Kernel.Alignment
 
         public init(
-            bufferAlignment: Int,
-            offsetAlignment: Int,
-            lengthMultiple: Int
+            bufferAlignment: Kernel.Alignment,
+            offsetAlignment: Kernel.Alignment,
+            lengthMultiple: Kernel.Alignment
         ) {
             self.bufferAlignment = bufferAlignment
             self.offsetAlignment = offsetAlignment
@@ -49,7 +49,7 @@ extension Kernel.File.Direct.Requirements {
         /// Creates alignment with a single value for all requirements.
         ///
         /// Use when buffer, offset, and length all share the same alignment.
-        public init(uniform alignment: Int) {
+        public init(uniform alignment: Kernel.Alignment) {
             self.bufferAlignment = alignment
             self.offsetAlignment = alignment
             self.lengthMultiple = alignment

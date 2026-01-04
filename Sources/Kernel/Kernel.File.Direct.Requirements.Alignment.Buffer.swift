@@ -19,7 +19,7 @@ extension Kernel.File.Direct.Requirements.Alignment {
         /// - Parameter address: The memory address to validate.
         /// - Returns: `true` if the address is aligned to `bufferAlignment`.
         public func isAligned(_ address: UnsafeRawPointer) -> Bool {
-            Int(bitPattern: address) % alignment.bufferAlignment == 0
+            alignment.bufferAlignment.isAligned(address)
         }
     }
 

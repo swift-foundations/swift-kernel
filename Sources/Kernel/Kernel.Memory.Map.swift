@@ -47,23 +47,23 @@ extension Kernel.Memory {
         @inlinable
         public static func map(
             addr: Kernel.Memory.Address? = nil,
-            length: Int,
+            length: Kernel.ByteCount,
             protection: Protection,
             flags: Flags,
             fd: Kernel.Descriptor = .invalid,
-            offset: Int64 = 0
+            offset: Kernel.File.Offset = .zero
         ) throws(Error) -> Kernel.Memory.Address {
-            guard length > 0 else {
+            guard length.isPositive else {
                 throw .invalid(.length)
             }
 
             let result = mmap(
                 addr,
-                length,
+                length.rawValue,
                 protection.rawValue,
                 flags.rawValue,
                 fd.rawValue,
-                off_t(offset)
+                off_t(offset.rawValue)
             )
 
             guard result != MAP_FAILED else {
@@ -82,9 +82,9 @@ extension Kernel.Memory {
         @inlinable
         public static func unmap(
             addr: Kernel.Memory.Address,
-            length: Int
+            length: Kernel.ByteCount
         ) throws(Error) {
-            guard munmap(addr, length) == 0 else {
+            guard munmap(addr, length.rawValue) == 0 else {
                 throw .unmap(.captureErrno())
             }
         }
@@ -108,10 +108,10 @@ extension Kernel.Memory {
         @inlinable
         public static func sync(
             addr: Kernel.Memory.Address,
-            length: Int,
+            length: Kernel.ByteCount,
             flags: Sync.Flags = .sync
         ) throws(Error) {
-            guard msync(addr, length, flags.rawValue) == 0 else {
+            guard msync(addr, length.rawValue, flags.rawValue) == 0 else {
                 throw .sync(.captureErrno())
             }
         }
@@ -126,10 +126,10 @@ extension Kernel.Memory {
         @inlinable
         public static func protect(
             addr: Kernel.Memory.Address,
-            length: Int,
+            length: Kernel.ByteCount,
             protection: Protection
         ) throws(Error) {
-            guard mprotect(addr, length, protection.rawValue) == 0 else {
+            guard mprotect(addr, length.rawValue, protection.rawValue) == 0 else {
                 throw .protect(.captureErrno())
             }
         }
@@ -145,10 +145,10 @@ extension Kernel.Memory {
         @inlinable
         public static func advise(
             addr: Kernel.Memory.Address,
-            length: Int,
+            length: Kernel.ByteCount,
             advice: Advice
         ) {
-            _ = madvise(addr, length, advice.rawValue)
+            _ = madvise(addr, length.rawValue, advice.rawValue)
         }
     }
 
@@ -181,9 +181,9 @@ extension Kernel.Memory {
         /// - Throws: `Error.sync` on failure.
         public static func sync(
             addr: Kernel.Memory.Address,
-            length: Int
+            length: Kernel.ByteCount
         ) throws(Error) {
-            guard FlushViewOfFile(addr, SIZE_T(length)) else {
+            guard FlushViewOfFile(addr, SIZE_T(length.rawValue)) else {
                 throw .sync(.captureLastError())
             }
         }
@@ -197,14 +197,14 @@ extension Kernel.Memory {
         /// - Throws: `Error.protect` on failure.
         public static func protect(
             addr: Kernel.Memory.Address,
-            length: Int,
+            length: Kernel.ByteCount,
             protection: Protection
         ) throws(Error) {
             var oldProtection: DWORD = 0
             guard
                 VirtualProtect(
                     addr,
-                    SIZE_T(length),
+                    SIZE_T(length.rawValue),
                     protection.windowsPageProtection,
                     &oldProtection
                 )
@@ -219,7 +219,7 @@ extension Kernel.Memory {
         /// This is currently a no-op.
         public static func advise(
             addr: Kernel.Memory.Address,
-            length: Int,
+            length: Kernel.ByteCount,
             advice: Advice
         ) {
             // Windows doesn't have direct madvise equivalent

@@ -146,50 +146,6 @@ extension Kernel.Thread.Condition {
         #endif
     }
 
-    /// Waits on the condition variable with a relative timeout in nanoseconds.
-    ///
-    /// This method uses platform-native relative wait where available:
-    /// - **Darwin**: `pthread_cond_timedwait_relative_np` (immune to wall-clock changes)
-    /// - **Linux**: Calculates absolute deadline using `CLOCK_MONOTONIC`
-    /// - **Windows**: `SleepConditionVariableSRW` with millisecond timeout
-    ///
-    /// The mutex is atomically released while waiting and reacquired before returning.
-    ///
-    /// - Parameters:
-    ///   - mutex: The mutex to release while waiting.
-    ///   - nanoseconds: Maximum time to wait in nanoseconds.
-    /// - Returns: `true` if signaled, `false` if timed out.
-    /// - Precondition: The mutex must be held by the current thread.
-    @inlinable
-    public func waitRelative(mutex: Kernel.Thread.Mutex, nanoseconds: UInt64) -> Bool {
-        #if os(Windows)
-            // Ceiling division to avoid under-waiting; clamp to DWORD.max
-            let milliseconds = (nanoseconds + 999_999) / 1_000_000
-            return SleepConditionVariableSRW(
-                &condvar,
-                &mutex.srwlock,
-                DWORD(min(milliseconds, UInt64(DWORD.max))),
-                0
-            )
-        #elseif os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
-            // Darwin: use relative timed wait (immune to wall-clock changes)
-            var ts = timespec()
-            ts.tv_sec = Int(nanoseconds / 1_000_000_000)
-            ts.tv_nsec = Int(nanoseconds % 1_000_000_000)
-            let result = pthread_cond_timedwait_relative_np(&cond, &mutex.mutex, &ts)
-            return result == 0
-        #else
-            // Linux: calculate absolute deadline using CLOCK_MONOTONIC
-            var ts = timespec()
-            clock_gettime(CLOCK_MONOTONIC, &ts)
-            let currentNanos = UInt64(ts.tv_sec) * 1_000_000_000 + UInt64(ts.tv_nsec)
-            let deadlineNanos = currentNanos + nanoseconds
-            ts.tv_sec = Int(deadlineNanos / 1_000_000_000)
-            ts.tv_nsec = Int(deadlineNanos % 1_000_000_000)
-            let result = pthread_cond_timedwait(&cond, &mutex.mutex, &ts)
-            return result == 0
-        #endif
-    }
 }
 
 // MARK: - Signal Operations

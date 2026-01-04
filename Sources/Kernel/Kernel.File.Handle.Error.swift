@@ -25,13 +25,13 @@ extension Kernel.File.Handle {
         case noSpace
 
         /// Buffer alignment violation for Direct I/O (detected by pre-validation).
-        case misalignedBuffer(address: Int, required: Int)
+        case misalignedBuffer(address: Int, required: Kernel.Alignment)
 
         /// Offset alignment violation for Direct I/O (detected by pre-validation).
-        case misalignedOffset(offset: Int64, required: Int)
+        case misalignedOffset(offset: Int64, required: Kernel.Alignment)
 
         /// Length not a multiple of required granularity (detected by pre-validation).
-        case invalidLength(length: Int, requiredMultiple: Int)
+        case invalidLength(length: Int, requiredMultiple: Kernel.Alignment)
 
         /// Direct I/O requirements are unknown.
         case requirementsUnknown
@@ -223,11 +223,11 @@ extension Kernel.File.Handle.Error: CustomStringConvertible {
         case .noSpace:
             return "No space left on device"
         case .misalignedBuffer(let address, let required):
-            return "Buffer address 0x\(String(address, radix: 16)) not aligned to \(required) bytes"
+            return "Buffer address 0x\(String(address, radix: 16)) not aligned to \(required.rawValue) bytes"
         case .misalignedOffset(let offset, let required):
-            return "File offset \(offset) not aligned to \(required) bytes"
+            return "File offset \(offset) not aligned to \(required.rawValue) bytes"
         case .invalidLength(let length, let requiredMultiple):
-            return "Length \(length) is not a multiple of \(requiredMultiple)"
+            return "Length \(length) is not a multiple of \(requiredMultiple.rawValue)"
         case .requirementsUnknown:
             return "Direct I/O requirements unknown"
         case .alignmentViolation(let operation):

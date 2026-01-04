@@ -37,7 +37,7 @@ extension Kernel.File {
             path: FilePath,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
-            permissions: UInt16
+            permissions: Kernel.File.Permissions
         ) throws(Error) -> Kernel.Descriptor {
             try Kernel.withPlatformString(path) { (cString: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.Descriptor in
                 try open(unsafePath: cString, mode: mode, options: options, permissions: permissions)
@@ -50,7 +50,7 @@ extension Kernel.File {
             path: borrowing Kernel.Path,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
-            permissions: UInt16
+            permissions: Kernel.File.Permissions
         ) throws(Error) -> Kernel.Descriptor {
             try open(unsafePath: path.cString, mode: mode, options: options, permissions: permissions)
         }
@@ -61,26 +61,26 @@ extension Kernel.File {
             unsafePath: UnsafePointer<CChar>,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
-            permissions: UInt16
+            permissions: Kernel.File.Permissions
         ) throws(Error) -> Kernel.Descriptor {
             let flags = mode.posixFlags | options.posixFlags
 
             let fd: Int32
             #if canImport(Darwin)
                 if options.contains(.create) {
-                    fd = Darwin.open(unsafePath, flags, mode_t(permissions))
+                    fd = Darwin.open(unsafePath, flags, mode_t(permissions.rawValue))
                 } else {
                     fd = Darwin.open(unsafePath, flags)
                 }
             #elseif canImport(Glibc)
                 if options.contains(.create) {
-                    fd = Glibc.open(unsafePath, flags, mode_t(permissions))
+                    fd = Glibc.open(unsafePath, flags, mode_t(permissions.rawValue))
                 } else {
                     fd = Glibc.open(unsafePath, flags)
                 }
             #elseif canImport(Musl)
                 if options.contains(.create) {
-                    fd = Musl.open(unsafePath, flags, mode_t(permissions))
+                    fd = Musl.open(unsafePath, flags, mode_t(permissions.rawValue))
                 } else {
                     fd = Musl.open(unsafePath, flags)
                 }
@@ -114,7 +114,7 @@ extension Kernel.File {
             path: FilePath,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
-            permissions: UInt16
+            permissions: Kernel.File.Permissions
         ) throws(Error) -> Kernel.Descriptor {
             try Kernel.withPlatformString(path) { (wpath: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.Descriptor in
                 try open(unsafePath: wpath, mode: mode, options: options, permissions: permissions)
@@ -127,7 +127,7 @@ extension Kernel.File {
             path: borrowing Kernel.Path,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
-            permissions: UInt16
+            permissions: Kernel.File.Permissions
         ) throws(Error) -> Kernel.Descriptor {
             try open(unsafePath: path.cString, mode: mode, options: options, permissions: permissions)
         }
@@ -138,7 +138,7 @@ extension Kernel.File {
             unsafePath: UnsafePointer<WCHAR>,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
-            permissions: UInt16
+            permissions: Kernel.File.Permissions
         ) throws(Error) -> Kernel.Descriptor {
             let desiredAccess = mode.windowsDesiredAccess(options: options)
             let creationDisposition = options.windowsCreationDisposition

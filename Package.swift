@@ -32,6 +32,7 @@ let package = Package(
             name: "Kernel",
             dependencies: [
                 .product(name: "SystemPackage", package: "swift-system"),
+                .product(name: "Formatting", package: "swift-standards"),
                 .target(name: "CLinuxShim", condition: .when(platforms: [.linux]))
             ]
         ),

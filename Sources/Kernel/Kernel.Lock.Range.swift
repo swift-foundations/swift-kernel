@@ -19,17 +19,19 @@ extension Kernel.Lock {
         ///
         /// - Parameters:
         ///   - start: The starting byte offset (inclusive).
-        ///   - end: The ending byte offset (exclusive). Use `UInt64.max` to lock to EOF.
+        ///   - end: The ending byte offset (exclusive). Use `.max` to lock to EOF.
         ///
-        /// This matches Swift's `Range<UInt64>` semantics (half-open interval).
-        case bytes(start: UInt64, end: UInt64)
+        /// This matches Swift's `Range` semantics (half-open interval).
+        case bytes(start: Kernel.File.Offset, end: Kernel.File.Offset)
 
-        /// Creates a byte range from a Swift Range.
+        /// Creates a byte range from start to end offsets.
         ///
-        /// - Parameter range: The byte range to lock.
+        /// - Parameters:
+        ///   - start: The starting byte offset (inclusive).
+        ///   - length: The number of bytes to lock.
         @inlinable
-        public init(_ range: Swift.Range<UInt64>) {
-            self = .bytes(start: range.lowerBound, end: range.upperBound)
+        public static func bytes(start: Kernel.File.Offset, length: Kernel.ByteCount) -> Range {
+            .bytes(start: start, end: start + length)
         }
     }
 }

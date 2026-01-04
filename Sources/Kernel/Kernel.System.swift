@@ -106,6 +106,18 @@ extension Kernel.System {
             ts.tv_nsec = Int(nanoseconds % 1_000_000_000)
             nanosleep(&ts, nil)
         }
+
+        /// Sleeps for the specified duration.
+        ///
+        /// - Parameter duration: The duration to sleep.
+        @inlinable
+        public static func sleep(_ duration: Duration) {
+            let (seconds, attoseconds) = duration.components
+            var ts = timespec()
+            ts.tv_sec = Int(seconds)
+            ts.tv_nsec = Int(attoseconds / 1_000_000_000)
+            nanosleep(&ts, nil)
+        }
     }
 #endif
 
@@ -164,6 +176,16 @@ extension Kernel.System {
         public static func sleep(nanoseconds: UInt64) {
             let milliseconds = nanoseconds / 1_000_000
             Sleep(DWORD(min(milliseconds, UInt64(DWORD.max))))
+        }
+
+        /// Sleeps for the specified duration.
+        ///
+        /// - Parameter duration: The duration to sleep.
+        /// - Note: Windows Sleep has millisecond granularity.
+        public static func sleep(_ duration: Duration) {
+            let (seconds, attoseconds) = duration.components
+            let totalMs = UInt64(seconds) * 1000 + UInt64(attoseconds / 1_000_000_000_000_000)
+            Sleep(DWORD(min(totalMs, UInt64(DWORD.max))))
         }
     }
 #endif

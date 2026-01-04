@@ -141,8 +141,8 @@ extension Kernel.Lock.Error {
                 fl.l_start = 0
                 fl.l_len = 0  // 0 means lock to EOF
             case .bytes(let start, let end):
-                fl.l_start = off_t(start)
-                fl.l_len = off_t(end - start)
+                fl.l_start = off_t(start.rawValue)
+                fl.l_len = off_t(end.rawValue - start.rawValue)
             }
 
             let result = fcntl(descriptor.rawValue, F_SETLK, &fl)
@@ -165,8 +165,8 @@ extension Kernel.Lock.Error {
                 fl.l_start = 0
                 fl.l_len = 0
             case .bytes(let start, let end):
-                fl.l_start = off_t(start)
-                fl.l_len = off_t(end - start)
+                fl.l_start = off_t(start.rawValue)
+                fl.l_len = off_t(end.rawValue - start.rawValue)
             }
 
             return fl
@@ -287,15 +287,15 @@ extension Kernel.Lock.Error {
         @inlinable
         static func makeOverlapped(range: Range) -> OVERLAPPED {
             var overlapped = OVERLAPPED()
-            let start: UInt64
+            let start: Int64
             switch range {
             case .file:
                 start = 0
             case .bytes(let s, _):
-                start = s
+                start = s.rawValue
             }
-            overlapped.Offset = DWORD(start & 0xFFFF_FFFF)
-            overlapped.OffsetHigh = DWORD(start >> 32)
+            overlapped.Offset = DWORD(UInt64(bitPattern: start) & 0xFFFF_FFFF)
+            overlapped.OffsetHigh = DWORD(UInt64(bitPattern: start) >> 32)
             return overlapped
         }
 
@@ -310,7 +310,7 @@ extension Kernel.Lock.Error {
                 // This is the Windows equivalent of "lock entire file".
                 return (DWORD.max, DWORD.max)
             case .bytes(let start, let end):
-                let length = end - start
+                let length = UInt64(bitPattern: end.rawValue - start.rawValue)
                 return (DWORD(length & 0xFFFF_FFFF), DWORD(length >> 32))
             }
         }

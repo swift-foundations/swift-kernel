@@ -32,17 +32,17 @@ extension Kernel.File.Direct {
         ///
         /// Direct I/O requires the buffer to be aligned to the sector size.
         /// Use `Buffer.Aligned` for portable aligned allocation.
-        case misalignedBuffer(address: Int, required: Int)
+        case misalignedBuffer(address: Int, required: Kernel.Alignment)
 
         /// The file offset is not properly aligned.
         ///
         /// Direct I/O requires file offsets to be multiples of the sector size.
-        case misalignedOffset(offset: Int64, required: Int)
+        case misalignedOffset(offset: Int64, required: Kernel.Alignment)
 
         /// The I/O length is not a valid multiple of the sector size.
         ///
         /// Direct I/O requires transfer lengths to be exact multiples.
-        case invalidLength(length: Int, requiredMultiple: Int)
+        case invalidLength(length: Int, requiredMultiple: Kernel.Alignment)
 
         /// Failed to enable or disable cache bypass mode.
         case modeChange
@@ -63,11 +63,11 @@ extension Kernel.File.Direct.Error: CustomStringConvertible {
         case .notSupported:
             return "Direct I/O not supported"
         case .misalignedBuffer(let address, let required):
-            return "Buffer address 0x\(String(address, radix: 16)) not aligned to \(required) bytes"
+            return "Buffer address 0x\(String(address, radix: 16)) not aligned to \(required.rawValue) bytes"
         case .misalignedOffset(let offset, let required):
-            return "File offset \(offset) not aligned to \(required) bytes"
+            return "File offset \(offset) not aligned to \(required.rawValue) bytes"
         case .invalidLength(let length, let requiredMultiple):
-            return "Length \(length) is not a multiple of \(requiredMultiple)"
+            return "Length \(length) is not a multiple of \(requiredMultiple.rawValue)"
         case .modeChange:
             return "Failed to change cache mode"
         case .invalidHandle:

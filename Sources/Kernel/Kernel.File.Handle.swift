@@ -106,7 +106,7 @@ extension Kernel.File.Handle {
     /// - Throws: `Kernel.IO.Read.Error` on failure.
     public func read(
         into buffer: UnsafeMutableRawBufferPointer,
-        at offset: Int64
+        at offset: Kernel.File.Offset
     ) throws(Kernel.IO.Read.Error) -> Int {
         try Kernel.IO.Read.pread(descriptor, into: buffer, at: offset)
     }
@@ -125,7 +125,7 @@ extension Kernel.File.Handle {
     /// - Throws: `Kernel.IO.Write.Error` on failure.
     public func write(
         from buffer: UnsafeRawBufferPointer,
-        at offset: Int64
+        at offset: Kernel.File.Offset
     ) throws(Kernel.IO.Write.Error) -> Int {
         try Kernel.IO.Write.pwrite(descriptor, from: buffer, at: offset)
     }

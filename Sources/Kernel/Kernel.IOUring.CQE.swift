@@ -59,8 +59,8 @@
         /// This is the value set via `sqe.userData` when the operation was submitted.
         /// Typically used to recover the operation context (e.g., a pointer to Storage).
         @inlinable
-        public var userData: UInt64 {
-            cValue.user_data
+        public var userData: UserData {
+            UserData(rawValue: cValue.user_data)
         }
 
         /// Result of the operation.

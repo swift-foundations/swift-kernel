@@ -84,7 +84,7 @@ extension Kernel.IO {
         public static func pread(
             _ descriptor: Kernel.Descriptor,
             into buffer: UnsafeMutableRawBufferPointer,
-            at offset: Int64
+            at offset: Kernel.File.Offset
         ) throws(Error) -> Int {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
@@ -94,19 +94,19 @@ extension Kernel.IO {
             }
             #if canImport(Darwin)
                 return try Kernel.Syscall.require(
-                    Darwin.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    Darwin.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
             #elseif canImport(Glibc)
                 return try Kernel.Syscall.require(
-                    Glibc.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    Glibc.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
             #elseif canImport(Musl)
                 return try Kernel.Syscall.require(
-                    Musl.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset)),
+                    Musl.pread(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
@@ -148,7 +148,7 @@ extension Kernel.IO.Read {
     public static func pread(
         _ descriptor: Kernel.Descriptor,
         into span: inout MutableSpan<UInt8>,
-        at offset: Int64
+        at offset: Kernel.File.Offset
     ) throws(Error) -> Int {
         try span.withUnsafeMutableBytes { (buffer: UnsafeMutableRawBufferPointer) throws(Error) -> Int in
             try pread(descriptor, into: buffer, at: offset)
@@ -199,7 +199,7 @@ extension Kernel.IO.Read {
         public static func pread(
             _ descriptor: Kernel.Descriptor,
             into buffer: UnsafeMutableRawBufferPointer,
-            at offset: Int64
+            at offset: Kernel.File.Offset
         ) throws(Error) -> Int {
             guard let baseAddress = buffer.baseAddress else {
                 return 0
@@ -209,8 +209,8 @@ extension Kernel.IO.Read {
             }
 
             var overlapped = OVERLAPPED()
-            overlapped.Offset = DWORD(offset & 0xFFFF_FFFF)
-            overlapped.OffsetHigh = DWORD(offset >> 32)
+            overlapped.Offset = DWORD(offset.rawValue & 0xFFFF_FFFF)
+            overlapped.OffsetHigh = DWORD(offset.rawValue >> 32)
 
             var bytesRead: DWORD = 0
             let result = ReadFile(
