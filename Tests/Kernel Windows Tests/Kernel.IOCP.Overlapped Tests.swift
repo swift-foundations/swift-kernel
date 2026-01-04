@@ -135,12 +135,14 @@
             var overlapped = Kernel.IOCP.Overlapped()
 
             // Set via property, verify raw fields match expected split
-            overlapped.offset = 0xABCD_EF01_2345_6789
+            // Use bitPattern since the hex value exceeds Int64.max
+            let testValue: UInt64 = 0xABCD_EF01_2345_6789
+            overlapped.offset = Int64(bitPattern: testValue)
 
             // Note: This value is negative when interpreted as signed
             // but the bit pattern should be preserved
-            let expectedLow = DWORD(truncatingIfNeeded: 0xABCD_EF01_2345_6789)
-            let expectedHigh = DWORD(truncatingIfNeeded: 0xABCD_EF01_2345_6789 >> 32)
+            let expectedLow = DWORD(truncatingIfNeeded: testValue)
+            let expectedHigh = DWORD(truncatingIfNeeded: testValue >> 32)
 
             #expect(overlapped.raw.Offset == expectedLow)
             #expect(overlapped.raw.OffsetHigh == expectedHigh)
