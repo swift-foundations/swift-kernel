@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
+internal import SystemPackage
 
 extension Kernel.Close {
     public enum Error: Swift.Error, Sendable {
