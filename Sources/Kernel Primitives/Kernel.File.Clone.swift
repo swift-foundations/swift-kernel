@@ -317,7 +317,7 @@ extension Kernel.File.Clone {
                         break  // EOF
                     }
 
-                    remaining = remaining - copied
+                    remaining -= copied
                 }
             }
         }

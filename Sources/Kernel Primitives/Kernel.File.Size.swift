@@ -148,4 +148,3 @@ public func - (lhs: Kernel.File.Offset, rhs: Kernel.File.Size) -> Kernel.File.Of
 public func -= (lhs: inout Kernel.File.Offset, rhs: Kernel.File.Size) {
     lhs = lhs - rhs
 }
-
