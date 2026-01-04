@@ -213,7 +213,7 @@ extension Kernel.Lock.Test.Unit {
             if let builtProductsDir = ProcessInfo.processInfo.environment["BUILT_PRODUCTS_DIR"] {
                 return "\(builtProductsDir)/_Lock Test Process"
             }
-            // Fall back to SPM build directory
+            // Fall back to SPM build directory (use absolute path from package root)
             #if os(macOS)
                 let buildDir = ".build/arm64-apple-macosx/debug"
             #elseif os(Linux)
@@ -221,7 +221,13 @@ extension Kernel.Lock.Test.Unit {
             #else
                 let buildDir = ".build/debug"
             #endif
-            return "\(buildDir)/_Lock Test Process"
+            // Get the package root by finding the directory containing Package.swift
+            // relative to the test file location
+            let packageRoot = URL(fileURLWithPath: #filePath)
+                .deletingLastPathComponent()  // Kernel Tests
+                .deletingLastPathComponent()  // Tests
+                .deletingLastPathComponent()  // swift-kernel
+            return packageRoot.appendingPathComponent(buildDir).appendingPathComponent("_Lock Test Process").path
         }
 
         @Test("Exclusive lock blocks try-exclusive from another process")
