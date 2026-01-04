@@ -24,7 +24,7 @@ extension Kernel.File.System.Stats.Test.Unit {
     @Test("Statfs memberwise init")
     func memberwiseInit() {
         let fs = Kernel.File.System.Stats(
-            type: 0x1234,
+            type: Kernel.File.System.Kind(0x1234),
             blockSize: 4096,
             blocks: 1_000_000,
             freeBlocks: 500000,
@@ -35,7 +35,7 @@ extension Kernel.File.System.Stats.Test.Unit {
             nameMax: 255
         )
 
-        #expect(fs.type == 0x1234)
+        #expect(fs.type == Kernel.File.System.Kind(0x1234))
         #expect(fs.blockSize == 4096)
         #expect(fs.blocks == 1_000_000)
         #expect(fs.freeBlocks == 500000)
@@ -50,7 +50,7 @@ extension Kernel.File.System.Stats.Test.Unit {
     @Test("Statfs with fsTypeName")
     func withFsTypeName() {
         let fs = Kernel.File.System.Stats(
-            type: 0x1234,
+            type: Kernel.File.System.Kind(0x1234),
             blockSize: 4096,
             blocks: 1_000_000,
             freeBlocks: 500000,
@@ -68,7 +68,7 @@ extension Kernel.File.System.Stats.Test.Unit {
     @Test("Statfs is equatable")
     func equatable() {
         let fs1 = Kernel.File.System.Stats(
-            type: 1,
+            type: Kernel.File.System.Kind(1),
             blockSize: 4096,
             blocks: 1000,
             freeBlocks: 500,
@@ -80,7 +80,7 @@ extension Kernel.File.System.Stats.Test.Unit {
         )
 
         let fs2 = Kernel.File.System.Stats(
-            type: 1,
+            type: Kernel.File.System.Kind(1),
             blockSize: 4096,
             blocks: 1000,
             freeBlocks: 500,
@@ -92,7 +92,7 @@ extension Kernel.File.System.Stats.Test.Unit {
         )
 
         let fs3 = Kernel.File.System.Stats(
-            type: 2,  // Different type
+            type: Kernel.File.System.Kind(2),  // Different type
             blockSize: 4096,
             blocks: 1000,
             freeBlocks: 500,
@@ -110,7 +110,7 @@ extension Kernel.File.System.Stats.Test.Unit {
     @Test("Statfs is hashable")
     func hashable() {
         let fs1 = Kernel.File.System.Stats(
-            type: 1,
+            type: Kernel.File.System.Kind(1),
             blockSize: 4096,
             blocks: 1000,
             freeBlocks: 500,
@@ -122,7 +122,7 @@ extension Kernel.File.System.Stats.Test.Unit {
         )
 
         let fs2 = Kernel.File.System.Stats(
-            type: 2,
+            type: Kernel.File.System.Kind(2),
             blockSize: 4096,
             blocks: 1000,
             freeBlocks: 500,
@@ -150,7 +150,7 @@ extension Kernel.File.System.Stats.Test.Unit {
         // In real filesystems, availableBlocks is typically <= freeBlocks
         // (root-reserved blocks)
         let fs = Kernel.File.System.Stats(
-            type: 1,
+            type: Kernel.File.System.Kind(1),
             blockSize: 4096,
             blocks: 1000,
             freeBlocks: 500,
