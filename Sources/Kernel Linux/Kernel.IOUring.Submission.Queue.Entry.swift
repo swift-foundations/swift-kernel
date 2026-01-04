@@ -75,6 +75,13 @@ public import Kernel_Primitives
             set { cValue.flags = newValue }
         }
 
+        /// Operation-specific flags (rw_flags field).
+        @inlinable
+        public var opFlags: Int32 {
+            get { cValue.rw_flags }
+            set { cValue.rw_flags = newValue }
+        }
+
         /// I/O priority.
         @inlinable
         public var priority: Kernel.IOUring.Priority {
@@ -92,8 +99,8 @@ public import Kernel_Primitives
         /// File offset for read/write operations.
         @inlinable
         public var offset: Kernel.IOUring.Offset {
-            get { Kernel.IOUring.Offset(rawValue: cValue.off) }
-            set { cValue.off = newValue.rawValue }
+            get { Kernel.IOUring.Offset(cValue.off) }
+            set { cValue.off = newValue._rawValue }
         }
 
         /// Buffer address or other address field.
@@ -120,8 +127,8 @@ public import Kernel_Primitives
         /// Personality ID (for credentials).
         @inlinable
         public var personality: Kernel.IOUring.Personality.ID {
-            get { Kernel.IOUring.Personality.ID(rawValue: cValue.personality) }
-            set { cValue.personality = newValue.rawValue }
+            get { Kernel.IOUring.Personality.ID(cValue.personality) }
+            set { cValue.personality = newValue._rawValue }
         }
     }
 

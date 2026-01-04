@@ -41,10 +41,10 @@ public import Kernel_Primitives
             public private(set) var features: UInt32
 
             /// Submission queue ring offset info (filled by kernel).
-            public private(set) var sqOff: Submission.Queue.Offsets
+            public private(set) var sqOff: Kernel.IOUring.Submission.Queue.Offsets
 
             /// Completion queue ring offset info (filled by kernel).
-            public private(set) var cqOff: Completion.Queue.Offsets
+            public private(set) var cqOff: Kernel.IOUring.Completion.Queue.Offsets
 
             /// Creates io_uring parameters for setup.
             ///
@@ -60,8 +60,8 @@ public import Kernel_Primitives
                 self.flags = flags
                 self.submission = submission
                 self.features = 0
-                self.sqOff = Submission.Queue.Offsets()
-                self.cqOff = Completion.Queue.Offsets()
+                self.sqOff = Kernel.IOUring.Submission.Queue.Offsets()
+                self.cqOff = Kernel.IOUring.Completion.Queue.Offsets()
             }
 
             /// Creates params from the C struct (after setup).
@@ -76,8 +76,8 @@ public import Kernel_Primitives
                     )
                 )
                 self.features = cParams.features
-                self.sqOff = Submission.Queue.Offsets(cParams.sq_off)
-                self.cqOff = Completion.Queue.Offsets(cParams.cq_off)
+                self.sqOff = Kernel.IOUring.Submission.Queue.Offsets(cParams.sq_off)
+                self.cqOff = Kernel.IOUring.Completion.Queue.Offsets(cParams.cq_off)
             }
 
             /// Converts to the C io_uring_params struct.

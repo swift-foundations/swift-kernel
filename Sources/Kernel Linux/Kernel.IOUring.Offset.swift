@@ -47,7 +47,7 @@ public import Kernel_Primitives
 
     // MARK: - Cross-Space Conversion
 
-    extension Coordinate.X where Space == Kernel.IOUring.Space {
+    extension Kernel.IOUring.Offset {
         /// Creates an io_uring offset from a file offset.
         ///
         /// Negative file offsets (indicating "current position") are
@@ -55,7 +55,7 @@ public import Kernel_Primitives
         @inlinable
         public init(_ fileOffset: Kernel.File.Offset) {
             if fileOffset._rawValue >= 0 {
-                self.init(UInt64(bitPattern: fileOffset._rawValue))
+                self.init(UInt64(fileOffset._rawValue))
             } else {
                 self = .current
             }
@@ -64,7 +64,7 @@ public import Kernel_Primitives
 
     // MARK: - CustomStringConvertible
 
-    extension Coordinate.X: CustomStringConvertible where Space == Kernel.IOUring.Space {
+    extension Kernel.IOUring.Offset: CustomStringConvertible {
         public var description: String {
             if self == .current {
                 return "current"
