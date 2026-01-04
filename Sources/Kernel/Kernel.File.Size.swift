@@ -92,11 +92,17 @@ extension Kernel.File.Size {
     public var isPositive: Bool {
         _rawValue > 0
     }
+}
 
-    /// The raw Int value for syscall boundaries.
+// MARK: - Int from File.Size
+
+extension Int {
+    /// Creates an Int from a file size for syscall boundaries.
+    ///
+    /// - Parameter size: The file size.
     @inlinable
-    public var intValue: Int {
-        Int(_rawValue)
+    public init(_ size: Kernel.File.Size) {
+        self = Int(size._rawValue)
     }
 }
 

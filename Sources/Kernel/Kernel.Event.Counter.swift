@@ -80,14 +80,20 @@
             public var isZero: Bool {
                 rawValue == 0
             }
+        }
+    }
 
-            /// The UInt32 representation for eventfd creation.
-            ///
-            /// Values larger than `UInt32.max` are clamped.
-            @inlinable
-            public var initValue: UInt32 {
-                UInt32(clamping: rawValue)
-            }
+    // MARK: - UInt32 from Counter
+
+    extension UInt32 {
+        /// Creates a UInt32 from an event counter for eventfd creation.
+        ///
+        /// Values larger than `UInt32.max` are clamped.
+        ///
+        /// - Parameter counter: The counter value.
+        @inlinable
+        public init(_ counter: Kernel.Event.Counter) {
+            self = UInt32(clamping: counter.rawValue)
         }
     }
 

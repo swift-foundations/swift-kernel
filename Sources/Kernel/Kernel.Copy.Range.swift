@@ -61,7 +61,7 @@
                     &srcOff,
                     destination.rawValue,
                     &dstOff,
-                    size_t(length.intValue),
+                    size_t(Int(length)),
                     0
                 )
             )

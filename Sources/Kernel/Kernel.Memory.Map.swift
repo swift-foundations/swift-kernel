@@ -61,7 +61,7 @@ extension Kernel.Memory {
 
             let result = mmap(
                 addr,
-                length.intValue,
+                Int(length),
                 protection.rawValue,
                 flags.rawValue,
                 fd.rawValue,
@@ -86,7 +86,7 @@ extension Kernel.Memory {
             addr: Kernel.Memory.Address,
             length: Kernel.File.Size
         ) throws(Error) {
-            guard munmap(addr, length.intValue) == 0 else {
+            guard munmap(addr, Int(length)) == 0 else {
                 throw .unmap(.captureErrno())
             }
         }
@@ -113,7 +113,7 @@ extension Kernel.Memory {
             length: Kernel.File.Size,
             flags: Sync.Flags = .sync
         ) throws(Error) {
-            guard msync(addr, length.intValue, flags.rawValue) == 0 else {
+            guard msync(addr, Int(length), flags.rawValue) == 0 else {
                 throw .sync(.captureErrno())
             }
         }
@@ -131,7 +131,7 @@ extension Kernel.Memory {
             length: Kernel.File.Size,
             protection: Protection
         ) throws(Error) {
-            guard mprotect(addr, length.intValue, protection.rawValue) == 0 else {
+            guard mprotect(addr, Int(length), protection.rawValue) == 0 else {
                 throw .protect(.captureErrno())
             }
         }
@@ -150,7 +150,7 @@ extension Kernel.Memory {
             length: Kernel.File.Size,
             advice: Advice
         ) {
-            _ = madvise(addr, length.intValue, advice.rawValue)
+            _ = madvise(addr, Int(length), advice.rawValue)
         }
     }
 
@@ -185,7 +185,7 @@ extension Kernel.Memory {
             addr: Kernel.Memory.Address,
             length: Kernel.File.Size
         ) throws(Error) {
-            guard FlushViewOfFile(addr, SIZE_T(length.intValue)) else {
+            guard FlushViewOfFile(addr, SIZE_T(Int(length))) else {
                 throw .sync(.captureLastError())
             }
         }
@@ -206,7 +206,7 @@ extension Kernel.Memory {
             guard
                 VirtualProtect(
                     addr,
-                    SIZE_T(length.intValue),
+                    SIZE_T(Int(length)),
                     protection.windowsPageProtection,
                     &oldProtection
                 )

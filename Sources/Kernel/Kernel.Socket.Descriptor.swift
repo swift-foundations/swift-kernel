@@ -82,12 +82,17 @@ extension Kernel.Socket.Descriptor {
         self.init(rawValue: descriptor.rawValue)
     }
 
-    /// Converts to a file descriptor.
+}
+
+// MARK: - Kernel.Descriptor from Socket.Descriptor
+
+extension Kernel.Descriptor {
+    /// Creates a file descriptor from a socket descriptor.
     ///
     /// On POSIX, socket FDs and file FDs are interchangeable (both `Int32`).
     @inlinable
-    public var fileDescriptor: Kernel.Descriptor {
-        Kernel.Descriptor(rawValue: rawValue)
+    public init(_ socket: Kernel.Socket.Descriptor) {
+        self.init(rawValue: socket.rawValue)
     }
 }
 

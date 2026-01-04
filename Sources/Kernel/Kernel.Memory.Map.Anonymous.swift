@@ -77,8 +77,8 @@ extension Kernel.Memory.Map {
             }
 
             let pageProtection = protection.windowsPageProtection
-            let maxSizeHigh = DWORD(UInt64(length.intValue) >> 32)
-            let maxSizeLow = DWORD(UInt64(length.intValue) & 0xFFFF_FFFF)
+            let maxSizeHigh = DWORD(UInt64(Int(length)) >> 32)
+            let maxSizeLow = DWORD(UInt64(Int(length)) & 0xFFFF_FFFF)
 
             let mappingHandle = CreateFileMappingW(
                 INVALID_HANDLE_VALUE,
@@ -100,7 +100,7 @@ extension Kernel.Memory.Map {
                 access,
                 0,
                 0,
-                SIZE_T(length.intValue)
+                SIZE_T(Int(length))
             )
 
             guard let address = viewAddress else {

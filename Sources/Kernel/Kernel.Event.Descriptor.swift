@@ -43,7 +43,7 @@
             initval: Counter = .zero,
             flags: Flags = .cloexec | .nonblock
         ) throws(Error) -> Kernel.Descriptor {
-            let efd = eventfd(initval.initValue, flags.rawValue)
+            let efd = eventfd(UInt32(initval), flags.rawValue)
             guard efd >= 0 else {
                 throw .create(.captureErrno())
             }
