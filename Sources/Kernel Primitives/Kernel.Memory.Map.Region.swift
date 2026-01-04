@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 #endif
 
 extension Kernel.Memory.Map {
@@ -21,6 +21,7 @@ extension Kernel.Memory.Map {
     /// - On POSIX: wraps the base address and length
     /// - On Windows: also tracks the mapping handle for cleanup
     ///
+    /// Regions are created by `Kernel.Memory.Map.map()` and related functions.
     /// Use `Kernel.Memory.Map.unmap(_:)` to release the region.
     public struct Region: @unchecked Sendable {
         /// The base address of the mapped region.
@@ -37,8 +38,8 @@ extension Kernel.Memory.Map {
             internal let mappingHandle: HANDLE
 
             /// Creates a mapped region with the given address, length, and Windows handle.
-            @inlinable
-            public init(base: Kernel.Memory.Address, length: Kernel.File.Size, mappingHandle: HANDLE) {
+            @usableFromInline
+            internal init(base: Kernel.Memory.Address, length: Kernel.File.Size, mappingHandle: HANDLE) {
                 self.base = base
                 self.length = length
                 self.mappingHandle = mappingHandle

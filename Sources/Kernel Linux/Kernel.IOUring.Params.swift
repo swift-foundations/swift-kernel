@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 public import Kernel_Primitives
 
-
 #if canImport(Glibc) || canImport(Musl)
 
     #if canImport(Glibc)
@@ -36,7 +35,7 @@ public import Kernel_Primitives
             public var flags: Setup.Flags
 
             /// Submission queue thread configuration.
-            public var submission: SubmissionConfiguration
+            public var submission: Submission
 
             /// Ring features supported by kernel (filled by kernel).
             public private(set) var features: UInt32
@@ -54,7 +53,7 @@ public import Kernel_Primitives
             ///   - submission: Submission queue thread configuration.
             public init(
                 flags: Setup.Flags = [],
-                submission: SubmissionConfiguration = SubmissionConfiguration()
+                submission: Submission = Submission()
             ) {
                 self.sqEntries = 0
                 self.cqEntries = 0
@@ -70,8 +69,8 @@ public import Kernel_Primitives
                 self.sqEntries = cParams.sq_entries
                 self.cqEntries = cParams.cq_entries
                 self.flags = Setup.Flags(rawValue: cParams.flags)
-                self.submission = SubmissionConfiguration(
-                    thread: SubmissionConfiguration.Thread(
+                self.submission = Submission(
+                    thread: Submission.Thread(
                         cpu: cParams.sq_thread_cpu,
                         idle: cParams.sq_thread_idle
                     )
@@ -96,7 +95,7 @@ public import Kernel_Primitives
 
     extension Kernel.IOUring.Params {
         /// Submission queue configuration.
-        public struct SubmissionConfiguration: Sendable, Equatable {
+        public struct Submission: Sendable, Equatable {
             /// Thread configuration for submission queue polling.
             public var thread: Thread
 
