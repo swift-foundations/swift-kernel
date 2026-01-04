@@ -45,11 +45,9 @@ extension Kernel.Thread {
     /// ```
     public final class Mutex: @unchecked Sendable {
         #if os(Windows)
-            @usableFromInline
-            var srwlock: SRWLOCK
+            private var srwlock: SRWLOCK
 
             /// Creates a new mutex.
-            @inlinable
             public init() {
                 self.srwlock = SRWLOCK()
                 InitializeSRWLock(&srwlock)
@@ -57,11 +55,9 @@ extension Kernel.Thread {
 
         // SRWLOCK doesn't need destruction on Windows
         #else
-            @usableFromInline
-            var mutex: pthread_mutex_t
+            private var mutex: pthread_mutex_t
 
             /// Creates a new mutex.
-            @inlinable
             public init() {
                 self.mutex = pthread_mutex_t()
                 var attr = pthread_mutexattr_t()
@@ -83,7 +79,6 @@ extension Kernel.Thread.Mutex {
     /// Acquires the mutex.
     ///
     /// Blocks until the mutex is available.
-    @inlinable
     public func lock() {
         #if os(Windows)
             AcquireSRWLockExclusive(&srwlock)
@@ -95,7 +90,6 @@ extension Kernel.Thread.Mutex {
     /// Releases the mutex.
     ///
     /// - Precondition: The mutex must be held by the current thread.
-    @inlinable
     public func unlock() {
         #if os(Windows)
             ReleaseSRWLockExclusive(&srwlock)
@@ -107,7 +101,6 @@ extension Kernel.Thread.Mutex {
     /// Attempts to acquire the mutex without blocking.
     ///
     /// - Returns: `true` if the mutex was acquired, `false` if it was already held.
-    @inlinable
     public func tryLock() -> Bool {
         #if os(Windows)
             return TryAcquireSRWLockExclusive(&srwlock) != 0
@@ -123,10 +116,28 @@ extension Kernel.Thread.Mutex {
     /// - Parameter body: The closure to execute while holding the mutex.
     /// - Returns: The value returned by the closure.
     /// - Throws: Any error thrown by `body`.
-    @inlinable
     public func withLock<T, E: Error>(_ body: () throws(E) -> T) throws(E) -> T {
         lock()
         defer { unlock() }
         return try body()
     }
+}
+
+// MARK: - Internal Access for Condition
+
+extension Kernel.Thread.Mutex {
+    /// Provides access to the underlying platform mutex pointer.
+    ///
+    /// This is internal API for `Kernel.Thread.Condition` to use when waiting.
+    /// - Parameter body: A closure that receives the pointer.
+    /// - Returns: The value returned by `body`.
+    #if os(Windows)
+    func withUnsafeMutablePointer<T>(_ body: (UnsafeMutablePointer<SRWLOCK>) -> T) -> T {
+        Swift.withUnsafeMutablePointer(to: &srwlock, body)
+    }
+    #else
+    func withUnsafeMutablePointer<T>(_ body: (UnsafeMutablePointer<pthread_mutex_t>) -> T) -> T {
+        Swift.withUnsafeMutablePointer(to: &mutex, body)
+    }
+    #endif
 }

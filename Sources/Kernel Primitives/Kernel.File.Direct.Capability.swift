@@ -43,25 +43,57 @@ extension Kernel.File.Direct {
     }
 }
 
-// MARK: - Convenience
+// MARK: - Direct Accessor
 
 extension Kernel.File.Direct.Capability {
-    /// Whether strict Direct I/O is available.
-    public var supportsDirect: Bool {
-        if case .directSupported = self { return true }
-        return false
-    }
+    /// Accessor for direct I/O properties.
+    public var direct: Direct { Direct(capability: self) }
 
-    /// Whether any form of cache bypass is available.
-    public var supportsBypass: Bool {
-        switch self {
-        case .directSupported, .uncachedOnly:
-            return true
-        case .bufferedOnly:
+    /// Direct I/O properties accessor.
+    public struct Direct: Sendable {
+        let capability: Kernel.File.Direct.Capability
+
+        init(capability: Kernel.File.Direct.Capability) {
+            self.capability = capability
+        }
+
+        /// Whether strict Direct I/O is available.
+        public var isSupported: Bool {
+            if case .directSupported = capability { return true }
             return false
         }
     }
+}
 
+// MARK: - Bypass Accessor
+
+extension Kernel.File.Direct.Capability {
+    /// Accessor for cache bypass properties.
+    public var bypass: Bypass { Bypass(capability: self) }
+
+    /// Cache bypass properties accessor.
+    public struct Bypass: Sendable {
+        let capability: Kernel.File.Direct.Capability
+
+        init(capability: Kernel.File.Direct.Capability) {
+            self.capability = capability
+        }
+
+        /// Whether any form of cache bypass is available.
+        public var isSupported: Bool {
+            switch capability {
+            case .directSupported, .uncachedOnly:
+                return true
+            case .bufferedOnly:
+                return false
+            }
+        }
+    }
+}
+
+// MARK: - Alignment
+
+extension Kernel.File.Direct.Capability {
     /// The alignment requirements, if Direct I/O is supported.
     public var alignment: Kernel.File.Direct.Requirements.Alignment? {
         if case .directSupported(let alignment) = self {

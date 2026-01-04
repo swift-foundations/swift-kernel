@@ -33,12 +33,6 @@ public import Kernel_Primitives
     // MARK: - Accessors
 
     extension Kernel.IOCP.Entry {
-        /// Number of bytes transferred in the completed operation.
-        @inlinable
-        public var bytesTransferred: UInt32 {
-            raw.dwNumberOfBytesTransferred
-        }
-
         /// Pointer to the OVERLAPPED structure for this completion.
         @inlinable
         public var overlapped: UnsafeMutablePointer<OVERLAPPED>? {
@@ -49,6 +43,30 @@ public import Kernel_Primitives
         @inlinable
         public var key: Kernel.IOCP.Completion.Key {
             Kernel.IOCP.Completion.Key(rawValue: raw.lpCompletionKey)
+        }
+    }
+
+    // MARK: - Bytes Accessor
+
+    extension Kernel.IOCP.Entry {
+        /// Accessor for byte-related properties.
+        public var bytes: Bytes { Bytes(entry: self) }
+
+        /// Byte-related properties for completion entry.
+        public struct Bytes: Sendable {
+            @usableFromInline
+            let entry: Kernel.IOCP.Entry
+
+            @usableFromInline
+            init(entry: Kernel.IOCP.Entry) {
+                self.entry = entry
+            }
+
+            /// Number of bytes transferred in the completed operation.
+            @inlinable
+            public var transferred: UInt32 {
+                entry.raw.dwNumberOfBytesTransferred
+            }
         }
     }
 

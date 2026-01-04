@@ -87,7 +87,7 @@ extension Kernel.File {
         }
 
         deinit {
-            try? Kernel.Close.close(descriptor)
+            _ = Result { try Kernel.Close.close(descriptor) }
         }
     }
 }
@@ -163,9 +163,17 @@ extension Kernel.File.Handle {
     /// Closes the file handle explicitly.
     ///
     /// After calling this method, the handle is consumed and cannot be used.
-    /// The descriptor is closed regardless of whether the close syscall succeeds.
-    public consuming func close() {
-        try? Kernel.Close.close(descriptor)
+    ///
+    /// - Returns: `.success(())` if the close succeeded, or `.failure(error)` with
+    ///   the typed error. The caller decides whether to ignore the error.
+    @discardableResult
+    public consuming func close() -> Result<Void, Kernel.Close.Error> {
+        do throws(Kernel.Close.Error) {
+            try Kernel.Close.close(descriptor)
+            return .success(())
+        } catch {
+            return .failure(error)
+        }
     }
 }
 
@@ -180,7 +188,6 @@ extension Kernel.File.Handle {
     /// - Parameter body: A closure that receives the descriptor.
     /// - Returns: The value returned by `body`.
     /// - Throws: Any error thrown by `body`.
-    @inlinable
     public func withDescriptor<T, E: Swift.Error>(
         _ body: (Kernel.File.Descriptor) throws(E) -> T
     ) throws(E) -> T {

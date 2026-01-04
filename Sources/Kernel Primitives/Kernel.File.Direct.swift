@@ -205,7 +205,7 @@ extension Kernel.File.Direct.Requirements {
         ) throws(Error.Syscall) {
             let result = fcntl(descriptor.rawValue, F_NOCACHE, enabled ? 1 : 0)
             guard result != -1 else {
-                let operation: Error.Operation = enabled ? .setNoCache : .clearNoCache
+                let operation: Error.Operation = enabled ? .cache(.set) : .cache(.clear)
                 throw .platform(code: .posix(errno), operation: operation)
             }
         }
@@ -343,7 +343,7 @@ extension Kernel.File.Direct.Requirements {
             handle: UnsafeMutableRawPointer?
         ) throws(Error.Syscall) -> Requirements {
             guard handle != nil, handle != INVALID_HANDLE_VALUE else {
-                throw .invalidDescriptor(operation: .getSectorSize)
+                throw .invalidDescriptor(operation: .sector(.getSize))
             }
 
             // Getting path from handle requires GetFinalPathNameByHandle

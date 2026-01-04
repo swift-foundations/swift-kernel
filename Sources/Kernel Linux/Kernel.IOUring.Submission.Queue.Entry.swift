@@ -110,15 +110,6 @@ public import Kernel_Primitives
             set { cValue.len = newValue.rawValue }
         }
 
-        /// Operation-specific flags.
-        ///
-        /// Note: Uses Int32 to match Linux kernel's `__kernel_rwf_t` type.
-        @inlinable
-        public var opFlags: Int32 {
-            get { cValue.rw_flags }
-            set { cValue.rw_flags = newValue }
-        }
-
         /// Operation data returned with completion.
         @inlinable
         public var data: Kernel.IOUring.Operation.Data {
@@ -126,25 +117,76 @@ public import Kernel_Primitives
             set { cValue.user_data = newValue._rawValue }
         }
 
-        /// Buffer index (for registered buffers).
-        @inlinable
-        public var bufferIndex: Kernel.IOUring.Buffer.Index {
-            get { Kernel.IOUring.Buffer.Index(rawValue: cValue.buf_index) }
-            set { cValue.buf_index = newValue.rawValue }
-        }
-
-        /// Buffer group (for buffer selection).
-        @inlinable
-        public var bufferGroup: Kernel.IOUring.Buffer.Group {
-            get { Kernel.IOUring.Buffer.Group(rawValue: cValue.buf_group) }
-            set { cValue.buf_group = newValue.rawValue }
-        }
-
         /// Personality ID (for credentials).
         @inlinable
         public var personality: Kernel.IOUring.Personality.ID {
             get { Kernel.IOUring.Personality.ID(rawValue: cValue.personality) }
             set { cValue.personality = newValue.rawValue }
+        }
+    }
+
+    // MARK: - Op Accessor
+
+    extension Kernel.IOUring.Submission.Queue.Entry {
+        /// Accessor for operation-specific properties.
+        public var op: Op {
+            get { Op(entry: self) }
+            set { cValue.rw_flags = newValue.flags }
+        }
+
+        /// Operation-specific properties for submission entry.
+        public struct Op: Sendable {
+            /// Operation-specific flags.
+            ///
+            /// Note: Uses Int32 to match Linux kernel's `__kernel_rwf_t` type.
+            public var flags: Int32
+
+            @usableFromInline
+            init(entry: Kernel.IOUring.Submission.Queue.Entry) {
+                self.flags = entry.cValue.rw_flags
+            }
+
+            /// Creates an Op with the given flags.
+            public init(flags: Int32) {
+                self.flags = flags
+            }
+        }
+    }
+
+    // MARK: - Buffer Accessor
+
+    extension Kernel.IOUring.Submission.Queue.Entry {
+        /// Accessor for buffer-related properties.
+        public var buffer: Buffer {
+            get { Buffer(entry: self) }
+            set {
+                cValue.buf_index = newValue.index.rawValue
+                cValue.buf_group = newValue.group.rawValue
+            }
+        }
+
+        /// Buffer-related properties for submission entry.
+        public struct Buffer: Sendable {
+            /// Buffer index (for registered buffers).
+            public var index: Kernel.IOUring.Buffer.Index
+
+            /// Buffer group (for buffer selection).
+            public var group: Kernel.IOUring.Buffer.Group
+
+            @usableFromInline
+            init(entry: Kernel.IOUring.Submission.Queue.Entry) {
+                self.index = Kernel.IOUring.Buffer.Index(rawValue: entry.cValue.buf_index)
+                self.group = Kernel.IOUring.Buffer.Group(rawValue: entry.cValue.buf_group)
+            }
+
+            /// Creates a Buffer with the given index and group.
+            public init(
+                index: Kernel.IOUring.Buffer.Index = .init(rawValue: 0),
+                group: Kernel.IOUring.Buffer.Group = .init(rawValue: 0)
+            ) {
+                self.index = index
+                self.group = group
+            }
         }
     }
 

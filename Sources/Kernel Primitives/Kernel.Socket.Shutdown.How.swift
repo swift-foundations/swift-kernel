@@ -19,7 +19,7 @@ extension Kernel.Socket.Shutdown {
         case write = 1  // SHUT_WR
 
         /// Shut down both read and write sides.
-        case readWrite = 2  // SHUT_RDWR
+        case both = 2  // SHUT_RDWR
     }
 }
 
@@ -35,7 +35,7 @@ extension Kernel.Socket.Shutdown {
             switch self {
             case .read: return SD_RECEIVE
             case .write: return SD_SEND
-            case .readWrite: return SD_BOTH
+            case .both: return SD_BOTH
             }
         }
     }

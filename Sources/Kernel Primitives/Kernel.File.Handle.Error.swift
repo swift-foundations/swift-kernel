@@ -134,7 +134,7 @@ extension Kernel.File.Handle.Error {
             switch operation {
             case .open:
                 self = .platform(code: code, operation: .read)
-            case .setNoCache, .clearNoCache, .getSectorSize:
+            case .cache, .sector:
                 self = .platform(code: code, operation: .sync)
             case .read:
                 self = .platform(code: code, operation: .read)

@@ -106,14 +106,6 @@ public import Kernel_Primitives
             res == -125  // ECANCELED
         }
 
-        /// The result as a byte count (for read/write operations).
-        ///
-        /// Returns nil if the operation failed.
-        @inlinable
-        public var bytesTransferred: Int? {
-            isSuccess ? Int(res) : nil
-        }
-
         /// The errno value (for failed operations).
         ///
         /// Returns nil if the operation succeeded.
@@ -123,28 +115,86 @@ public import Kernel_Primitives
         }
     }
 
+    // MARK: - Bytes Accessor
+
+    extension Kernel.IOUring.Completion.Queue.Entry {
+        /// Accessor for byte-related properties.
+        public var bytes: Bytes { Bytes(entry: self) }
+
+        /// Byte-related properties for completion entry.
+        public struct Bytes: Sendable {
+            @usableFromInline
+            let entry: Kernel.IOUring.Completion.Queue.Entry
+
+            @usableFromInline
+            init(entry: Kernel.IOUring.Completion.Queue.Entry) {
+                self.entry = entry
+            }
+
+            /// The number of bytes transferred (for read/write operations).
+            ///
+            /// Returns nil if the operation failed.
+            @inlinable
+            public var transferred: Int? {
+                entry.isSuccess ? Int(entry.res) : nil
+            }
+        }
+    }
+
+    // MARK: - Buffer Accessor
+
+    extension Kernel.IOUring.Completion.Queue.Entry {
+        /// Accessor for buffer-related properties.
+        public var buffer: Buffer { Buffer(entry: self) }
+
+        /// Buffer-related properties for completion entry.
+        public struct Buffer: Sendable {
+            @usableFromInline
+            let entry: Kernel.IOUring.Completion.Queue.Entry
+
+            @usableFromInline
+            init(entry: Kernel.IOUring.Completion.Queue.Entry) {
+                self.entry = entry
+            }
+
+            /// The buffer ID if a buffer was selected.
+            ///
+            /// Only valid when `.buffer` flag is set.
+            @inlinable
+            public var id: UInt16? {
+                guard Flags(rawValue: entry.flags).contains(.buffer) else { return nil }
+                return UInt16(truncatingIfNeeded: entry.flags >> 16)
+            }
+        }
+    }
+
     // MARK: - Typed Flags Accessors
 
     extension Kernel.IOUring.Completion.Queue.Entry {
-        /// The entry flags as a typed value.
-        @inlinable
-        public var typedFlags: Flags {
-            Flags(rawValue: flags)
+        /// Accessor for typed flag operations.
+        public var typed: Typed { Typed(entry: self) }
+
+        /// Typed accessor for flags.
+        public struct Typed: Sendable {
+            @usableFromInline
+            let entry: Kernel.IOUring.Completion.Queue.Entry
+
+            @usableFromInline
+            init(entry: Kernel.IOUring.Completion.Queue.Entry) {
+                self.entry = entry
+            }
+
+            /// The entry flags as a typed value.
+            @inlinable
+            public var flags: Flags {
+                Flags(rawValue: entry.flags)
+            }
         }
 
         /// Whether this entry indicates more completions will follow (multishot).
         @inlinable
         public var hasMore: Bool {
-            typedFlags.contains(.more)
-        }
-
-        /// The buffer ID if a buffer was selected.
-        ///
-        /// Only valid when `.buffer` flag is set.
-        @inlinable
-        public var bufferID: UInt16? {
-            guard typedFlags.contains(.buffer) else { return nil }
-            return UInt16(truncatingIfNeeded: flags >> 16)
+            typed.flags.contains(.more)
         }
     }
 

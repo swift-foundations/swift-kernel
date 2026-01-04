@@ -11,12 +11,22 @@
 
 extension Kernel.File.Direct.Error {
     /// Direct I/O operation types for syscall error context.
-    public enum Operation: String, Sendable, Equatable {
+    public enum Operation: Sendable, Equatable {
         case open
-        case setNoCache
-        case clearNoCache
-        case getSectorSize
+        case cache(Cache)
+        case sector(Sector)
         case read
         case write
+
+        /// Cache operation types.
+        public enum Cache: String, Sendable, Equatable {
+            case set
+            case clear
+        }
+
+        /// Sector operation types.
+        public enum Sector: String, Sendable, Equatable {
+            case getSize
+        }
     }
 }

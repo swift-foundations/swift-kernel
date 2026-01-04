@@ -87,17 +87,24 @@ extension Kernel.Lock {
         /// This is the canonical way to release the lock. After calling,
         /// the token is consumed and cannot be used.
         ///
-        /// - Note: This is a best-effort, non-throwing operation.
-        public consuming func release() {
-            guard !isReleased else { return }
+        /// - Returns: `.success(())` if the unlock succeeded, or `.failure(error)` with
+        ///   the typed error. The caller decides whether to ignore the error.
+        @discardableResult
+        public consuming func release() -> Result<Void, Error> {
+            guard !isReleased else { return .success(()) }
             isReleased = true
-            try? Kernel.Lock.unlock(descriptor, range: range)
+            do throws(Error) {
+                try Kernel.Lock.unlock(descriptor, range: range)
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }
 
         deinit {
             // Backstop release - correctness should not depend on this
             guard !isReleased else { return }
-            try? Kernel.Lock.unlock(descriptor, range: range)
+            _ = Result { try Kernel.Lock.unlock(descriptor, range: range) }
         }
     }
 }

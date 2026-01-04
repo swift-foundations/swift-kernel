@@ -27,17 +27,11 @@ public import Kernel_Primitives
             /// - `EVFILT_PROC`: process ID
             public var id: Kernel.Event.ID
 
-            /// Filter type (read, write, user, etc.).
-            public var filter: Filter
+            /// Filter configuration for this event.
+            public var filter: FilterConfiguration
 
             /// Action and status flags.
             public var flags: Flags
-
-            /// Filter-specific flags.
-            public var fflags: Filter.Flags
-
-            /// Filter-specific data (e.g., bytes available for read).
-            public var filterData: Filter.Data
 
             /// Event data for event routing.
             ///
@@ -48,25 +42,47 @@ public import Kernel_Primitives
             ///
             /// - Parameters:
             ///   - id: Event source identifier.
-            ///   - filter: Filter type determining what triggers the event.
+            ///   - filter: Filter configuration for this event.
             ///   - flags: Action and behavior flags.
-            ///   - fflags: Filter-specific flags.
-            ///   - filterData: Filter-specific data.
             ///   - data: Event data for event routing.
             @inlinable
             public init(
                 id: Kernel.Event.ID,
-                filter: Filter,
+                filter: FilterConfiguration,
                 flags: Flags,
-                fflags: Filter.Flags = .none,
-                filterData: Filter.Data = .zero,
                 data: Data = .zero
             ) {
                 self.id = id
                 self.filter = filter
                 self.flags = flags
-                self.fflags = fflags
-                self.filterData = filterData
+                self.data = data
+            }
+        }
+    }
+
+    // MARK: - Filter Configuration
+
+    extension Kernel.Kqueue.Event {
+        /// Filter configuration containing type, flags, and data.
+        public struct FilterConfiguration: Sendable, Equatable, Hashable {
+            /// Filter type (read, write, user, etc.).
+            public var type: Kernel.Kqueue.Filter
+
+            /// Filter-specific flags.
+            public var flags: Kernel.Kqueue.Filter.Flags
+
+            /// Filter-specific data (e.g., bytes available for read).
+            public var data: Kernel.Kqueue.Filter.Data
+
+            /// Creates a filter configuration.
+            @inlinable
+            public init(
+                type: Kernel.Kqueue.Filter,
+                flags: Kernel.Kqueue.Filter.Flags = .none,
+                data: Kernel.Kqueue.Filter.Data = .zero
+            ) {
+                self.type = type
+                self.flags = flags
                 self.data = data
             }
         }
@@ -79,10 +95,12 @@ public import Kernel_Primitives
         @usableFromInline
         internal init(_ cEvent: Darwin.kevent) {
             self.id = Kernel.Event.ID(cEvent.ident)
-            self.filter = Kernel.Kqueue.Filter(rawValue: cEvent.filter)
+            self.filter = FilterConfiguration(
+                type: Kernel.Kqueue.Filter(rawValue: cEvent.filter),
+                flags: Kernel.Kqueue.Filter.Flags(rawValue: cEvent.fflags),
+                data: Kernel.Kqueue.Filter.Data(cEvent.data)
+            )
             self.flags = Kernel.Kqueue.Flags(rawValue: cEvent.flags)
-            self.fflags = Kernel.Kqueue.Filter.Flags(rawValue: cEvent.fflags)
-            self.filterData = Kernel.Kqueue.Filter.Data(cEvent.data)
             self.data = Data(cEvent.udata)
         }
 
@@ -91,10 +109,10 @@ public import Kernel_Primitives
         internal var cValue: Darwin.kevent {
             var ev = Darwin.kevent()
             ev.ident = id._rawValue
-            ev.filter = filter.rawValue
+            ev.filter = filter.type.rawValue
             ev.flags = flags.rawValue
-            ev.fflags = fflags.rawValue
-            ev.data = filterData._rawValue
+            ev.fflags = filter.flags.rawValue
+            ev.data = filter.data._rawValue
             ev.udata = UnsafeMutableRawPointer(data)
             return ev
         }

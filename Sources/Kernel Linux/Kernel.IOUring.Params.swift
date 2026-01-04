@@ -35,11 +35,8 @@ public import Kernel_Primitives
             /// Setup flags.
             public var flags: Setup.Flags
 
-            /// SQ thread CPU affinity (when using .sqAff flag).
-            public var sqThreadCPU: UInt32
-
-            /// SQ thread idle timeout in milliseconds.
-            public var sqThreadIdle: UInt32
+            /// Submission queue thread configuration.
+            public var submission: SubmissionConfiguration
 
             /// Ring features supported by kernel (filled by kernel).
             public private(set) var features: UInt32
@@ -54,18 +51,15 @@ public import Kernel_Primitives
             ///
             /// - Parameters:
             ///   - flags: Setup flags to configure the ring.
-            ///   - sqThreadCPU: CPU to pin SQ thread to (requires .sqAff flag).
-            ///   - sqThreadIdle: SQ thread idle timeout in milliseconds.
+            ///   - submission: Submission queue thread configuration.
             public init(
                 flags: Setup.Flags = [],
-                sqThreadCPU: UInt32 = 0,
-                sqThreadIdle: UInt32 = 0
+                submission: SubmissionConfiguration = SubmissionConfiguration()
             ) {
                 self.sqEntries = 0
                 self.cqEntries = 0
                 self.flags = flags
-                self.sqThreadCPU = sqThreadCPU
-                self.sqThreadIdle = sqThreadIdle
+                self.submission = submission
                 self.features = 0
                 self.sqOff = Submission.Queue.Offsets()
                 self.cqOff = Completion.Queue.Offsets()
@@ -76,8 +70,12 @@ public import Kernel_Primitives
                 self.sqEntries = cParams.sq_entries
                 self.cqEntries = cParams.cq_entries
                 self.flags = Setup.Flags(rawValue: cParams.flags)
-                self.sqThreadCPU = cParams.sq_thread_cpu
-                self.sqThreadIdle = cParams.sq_thread_idle
+                self.submission = SubmissionConfiguration(
+                    thread: SubmissionConfiguration.Thread(
+                        cpu: cParams.sq_thread_cpu,
+                        idle: cParams.sq_thread_idle
+                    )
+                )
                 self.features = cParams.features
                 self.sqOff = Submission.Queue.Offsets(cParams.sq_off)
                 self.cqOff = Completion.Queue.Offsets(cParams.cq_off)
@@ -87,9 +85,39 @@ public import Kernel_Primitives
             internal var cValue: io_uring_params {
                 var params = io_uring_params()
                 params.flags = flags.rawValue
-                params.sq_thread_cpu = sqThreadCPU
-                params.sq_thread_idle = sqThreadIdle
+                params.sq_thread_cpu = submission.thread.cpu
+                params.sq_thread_idle = submission.thread.idle
                 return params
+            }
+        }
+    }
+
+    // MARK: - Submission Thread Configuration
+
+    extension Kernel.IOUring.Params {
+        /// Submission queue configuration.
+        public struct SubmissionConfiguration: Sendable, Equatable {
+            /// Thread configuration for submission queue polling.
+            public var thread: Thread
+
+            /// Creates submission configuration.
+            public init(thread: Thread = Thread()) {
+                self.thread = thread
+            }
+
+            /// Thread configuration for submission queue polling.
+            public struct Thread: Sendable, Equatable {
+                /// CPU affinity (when using .sqAff flag).
+                public var cpu: UInt32
+
+                /// Idle timeout in milliseconds.
+                public var idle: UInt32
+
+                /// Creates thread configuration.
+                public init(cpu: UInt32 = 0, idle: UInt32 = 0) {
+                    self.cpu = cpu
+                    self.idle = idle
+                }
             }
         }
     }

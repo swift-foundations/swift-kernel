@@ -93,7 +93,7 @@ extension Kernel.Thread.Handle {
     ///
     /// Used for shutdown safety to prevent join-on-self deadlock.
     @inlinable
-    public var isCurrentThread: Bool {
+    public var isCurrent: Bool {
         #if os(Windows)
             GetCurrentThreadId() == GetThreadId(rawValue)
         #else
