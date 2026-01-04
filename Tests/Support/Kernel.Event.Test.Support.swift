@@ -11,14 +11,6 @@
 
 public import Kernel_Primitives
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#endif
-
 extension Kernel.Event {
     /// Test utilities for eventing operations (kqueue, epoll, io_uring).
     public enum Test {
@@ -32,16 +24,18 @@ extension Kernel.Event {
         /// - Returns: Tuple of (read descriptor, write descriptor)
         /// - Throws: `PipeError` if pipe creation fails
         public static func makePipe() throws -> (read: Kernel.Descriptor, write: Kernel.Descriptor) {
-            var fds: [Int32] = [0, 0]
-            guard pipe(&fds) == 0 else { throw PipeError() }
-            return (Kernel.Descriptor(rawValue: fds[0]), Kernel.Descriptor(rawValue: fds[1]))
+            do {
+                return try Kernel.Pipe.create()
+            } catch {
+                throw PipeError()
+            }
         }
 
         /// Closes a descriptor without throwing (safe for defer blocks).
         ///
         /// - Parameter fd: The descriptor to close
         public static func closeNoThrow(_ fd: Kernel.Descriptor) {
-            _ = close(fd.rawValue)
+            try? Kernel.Close.close(fd)
         }
 
         /// Writes one byte to a descriptor.
@@ -51,7 +45,9 @@ extension Kernel.Event {
         ///   - value: The byte value to write (default: 1)
         public static func writeByte(_ fd: Kernel.Descriptor, value: UInt8 = 1) {
             var byte = value
-            _ = write(fd.rawValue, &byte, 1)
+            _ = withUnsafeBytes(of: &byte) { buffer in
+                try? Kernel.IO.Write.write(fd, from: buffer)
+            }
         }
 
         /// Drains one byte from a descriptor.
@@ -59,7 +55,9 @@ extension Kernel.Event {
         /// - Parameter fd: The descriptor to read from
         public static func readDrain(_ fd: Kernel.Descriptor) {
             var byte: UInt8 = 0
-            _ = read(fd.rawValue, &byte, 1)
+            _ = withUnsafeMutableBytes(of: &byte) { buffer in
+                try? Kernel.IO.Read.read(fd, into: buffer)
+            }
         }
     }
 }

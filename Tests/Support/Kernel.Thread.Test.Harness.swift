@@ -9,13 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#endif
+public import Kernel_Primitives
 
 /// Test harness utilities for threading tests.
 ///
@@ -60,35 +54,23 @@ public enum KernelThreadTest {
     /// let result = h.withLocked { $0.result }
     /// ```
     public final class Harness<State>: @unchecked Sendable {
-        private var mutex = pthread_mutex_t()
-        private var cond = pthread_cond_t()
+        private let mutex: Kernel.Thread.Mutex
+        private let condition: Kernel.Thread.Condition
         private var state: State
 
         /// Creates a harness with the given initial state.
         public init(_ initial: State) {
+            self.mutex = Kernel.Thread.Mutex()
+            self.condition = Kernel.Thread.Condition()
             self.state = initial
-
-            var m = pthread_mutex_t()
-            var c = pthread_cond_t()
-
-            pthread_mutex_init(&m, nil)
-            pthread_cond_init(&c, nil)
-
-            self.mutex = m
-            self.cond = c
-        }
-
-        deinit {
-            pthread_cond_destroy(&cond)
-            pthread_mutex_destroy(&mutex)
         }
 
         /// Executes a closure with exclusive access to the state.
         ///
         /// Does not signal waiting threads. Use `update` if you need to signal.
         public func withLocked<R>(_ body: (inout State) -> R) -> R {
-            pthread_mutex_lock(&mutex)
-            defer { pthread_mutex_unlock(&mutex) }
+            mutex.lock()
+            defer { mutex.unlock() }
             return body(&state)
         }
 
@@ -96,17 +78,17 @@ public enum KernelThreadTest {
         ///
         /// Use this when changing state that other threads may be waiting on.
         public func update(_ body: (inout State) -> Void) {
-            pthread_mutex_lock(&mutex)
+            mutex.lock()
             body(&state)
-            pthread_cond_broadcast(&cond)
-            pthread_mutex_unlock(&mutex)
+            condition.broadcast()
+            mutex.unlock()
         }
 
         /// Broadcasts to waiting threads without modifying state.
         public func signal() {
-            pthread_mutex_lock(&mutex)
-            pthread_cond_broadcast(&cond)
-            pthread_mutex_unlock(&mutex)
+            mutex.lock()
+            condition.broadcast()
+            mutex.unlock()
         }
 
         /// Waits until the predicate returns true, with a timeout.
@@ -122,38 +104,17 @@ public enum KernelThreadTest {
             until predicate: (State) -> Bool,
             timeoutSeconds: Int = 5
         ) throws(Timeout) {
-            pthread_mutex_lock(&mutex)
-            defer { pthread_mutex_unlock(&mutex) }
+            mutex.lock()
+            defer { mutex.unlock() }
 
             if predicate(state) { return }
 
-            var deadline = timespec()
-            KernelThreadTest.clockRealtime(&deadline)
-            KernelThreadTest.addSeconds(timeoutSeconds, to: &deadline)
+            let timeout = Duration.seconds(timeoutSeconds)
 
             while !predicate(state) {
-                let rc = pthread_cond_timedwait(&cond, &mutex, &deadline)
-                if rc == ETIMEDOUT { throw Timeout() }
+                let signaled = condition.wait(mutex: mutex, timeout: timeout)
+                if !signaled { throw Timeout() }
             }
         }
-    }
-
-    /// Gets the current realtime clock value.
-    internal static func clockRealtime(_ out: inout timespec) {
-        #if canImport(Darwin)
-            var tv = timeval()
-            gettimeofday(&tv, nil)
-            out.tv_sec = tv.tv_sec
-            out.tv_nsec = Int(tv.tv_usec) * 1_000
-        #else
-            var ts = timespec()
-            clock_gettime(CLOCK_REALTIME, &ts)
-            out = ts
-        #endif
-    }
-
-    /// Adds seconds to a timespec.
-    internal static func addSeconds(_ seconds: Int, to ts: inout timespec) {
-        ts.tv_sec += seconds
     }
 }
