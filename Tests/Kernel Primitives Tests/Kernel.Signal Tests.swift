@@ -17,3 +17,26 @@ import Testing
 extension Kernel.Signal {
     #TestSuites
 }
+
+// MARK: - Unit Tests
+
+extension Kernel.Signal.Test.Unit {
+    @Test("Signal namespace exists")
+    func namespaceExists() {
+        _ = Kernel.Signal.self
+    }
+
+    @Test("Signal is an enum")
+    func isEnum() {
+        let _: Kernel.Signal.Type = Kernel.Signal.self
+    }
+}
+
+// MARK: - Nested Types
+
+extension Kernel.Signal.Test.Unit {
+    @Test("Signal.Error type exists")
+    func errorTypeExists() {
+        let _: Kernel.Signal.Error.Type = Kernel.Signal.Error.self
+    }
+}

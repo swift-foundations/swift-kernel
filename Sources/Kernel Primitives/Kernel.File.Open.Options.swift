@@ -13,7 +13,7 @@ extension Kernel.File.Open {
     /// Options for opening files.
     ///
     /// These are portable flags that map to platform-specific values internally.
-    public struct Options: OptionSet, Sendable {
+    public struct Options: OptionSet, Sendable, Hashable {
         public let rawValue: UInt32
 
         public init(rawValue: UInt32) {

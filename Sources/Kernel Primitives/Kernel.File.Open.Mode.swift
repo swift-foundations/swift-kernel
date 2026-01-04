@@ -13,7 +13,7 @@ extension Kernel.File.Open {
     /// File access mode as an OptionSet.
     ///
     /// Use `[.read]`, `[.write]`, or `[.read, .write]` for access modes.
-    public struct Mode: OptionSet, Sendable {
+    public struct Mode: OptionSet, Sendable, Hashable {
         public let rawValue: UInt8
 
         public init(rawValue: UInt8) {

@@ -17,3 +17,26 @@ import Testing
 extension Kernel.Permission {
     #TestSuites
 }
+
+// MARK: - Unit Tests
+
+extension Kernel.Permission.Test.Unit {
+    @Test("Permission namespace exists")
+    func namespaceExists() {
+        _ = Kernel.Permission.self
+    }
+
+    @Test("Permission is an enum")
+    func isEnum() {
+        let _: Kernel.Permission.Type = Kernel.Permission.self
+    }
+}
+
+// MARK: - Nested Types
+
+extension Kernel.Permission.Test.Unit {
+    @Test("Permission.Error type exists")
+    func errorTypeExists() {
+        let _: Kernel.Permission.Error.Type = Kernel.Permission.Error.self
+    }
+}
