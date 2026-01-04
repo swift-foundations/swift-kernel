@@ -84,21 +84,14 @@ extension Kernel.Lock {
 
         /// Releases the lock.
         ///
-        /// This is the canonical way to release the lock. After calling,
-        /// the token is consumed and cannot be used.
+        /// On success, the token is marked released and subsequent calls are no-ops.
+        /// On failure, the token remains valid for retry - the lock is preserved.
         ///
-        /// - Returns: `.success(())` if the unlock succeeded, or `.failure(error)` with
-        ///   the typed error. The caller decides whether to ignore the error.
-        @discardableResult
-        public consuming func release() -> Result<Void, Error> {
-            guard !isReleased else { return .success(()) }
+        /// - Throws: `Kernel.Lock.Error` if the unlock syscall fails.
+        public mutating func release() throws(Error) {
+            guard !isReleased else { return }
+            try Kernel.Lock.unlock(descriptor, range: range)
             isReleased = true
-            do throws(Error) {
-                try Kernel.Lock.unlock(descriptor, range: range)
-                return .success(())
-            } catch {
-                return .failure(error)
-            }
         }
 
         deinit {
@@ -233,10 +226,9 @@ extension Kernel.Lock {
         acquire: Acquire = .wait,
         _ body: () throws -> T
     ) throws -> T {
-        let token = try Token(descriptor: descriptor, range: range, kind: .exclusive, acquire: acquire)
-        let result = try body()
-        _ = consume token
-        return result
+        var token = try Token(descriptor: descriptor, range: range, kind: .exclusive, acquire: acquire)
+        defer { try? token.release() }
+        return try body()
     }
 
     /// Executes a closure while holding a shared lock.
@@ -256,9 +248,8 @@ extension Kernel.Lock {
         acquire: Acquire = .wait,
         _ body: () throws -> T
     ) throws -> T {
-        let token = try Token(descriptor: descriptor, range: range, kind: .shared, acquire: acquire)
-        let result = try body()
-        _ = consume token
-        return result
+        var token = try Token(descriptor: descriptor, range: range, kind: .shared, acquire: acquire)
+        defer { try? token.release() }
+        return try body()
     }
 }

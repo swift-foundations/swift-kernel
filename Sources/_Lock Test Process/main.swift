@@ -200,7 +200,7 @@ func printUsage() {
 
 #if !os(Windows)
 
-    func main() -> Int32 {
+    func main() throws -> Int32 {
         guard let args = parseArguments() else {
             return 3
         }
@@ -276,19 +276,24 @@ func printUsage() {
         }
 
         // Release lock
-        token.release()
+        try token.release()
 
         writeStdout("RELEASED\n")
 
         return 0
     }
 
-    exit(main())
+    do {
+        exit(try main())
+    } catch {
+        writeStderr("Error: \(error)\n")
+        exit(3)
+    }
 
 #else
 
     // Windows implementation
-    func main() -> Int32 {
+    func main() throws -> Int32 {
         guard let args = parseArguments() else {
             return 3
         }
@@ -375,13 +380,18 @@ func printUsage() {
         }
 
         // Release lock
-        token.release()
+        try token.release()
 
         writeStdout("RELEASED\n")
 
         return 0
     }
 
-    exit(main())
+    do {
+        exit(try main())
+    } catch {
+        writeStderr("Error: \(error)\n")
+        exit(3)
+    }
 
 #endif

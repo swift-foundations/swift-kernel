@@ -70,6 +70,9 @@ extension Kernel.File {
         /// For `.uncached` or `.buffered`, this may be `.unknown(...)`.
         public let requirements: Kernel.File.Direct.Requirements
 
+        /// Tracks whether close() has been called successfully.
+        private var isClosed: Bool = false
+
         /// Creates a handle from a descriptor with Direct I/O state.
         ///
         /// - Parameters:
@@ -87,6 +90,7 @@ extension Kernel.File {
         }
 
         deinit {
+            guard !isClosed else { return }
             _ = Result { try Kernel.Close.close(descriptor) }
         }
     }
@@ -162,18 +166,14 @@ extension Kernel.File.Handle {
 extension Kernel.File.Handle {
     /// Closes the file handle explicitly.
     ///
-    /// After calling this method, the handle is consumed and cannot be used.
+    /// On success, the handle is marked closed and subsequent calls are no-ops.
+    /// On failure, the handle remains valid for retry - the token is preserved.
     ///
-    /// - Returns: `.success(())` if the close succeeded, or `.failure(error)` with
-    ///   the typed error. The caller decides whether to ignore the error.
-    @discardableResult
-    public consuming func close() -> Result<Void, Kernel.Close.Error> {
-        do throws(Kernel.Close.Error) {
-            try Kernel.Close.close(descriptor)
-            return .success(())
-        } catch {
-            return .failure(error)
-        }
+    /// - Throws: `Kernel.Close.Error` if the close syscall fails.
+    public mutating func close() throws(Kernel.Close.Error) {
+        guard !isClosed else { return }
+        try Kernel.Close.close(descriptor)
+        isClosed = true
     }
 }
 

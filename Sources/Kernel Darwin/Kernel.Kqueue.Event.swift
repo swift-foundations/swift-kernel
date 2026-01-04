@@ -27,13 +27,19 @@ public import Kernel_Primitives
             /// - `EVFILT_PROC`: process ID
             public var id: Kernel.Event.ID
 
-            /// Filter configuration for this event.
-            public var filter: FilterConfiguration
+            /// Filter type (EVFILT_READ, EVFILT_WRITE, etc.).
+            public var filter: Filter
 
-            /// Action and status flags.
+            /// Action and status flags (EV_ADD, EV_DELETE, etc.).
             public var flags: Flags
 
-            /// Event data for event routing.
+            /// Filter-specific flags.
+            public var fflags: Filter.Flags
+
+            /// Filter-specific data (e.g., bytes available for read).
+            public var filterData: Filter.Data
+
+            /// User-defined data for event routing.
             ///
             /// Typically stores an ID to dispatch the event to the correct handler.
             public var data: Data
@@ -42,47 +48,25 @@ public import Kernel_Primitives
             ///
             /// - Parameters:
             ///   - id: Event source identifier.
-            ///   - filter: Filter configuration for this event.
+            ///   - filter: Filter type.
             ///   - flags: Action and behavior flags.
-            ///   - data: Event data for event routing.
+            ///   - fflags: Filter-specific flags.
+            ///   - filterData: Filter-specific data.
+            ///   - data: User-defined routing data.
             @inlinable
             public init(
                 id: Kernel.Event.ID,
-                filter: FilterConfiguration,
+                filter: Filter,
                 flags: Flags,
+                fflags: Filter.Flags = .none,
+                filterData: Filter.Data = .zero,
                 data: Data = .zero
             ) {
                 self.id = id
                 self.filter = filter
                 self.flags = flags
-                self.data = data
-            }
-        }
-    }
-
-    // MARK: - Filter Configuration
-
-    extension Kernel.Kqueue.Event {
-        /// Filter configuration containing type, flags, and data.
-        public struct FilterConfiguration: Sendable, Equatable, Hashable {
-            /// Filter type (read, write, user, etc.).
-            public var type: Kernel.Kqueue.Filter
-
-            /// Filter-specific flags.
-            public var flags: Kernel.Kqueue.Filter.Flags
-
-            /// Filter-specific data (e.g., bytes available for read).
-            public var data: Kernel.Kqueue.Filter.Data
-
-            /// Creates a filter configuration.
-            @inlinable
-            public init(
-                type: Kernel.Kqueue.Filter,
-                flags: Kernel.Kqueue.Filter.Flags = .none,
-                data: Kernel.Kqueue.Filter.Data = .zero
-            ) {
-                self.type = type
-                self.flags = flags
+                self.fflags = fflags
+                self.filterData = filterData
                 self.data = data
             }
         }
@@ -95,12 +79,10 @@ public import Kernel_Primitives
         @usableFromInline
         internal init(_ cEvent: Darwin.kevent) {
             self.id = Kernel.Event.ID(cEvent.ident)
-            self.filter = FilterConfiguration(
-                type: Kernel.Kqueue.Filter(rawValue: cEvent.filter),
-                flags: Kernel.Kqueue.Filter.Flags(rawValue: cEvent.fflags),
-                data: Kernel.Kqueue.Filter.Data(cEvent.data)
-            )
+            self.filter = Kernel.Kqueue.Filter(rawValue: cEvent.filter)
             self.flags = Kernel.Kqueue.Flags(rawValue: cEvent.flags)
+            self.fflags = Kernel.Kqueue.Filter.Flags(rawValue: cEvent.fflags)
+            self.filterData = Kernel.Kqueue.Filter.Data(cEvent.data)
             self.data = Data(cEvent.udata)
         }
 
@@ -109,10 +91,10 @@ public import Kernel_Primitives
         internal var cValue: Darwin.kevent {
             var ev = Darwin.kevent()
             ev.ident = id._rawValue
-            ev.filter = filter.type.rawValue
+            ev.filter = filter.rawValue
             ev.flags = flags.rawValue
-            ev.fflags = filter.flags.rawValue
-            ev.data = filter.data._rawValue
+            ev.fflags = fflags.rawValue
+            ev.data = filterData._rawValue
             ev.udata = UnsafeMutableRawPointer(data)
             return ev
         }
