@@ -89,26 +89,6 @@ extension Kernel.Thread.Handle {
         #endif
     }
 
-    #if os(Windows)
-        /// Returns the current thread's handle.
-        ///
-        /// - Warning: The returned handle should NOT be joined or detached.
-        ///   It is intended only for identity comparison.
-        @inlinable
-        public static var current: HANDLE {
-            GetCurrentThread()
-        }
-    #else
-        /// Returns the current thread's handle.
-        ///
-        /// - Warning: The returned handle should NOT be joined or detached.
-        ///   It is intended only for identity comparison.
-        @inlinable
-        public static var current: pthread_t {
-            pthread_self()
-        }
-    #endif
-
     /// Check if this handle refers to the current thread.
     ///
     /// Used for shutdown safety to prevent join-on-self deadlock.
