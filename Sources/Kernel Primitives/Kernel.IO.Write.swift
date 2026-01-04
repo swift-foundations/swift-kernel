@@ -160,7 +160,7 @@ extension Kernel.IO.Write {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.IO.Write {
         /// Writes bytes to a file handle.

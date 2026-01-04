@@ -160,7 +160,7 @@ extension Kernel.IO.Read {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.IO.Read {
         /// Reads bytes from a file handle.

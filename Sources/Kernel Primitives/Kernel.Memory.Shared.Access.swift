@@ -64,7 +64,7 @@ extension Kernel.Memory.Shared {
 
 #if os(Windows)
 
-    @preconcurrency internal import WinSDK
+    @preconcurrency public import WinSDK
 
     extension Kernel.Memory.Shared.Access {
         /// Converts access mode to Windows page protection flags.

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
+internal import SystemPackage
 
 // MARK: - Socket Types
 
@@ -66,7 +66,7 @@ extension Kernel {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.Socket {
         /// Gets the pending socket error (SO_ERROR).

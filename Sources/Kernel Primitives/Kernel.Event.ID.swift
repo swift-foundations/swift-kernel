@@ -9,6 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
+#if os(Windows)
+    public import WinSDK
+#endif
+
 extension Kernel.Event {
     /// Event source identifier.
     ///
