@@ -11,7 +11,7 @@
 public import Kernel_Primitives
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.IOCP {
         /// Cancel operations for IOCP-associated handles.
