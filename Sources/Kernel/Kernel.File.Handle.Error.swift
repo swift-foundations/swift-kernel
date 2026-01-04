@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Binary
+
 extension Kernel.File.Handle {
     /// Errors that can occur during file handle operations.
     public enum Error: Swift.Error, Sendable, Equatable {
@@ -25,13 +27,13 @@ extension Kernel.File.Handle {
         case noSpace
 
         /// Buffer alignment violation for Direct I/O (detected by pre-validation).
-        case misalignedBuffer(address: Int, required: Kernel.Alignment)
+        case misalignedBuffer(address: Int, required: Binary.Alignment)
 
         /// Offset alignment violation for Direct I/O (detected by pre-validation).
-        case misalignedOffset(offset: Int64, required: Kernel.Alignment)
+        case misalignedOffset(offset: Int64, required: Binary.Alignment)
 
         /// Length not a multiple of required granularity (detected by pre-validation).
-        case invalidLength(length: Int, requiredMultiple: Kernel.Alignment)
+        case invalidLength(length: Int, requiredMultiple: Binary.Alignment)
 
         /// Direct I/O requirements are unknown.
         case requirementsUnknown
@@ -223,7 +225,7 @@ extension Kernel.File.Handle.Error: CustomStringConvertible {
         case .noSpace:
             return "No space left on device"
         case .misalignedBuffer(let address, let required):
-            return "Buffer address 0x\(String(address, radix: 16)) not aligned to \(required.rawValue) bytes"
+            return "Buffer address \(address.formatted(.hex.prefix)) not aligned to \(required)"
         case .misalignedOffset(let offset, let required):
             return "File offset \(offset) not aligned to \(required.rawValue) bytes"
         case .invalidLength(let length, let requiredMultiple):

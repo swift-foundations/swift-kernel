@@ -47,13 +47,13 @@
             sourceOffset: inout Kernel.File.Offset,
             to destination: Kernel.Descriptor,
             destOffset: inout Kernel.File.Offset,
-            length: Kernel.ByteCount
-        ) throws(Kernel.Copy.Error) -> Kernel.ByteCount {
+            length: Kernel.File.Size
+        ) throws(Kernel.Copy.Error) -> Kernel.File.Size {
             guard source.isValid else { throw .invalidDescriptor }
             guard destination.isValid else { throw .invalidDescriptor }
 
-            var srcOff = off_t(sourceOffset.rawValue)
-            var dstOff = off_t(destOffset.rawValue)
+            var srcOff = off_t(sourceOffset._rawValue)
+            var dstOff = off_t(destOffset._rawValue)
 
             let result = Int(
                 swift_copy_file_range(
@@ -61,7 +61,7 @@
                     &srcOff,
                     destination.rawValue,
                     &dstOff,
-                    size_t(length.rawValue),
+                    size_t(length.intValue),
                     0
                 )
             )
@@ -70,9 +70,9 @@
                 throw Kernel.Copy.Error(posix: errno)
             }
 
-            sourceOffset = Kernel.File.Offset(rawValue: Int64(srcOff))
-            destOffset = Kernel.File.Offset(rawValue: Int64(dstOff))
-            return Kernel.ByteCount(unchecked: result)
+            sourceOffset = Kernel.File.Offset(Int64(srcOff))
+            destOffset = Kernel.File.Offset(Int64(dstOff))
+            return Kernel.File.Size(Int64(result))
         }
     }
 

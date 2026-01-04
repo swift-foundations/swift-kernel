@@ -13,6 +13,7 @@
     internal import WinSDK
 #else
     internal import SystemPackage
+    public import Dimension
 
     #if canImport(Darwin)
         public import Darwin
@@ -84,14 +85,14 @@ extension Kernel.File.Stats {
             #endif
 
             self.init(
-                size: Int64(sb.st_size),
+                size: Kernel.File.Size(Int64(sb.st_size)),
                 type: Kind(mode: sb.st_mode),
                 permissions: UInt16(sb.st_mode & 0o7777),
-                uid: UInt32(sb.st_uid),
-                gid: UInt32(sb.st_gid),
-                inode: UInt64(sb.st_ino),
-                device: UInt64(sb.st_dev),
-                linkCount: UInt32(sb.st_nlink),
+                uid: Kernel.UserID(UInt32(sb.st_uid)),
+                gid: Kernel.GroupID(UInt32(sb.st_gid)),
+                inode: Kernel.Inode(UInt64(sb.st_ino)),
+                device: Kernel.Device(UInt64(sb.st_dev)),
+                linkCount: Kernel.LinkCount(UInt32(sb.st_nlink)),
                 accessTime: atime,
                 modificationTime: mtime,
                 changeTime: ctime
@@ -161,14 +162,14 @@ extension Kernel.File.Stats {
             let inode = (UInt64(info.nFileIndexHigh) << 32) | UInt64(info.nFileIndexLow)
 
             return Kernel.File.Stats(
-                size: size,
+                size: Kernel.File.Size(size),
                 type: type,
                 permissions: permissions,
-                uid: 0,
-                gid: 0,
-                inode: inode,
-                device: UInt64(info.dwVolumeSerialNumber),
-                linkCount: UInt32(info.nNumberOfLinks),
+                uid: .root,
+                gid: .root,
+                inode: Kernel.Inode(inode),
+                device: Kernel.Device(UInt64(info.dwVolumeSerialNumber)),
+                linkCount: Kernel.LinkCount(UInt32(info.nNumberOfLinks)),
                 accessTime: Kernel.Time(from: info.ftLastAccessTime),
                 modificationTime: Kernel.Time(from: info.ftLastWriteTime),
                 changeTime: Kernel.Time(from: info.ftLastWriteTime)

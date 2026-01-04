@@ -69,7 +69,7 @@ extension Kernel.Lock.Test.Unit {
 
     @Test("Range.bytes with length convenience")
     func rangeBytesWithLength() {
-        let range = Kernel.Lock.Range.bytes(start: Kernel.File.Offset(100), length: Kernel.ByteCount(unchecked: 100))
+        let range = Kernel.Lock.Range.bytes(start: Kernel.File.Offset(100), length: Kernel.File.Size(100))
         #expect(range == .bytes(start: Kernel.File.Offset(100), end: Kernel.File.Offset(200)))
     }
 }

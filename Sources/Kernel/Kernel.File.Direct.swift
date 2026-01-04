@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import SystemPackage
+public import Binary
 
 /// Namespace for Direct I/O operations (cache bypass).
 ///
@@ -152,9 +153,9 @@ extension Kernel.File.Direct.Requirements {
     ///   - offsetAlignment: Required alignment for file offsets.
     ///   - lengthMultiple: Required multiple for I/O lengths.
     public init(
-        bufferAlignment: Kernel.Alignment,
-        offsetAlignment: Kernel.Alignment,
-        lengthMultiple: Kernel.Alignment
+        bufferAlignment: Binary.Alignment,
+        offsetAlignment: Binary.Alignment,
+        lengthMultiple: Binary.Alignment
     ) {
         self = .known(
             Alignment(
@@ -170,7 +171,7 @@ extension Kernel.File.Direct.Requirements {
     /// Convenience for when buffer, offset, and length all use the same alignment.
     ///
     /// - Parameter alignment: The uniform alignment value.
-    public init(uniformAlignment alignment: Kernel.Alignment) {
+    public init(uniformAlignment alignment: Binary.Alignment) {
         self = .known(Alignment(uniform: alignment))
     }
 }

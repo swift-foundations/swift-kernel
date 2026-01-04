@@ -11,11 +11,13 @@
 
 #if canImport(Glibc) || canImport(Musl)
 
+    public import Binary
+
     extension Kernel.IOUring {
         /// File offset for io_uring operations.
         ///
-        /// Represents a file offset in io_uring's format, where `UInt64.max`
-        /// indicates "use current file position".
+        /// A type-safe coordinate for io_uring file positions.
+        /// Uses UInt64 where `UInt64.max` indicates "use current file position".
         ///
         /// ## Usage
         ///
@@ -25,75 +27,48 @@
         ///
         /// // Read at current file position
         /// sqe.prepare.read(fd: fd, buffer: buf, length: len, offset: .current, userData: id)
-        ///
-        /// // Convert from Kernel.File.Offset
-        /// let offset = Kernel.IOUring.Offset(fileOffset)
         /// ```
-        public struct Offset: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
-            public let rawValue: UInt64
-
-            /// Creates an io_uring offset from a raw UInt64 value.
-            @inlinable
-            public init(rawValue: UInt64) {
-                self.rawValue = rawValue
-            }
-
-            /// Creates an io_uring offset from an integer.
-            @inlinable
-            public init(_ value: UInt64) {
-                self.rawValue = value
-            }
-
-            /// Creates an io_uring offset from a file offset.
-            ///
-            /// Negative file offsets (indicating "current position") are
-            /// converted to `.current` (UInt64.max).
-            @inlinable
-            public init(_ fileOffset: Kernel.File.Offset) {
-                if fileOffset.rawValue >= 0 {
-                    self.rawValue = UInt64(bitPattern: fileOffset.rawValue)
-                } else {
-                    self.rawValue = UInt64.max
-                }
-            }
-
-            // MARK: - Common Values
-
-            /// Zero offset (beginning of file).
-            public static let zero = Offset(rawValue: 0)
-
-            /// Use current file position.
-            ///
-            /// When passed to read/write operations, the operation uses
-            /// the file descriptor's current position.
-            public static let current = Offset(rawValue: UInt64.max)
-
-            // MARK: - Comparable
-
-            @inlinable
-            public static func < (lhs: Offset, rhs: Offset) -> Bool {
-                lhs.rawValue < rhs.rawValue
-            }
-        }
+        public typealias Offset = Coordinate.X<Space>.Value<UInt64>
     }
 
-    // MARK: - ExpressibleByIntegerLiteral
+    // MARK: - Offset Constants
 
-    extension Kernel.IOUring.Offset: ExpressibleByIntegerLiteral {
+    extension Kernel.IOUring.Offset {
+        /// Zero offset (beginning of file).
+        public static let zero: Self = 0
+
+        /// Use current file position.
+        ///
+        /// When passed to read/write operations, the operation uses
+        /// the file descriptor's current position.
+        public static let current = Self(UInt64.max)
+    }
+
+    // MARK: - Cross-Space Conversion
+
+    extension Coordinate.X where Space == Kernel.IOUring.Space {
+        /// Creates an io_uring offset from a file offset.
+        ///
+        /// Negative file offsets (indicating "current position") are
+        /// converted to `.current` (UInt64.max).
         @inlinable
-        public init(integerLiteral value: UInt64) {
-            self.rawValue = value
+        public init(_ fileOffset: Kernel.File.Offset) {
+            if fileOffset._rawValue >= 0 {
+                self.init(UInt64(bitPattern: fileOffset._rawValue))
+            } else {
+                self = .current
+            }
         }
     }
 
     // MARK: - CustomStringConvertible
 
-    extension Kernel.IOUring.Offset: CustomStringConvertible {
+    extension Coordinate.X: CustomStringConvertible where Space == Kernel.IOUring.Space {
         public var description: String {
             if self == .current {
                 return "current"
             }
-            return "\(rawValue)"
+            return "\(_rawValue)"
         }
     }
 

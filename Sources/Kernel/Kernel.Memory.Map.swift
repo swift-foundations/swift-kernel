@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Dimension
+
 extension Kernel.Memory {
     /// Raw memory mapping syscall wrappers.
     ///
@@ -47,7 +49,7 @@ extension Kernel.Memory {
         @inlinable
         public static func map(
             addr: Kernel.Memory.Address? = nil,
-            length: Kernel.ByteCount,
+            length: Kernel.File.Size,
             protection: Protection,
             flags: Flags,
             fd: Kernel.Descriptor = .invalid,
@@ -59,11 +61,11 @@ extension Kernel.Memory {
 
             let result = mmap(
                 addr,
-                length.rawValue,
+                length.intValue,
                 protection.rawValue,
                 flags.rawValue,
                 fd.rawValue,
-                off_t(offset.rawValue)
+                off_t(offset._rawValue)
             )
 
             guard result != MAP_FAILED else {
@@ -82,9 +84,9 @@ extension Kernel.Memory {
         @inlinable
         public static func unmap(
             addr: Kernel.Memory.Address,
-            length: Kernel.ByteCount
+            length: Kernel.File.Size
         ) throws(Error) {
-            guard munmap(addr, length.rawValue) == 0 else {
+            guard munmap(addr, length.intValue) == 0 else {
                 throw .unmap(.captureErrno())
             }
         }
@@ -108,10 +110,10 @@ extension Kernel.Memory {
         @inlinable
         public static func sync(
             addr: Kernel.Memory.Address,
-            length: Kernel.ByteCount,
+            length: Kernel.File.Size,
             flags: Sync.Flags = .sync
         ) throws(Error) {
-            guard msync(addr, length.rawValue, flags.rawValue) == 0 else {
+            guard msync(addr, length.intValue, flags.rawValue) == 0 else {
                 throw .sync(.captureErrno())
             }
         }
@@ -126,10 +128,10 @@ extension Kernel.Memory {
         @inlinable
         public static func protect(
             addr: Kernel.Memory.Address,
-            length: Kernel.ByteCount,
+            length: Kernel.File.Size,
             protection: Protection
         ) throws(Error) {
-            guard mprotect(addr, length.rawValue, protection.rawValue) == 0 else {
+            guard mprotect(addr, length.intValue, protection.rawValue) == 0 else {
                 throw .protect(.captureErrno())
             }
         }
@@ -145,10 +147,10 @@ extension Kernel.Memory {
         @inlinable
         public static func advise(
             addr: Kernel.Memory.Address,
-            length: Kernel.ByteCount,
+            length: Kernel.File.Size,
             advice: Advice
         ) {
-            _ = madvise(addr, length.rawValue, advice.rawValue)
+            _ = madvise(addr, length.intValue, advice.rawValue)
         }
     }
 
@@ -181,9 +183,9 @@ extension Kernel.Memory {
         /// - Throws: `Error.sync` on failure.
         public static func sync(
             addr: Kernel.Memory.Address,
-            length: Kernel.ByteCount
+            length: Kernel.File.Size
         ) throws(Error) {
-            guard FlushViewOfFile(addr, SIZE_T(length.rawValue)) else {
+            guard FlushViewOfFile(addr, SIZE_T(length.intValue)) else {
                 throw .sync(.captureLastError())
             }
         }
@@ -197,14 +199,14 @@ extension Kernel.Memory {
         /// - Throws: `Error.protect` on failure.
         public static func protect(
             addr: Kernel.Memory.Address,
-            length: Kernel.ByteCount,
+            length: Kernel.File.Size,
             protection: Protection
         ) throws(Error) {
             var oldProtection: DWORD = 0
             guard
                 VirtualProtect(
                     addr,
-                    SIZE_T(length.rawValue),
+                    SIZE_T(length.intValue),
                     protection.windowsPageProtection,
                     &oldProtection
                 )
@@ -219,7 +221,7 @@ extension Kernel.Memory {
         /// This is currently a no-op.
         public static func advise(
             addr: Kernel.Memory.Address,
-            length: Kernel.ByteCount,
+            length: Kernel.File.Size,
             advice: Advice
         ) {
             // Windows doesn't have direct madvise equivalent

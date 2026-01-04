@@ -23,8 +23,8 @@
         /// // From a raw value
         /// let length = Kernel.IOUring.Length(rawValue: 4096)
         ///
-        /// // From a ByteCount
-        /// let length = Kernel.IOUring.Length(byteCount)
+        /// // From a File.Size
+        /// let length = Kernel.IOUring.Length(fileSize)
         ///
         /// // From a buffer pointer
         /// let length = Kernel.IOUring.Length(buffer)
@@ -38,16 +38,6 @@
             @inlinable
             public init(rawValue: UInt32) {
                 self.rawValue = rawValue
-            }
-
-            /// Creates a length from a ByteCount.
-            ///
-            /// Values larger than `UInt32.max` are clamped.
-            ///
-            /// - Parameter byteCount: The byte count to convert.
-            @inlinable
-            public init(_ byteCount: Kernel.ByteCount) {
-                self.rawValue = UInt32(clamping: byteCount.rawValue)
             }
 
             /// Creates a length from an integer.

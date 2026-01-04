@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Binary
+
 extension Kernel.File.Direct.Requirements.Alignment {
     /// Accessor for length validation.
     public struct Length: Sendable {

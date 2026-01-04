@@ -40,7 +40,7 @@ extension Kernel.Memory.Map {
         /// - Throws: `Error.map` on failure.
         @inlinable
         public static func map(
-            length: Kernel.ByteCount,
+            length: Kernel.File.Size,
             protection: Kernel.Memory.Map.Protection = .readWrite,
             shared: Bool = false
         ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.Region {
@@ -69,7 +69,7 @@ extension Kernel.Memory.Map {
         /// - Returns: The mapped region.
         /// - Throws: `Error.map` on failure.
         public static func map(
-            length: Kernel.ByteCount,
+            length: Kernel.File.Size,
             protection: Kernel.Memory.Map.Protection = .readWrite
         ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.Region {
             guard length.isPositive else {
@@ -77,8 +77,8 @@ extension Kernel.Memory.Map {
             }
 
             let pageProtection = protection.windowsPageProtection
-            let maxSizeHigh = DWORD(UInt64(length.rawValue) >> 32)
-            let maxSizeLow = DWORD(UInt64(length.rawValue) & 0xFFFF_FFFF)
+            let maxSizeHigh = DWORD(UInt64(length.intValue) >> 32)
+            let maxSizeLow = DWORD(UInt64(length.intValue) & 0xFFFF_FFFF)
 
             let mappingHandle = CreateFileMappingW(
                 INVALID_HANDLE_VALUE,
@@ -100,7 +100,7 @@ extension Kernel.Memory.Map {
                 access,
                 0,
                 0,
-                SIZE_T(length.rawValue)
+                SIZE_T(length.intValue)
             )
 
             guard let address = viewAddress else {

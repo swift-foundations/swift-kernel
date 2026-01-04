@@ -1,0 +1,156 @@
+// ===----------------------------------------------------------------------===//
+//
+// This source file is part of the swift-kernel open source project
+//
+// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE for license information
+//
+// ===----------------------------------------------------------------------===//
+
+public import Binary
+
+extension Kernel.File {
+    /// File size as a non-directional magnitude.
+    ///
+    /// A type-safe wrapper for file sizes and byte counts. Uses the Dimension module
+    /// to provide proper dimensional arithmetic with `Offset` and `Delta`:
+    /// - `Offset + Size = Offset` (translate position by size)
+    /// - `Size + Size = Size` (combine sizes)
+    /// - `Size - Size = Size` (difference of sizes)
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// let size: Kernel.File.Size = 4096
+    /// let offset: Kernel.File.Offset = 1000
+    /// let newOffset = offset + size  // File.Offset
+    ///
+    /// // Create from pages
+    /// let pageSize = Kernel.File.Size(pages: 4)
+    /// ```
+    public typealias Size = Magnitude<Space>.Value<Int64>
+}
+
+// MARK: - Size Constants
+
+extension Kernel.File.Size {
+    /// Zero bytes.
+    public static let zero: Self = 0
+
+    /// One kilobyte (1024 bytes).
+    public static let kilobyte: Self = 1024
+
+    /// One megabyte (1024 * 1024 bytes).
+    public static let megabyte: Self = Self(1024 * 1024)
+
+    /// One gigabyte (1024 * 1024 * 1024 bytes).
+    public static let gigabyte: Self = Self(1024 * 1024 * 1024)
+
+    /// One system page.
+    public static var page: Self {
+        Self(Int64(Kernel.System.pageSize))
+    }
+}
+
+// MARK: - Convenience Initializers
+
+extension Kernel.File.Size {
+    /// Creates a file size from a number of pages.
+    ///
+    /// - Parameter pages: Number of pages.
+    @inlinable
+    public init(pages: Int) {
+        self.init(Int64(pages * Kernel.System.pageSize))
+    }
+
+    /// Creates a file size from an Int value.
+    @inlinable
+    public init(_ value: Int) {
+        self.init(Int64(value))
+    }
+
+    /// Creates a file size from a UInt64 value.
+    @inlinable
+    public init(_ value: UInt64) {
+        self.init(Int64(bitPattern: value))
+    }
+}
+
+// MARK: - Queries
+
+extension Kernel.File.Size {
+    /// Whether this size is zero.
+    @inlinable
+    public var isZero: Bool {
+        _rawValue == 0
+    }
+
+    /// Whether this size is positive (greater than zero).
+    @inlinable
+    public var isPositive: Bool {
+        _rawValue > 0
+    }
+
+    /// The raw Int value for syscall boundaries.
+    @inlinable
+    public var intValue: Int {
+        Int(_rawValue)
+    }
+}
+
+// MARK: - Offset + Size Arithmetic
+
+/// Adds a file size to an offset.
+@inlinable
+public func + (lhs: Kernel.File.Offset, rhs: Kernel.File.Size) -> Kernel.File.Offset {
+    Kernel.File.Offset(lhs._rawValue + rhs._rawValue)
+}
+
+/// Adds a file size to an offset in place.
+@inlinable
+public func += (lhs: inout Kernel.File.Offset, rhs: Kernel.File.Size) {
+    lhs = lhs + rhs
+}
+
+/// Subtracts a file size from an offset.
+@inlinable
+public func - (lhs: Kernel.File.Offset, rhs: Kernel.File.Size) -> Kernel.File.Offset {
+    Kernel.File.Offset(lhs._rawValue - rhs._rawValue)
+}
+
+/// Subtracts a file size from an offset in place.
+@inlinable
+public func -= (lhs: inout Kernel.File.Offset, rhs: Kernel.File.Size) {
+    lhs = lhs - rhs
+}
+
+// MARK: - IOUring.Length Conversion
+
+#if os(Linux)
+extension Kernel.IOUring.Length {
+    /// Creates a Length from a File.Size.
+    ///
+    /// Saturates at `UInt32.max` for sizes larger than 4GB.
+    @inlinable
+    public init(_ size: Kernel.File.Size) {
+        if size._rawValue > Int64(UInt32.max) {
+            self.init(rawValue: UInt32.max)
+        } else if size._rawValue < 0 {
+            self.init(rawValue: 0)
+        } else {
+            self.init(rawValue: UInt32(size._rawValue))
+        }
+    }
+}
+#endif
+
+// MARK: - CustomStringConvertible
+
+extension Tagged: @retroactive CustomStringConvertible
+where Tag == Magnitude<Kernel.File.Space>, RawValue == Int64 {
+    public var description: String {
+        "\(_rawValue)"
+    }
+}

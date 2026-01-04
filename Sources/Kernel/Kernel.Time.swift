@@ -100,6 +100,31 @@ extension Kernel.Time: Comparable {
 // MARK: - Duration Conversions
 
 extension Kernel.Time {
+    /// Creates a time interval from a Swift Duration.
+    ///
+    /// - Parameter duration: The duration to convert.
+    ///
+    /// - Note: This creates a time interval, not an absolute time.
+    ///   For absolute times (since Unix epoch), use `init(seconds:nanoseconds:)`.
+    @inlinable
+    public init(_ duration: Duration) {
+        let (seconds, attoseconds) = duration.components
+        let nanoseconds = attoseconds / 1_000_000_000
+        self.init(seconds: seconds, nanoseconds: Int32(nanoseconds))
+    }
+}
+
+extension Duration {
+    /// Creates a Duration from a Kernel.Time.
+    ///
+    /// - Parameter time: The kernel time to convert.
+    @inlinable
+    public init(_ time: Kernel.Time) {
+        self = .seconds(time.seconds) + .nanoseconds(Int64(time.nanoseconds))
+    }
+}
+
+extension Kernel.Time {
     /// Converts a Duration to milliseconds for epoll/poll.
     ///
     /// - Parameter duration: The duration to convert, or `nil` for infinite wait.

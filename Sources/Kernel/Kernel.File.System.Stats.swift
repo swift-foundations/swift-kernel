@@ -37,19 +37,19 @@ extension Kernel.File.System {
         ///
         /// - Important: The semantic meaning differs between platforms. For portable
         ///   filesystem type detection, use `fsTypeName` when available.
-        public let type: UInt64
+        public let type: Kernel.File.System.Kind
 
         /// Optimal transfer block size in bytes.
-        public let blockSize: UInt64
+        public let blockSize: Kernel.File.System.BlockSize
 
         /// Total data blocks in filesystem.
-        public let blocks: UInt64
+        public let blocks: Kernel.File.System.BlockCount
 
         /// Free blocks in filesystem.
-        public let freeBlocks: UInt64
+        public let freeBlocks: Kernel.File.System.BlockCount
 
         /// Free blocks available to unprivileged user.
-        public let availableBlocks: UInt64
+        public let availableBlocks: Kernel.File.System.BlockCount
 
         /// Total file nodes (inodes) in filesystem.
         public let files: UInt64
@@ -74,11 +74,11 @@ extension Kernel.File.System {
 
         /// Creates filesystem statistics with the given values.
         public init(
-            type: UInt64,
-            blockSize: UInt64,
-            blocks: UInt64,
-            freeBlocks: UInt64,
-            availableBlocks: UInt64,
+            type: Kernel.File.System.Kind,
+            blockSize: Kernel.File.System.BlockSize,
+            blocks: Kernel.File.System.BlockCount,
+            freeBlocks: Kernel.File.System.BlockCount,
+            availableBlocks: Kernel.File.System.BlockCount,
             files: UInt64,
             freeFiles: UInt64,
             fsid: UInt64,
@@ -166,11 +166,11 @@ extension Kernel.File.System {
         init(from buf: PlatformStatfs) {
             #if canImport(Darwin)
                 self.init(
-                    type: UInt64(buf.f_type),
-                    blockSize: UInt64(buf.f_bsize),
-                    blocks: UInt64(buf.f_blocks),
-                    freeBlocks: UInt64(buf.f_bfree),
-                    availableBlocks: UInt64(buf.f_bavail),
+                    type: Kernel.File.System.Kind(UInt64(buf.f_type)),
+                    blockSize: Kernel.File.System.BlockSize(UInt64(buf.f_bsize)),
+                    blocks: Kernel.File.System.BlockCount(UInt64(buf.f_blocks)),
+                    freeBlocks: Kernel.File.System.BlockCount(UInt64(buf.f_bfree)),
+                    availableBlocks: Kernel.File.System.BlockCount(UInt64(buf.f_bavail)),
                     files: UInt64(buf.f_files),
                     freeFiles: UInt64(buf.f_ffree),
                     fsid: UInt64(buf.f_fsid.val.0) | (UInt64(buf.f_fsid.val.1) << 32),
@@ -181,11 +181,11 @@ extension Kernel.File.System {
                 )
             #else
                 self.init(
-                    type: UInt64(bitPattern: Int64(buf.f_type)),
-                    blockSize: UInt64(buf.f_bsize),
-                    blocks: UInt64(buf.f_blocks),
-                    freeBlocks: UInt64(buf.f_bfree),
-                    availableBlocks: UInt64(buf.f_bavail),
+                    type: Kernel.File.System.Kind(UInt64(bitPattern: Int64(buf.f_type))),
+                    blockSize: Kernel.File.System.BlockSize(UInt64(buf.f_bsize)),
+                    blocks: Kernel.File.System.BlockCount(UInt64(buf.f_blocks)),
+                    freeBlocks: Kernel.File.System.BlockCount(UInt64(buf.f_bfree)),
+                    availableBlocks: Kernel.File.System.BlockCount(UInt64(buf.f_bavail)),
                     files: UInt64(buf.f_files),
                     freeFiles: UInt64(buf.f_ffree),
                     fsid: UInt64(buf.f_fsid.__val.0) | (UInt64(buf.f_fsid.__val.1) << 32),
@@ -263,11 +263,11 @@ extension Kernel.File.System {
                 }() : nil
 
             return Kernel.File.System.Stats(
-                type: UInt64(volumeSerial),
-                blockSize: blockSize,
-                blocks: UInt64(totalClusters),
-                freeBlocks: UInt64(freeClusters),
-                availableBlocks: UInt64(freeClusters),
+                type: Kernel.File.System.Kind(UInt64(volumeSerial)),
+                blockSize: Kernel.File.System.BlockSize(blockSize),
+                blocks: Kernel.File.System.BlockCount(UInt64(totalClusters)),
+                freeBlocks: Kernel.File.System.BlockCount(UInt64(freeClusters)),
+                availableBlocks: Kernel.File.System.BlockCount(UInt64(freeClusters)),
                 files: 0,
                 freeFiles: 0,
                 fsid: UInt64(volumeSerial),

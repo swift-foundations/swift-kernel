@@ -30,7 +30,7 @@ extension Kernel.Lock {
         ///   - start: The starting byte offset (inclusive).
         ///   - length: The number of bytes to lock.
         @inlinable
-        public static func bytes(start: Kernel.File.Offset, length: Kernel.ByteCount) -> Range {
+        public static func bytes(start: Kernel.File.Offset, length: Kernel.File.Size) -> Range {
             .bytes(start: start, end: start + length)
         }
     }

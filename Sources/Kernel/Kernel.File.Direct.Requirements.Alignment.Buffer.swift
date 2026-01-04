@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Binary
+
 extension Kernel.File.Direct.Requirements.Alignment {
     /// Accessor for buffer alignment validation.
     public struct Buffer: Sendable {

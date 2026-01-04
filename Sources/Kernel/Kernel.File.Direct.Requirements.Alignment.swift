@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Binary
+
 extension Kernel.File.Direct.Requirements {
     /// Concrete alignment values for Direct I/O.
     public struct Alignment: Sendable, Equatable {
@@ -18,7 +20,7 @@ extension Kernel.File.Direct.Requirements {
         /// that is a multiple of this value.
         ///
         /// Typical values: 512 (legacy), 4096 (modern SSDs/NVMe).
-        public let bufferAlignment: Kernel.Alignment
+        public let bufferAlignment: Binary.Alignment
 
         /// Required alignment for file offsets.
         ///
@@ -26,7 +28,7 @@ extension Kernel.File.Direct.Requirements {
         /// of this value.
         ///
         /// Usually matches `bufferAlignment` but may differ on some systems.
-        public let offsetAlignment: Kernel.Alignment
+        public let offsetAlignment: Binary.Alignment
 
         /// Required multiple for I/O transfer lengths.
         ///
@@ -34,12 +36,12 @@ extension Kernel.File.Direct.Requirements {
         /// Partial sector I/O is not allowed in Direct mode.
         ///
         /// Usually matches `bufferAlignment`.
-        public let lengthMultiple: Kernel.Alignment
+        public let lengthMultiple: Binary.Alignment
 
         public init(
-            bufferAlignment: Kernel.Alignment,
-            offsetAlignment: Kernel.Alignment,
-            lengthMultiple: Kernel.Alignment
+            bufferAlignment: Binary.Alignment,
+            offsetAlignment: Binary.Alignment,
+            lengthMultiple: Binary.Alignment
         ) {
             self.bufferAlignment = bufferAlignment
             self.offsetAlignment = offsetAlignment
@@ -49,7 +51,7 @@ extension Kernel.File.Direct.Requirements {
         /// Creates alignment with a single value for all requirements.
         ///
         /// Use when buffer, offset, and length all share the same alignment.
-        public init(uniform alignment: Kernel.Alignment) {
+        public init(uniform alignment: Binary.Alignment) {
             self.bufferAlignment = alignment
             self.offsetAlignment = alignment
             self.lengthMultiple = alignment

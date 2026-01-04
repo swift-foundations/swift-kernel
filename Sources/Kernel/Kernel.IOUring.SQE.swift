@@ -75,9 +75,9 @@
 
         /// I/O priority.
         @inlinable
-        public var ioprio: UInt16 {
-            get { cValue.ioprio }
-            set { cValue.ioprio = newValue }
+        public var priority: Priority {
+            get { Priority(rawValue: cValue.ioprio) }
+            set { cValue.ioprio = newValue.rawValue }
         }
 
         /// File descriptor for the operation.
@@ -126,23 +126,23 @@
 
         /// Buffer index (for registered buffers).
         @inlinable
-        public var bufferIndex: UInt16 {
-            get { cValue.buf_index }
-            set { cValue.buf_index = newValue }
+        public var bufferIndex: BufferIndex {
+            get { BufferIndex(rawValue: cValue.buf_index) }
+            set { cValue.buf_index = newValue.rawValue }
         }
 
         /// Buffer group (for buffer selection).
         @inlinable
-        public var bufferGroup: UInt16 {
-            get { cValue.buf_group }
-            set { cValue.buf_group = newValue }
+        public var bufferGroup: BufferGroup {
+            get { BufferGroup(rawValue: cValue.buf_group) }
+            set { cValue.buf_group = newValue.rawValue }
         }
 
         /// Personality ID (for credentials).
         @inlinable
-        public var personality: UInt16 {
-            get { cValue.personality }
-            set { cValue.personality = newValue }
+        public var personality: PersonalityID {
+            get { PersonalityID(rawValue: cValue.personality) }
+            set { cValue.personality = newValue.rawValue }
         }
     }
 

@@ -27,7 +27,7 @@ extension Kernel.Memory.Map {
         public let base: Kernel.Memory.Address
 
         /// The length of the mapped region in bytes.
-        public let length: Kernel.ByteCount
+        public let length: Kernel.File.Size
 
         #if os(Windows)
             /// The file mapping handle (Windows only).
@@ -38,7 +38,7 @@ extension Kernel.Memory.Map {
 
             /// Creates a mapped region with the given address, length, and Windows handle.
             @inlinable
-            public init(base: Kernel.Memory.Address, length: Kernel.ByteCount, mappingHandle: HANDLE) {
+            public init(base: Kernel.Memory.Address, length: Kernel.File.Size, mappingHandle: HANDLE) {
                 self.base = base
                 self.length = length
                 self.mappingHandle = mappingHandle
@@ -46,7 +46,7 @@ extension Kernel.Memory.Map {
         #else
             /// Creates a mapped region with the given address and length.
             @inlinable
-            public init(base: Kernel.Memory.Address, length: Kernel.ByteCount) {
+            public init(base: Kernel.Memory.Address, length: Kernel.File.Size) {
                 self.base = base
                 self.length = length
             }

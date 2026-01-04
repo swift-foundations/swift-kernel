@@ -16,7 +16,7 @@ extension Kernel.File {
     /// Platform-specific fields are normalized to common types.
     public struct Stats: Sendable, Equatable {
         /// File size in bytes.
-        public let size: Int64
+        public let size: Kernel.File.Size
 
         /// File type (regular, directory, symlink, etc.).
         public let type: Kind
@@ -29,25 +29,25 @@ extension Kernel.File {
         /// Owner user ID.
         ///
         /// On Windows, this is always 0.
-        public let uid: UInt32
+        public let uid: Kernel.UserID
 
         /// Owner group ID.
         ///
         /// On Windows, this is always 0.
-        public let gid: UInt32
+        public let gid: Kernel.GroupID
 
         /// Inode number.
         ///
         /// On Windows, this is synthesized from file ID.
-        public let inode: UInt64
+        public let inode: Kernel.Inode
 
         /// Device ID.
         ///
         /// On Windows, this is synthesized from volume serial number.
-        public let device: UInt64
+        public let device: Kernel.Device
 
         /// Number of hard links.
-        public let linkCount: UInt32
+        public let linkCount: Kernel.LinkCount
 
         /// Last access time.
         public let accessTime: Kernel.Time
@@ -69,14 +69,14 @@ extension Kernel.File {
         /// Creates a Stat value.
         @inlinable
         public init(
-            size: Int64,
+            size: Kernel.File.Size,
             type: Kind,
             permissions: UInt16,
-            uid: UInt32,
-            gid: UInt32,
-            inode: UInt64,
-            device: UInt64,
-            linkCount: UInt32,
+            uid: Kernel.UserID,
+            gid: Kernel.GroupID,
+            inode: Kernel.Inode,
+            device: Kernel.Device,
+            linkCount: Kernel.LinkCount,
             accessTime: Kernel.Time,
             modificationTime: Kernel.Time,
             changeTime: Kernel.Time

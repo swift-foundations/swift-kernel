@@ -22,6 +22,14 @@
         public enum IOUring {}
     }
 
+    extension Kernel.IOUring {
+        /// Phantom type tag for the io_uring byte space.
+        ///
+        /// Used to parameterize Dimension types for io_uring operations.
+        /// IOUring uses UInt64 for offsets (with UInt64.max meaning "current position").
+        public enum Space {}
+    }
+
 #endif
 
 #if canImport(Glibc) || canImport(Musl)

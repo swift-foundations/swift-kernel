@@ -30,6 +30,7 @@
 
 import Kernel
 import SystemPackage
+import Binary
 
 #if canImport(Darwin)
     import Darwin

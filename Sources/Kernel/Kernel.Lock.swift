@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Binary
+
 extension Kernel {
     /// File locking types and operations.
     public enum Lock {}
@@ -141,8 +143,8 @@ extension Kernel.Lock.Error {
                 fl.l_start = 0
                 fl.l_len = 0  // 0 means lock to EOF
             case .bytes(let start, let end):
-                fl.l_start = off_t(start.rawValue)
-                fl.l_len = off_t(end.rawValue - start.rawValue)
+                fl.l_start = off_t(start._rawValue)
+                fl.l_len = off_t((end - start)._rawValue)
             }
 
             let result = fcntl(descriptor.rawValue, F_SETLK, &fl)
@@ -165,8 +167,8 @@ extension Kernel.Lock.Error {
                 fl.l_start = 0
                 fl.l_len = 0
             case .bytes(let start, let end):
-                fl.l_start = off_t(start.rawValue)
-                fl.l_len = off_t(end.rawValue - start.rawValue)
+                fl.l_start = off_t(start._rawValue)
+                fl.l_len = off_t((end - start)._rawValue)
             }
 
             return fl
@@ -292,7 +294,7 @@ extension Kernel.Lock.Error {
             case .file:
                 start = 0
             case .bytes(let s, _):
-                start = s.rawValue
+                start = s._rawValue
             }
             overlapped.Offset = DWORD(UInt64(bitPattern: start) & 0xFFFF_FFFF)
             overlapped.OffsetHigh = DWORD(UInt64(bitPattern: start) >> 32)
@@ -310,7 +312,7 @@ extension Kernel.Lock.Error {
                 // This is the Windows equivalent of "lock entire file".
                 return (DWORD.max, DWORD.max)
             case .bytes(let start, let end):
-                let length = UInt64(bitPattern: end.rawValue - start.rawValue)
+                let length = UInt64(bitPattern: (end - start)._rawValue)
                 return (DWORD(length & 0xFFFF_FFFF), DWORD(length >> 32))
             }
         }
