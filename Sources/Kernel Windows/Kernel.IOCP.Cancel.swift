@@ -2,7 +2,7 @@
 //
 // This source file is part of the swift-kernel open source project
 //
-// Copyright (c) 2024 Coen ten Thije Boonkkamp and the swift-kernel project authors
+// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -11,50 +11,76 @@
 public import Kernel_Primitives
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 
     extension Kernel.IOCP {
-        /// Cancel operations.
-        public enum Cancel {
-
-        }
+        /// Cancel operations for IOCP-associated handles.
+        public enum Cancel {}
     }
 
-    // MARK: - Operations
+    // MARK: - Cancel All
 
     extension Kernel.IOCP.Cancel {
-        /// Cancels pending I/O on a handle (fire-and-forget).
+        /// Cancels all pending I/O on a handle (fire-and-forget).
         ///
-        /// Returns silently if the operation already completed (`ERROR_NOT_FOUND`).
+        /// Returns silently if no operations are pending.
         ///
-        /// - Parameters:
-        ///   - fileHandle: The file handle with pending I/O.
-        ///   - overlapped: The overlapped structure for the operation to cancel,
-        ///     or `nil` to cancel all pending I/O on the handle.
+        /// - Parameter descriptor: The descriptor with pending I/O.
         @inlinable
-        public static func pending(
-            fileHandle: HANDLE,
-            overlapped: LPOVERLAPPED?
-        ) {
-            _ = CancelIoEx(fileHandle, overlapped)
-            // Ignore errors - if not found, already completed
+        public static func all(_ descriptor: Kernel.Descriptor) {
+            _ = CancelIoEx(descriptor.rawValue, nil)
         }
 
-        /// Cancels an overlapped I/O operation with status.
+        /// Cancels all pending I/O on a handle with status.
         ///
-        /// - Parameters:
-        ///   - handle: The file handle.
-        ///   - overlapped: The overlapped structure for the operation to cancel.
-        /// - Returns: `true` if cancelled, `false` if already completed (ERROR_NOT_FOUND).
+        /// - Parameter descriptor: The descriptor with pending I/O.
+        /// - Returns: `true` if cancelled, `false` if no pending operations.
         @inlinable
-        public static func io(
-            _ handle: HANDLE,
-            overlapped: UnsafeMutablePointer<OVERLAPPED>
-        ) -> Bool {
-            if CancelIoEx(handle, overlapped) {
+        public static func allWithStatus(_ descriptor: Kernel.Descriptor) -> Bool {
+            if CancelIoEx(descriptor.rawValue, nil) {
                 return true
             }
             return GetLastError() != Kernel.IOCP.WindowsError.notFound
+        }
+    }
+
+    // MARK: - Cancel Specific
+
+    extension Kernel.IOCP.Cancel {
+        /// Cancels a specific pending I/O operation (fire-and-forget).
+        ///
+        /// Returns silently if the operation already completed.
+        ///
+        /// - Parameters:
+        ///   - descriptor: The descriptor with pending I/O.
+        ///   - overlapped: The overlapped structure for the operation to cancel.
+        @inlinable
+        public static func pending(
+            _ descriptor: Kernel.Descriptor,
+            overlapped: inout Kernel.IOCP.Overlapped
+        ) {
+            withUnsafeMutablePointer(to: &overlapped.raw) { ptr in
+                _ = CancelIoEx(descriptor.rawValue, ptr)
+            }
+        }
+
+        /// Cancels a specific I/O operation with status.
+        ///
+        /// - Parameters:
+        ///   - descriptor: The descriptor with pending I/O.
+        ///   - overlapped: The overlapped structure for the operation to cancel.
+        /// - Returns: `true` if cancelled, `false` if already completed.
+        @inlinable
+        public static func pendingWithStatus(
+            _ descriptor: Kernel.Descriptor,
+            overlapped: inout Kernel.IOCP.Overlapped
+        ) -> Bool {
+            withUnsafeMutablePointer(to: &overlapped.raw) { ptr in
+                if CancelIoEx(descriptor.rawValue, ptr) {
+                    return true
+                }
+                return GetLastError() != Kernel.IOCP.WindowsError.notFound
+            }
         }
     }
 

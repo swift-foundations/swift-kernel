@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-    import WinSDK
     import StandardsTestSupport
     import Testing
 
@@ -33,139 +32,129 @@
         func isEnum() {
             let _: Kernel.IOCP.Cancel.Type = Kernel.IOCP.Cancel.self
         }
+    }
 
-        @Test("pending function exists")
-        func pendingFunctionExists() {
-            // Verify the function signature exists
-            let _: (HANDLE, LPOVERLAPPED) -> Void = Kernel.IOCP.Cancel.pending
+    // MARK: - all() Tests
+
+    extension Kernel.IOCP.Cancel.Test.Unit {
+        @Test("all does not crash with invalid descriptor")
+        func allWithInvalidDescriptor() {
+            // Should not crash - errors are silently ignored
+            Kernel.IOCP.Cancel.all(Kernel.Descriptor.invalid)
         }
 
-        @Test("io function exists")
-        func ioFunctionExists() {
-            // Verify the function signature exists
-            let _: (HANDLE, UnsafeMutablePointer<OVERLAPPED>) -> Bool = Kernel.IOCP.Cancel.io
+        @Test("all is fire-and-forget")
+        func allIsFireAndForget() {
+            // all() returns Void, so it's truly fire-and-forget
+            Kernel.IOCP.Cancel.all(Kernel.Descriptor.invalid)
+            // No return value to check - this is intentional
+        }
+    }
+
+    // MARK: - allWithStatus() Tests
+
+    extension Kernel.IOCP.Cancel.Test.Unit {
+        @Test("allWithStatus returns Bool")
+        func allWithStatusReturnsBool() {
+            let result = Kernel.IOCP.Cancel.allWithStatus(Kernel.Descriptor.invalid)
+            #expect(result is Bool)
+        }
+
+        @Test("allWithStatus with invalid descriptor returns appropriate value")
+        func allWithStatusInvalidDescriptor() {
+            let result = Kernel.IOCP.Cancel.allWithStatus(Kernel.Descriptor.invalid)
+            // With invalid descriptor, CancelIoEx fails
+            #expect(result == true || result == false)
         }
     }
 
     // MARK: - pending() Tests
 
     extension Kernel.IOCP.Cancel.Test.Unit {
-        @Test("pending does not crash with invalid handle")
-        func pendingWithInvalidHandle() {
-            var overlapped = OVERLAPPED()
-            withUnsafeMutablePointer(to: &overlapped) { ptr in
-                // Should not crash - errors are silently ignored
-                Kernel.IOCP.Cancel.pending(fileHandle: INVALID_HANDLE_VALUE, overlapped: ptr)
-            }
+        @Test("pending does not crash with invalid descriptor")
+        func pendingWithInvalidDescriptor() {
+            var overlapped = Kernel.IOCP.Overlapped()
+            // Should not crash - errors are silently ignored
+            Kernel.IOCP.Cancel.pending(Kernel.Descriptor.invalid, overlapped: &overlapped)
         }
 
         @Test("pending is fire-and-forget")
         func pendingIsFireAndForget() {
-            // pending() returns Void, so it's truly fire-and-forget
-            var overlapped = OVERLAPPED()
-            withUnsafeMutablePointer(to: &overlapped) { ptr in
-                Kernel.IOCP.Cancel.pending(fileHandle: INVALID_HANDLE_VALUE, overlapped: ptr)
-                // No return value to check - this is intentional
-            }
+            var overlapped = Kernel.IOCP.Overlapped()
+            Kernel.IOCP.Cancel.pending(Kernel.Descriptor.invalid, overlapped: &overlapped)
+            // No return value to check - this is intentional
         }
     }
 
-    // MARK: - io() Tests
+    // MARK: - pendingWithStatus() Tests
 
     extension Kernel.IOCP.Cancel.Test.Unit {
-        @Test("io returns Bool")
-        func ioReturnsBool() {
-            var overlapped = OVERLAPPED()
-            let result = withUnsafeMutablePointer(to: &overlapped) { ptr in
-                Kernel.IOCP.Cancel.io(INVALID_HANDLE_VALUE, overlapped: ptr)
-            }
-            // Result should be a Bool
+        @Test("pendingWithStatus returns Bool")
+        func pendingWithStatusReturnsBool() {
+            var overlapped = Kernel.IOCP.Overlapped()
+            let result = Kernel.IOCP.Cancel.pendingWithStatus(
+                Kernel.Descriptor.invalid,
+                overlapped: &overlapped
+            )
             #expect(result is Bool)
         }
 
-        @Test("io with invalid handle returns appropriate value")
-        func ioWithInvalidHandle() {
-            var overlapped = OVERLAPPED()
-            let result = withUnsafeMutablePointer(to: &overlapped) { ptr in
-                Kernel.IOCP.Cancel.io(INVALID_HANDLE_VALUE, overlapped: ptr)
-            }
-            // With invalid handle, CancelIoEx fails
-            // Result depends on whether error is ERROR_NOT_FOUND
+        @Test("pendingWithStatus with invalid descriptor returns appropriate value")
+        func pendingWithStatusInvalidDescriptor() {
+            var overlapped = Kernel.IOCP.Overlapped()
+            let result = Kernel.IOCP.Cancel.pendingWithStatus(
+                Kernel.Descriptor.invalid,
+                overlapped: &overlapped
+            )
+            // With invalid descriptor, CancelIoEx fails
             #expect(result == true || result == false)
-        }
-    }
-
-    // MARK: - Return Value Semantics Tests
-
-    extension Kernel.IOCP.Cancel.Test.Unit {
-        @Test("io returns true when cancelled, false when not found")
-        func ioReturnValueSemantics() {
-            // The function returns:
-            // - true if cancelled successfully
-            // - false if ERROR_NOT_FOUND (operation already completed)
-            // - true for other errors (conservative approach)
-
-            // This test documents the expected behavior
-            var overlapped = OVERLAPPED()
-            _ = withUnsafeMutablePointer(to: &overlapped) { ptr in
-                Kernel.IOCP.Cancel.io(INVALID_HANDLE_VALUE, overlapped: ptr)
-            }
-            // Cannot easily verify without an actual pending I/O operation
         }
     }
 
     // MARK: - Edge Cases
 
     extension Kernel.IOCP.Cancel.Test.EdgeCase {
-        @Test("pending with null overlapped pointer")
-        func pendingNullOverlapped() {
-            // Note: This would be UB in C, but tests the API boundary
-            // In practice, callers should never pass null
-            Kernel.IOCP.Cancel.pending(fileHandle: INVALID_HANDLE_VALUE, overlapped: nil)
-            // Should not crash
-        }
-
         @Test("Cancel operations are safe to call multiple times")
         func cancelMultipleTimes() {
-            var overlapped = OVERLAPPED()
-            withUnsafeMutablePointer(to: &overlapped) { ptr in
-                // Call pending multiple times - should be safe
-                for _ in 0..<3 {
-                    Kernel.IOCP.Cancel.pending(fileHandle: INVALID_HANDLE_VALUE, overlapped: ptr)
-                }
+            var overlapped = Kernel.IOCP.Overlapped()
 
-                // Call io multiple times - should be safe
-                for _ in 0..<3 {
-                    _ = Kernel.IOCP.Cancel.io(INVALID_HANDLE_VALUE, overlapped: ptr)
-                }
+            // Call all multiple times - should be safe
+            for _ in 0..<3 {
+                Kernel.IOCP.Cancel.all(Kernel.Descriptor.invalid)
+            }
+
+            // Call pending multiple times - should be safe
+            for _ in 0..<3 {
+                Kernel.IOCP.Cancel.pending(Kernel.Descriptor.invalid, overlapped: &overlapped)
+            }
+
+            // Call pendingWithStatus multiple times - should be safe
+            for _ in 0..<3 {
+                _ = Kernel.IOCP.Cancel.pendingWithStatus(
+                    Kernel.Descriptor.invalid,
+                    overlapped: &overlapped
+                )
             }
         }
 
         @Test("Cancel with different overlapped instances")
         func cancelDifferentOverlappeds() {
-            var overlapped1 = OVERLAPPED()
-            var overlapped2 = OVERLAPPED()
-            var overlapped3 = OVERLAPPED()
+            var overlapped1 = Kernel.IOCP.Overlapped()
+            var overlapped2 = Kernel.IOCP.Overlapped()
+            var overlapped3 = Kernel.IOCP.Overlapped()
 
-            withUnsafeMutablePointer(to: &overlapped1) { ptr1 in
-                withUnsafeMutablePointer(to: &overlapped2) { ptr2 in
-                    withUnsafeMutablePointer(to: &overlapped3) { ptr3 in
-                        Kernel.IOCP.Cancel.pending(fileHandle: INVALID_HANDLE_VALUE, overlapped: ptr1)
-                        Kernel.IOCP.Cancel.pending(fileHandle: INVALID_HANDLE_VALUE, overlapped: ptr2)
-                        Kernel.IOCP.Cancel.pending(fileHandle: INVALID_HANDLE_VALUE, overlapped: ptr3)
-                    }
-                }
-            }
+            Kernel.IOCP.Cancel.pending(Kernel.Descriptor.invalid, overlapped: &overlapped1)
+            Kernel.IOCP.Cancel.pending(Kernel.Descriptor.invalid, overlapped: &overlapped2)
+            Kernel.IOCP.Cancel.pending(Kernel.Descriptor.invalid, overlapped: &overlapped3)
         }
     }
 
     // MARK: - WindowsError Integration Tests
 
     extension Kernel.IOCP.Cancel.Test.Unit {
-        @Test("io uses WindowsError.notFound for comparison")
-        func ioUsesNotFoundConstant() {
+        @Test("Cancel uses WindowsError.notFound for comparison")
+        func usesNotFoundConstant() {
             // Verify that the implementation checks against ERROR_NOT_FOUND
-            // by ensuring the constant is accessible
             let notFound = Kernel.IOCP.WindowsError.notFound
             #expect(notFound == 1168)  // ERROR_NOT_FOUND
         }
