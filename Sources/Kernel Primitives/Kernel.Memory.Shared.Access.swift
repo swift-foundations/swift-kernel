@@ -9,29 +9,29 @@
 //
 // ===----------------------------------------------------------------------===//
 
-#if !os(Windows)
+extension Kernel.Memory.Shared {
+    /// Access mode for shared memory objects.
+    ///
+    /// Specifies whether the shared memory is opened for reading,
+    /// writing, or both.
+    public struct Access: OptionSet, Sendable, Equatable, Hashable {
+        public let rawValue: UInt8
 
-    extension Kernel.Memory.Shared {
-        /// Access mode for shared memory objects.
-        ///
-        /// Specifies whether the shared memory is opened for reading,
-        /// writing, or both.
-        public struct Access: OptionSet, Sendable, Equatable, Hashable {
-            public let rawValue: UInt8
-
-            public init(rawValue: UInt8) {
-                self.rawValue = rawValue
-            }
-
-            /// Open for reading.
-            public static let read = Self(rawValue: 1 << 0)
-
-            /// Open for writing.
-            public static let write = Self(rawValue: 1 << 1)
+        public init(rawValue: UInt8) {
+            self.rawValue = rawValue
         }
-    }
 
-    // MARK: - POSIX Conversion
+        /// Open for reading.
+        public static let read = Self(rawValue: 1 << 0)
+
+        /// Open for writing.
+        public static let write = Self(rawValue: 1 << 1)
+    }
+}
+
+// MARK: - POSIX Conversion
+
+#if !os(Windows)
 
     #if canImport(Darwin)
         internal import Darwin
@@ -55,6 +55,30 @@
             } else {
                 return O_RDONLY
             }
+        }
+    }
+
+#endif
+
+// MARK: - Windows Conversion
+
+#if os(Windows)
+
+    @preconcurrency internal import WinSDK
+
+    extension Kernel.Memory.Shared.Access {
+        /// Converts access mode to Windows page protection flags.
+        @usableFromInline
+        internal var windowsPageProtection: DWORD {
+            let hasWrite = contains(.write)
+            return hasWrite ? DWORD(PAGE_READWRITE) : DWORD(PAGE_READONLY)
+        }
+
+        /// Converts access mode to Windows file map access flags.
+        @usableFromInline
+        internal var windowsMapAccess: DWORD {
+            let hasWrite = contains(.write)
+            return hasWrite ? DWORD(FILE_MAP_ALL_ACCESS) : DWORD(FILE_MAP_READ)
         }
     }
 

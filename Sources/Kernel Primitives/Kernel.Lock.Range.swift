@@ -33,5 +33,24 @@ extension Kernel.Lock {
         public static func bytes(start: Kernel.File.Offset, length: Kernel.File.Size) -> Range {
             .bytes(start: start, end: start + length)
         }
+
+        /// Creates a lock range suitable for a memory mapping.
+        ///
+        /// The range is rounded up to the platform's allocation granularity
+        /// to ensure the lock covers every byte that could be faulted.
+        ///
+        /// - Parameters:
+        ///   - offset: The aligned start offset of the mapping.
+        ///   - length: The mapping length.
+        @inlinable
+        public init(
+            forMappingAt offset: Kernel.File.Offset,
+            length: Kernel.File.Size
+        ) {
+            let granularity = Kernel.System.allocationGranularity
+            let endOffset = offset + length
+            let roundedEnd = Kernel.System.alignUp(endOffset, to: granularity)
+            self = .bytes(start: offset, end: roundedEnd)
+        }
     }
 }
