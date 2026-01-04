@@ -25,15 +25,37 @@ let package = Package(
     targets: [
         .target(
             name: "CLinuxShim",
-            dependencies: [],
-            path: "Sources/CLinuxShim"
+            dependencies: []
+        ),
+        .target(
+            name: "Kernel Primitives",
+            dependencies: [
+                .product(name: "SystemPackage", package: "swift-system"),
+                .product(name: "Binary", package: "swift-standards"),
+            ]
+        ),
+        .target(
+            name: "Kernel Darwin",
+            dependencies: ["Kernel Primitives"]
+        ),
+        .target(
+            name: "Kernel Linux",
+            dependencies: [
+                "Kernel Primitives",
+                .target(name: "CLinuxShim", condition: .when(platforms: [.linux]))
+            ]
+        ),
+        .target(
+            name: "Kernel Windows",
+            dependencies: ["Kernel Primitives"]
         ),
         .target(
             name: "Kernel",
             dependencies: [
-                .product(name: "SystemPackage", package: "swift-system"),
-                .product(name: "Binary", package: "swift-standards"),
-                .target(name: "CLinuxShim", condition: .when(platforms: [.linux]))
+                "Kernel Primitives",
+                .target(name: "Kernel Darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
+                .target(name: "Kernel Linux", condition: .when(platforms: [.linux])),
+                .target(name: "Kernel Windows", condition: .when(platforms: [.windows]))
             ]
         ),
         .testTarget(
@@ -47,8 +69,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "_Lock Test Process",
-            dependencies: ["Kernel"],
-            path: "Sources/_Lock Test Process"
+            dependencies: ["Kernel"]
         )
     ]
 )
