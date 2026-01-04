@@ -49,7 +49,7 @@ extension Kernel.File {
 #if canImport(Darwin)
     internal import Darwin
 #elseif canImport(Glibc)
-    internal import Glibc
+    public import Glibc
 #elseif os(Windows)
     internal import WinSDK
 #endif
@@ -94,11 +94,8 @@ extension Kernel.File.Clone.Capability {
             // Btrfs: 0x9123683E
             // XFS: 0x58465342 (with reflink enabled)
             // OCFS2: 0x7461636f
-            let btrfsMagic: UInt64 = 0x9123_683E
-            let xfsMagic: UInt64 = 0x5846_5342
-
             let fsMagic = statfsBuf.type
-            if fsMagic == btrfsMagic || fsMagic == xfsMagic {
+            if fsMagic == .btrfs || fsMagic == .xfs {
                 return .reflink
             }
 
@@ -298,12 +295,12 @@ extension Kernel.File.Clone {
                 destFd: Int32,
                 length: Int
             ) throws(Kernel.File.Clone.Error.Syscall) {
-                var remaining = length
-                var srcOffset: Int64 = 0
-                var dstOffset: Int64 = 0
+                var remaining = Kernel.File.Size(length)
+                var srcOffset = Kernel.File.Offset(0)
+                var dstOffset = Kernel.File.Offset(0)
 
-                while remaining > 0 {
-                    let copied: Int
+                while remaining > .zero {
+                    let copied: Kernel.File.Size
                     do {
                         copied = try Kernel.Copy.Range.copy(
                             from: Kernel.Descriptor(rawValue: sourceFd),
@@ -316,11 +313,11 @@ extension Kernel.File.Clone {
                         throw .platform(code: .posix(errno), operation: .copyFileRange)
                     }
 
-                    if copied == 0 {
+                    if copied == .zero {
                         break  // EOF
                     }
 
-                    remaining -= copied
+                    remaining = remaining - copied
                 }
             }
         }

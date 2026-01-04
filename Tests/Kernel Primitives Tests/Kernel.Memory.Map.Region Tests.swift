@@ -43,7 +43,7 @@ extension Kernel.Memory.Map.Region.Test.Unit {
             let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
             defer { try? Kernel.Memory.Map.unmap(region) }
 
-            #expect(region.base != nil)
+            #expect(Int(bitPattern: region.base) != 0)
         }
 
         @Test("Region stores length")

@@ -262,12 +262,8 @@ extension Kernel.File.Direct.Requirements {
             // NFS: 0x6969
             // CIFS: 0xFF534D42
             // tmpfs: 0x01021994
-            let nfsMagic: UInt64 = 0x6969
-            let cifsMagic: UInt64 = 0xFF53_4D42
-            let tmpfsMagic: UInt64 = 0x0102_1994
-
             let fsMagic = statfsBuf.type
-            if fsMagic == nfsMagic || fsMagic == cifsMagic || fsMagic == tmpfsMagic {
+            if fsMagic == .nfs || fsMagic == .cifs || fsMagic == .tmpfs {
                 return .bufferedOnly
             }
 

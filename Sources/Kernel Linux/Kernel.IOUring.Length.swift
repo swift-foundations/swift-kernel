@@ -98,4 +98,22 @@ public import Kernel_Primitives
         }
     }
 
+    // MARK: - File.Size Conversion
+
+    extension Kernel.IOUring.Length {
+        /// Creates a Length from a File.Size.
+        ///
+        /// Saturates at `UInt32.max` for sizes larger than 4GB.
+        @inlinable
+        public init(_ size: Kernel.File.Size) {
+            if size._rawValue > Int64(UInt32.max) {
+                self.init(rawValue: UInt32.max)
+            } else if size._rawValue < 0 {
+                self.init(rawValue: 0)
+            } else {
+                self.init(rawValue: UInt32(size._rawValue))
+            }
+        }
+    }
+
 #endif

@@ -132,9 +132,9 @@ extension Kernel.Error {
 #if canImport(Darwin)
     internal import Darwin
 #elseif canImport(Glibc)
-    internal import Glibc
+    public import Glibc
 #elseif canImport(Musl)
-    internal import Musl
+    public import Musl
 #endif
 
 extension Kernel.Error {

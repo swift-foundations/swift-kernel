@@ -14,7 +14,11 @@ let package = Package(
         .library(
             name: "Kernel",
             targets: ["Kernel"]
-        )
+        ),
+        .library(
+            name: "Kernel Test Support",
+            targets: ["Kernel Test Support"]
+        ),
     ],
     dependencies: [
         // swift-system for internal use only (Errno, FilePath bridging)

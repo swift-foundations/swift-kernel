@@ -21,10 +21,10 @@ extension Kernel.Memory.Map {
     #if canImport(Darwin)
         internal import Darwin
     #elseif canImport(Glibc)
-        internal import Glibc
+        public import Glibc
         public import CLinuxShim
     #elseif canImport(Musl)
-        internal import Musl
+        public import Musl
     #endif
 
     extension Kernel.Memory.Map.Anonymous {

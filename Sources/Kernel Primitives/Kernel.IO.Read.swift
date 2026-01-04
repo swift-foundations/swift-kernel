@@ -28,9 +28,9 @@ extension Kernel.IO {
     #if canImport(Darwin)
         public import Darwin
     #elseif canImport(Glibc)
-        internal import Glibc
+        public import Glibc
     #elseif canImport(Musl)
-        internal import Musl
+        public import Musl
     #endif
 
     extension Kernel.IO.Read {
