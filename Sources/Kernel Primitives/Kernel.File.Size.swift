@@ -76,6 +76,23 @@ extension Kernel.File.Size {
     public init(_ value: UInt64) {
         self.init(Int64(bitPattern: value))
     }
+
+    /// Creates a file size from a file delta.
+    ///
+    /// Use this when converting a non-negative displacement to a magnitude.
+    /// For example, when computing the offset padding after alignment:
+    /// ```swift
+    /// let delta = requestedOffset - alignedOffset  // File.Delta
+    /// let padding = File.Size(delta)               // Convert to Size
+    /// ```
+    ///
+    /// - Parameter delta: The file delta (must be non-negative).
+    /// - Precondition: `delta` must be non-negative.
+    @inlinable
+    public init(_ delta: Kernel.File.Delta) {
+        precondition(delta._rawValue >= 0, "Delta must be non-negative to convert to Size")
+        self.init(delta._rawValue)
+    }
 }
 
 // MARK: - Queries

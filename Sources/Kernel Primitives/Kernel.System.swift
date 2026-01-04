@@ -42,6 +42,54 @@ extension Kernel.System {
     public static func alignUp(_ value: Int, to alignment: Int) -> Int {
         (value + alignment - 1) & ~(alignment - 1)
     }
+
+    // MARK: - Typed Alignment (File.Offset)
+
+    /// Rounds a file offset down to the nearest multiple of alignment.
+    ///
+    /// - Parameters:
+    ///   - offset: The offset to align.
+    ///   - alignment: The alignment boundary (must be a power of 2).
+    /// - Returns: The largest multiple of `alignment` that is ≤ `offset`.
+    @inlinable
+    public static func alignDown(_ offset: Kernel.File.Offset, to alignment: Int) -> Kernel.File.Offset {
+        Kernel.File.Offset(alignDown(Int(offset._rawValue), to: alignment))
+    }
+
+    /// Rounds a file offset up to the nearest multiple of alignment.
+    ///
+    /// - Parameters:
+    ///   - offset: The offset to align.
+    ///   - alignment: The alignment boundary (must be a power of 2).
+    /// - Returns: The smallest multiple of `alignment` that is ≥ `offset`.
+    @inlinable
+    public static func alignUp(_ offset: Kernel.File.Offset, to alignment: Int) -> Kernel.File.Offset {
+        Kernel.File.Offset(alignUp(Int(offset._rawValue), to: alignment))
+    }
+
+    // MARK: - Typed Alignment (File.Size)
+
+    /// Rounds a file size down to the nearest multiple of alignment.
+    ///
+    /// - Parameters:
+    ///   - size: The size to align.
+    ///   - alignment: The alignment boundary (must be a power of 2).
+    /// - Returns: The largest multiple of `alignment` that is ≤ `size`.
+    @inlinable
+    public static func alignDown(_ size: Kernel.File.Size, to alignment: Int) -> Kernel.File.Size {
+        Kernel.File.Size(alignDown(Int(size._rawValue), to: alignment))
+    }
+
+    /// Rounds a file size up to the nearest multiple of alignment.
+    ///
+    /// - Parameters:
+    ///   - size: The size to align.
+    ///   - alignment: The alignment boundary (must be a power of 2).
+    /// - Returns: The smallest multiple of `alignment` that is ≥ `size`.
+    @inlinable
+    public static func alignUp(_ size: Kernel.File.Size, to alignment: Int) -> Kernel.File.Size {
+        Kernel.File.Size(alignUp(Int(size._rawValue), to: alignment))
+    }
 }
 
 #if !os(Windows)
