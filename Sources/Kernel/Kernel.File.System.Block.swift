@@ -89,66 +89,26 @@ extension Kernel.File.System.Block {
     ///
     /// ```swift
     /// let stats = try Kernel.File.System.Stats.get(path)
-    /// let freeBytes = stats.freeBlocks.rawValue * stats.blockSize.rawValue
+    /// let freeBytes = stats.freeBlocks._rawValue * stats.blockSize.rawValue
     /// ```
-    public struct Count: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
-        public let rawValue: UInt64
-
-        /// Creates a block count from a raw value.
-        @inlinable
-        public init(rawValue: UInt64) {
-            self.rawValue = rawValue
-        }
-
-        /// Creates a block count from a UInt64 value.
-        @inlinable
-        public init(_ value: UInt64) {
-            self.rawValue = value
-        }
-
-        // MARK: - Common Values
-
-        /// Zero blocks.
-        public static let zero = Count(rawValue: 0)
-
-        // MARK: - Comparable
-
-        @inlinable
-        public static func < (lhs: Self, rhs: Self) -> Bool {
-            lhs.rawValue < rhs.rawValue
-        }
-    }
+    public typealias Count = Tagged<Kernel.File.System.Block, UInt64>
 }
 
-// MARK: - Block.Count + ExpressibleByIntegerLiteral
+// MARK: - Block.Count Constants & Arithmetic
 
-extension Kernel.File.System.Block.Count: ExpressibleByIntegerLiteral {
-    @inlinable
-    public init(integerLiteral value: UInt64) {
-        self.rawValue = value
-    }
-}
+extension Tagged where Tag == Kernel.File.System.Block, RawValue == UInt64 {
+    /// Zero blocks.
+    public static var zero: Self { Self(0) }
 
-// MARK: - Block.Count + CustomStringConvertible
-
-extension Kernel.File.System.Block.Count: CustomStringConvertible {
-    public var description: String {
-        "\(rawValue)"
-    }
-}
-
-// MARK: - Block.Count + Arithmetic
-
-extension Kernel.File.System.Block.Count {
     /// Adds two block counts.
     @inlinable
     public static func + (lhs: Self, rhs: Self) -> Self {
-        Self(rawValue: lhs.rawValue + rhs.rawValue)
+        Self(lhs._rawValue + rhs._rawValue)
     }
 
     /// Subtracts two block counts.
     @inlinable
     public static func - (lhs: Self, rhs: Self) -> Self {
-        Self(rawValue: lhs.rawValue - rhs.rawValue)
+        Self(lhs._rawValue - rhs._rawValue)
     }
 }

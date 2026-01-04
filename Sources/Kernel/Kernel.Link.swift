@@ -31,51 +31,15 @@ extension Kernel.Link {
     ///     // File has multiple hard links
     /// }
     /// ```
-    public struct Count: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
-        public let rawValue: UInt32
-
-        /// Creates a link count from a raw value.
-        @inlinable
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
-        }
-
-        /// Creates a link count from a UInt32 value.
-        @inlinable
-        public init(_ value: UInt32) {
-            self.rawValue = value
-        }
-
-        // MARK: - Common Values
-
-        /// A single link (typical for newly created files).
-        public static let one = Count(1)
-
-        /// Zero links (file is being deleted).
-        public static let zero = Count(0)
-
-        // MARK: - Comparable
-
-        @inlinable
-        public static func < (lhs: Self, rhs: Self) -> Bool {
-            lhs.rawValue < rhs.rawValue
-        }
-    }
+    public typealias Count = Tagged<Kernel.Link, UInt32>
 }
 
-// MARK: - Link.Count + ExpressibleByIntegerLiteral
+// MARK: - Link.Count Constants
 
-extension Kernel.Link.Count: ExpressibleByIntegerLiteral {
-    @inlinable
-    public init(integerLiteral value: UInt32) {
-        self.rawValue = value
-    }
-}
+extension Tagged where Tag == Kernel.Link, RawValue == UInt32 {
+    /// A single link (typical for newly created files).
+    public static var one: Self { Self(1) }
 
-// MARK: - Link.Count + CustomStringConvertible
-
-extension Kernel.Link.Count: CustomStringConvertible {
-    public var description: String {
-        "\(rawValue)"
-    }
+    /// Zero links (file is being deleted).
+    public static var zero: Self { Self(0) }
 }
