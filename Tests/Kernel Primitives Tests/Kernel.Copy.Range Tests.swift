@@ -9,6 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
+#if os(Linux)
 import StandardsTestSupport
 import Testing
 
@@ -17,3 +18,4 @@ import Testing
 extension Kernel.Copy.Range {
     #TestSuites
 }
+#endif

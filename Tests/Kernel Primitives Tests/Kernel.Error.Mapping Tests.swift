@@ -14,6 +14,5 @@ import Testing
 
 @testable import Kernel_Primitives
 
-extension Kernel.Error.Mapping {
-    #TestSuites
-}
+// Kernel.Error.Mapping.swift contains extension initializers for error mapping
+// No type to extend with #TestSuites

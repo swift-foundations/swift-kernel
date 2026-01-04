@@ -14,6 +14,5 @@ import Testing
 
 @testable import Kernel_Primitives
 
-extension Kernel.Memory.Address {
-    #TestSuites
-}
+// Kernel.Memory.Address is a typealias to UnsafeMutableRawPointer
+// #TestSuites cannot be used on typealiases

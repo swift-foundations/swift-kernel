@@ -30,10 +30,11 @@ import Testing
     import Foundation
 #endif
 
-// Add Integration suite for multi-process tests
-extension Kernel.Lock.Test {
-    @Suite struct Integration {}
-}
+// Integration suite for multi-process lock tests
+// Note: Kernel.Lock.Test is defined in Kernel Primitives Tests via #TestSuites
+// This integration test target defines its own suite
+@Suite("Kernel.Lock Integration")
+struct KernelLockIntegration {}
 
 // MARK: - Cross-Platform Test Helpers
 
@@ -70,7 +71,7 @@ private func cleanupTempFile(path: FilePath, fd: Kernel.Descriptor) {
 
 // MARK: - Token Integration Tests
 
-extension Kernel.Lock.Test.Integration {
+extension KernelLockIntegration {
     @Test("Token acquires and releases lock")
     func tokenAcquiresAndReleasesLock() throws {
         let (path, fd) = try createTempFile(prefix: "kernel-lock-token")
@@ -79,7 +80,7 @@ extension Kernel.Lock.Test.Integration {
         #expect(fd.isValid, "Failed to create test file")
 
         // Acquire exclusive lock
-        let token = try Kernel.Lock.Token(
+        var token = try Kernel.Lock.Token(
             descriptor: fd,
             range: .file,
             kind: .exclusive,
@@ -87,7 +88,7 @@ extension Kernel.Lock.Test.Integration {
         )
 
         // Release the lock
-        token.release()
+        try token.release()
     }
 
     @Test("Try lock returns immediately when uncontested")
@@ -98,14 +99,14 @@ extension Kernel.Lock.Test.Integration {
         #expect(fd.isValid, "Failed to create test file")
 
         // Try to acquire lock without blocking - should succeed
-        let token = try Kernel.Lock.Token(
+        var token = try Kernel.Lock.Token(
             descriptor: fd,
             range: .file,
             kind: .exclusive,
             acquire: .try
         )
 
-        token.release()
+        try token.release()
     }
 }
 
@@ -126,7 +127,7 @@ extension Kernel.Lock.Test.Integration {
         return (path, fd)
     }
 
-    extension Kernel.Lock.Test.Integration {
+    extension KernelLockIntegration {
 
         /// Path to the lock test helper executable
         private static var helperPath: String {
@@ -162,7 +163,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(fd >= 0, "Failed to create test file")
 
             // Acquire exclusive lock in this process
-            let token = try Kernel.Lock.Token(
+            var token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
                 range: .file,
                 kind: .exclusive,
@@ -186,7 +187,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
             #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
 
-            token.release()
+            try token.release()
         }
 
         @Test("Exclusive lock blocks try-shared from another process")
@@ -200,7 +201,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(fd >= 0, "Failed to create test file")
 
             // Acquire exclusive lock in this process
-            let token = try Kernel.Lock.Token(
+            var token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
                 range: .file,
                 kind: .exclusive,
@@ -224,7 +225,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
             #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
 
-            token.release()
+            try token.release()
         }
 
         @Test("Shared lock allows try-shared from another process")
@@ -238,7 +239,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(fd >= 0, "Failed to create test file")
 
             // Acquire shared lock in this process
-            let token = try Kernel.Lock.Token(
+            var token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
                 range: .file,
                 kind: .shared,
@@ -263,7 +264,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(output.contains("READY"), "Helper should report READY")
             #expect(output.contains("RELEASED"), "Helper should report RELEASED")
 
-            token.release()
+            try token.release()
         }
 
         @Test("Shared lock blocks try-exclusive from another process")
@@ -277,7 +278,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(fd >= 0, "Failed to create test file")
 
             // Acquire shared lock in this process
-            let token = try Kernel.Lock.Token(
+            var token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
                 range: .file,
                 kind: .shared,
@@ -301,7 +302,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
             #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
 
-            token.release()
+            try token.release()
         }
 
         @Test("Non-overlapping byte ranges don't conflict")
@@ -315,7 +316,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(fd >= 0, "Failed to create test file")
 
             // Acquire exclusive lock on bytes 0-100 in this process
-            let token = try Kernel.Lock.Token(
+            var token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
                 range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(100)),
                 kind: .exclusive,
@@ -339,7 +340,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(process.terminationStatus == 0, "Helper should exit with 0 (success)")
             #expect(output.contains("READY"), "Helper should report READY")
 
-            token.release()
+            try token.release()
         }
 
         @Test("Overlapping byte ranges do conflict")
@@ -353,7 +354,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(fd >= 0, "Failed to create test file")
 
             // Acquire exclusive lock on bytes 0-200 in this process
-            let token = try Kernel.Lock.Token(
+            var token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
                 range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(200)),
                 kind: .exclusive,
@@ -377,7 +378,7 @@ extension Kernel.Lock.Test.Integration {
             #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
             #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
 
-            token.release()
+            try token.release()
         }
     }
 #endif

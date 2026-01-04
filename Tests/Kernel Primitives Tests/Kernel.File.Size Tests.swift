@@ -14,6 +14,5 @@ import Testing
 
 @testable import Kernel_Primitives
 
-extension Kernel.File.Size {
-    #TestSuites
-}
+// Kernel.File.Size is a typealias to Magnitude<Space>.Value<Int64>
+// #TestSuites cannot be used on typealiases

@@ -16,7 +16,6 @@ import Testing
 @testable import Kernel_Darwin
 import Kernel_Primitives
 
-extension Kernel.Kqueue.Event.Data {
-    #TestSuites
-}
+// Kernel.Kqueue.Event.Data is a typealias to Tagged<Kernel.Kqueue.Event, UInt64>
+// #TestSuites cannot be used on typealiases
 #endif

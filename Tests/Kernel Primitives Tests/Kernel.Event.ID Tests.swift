@@ -14,6 +14,5 @@ import Testing
 
 @testable import Kernel_Primitives
 
-extension Kernel.Event.ID {
-    #TestSuites
-}
+// Kernel.Event.ID is a typealias to Tagged<Kernel.Event, UInt>
+// #TestSuites cannot be used on typealiases

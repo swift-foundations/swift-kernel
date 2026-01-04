@@ -16,7 +16,6 @@ import Testing
 @testable import Kernel_Darwin
 import Kernel_Primitives
 
-extension Kernel.Kqueue.Filter.Data {
-    #TestSuites
-}
+// Kernel.Kqueue.Filter.Data is a typealias to Tagged<Kernel.Kqueue.Filter, Int>
+// #TestSuites cannot be used on typealiases
 #endif

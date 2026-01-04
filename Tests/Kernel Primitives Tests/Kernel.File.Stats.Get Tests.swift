@@ -14,6 +14,5 @@ import Testing
 
 @testable import Kernel_Primitives
 
-extension Kernel.File.Stats.Get {
-    #TestSuites
-}
+// Kernel.File.Stats.Get.swift contains the fstat syscall implementation
+// No type to extend with #TestSuites

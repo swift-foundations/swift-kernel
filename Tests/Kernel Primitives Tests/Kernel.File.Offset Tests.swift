@@ -14,6 +14,5 @@ import Testing
 
 @testable import Kernel_Primitives
 
-extension Kernel.File.Offset {
-    #TestSuites
-}
+// Kernel.File.Offset is a typealias to Coordinate.X<Space>.Value<Int64>
+// #TestSuites cannot be used on typealiases
