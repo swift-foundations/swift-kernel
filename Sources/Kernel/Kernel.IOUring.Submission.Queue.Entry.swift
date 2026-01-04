@@ -2,7 +2,7 @@
 //
 // This source file is part of the swift-kernel open source project
 //
-// Copyright (c) 2024 Coen ten Thije Boonkkamp and the swift-kernel project authors
+// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -18,37 +18,37 @@
         import Musl
     #endif
 
-    extension Kernel.IOUring {
+    extension Kernel.IOUring.Submission.Queue {
         /// Swift wrapper for io_uring submission queue entry.
         ///
-        /// An SQE describes an I/O operation to be performed by the kernel.
+        /// An Entry describes an I/O operation to be performed by the kernel.
         /// This wrapper provides a Swift-native interface to the C `io_uring_sqe` struct.
         ///
         /// ## Usage
         ///
-        /// SQEs are typically filled in-place in the SQ ring buffer:
+        /// Entries are typically filled in-place in the submission queue ring buffer:
         /// ```swift
-        /// let sqePtr = ring.sqes.advanced(by: index)
-        /// var sqe = Kernel.IOUring.SQE()
-        /// sqe.setRead(fd: fd, buffer: buffer, offset: 0, userData: id)
-        /// sqePtr.pointee = sqe.cValue
+        /// let entryPtr = ring.sqes.advanced(by: index)
+        /// var entry = Kernel.IOUring.Submission.Queue.Entry()
+        /// entry.setRead(fd: fd, buffer: buffer, offset: 0, userData: id)
+        /// entryPtr.pointee = entry.cValue
         /// ```
         ///
         /// ## Thread Safety
         ///
-        /// SQEs are value types that wrap a C struct. They should be filled
+        /// Entries are value types that wrap a C struct. They should be filled
         /// on the poll thread and written to the shared ring buffer.
-        public struct SQE: Sendable {
+        public struct Entry: Sendable {
             /// The underlying C struct.
             public var cValue: io_uring_sqe
 
-            /// Creates an empty SQE (zeroed).
+            /// Creates an empty Entry (zeroed).
             @inlinable
             public init() {
                 self.cValue = io_uring_sqe()
             }
 
-            /// Creates an SQE from a C struct.
+            /// Creates an Entry from a C struct.
             @inlinable
             public init(_ cValue: io_uring_sqe) {
                 self.cValue = cValue
@@ -58,7 +58,7 @@
 
     // MARK: - Accessors
 
-    extension Kernel.IOUring.SQE {
+    extension Kernel.IOUring.Submission.Queue.Entry {
         /// The operation code.
         @inlinable
         public var opcode: Kernel.IOUring.Opcode {
@@ -66,7 +66,7 @@
             set { cValue.opcode = newValue.rawValue }
         }
 
-        /// SQE flags.
+        /// Entry flags.
         @inlinable
         public var flags: UInt8 {
             get { cValue.flags }
@@ -75,8 +75,8 @@
 
         /// I/O priority.
         @inlinable
-        public var priority: Priority {
-            get { Priority(rawValue: cValue.ioprio) }
+        public var priority: Kernel.IOUring.Priority {
+            get { Kernel.IOUring.Priority(rawValue: cValue.ioprio) }
             set { cValue.ioprio = newValue.rawValue }
         }
 
@@ -89,8 +89,8 @@
 
         /// File offset for read/write operations.
         @inlinable
-        public var offset: Offset {
-            get { Offset(rawValue: cValue.off) }
+        public var offset: Kernel.IOUring.Offset {
+            get { Kernel.IOUring.Offset(rawValue: cValue.off) }
             set { cValue.off = newValue.rawValue }
         }
 
@@ -103,8 +103,8 @@
 
         /// Buffer length.
         @inlinable
-        public var len: Length {
-            get { Length(rawValue: cValue.len) }
+        public var len: Kernel.IOUring.Length {
+            get { Kernel.IOUring.Length(rawValue: cValue.len) }
             set { cValue.len = newValue.rawValue }
         }
 
@@ -119,29 +119,29 @@
 
         /// User data returned with completion.
         @inlinable
-        public var userData: UserData {
-            get { UserData(rawValue: cValue.user_data) }
+        public var userData: Kernel.IOUring.UserData {
+            get { Kernel.IOUring.UserData(rawValue: cValue.user_data) }
             set { cValue.user_data = newValue.rawValue }
         }
 
         /// Buffer index (for registered buffers).
         @inlinable
-        public var bufferIndex: Buffer.Index {
-            get { Buffer.Index(rawValue: cValue.buf_index) }
+        public var bufferIndex: Kernel.IOUring.Buffer.Index {
+            get { Kernel.IOUring.Buffer.Index(rawValue: cValue.buf_index) }
             set { cValue.buf_index = newValue.rawValue }
         }
 
         /// Buffer group (for buffer selection).
         @inlinable
-        public var bufferGroup: Buffer.Group {
-            get { Buffer.Group(rawValue: cValue.buf_group) }
+        public var bufferGroup: Kernel.IOUring.Buffer.Group {
+            get { Kernel.IOUring.Buffer.Group(rawValue: cValue.buf_group) }
             set { cValue.buf_group = newValue.rawValue }
         }
 
         /// Personality ID (for credentials).
         @inlinable
-        public var personality: Personality.ID {
-            get { Personality.ID(rawValue: cValue.personality) }
+        public var personality: Kernel.IOUring.Personality.ID {
+            get { Kernel.IOUring.Personality.ID(rawValue: cValue.personality) }
             set { cValue.personality = newValue.rawValue }
         }
     }

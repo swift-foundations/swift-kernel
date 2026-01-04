@@ -2,7 +2,7 @@
 //
 // This source file is part of the swift-kernel open source project
 //
-// Copyright (c) 2024 Coen ten Thije Boonkkamp and the swift-kernel project authors
+// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -11,8 +11,8 @@
 
 #if canImport(Glibc) || canImport(Musl)
 
-    extension Kernel.IOUring.SQE {
-        /// Flags for SQE behavior.
+    extension Kernel.IOUring.Submission.Queue.Entry {
+        /// Flags for submission queue entry behavior.
         public struct Flags: OptionSet, Sendable {
             public let rawValue: UInt8
 
@@ -24,7 +24,7 @@
             /// Use fixed file descriptor from registered files.
             public static let fixedFile = Flags(rawValue: 1 << 0)
 
-            /// Issue operation after previous SQE completes.
+            /// Issue operation after previous entry completes.
             public static let ioLink = Flags(rawValue: 1 << 1)
 
             /// Like ioLink, but also links on failure.
@@ -36,7 +36,7 @@
             /// Select buffer from provided buffer group.
             public static let bufferSelect = Flags(rawValue: 1 << 4)
 
-            /// Don't post CQE if operation completes successfully (kernel 5.17+).
+            /// Don't post completion entry if operation completes successfully (kernel 5.17+).
             public static let cqeSkipSuccess = Flags(rawValue: 1 << 5)
         }
     }

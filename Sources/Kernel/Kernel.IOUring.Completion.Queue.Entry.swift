@@ -2,7 +2,7 @@
 //
 // This source file is part of the swift-kernel open source project
 //
-// Copyright (c) 2024 Coen ten Thije Boonkkamp and the swift-kernel project authors
+// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -18,32 +18,32 @@
         import Musl
     #endif
 
-    extension Kernel.IOUring {
+    extension Kernel.IOUring.Completion.Queue {
         /// Swift wrapper for io_uring completion queue entry.
         ///
-        /// A CQE contains the result of a completed I/O operation.
+        /// An Entry contains the result of a completed I/O operation.
         /// This wrapper provides a Swift-native interface to the C `io_uring_cqe` struct.
         ///
         /// ## Usage
         ///
-        /// CQEs are read from the CQ ring buffer:
+        /// Entries are read from the completion queue ring buffer:
         /// ```swift
-        /// let cqePtr = ring.cqes.advanced(by: index)
-        /// let cqe = Kernel.IOUring.CQE(cqePtr.pointee)
-        /// if cqe.isSuccess {
-        ///     print("Completed: \(cqe.result) bytes")
+        /// let entryPtr = ring.cqes.advanced(by: index)
+        /// let entry = Kernel.IOUring.Completion.Queue.Entry(entryPtr.pointee)
+        /// if entry.isSuccess {
+        ///     print("Completed: \(entry.result) bytes")
         /// }
         /// ```
         ///
         /// ## Thread Safety
         ///
-        /// CQEs are value types that wrap a C struct. They should be read
+        /// Entries are value types that wrap a C struct. They should be read
         /// on the poll thread from the shared ring buffer.
-        public struct CQE: Sendable {
+        public struct Entry: Sendable {
             /// The underlying C struct.
             public let cValue: io_uring_cqe
 
-            /// Creates a CQE from a C struct.
+            /// Creates an Entry from a C struct.
             @inlinable
             public init(_ cValue: io_uring_cqe) {
                 self.cValue = cValue
@@ -53,14 +53,14 @@
 
     // MARK: - Accessors
 
-    extension Kernel.IOUring.CQE {
-        /// User data from the corresponding SQE.
+    extension Kernel.IOUring.Completion.Queue.Entry {
+        /// User data from the corresponding submission queue entry.
         ///
-        /// This is the value set via `sqe.userData` when the operation was submitted.
+        /// This is the value set via `entry.userData` when the operation was submitted.
         /// Typically used to recover the operation context (e.g., a pointer to Storage).
         @inlinable
-        public var userData: UserData {
-            UserData(rawValue: cValue.user_data)
+        public var userData: Kernel.IOUring.UserData {
+            Kernel.IOUring.UserData(rawValue: cValue.user_data)
         }
 
         /// Result of the operation.
@@ -72,7 +72,7 @@
             cValue.res
         }
 
-        /// CQE flags.
+        /// Entry flags.
         ///
         /// Contains additional information about the completion.
         @inlinable
@@ -83,7 +83,7 @@
 
     // MARK: - Result Interpretation
 
-    extension Kernel.IOUring.CQE {
+    extension Kernel.IOUring.Completion.Queue.Entry {
         /// Whether the operation completed successfully.
         @inlinable
         public var isSuccess: Bool {
@@ -123,14 +123,14 @@
 
     // MARK: - Typed Flags Accessors
 
-    extension Kernel.IOUring.CQE {
-        /// The CQE flags as a typed value.
+    extension Kernel.IOUring.Completion.Queue.Entry {
+        /// The entry flags as a typed value.
         @inlinable
         public var typedFlags: Flags {
             Flags(rawValue: flags)
         }
 
-        /// Whether this CQE indicates more completions will follow (multishot).
+        /// Whether this entry indicates more completions will follow (multishot).
         @inlinable
         public var hasMore: Bool {
             typedFlags.contains(.more)

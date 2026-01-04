@@ -30,7 +30,7 @@ extension Kernel.Event {
     ///
     /// - **epoll**: Maps to `epoll_data_t.u64`
     /// - **kqueue**: Maps to `udata` field (pointer on 64-bit)
-    /// - **io_uring**: Maps to `user_data` field in SQE/CQE
+    /// - **io_uring**: Maps to `user_data` field in submission/completion queue entries
     public struct UserData: RawRepresentable, Sendable, Equatable, Hashable {
         public let rawValue: UInt64
 

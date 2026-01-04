@@ -43,10 +43,10 @@
             public private(set) var features: UInt32
 
             /// Submission queue ring offset info (filled by kernel).
-            public private(set) var sqOff: SQOffsets
+            public private(set) var sqOff: Submission.Queue.Offsets
 
             /// Completion queue ring offset info (filled by kernel).
-            public private(set) var cqOff: CQOffsets
+            public private(set) var cqOff: Completion.Queue.Offsets
 
             /// Creates io_uring parameters for setup.
             ///
@@ -65,8 +65,8 @@
                 self.sqThreadCPU = sqThreadCPU
                 self.sqThreadIdle = sqThreadIdle
                 self.features = 0
-                self.sqOff = SQOffsets()
-                self.cqOff = CQOffsets()
+                self.sqOff = Submission.Queue.Offsets()
+                self.cqOff = Completion.Queue.Offsets()
             }
 
             /// Creates params from the C struct (after setup).
@@ -77,8 +77,8 @@
                 self.sqThreadCPU = cParams.sq_thread_cpu
                 self.sqThreadIdle = cParams.sq_thread_idle
                 self.features = cParams.features
-                self.sqOff = SQOffsets(cParams.sq_off)
-                self.cqOff = CQOffsets(cParams.cq_off)
+                self.sqOff = Submission.Queue.Offsets(cParams.sq_off)
+                self.cqOff = Completion.Queue.Offsets(cParams.cq_off)
             }
 
             /// Converts to the C io_uring_params struct.

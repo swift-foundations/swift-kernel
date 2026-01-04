@@ -2,7 +2,7 @@
 //
 // This source file is part of the swift-kernel open source project
 //
-// Copyright (c) 2024 Coen ten Thije Boonkkamp and the swift-kernel project authors
+// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -18,27 +18,27 @@
         import Musl
     #endif
 
-    extension Kernel.IOUring.SQE {
-        /// Helper for preparing SQE operations.
+    extension Kernel.IOUring.Submission.Queue.Entry {
+        /// Helper for preparing submission queue entry operations.
         public struct Prepare {
-            public var sqe: Kernel.IOUring.SQE
+            public var entry: Kernel.IOUring.Submission.Queue.Entry
 
             @inlinable
-            init(sqe: Kernel.IOUring.SQE) {
-                self.sqe = sqe
+            init(entry: Kernel.IOUring.Submission.Queue.Entry) {
+                self.entry = entry
             }
 
-            /// Configures this SQE for a no-op operation.
+            /// Configures this entry for a no-op operation.
             ///
             /// - Parameter userData: User data to return with completion.
             @inlinable
-            public mutating func nop(userData: UserData) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .nop
-                sqe.userData = userData
+            public mutating func nop(userData: Kernel.IOUring.UserData) {
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .nop
+                entry.userData = userData
             }
 
-            /// Configures this SQE for a read operation.
+            /// Configures this entry for a read operation.
             ///
             /// - Parameters:
             ///   - fd: File descriptor to read from.
@@ -50,20 +50,20 @@
             public mutating func read(
                 fd: Kernel.Descriptor,
                 buffer: UnsafeMutableRawPointer,
-                length: Length,
-                offset: Offset,
-                userData: UserData
+                length: Kernel.IOUring.Length,
+                offset: Kernel.IOUring.Offset,
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .read
-                sqe.fd = fd
-                sqe.addr = UInt64(UInt(bitPattern: buffer))
-                sqe.len = length
-                sqe.offset = offset
-                sqe.userData = userData
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .read
+                entry.fd = fd
+                entry.addr = UInt64(UInt(bitPattern: buffer))
+                entry.len = length
+                entry.offset = offset
+                entry.userData = userData
             }
 
-            /// Configures this SQE for a write operation.
+            /// Configures this entry for a write operation.
             ///
             /// - Parameters:
             ///   - fd: File descriptor to write to.
@@ -75,36 +75,36 @@
             public mutating func write(
                 fd: Kernel.Descriptor,
                 buffer: UnsafeRawPointer,
-                length: Length,
-                offset: Offset,
-                userData: UserData
+                length: Kernel.IOUring.Length,
+                offset: Kernel.IOUring.Offset,
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .write
-                sqe.fd = fd
-                sqe.addr = UInt64(UInt(bitPattern: buffer))
-                sqe.len = length
-                sqe.offset = offset
-                sqe.userData = userData
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .write
+                entry.fd = fd
+                entry.addr = UInt64(UInt(bitPattern: buffer))
+                entry.len = length
+                entry.offset = offset
+                entry.userData = userData
             }
 
-            /// Configures this SQE for a cancel operation.
+            /// Configures this entry for a cancel operation.
             ///
             /// - Parameters:
             ///   - targetUserData: User data of the operation to cancel.
             ///   - userData: User data to return with this cancel's completion.
             @inlinable
             public mutating func cancel(
-                targetUserData: UserData,
-                userData: UserData
+                targetUserData: Kernel.IOUring.UserData,
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .asyncCancel
-                sqe.addr = targetUserData.rawValue
-                sqe.userData = userData
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .asyncCancel
+                entry.addr = targetUserData.rawValue
+                entry.userData = userData
             }
 
-            /// Configures this SQE for an fsync operation.
+            /// Configures this entry for an fsync operation.
             ///
             /// - Parameters:
             ///   - fd: File descriptor to sync.
@@ -114,18 +114,18 @@
             public mutating func fsync(
                 fd: Kernel.Descriptor,
                 datasync: Bool,
-                userData: UserData
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .fsync
-                sqe.fd = fd
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .fsync
+                entry.fd = fd
                 if datasync {
-                    sqe.opFlags = 1  // IORING_FSYNC_DATASYNC
+                    entry.opFlags = 1  // IORING_FSYNC_DATASYNC
                 }
-                sqe.userData = userData
+                entry.userData = userData
             }
 
-            /// Configures this SQE for a close operation.
+            /// Configures this entry for a close operation.
             ///
             /// - Parameters:
             ///   - fd: File descriptor to close.
@@ -133,15 +133,15 @@
             @inlinable
             public mutating func close(
                 fd: Kernel.Descriptor,
-                userData: UserData
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .close
-                sqe.fd = fd
-                sqe.userData = userData
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .close
+                entry.fd = fd
+                entry.userData = userData
             }
 
-            /// Configures this SQE for an accept operation.
+            /// Configures this entry for an accept operation.
             ///
             /// - Parameters:
             ///   - fd: Listening socket file descriptor.
@@ -155,18 +155,18 @@
                 addr: UnsafeMutableRawPointer?,
                 addrLen: UnsafeMutablePointer<UInt32>?,
                 flags: Int32,
-                userData: UserData
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .accept
-                sqe.fd = fd
-                sqe.addr = UInt64(UInt(bitPattern: addr))
-                sqe.offset = UInt64(UInt(bitPattern: addrLen))
-                sqe.opFlags = flags
-                sqe.userData = userData
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .accept
+                entry.fd = fd
+                entry.addr = UInt64(UInt(bitPattern: addr))
+                entry.offset = Kernel.IOUring.Offset(rawValue: UInt64(UInt(bitPattern: addrLen)))
+                entry.opFlags = flags
+                entry.userData = userData
             }
 
-            /// Configures this SQE for a connect operation.
+            /// Configures this entry for a connect operation.
             ///
             /// - Parameters:
             ///   - fd: Socket file descriptor.
@@ -178,17 +178,17 @@
                 fd: Kernel.Descriptor,
                 addr: UnsafeRawPointer,
                 addrLen: UInt32,
-                userData: UserData
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .connect
-                sqe.fd = fd
-                sqe.addr = UInt64(UInt(bitPattern: addr))
-                sqe.offset = UInt64(addrLen)
-                sqe.userData = userData
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .connect
+                entry.fd = fd
+                entry.addr = UInt64(UInt(bitPattern: addr))
+                entry.offset = Kernel.IOUring.Offset(rawValue: UInt64(addrLen))
+                entry.userData = userData
             }
 
-            /// Configures this SQE for a send operation.
+            /// Configures this entry for a send operation.
             ///
             /// - Parameters:
             ///   - fd: Socket file descriptor.
@@ -200,20 +200,20 @@
             public mutating func send(
                 fd: Kernel.Descriptor,
                 buffer: UnsafeRawPointer,
-                length: Length,
+                length: Kernel.IOUring.Length,
                 flags: Int32,
-                userData: UserData
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .send
-                sqe.fd = fd
-                sqe.addr = UInt64(UInt(bitPattern: buffer))
-                sqe.len = length
-                sqe.opFlags = flags
-                sqe.userData = userData
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .send
+                entry.fd = fd
+                entry.addr = UInt64(UInt(bitPattern: buffer))
+                entry.len = length
+                entry.opFlags = flags
+                entry.userData = userData
             }
 
-            /// Configures this SQE for a recv operation.
+            /// Configures this entry for a recv operation.
             ///
             /// - Parameters:
             ///   - fd: Socket file descriptor.
@@ -225,36 +225,36 @@
             public mutating func recv(
                 fd: Kernel.Descriptor,
                 buffer: UnsafeMutableRawPointer,
-                length: Length,
+                length: Kernel.IOUring.Length,
                 flags: Int32,
-                userData: UserData
+                userData: Kernel.IOUring.UserData
             ) {
-                sqe.cValue = io_uring_sqe()
-                sqe.opcode = .recv
-                sqe.fd = fd
-                sqe.addr = UInt64(UInt(bitPattern: buffer))
-                sqe.len = length
-                sqe.opFlags = flags
-                sqe.userData = userData
+                entry.cValue = io_uring_sqe()
+                entry.opcode = .recv
+                entry.fd = fd
+                entry.addr = UInt64(UInt(bitPattern: buffer))
+                entry.len = length
+                entry.opFlags = flags
+                entry.userData = userData
             }
         }
     }
 
     // MARK: - Prepare Accessor
 
-    extension Kernel.IOUring.SQE {
-        /// Accessor for preparing SQE operations.
+    extension Kernel.IOUring.Submission.Queue.Entry {
+        /// Accessor for preparing entry operations.
         ///
         /// ## Usage
         ///
         /// ```swift
-        /// var sqe = Kernel.IOUring.SQE()
-        /// sqe.prepare.read(fd: fd, buffer: buffer, length: len, offset: 0, userData: id)
+        /// var entry = Kernel.IOUring.Submission.Queue.Entry()
+        /// entry.prepare.read(fd: fd, buffer: buffer, length: len, offset: 0, userData: id)
         /// ```
         @inlinable
         public var prepare: Prepare {
-            get { Prepare(sqe: self) }
-            set { self = newValue.sqe }
+            get { Prepare(entry: self) }
+            set { self = newValue.entry }
         }
     }
 

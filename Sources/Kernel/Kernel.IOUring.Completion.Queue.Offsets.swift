@@ -2,7 +2,7 @@
 //
 // This source file is part of the swift-kernel open source project
 //
-// Copyright (c) 2024 Coen ten Thije Boonkkamp and the swift-kernel project authors
+// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE for license information
@@ -18,9 +18,9 @@
         import Musl
     #endif
 
-    extension Kernel.IOUring {
+    extension Kernel.IOUring.Completion.Queue {
         /// Offsets for completion queue ring mapping.
-        public struct CQOffsets: Sendable, Equatable {
+        public struct Offsets: Sendable, Equatable {
             public let head: UInt32
             public let tail: UInt32
             public let ringMask: UInt32
