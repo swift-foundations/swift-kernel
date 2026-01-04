@@ -348,7 +348,7 @@ extension Kernel.File.Direct.Requirements {
             // Most modern Windows storage uses 512 or 4096 byte sectors.
             // We'll use 4096 as a safe default, but callers should prefer
             // querying with a path when possible.
-            return .known(Requirements.Alignment(uniform: 4096))
+            return .known(Requirements.Alignment(uniform: .`4096`))
         }
     }
 #endif
