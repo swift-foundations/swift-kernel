@@ -10,6 +10,13 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel {
+    /// Link-related types.
+    public enum Link {}
+}
+
+// MARK: - Link.Count
+
+extension Kernel.Link {
     /// Hard link count for a file.
     ///
     /// A type-safe wrapper for the number of hard links to a file.
@@ -24,7 +31,7 @@ extension Kernel {
     ///     // File has multiple hard links
     /// }
     /// ```
-    public struct LinkCount: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
+    public struct Count: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
         public let rawValue: UInt32
 
         /// Creates a link count from a raw value.
@@ -42,32 +49,32 @@ extension Kernel {
         // MARK: - Common Values
 
         /// A single link (typical for newly created files).
-        public static let one = LinkCount(1)
+        public static let one = Count(1)
 
         /// Zero links (file is being deleted).
-        public static let zero = LinkCount(0)
+        public static let zero = Count(0)
 
         // MARK: - Comparable
 
         @inlinable
-        public static func < (lhs: LinkCount, rhs: LinkCount) -> Bool {
+        public static func < (lhs: Self, rhs: Self) -> Bool {
             lhs.rawValue < rhs.rawValue
         }
     }
 }
 
-// MARK: - ExpressibleByIntegerLiteral
+// MARK: - Link.Count + ExpressibleByIntegerLiteral
 
-extension Kernel.LinkCount: ExpressibleByIntegerLiteral {
+extension Kernel.Link.Count: ExpressibleByIntegerLiteral {
     @inlinable
     public init(integerLiteral value: UInt32) {
         self.rawValue = value
     }
 }
 
-// MARK: - CustomStringConvertible
+// MARK: - Link.Count + CustomStringConvertible
 
-extension Kernel.LinkCount: CustomStringConvertible {
+extension Kernel.Link.Count: CustomStringConvertible {
     public var description: String {
         "\(rawValue)"
     }

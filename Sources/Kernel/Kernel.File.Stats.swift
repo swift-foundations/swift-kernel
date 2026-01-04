@@ -29,12 +29,12 @@ extension Kernel.File {
         /// Owner user ID.
         ///
         /// On Windows, this is always 0.
-        public let uid: Kernel.UserID
+        public let uid: Kernel.User.ID
 
         /// Owner group ID.
         ///
         /// On Windows, this is always 0.
-        public let gid: Kernel.GroupID
+        public let gid: Kernel.Group.ID
 
         /// Inode number.
         ///
@@ -47,7 +47,7 @@ extension Kernel.File {
         public let device: Kernel.Device
 
         /// Number of hard links.
-        public let linkCount: Kernel.LinkCount
+        public let linkCount: Kernel.Link.Count
 
         /// Last access time.
         public let accessTime: Kernel.Time
@@ -72,11 +72,11 @@ extension Kernel.File {
             size: Kernel.File.Size,
             type: Kind,
             permissions: UInt16,
-            uid: Kernel.UserID,
-            gid: Kernel.GroupID,
+            uid: Kernel.User.ID,
+            gid: Kernel.Group.ID,
             inode: Kernel.Inode,
             device: Kernel.Device,
-            linkCount: Kernel.LinkCount,
+            linkCount: Kernel.Link.Count,
             accessTime: Kernel.Time,
             modificationTime: Kernel.Time,
             changeTime: Kernel.Time

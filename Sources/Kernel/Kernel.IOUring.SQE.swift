@@ -126,22 +126,22 @@
 
         /// Buffer index (for registered buffers).
         @inlinable
-        public var bufferIndex: BufferIndex {
-            get { BufferIndex(rawValue: cValue.buf_index) }
+        public var bufferIndex: Buffer.Index {
+            get { Buffer.Index(rawValue: cValue.buf_index) }
             set { cValue.buf_index = newValue.rawValue }
         }
 
         /// Buffer group (for buffer selection).
         @inlinable
-        public var bufferGroup: BufferGroup {
-            get { BufferGroup(rawValue: cValue.buf_group) }
+        public var bufferGroup: Buffer.Group {
+            get { Buffer.Group(rawValue: cValue.buf_group) }
             set { cValue.buf_group = newValue.rawValue }
         }
 
         /// Personality ID (for credentials).
         @inlinable
-        public var personality: PersonalityID {
-            get { PersonalityID(rawValue: cValue.personality) }
+        public var personality: Personality.ID {
+            get { Personality.ID(rawValue: cValue.personality) }
             set { cValue.personality = newValue.rawValue }
         }
     }

@@ -10,6 +10,13 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel {
+    /// User-related types.
+    public enum User {}
+}
+
+// MARK: - User.ID
+
+extension Kernel.User {
     /// POSIX user ID.
     ///
     /// A type-safe wrapper for user identifiers used in file ownership
@@ -23,7 +30,7 @@ extension Kernel {
     ///     // File is owned by root
     /// }
     /// ```
-    public struct UserID: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
+    public struct ID: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
         public let rawValue: UInt32
 
         /// Creates a user ID from a raw value.
@@ -41,29 +48,29 @@ extension Kernel {
         // MARK: - Common Values
 
         /// The root user (uid 0).
-        public static let root = UserID(0)
+        public static let root = ID(0)
 
         // MARK: - Comparable
 
         @inlinable
-        public static func < (lhs: UserID, rhs: UserID) -> Bool {
+        public static func < (lhs: Self, rhs: Self) -> Bool {
             lhs.rawValue < rhs.rawValue
         }
     }
 }
 
-// MARK: - ExpressibleByIntegerLiteral
+// MARK: - User.ID + ExpressibleByIntegerLiteral
 
-extension Kernel.UserID: ExpressibleByIntegerLiteral {
+extension Kernel.User.ID: ExpressibleByIntegerLiteral {
     @inlinable
     public init(integerLiteral value: UInt32) {
         self.rawValue = value
     }
 }
 
-// MARK: - CustomStringConvertible
+// MARK: - User.ID + CustomStringConvertible
 
-extension Kernel.UserID: CustomStringConvertible {
+extension Kernel.User.ID: CustomStringConvertible {
     public var description: String {
         "\(rawValue)"
     }

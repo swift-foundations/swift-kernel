@@ -10,6 +10,13 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel {
+    /// Group-related types.
+    public enum Group {}
+}
+
+// MARK: - Group.ID
+
+extension Kernel.Group {
     /// POSIX group ID.
     ///
     /// A type-safe wrapper for group identifiers used in file ownership
@@ -23,7 +30,7 @@ extension Kernel {
     ///     // File is owned by root group
     /// }
     /// ```
-    public struct GroupID: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
+    public struct ID: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
         public let rawValue: UInt32
 
         /// Creates a group ID from a raw value.
@@ -41,29 +48,29 @@ extension Kernel {
         // MARK: - Common Values
 
         /// The root group (gid 0).
-        public static let root = GroupID(0)
+        public static let root = ID(0)
 
         // MARK: - Comparable
 
         @inlinable
-        public static func < (lhs: GroupID, rhs: GroupID) -> Bool {
+        public static func < (lhs: Self, rhs: Self) -> Bool {
             lhs.rawValue < rhs.rawValue
         }
     }
 }
 
-// MARK: - ExpressibleByIntegerLiteral
+// MARK: - Group.ID + ExpressibleByIntegerLiteral
 
-extension Kernel.GroupID: ExpressibleByIntegerLiteral {
+extension Kernel.Group.ID: ExpressibleByIntegerLiteral {
     @inlinable
     public init(integerLiteral value: UInt32) {
         self.rawValue = value
     }
 }
 
-// MARK: - CustomStringConvertible
+// MARK: - Group.ID + CustomStringConvertible
 
-extension Kernel.GroupID: CustomStringConvertible {
+extension Kernel.Group.ID: CustomStringConvertible {
     public var description: String {
         "\(rawValue)"
     }

@@ -88,11 +88,11 @@ extension Kernel.File.Stats {
                 size: Kernel.File.Size(Int64(sb.st_size)),
                 type: Kind(mode: sb.st_mode),
                 permissions: UInt16(sb.st_mode & 0o7777),
-                uid: Kernel.UserID(UInt32(sb.st_uid)),
-                gid: Kernel.GroupID(UInt32(sb.st_gid)),
+                uid: Kernel.User.ID(UInt32(sb.st_uid)),
+                gid: Kernel.Group.ID(UInt32(sb.st_gid)),
                 inode: Kernel.Inode(UInt64(sb.st_ino)),
                 device: Kernel.Device(UInt64(sb.st_dev)),
-                linkCount: Kernel.LinkCount(UInt32(sb.st_nlink)),
+                linkCount: Kernel.Link.Count(UInt32(sb.st_nlink)),
                 accessTime: atime,
                 modificationTime: mtime,
                 changeTime: ctime
@@ -169,7 +169,7 @@ extension Kernel.File.Stats {
                 gid: .root,
                 inode: Kernel.Inode(inode),
                 device: Kernel.Device(UInt64(info.dwVolumeSerialNumber)),
-                linkCount: Kernel.LinkCount(UInt32(info.nNumberOfLinks)),
+                linkCount: Kernel.Link.Count(UInt32(info.nNumberOfLinks)),
                 accessTime: Kernel.Time(from: info.ftLastAccessTime),
                 modificationTime: Kernel.Time(from: info.ftLastWriteTime),
                 changeTime: Kernel.Time(from: info.ftLastWriteTime)

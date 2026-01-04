@@ -146,11 +146,3 @@ extension Kernel.IOUring.Length {
 }
 #endif
 
-// MARK: - CustomStringConvertible
-
-extension Tagged: @retroactive CustomStringConvertible
-where Tag == Magnitude<Kernel.File.Space>, RawValue == Int64 {
-    public var description: String {
-        "\(_rawValue)"
-    }
-}
