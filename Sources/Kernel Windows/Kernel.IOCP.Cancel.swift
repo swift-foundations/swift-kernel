@@ -29,11 +29,12 @@ public import Kernel_Primitives
         ///
         /// - Parameters:
         ///   - fileHandle: The file handle with pending I/O.
-        ///   - overlapped: The overlapped structure for the operation to cancel.
+        ///   - overlapped: The overlapped structure for the operation to cancel,
+        ///     or `nil` to cancel all pending I/O on the handle.
         @inlinable
         public static func pending(
             fileHandle: HANDLE,
-            overlapped: LPOVERLAPPED
+            overlapped: LPOVERLAPPED?
         ) {
             _ = CancelIoEx(fileHandle, overlapped)
             // Ignore errors - if not found, already completed
