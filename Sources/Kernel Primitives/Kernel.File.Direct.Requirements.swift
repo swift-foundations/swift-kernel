@@ -130,15 +130,7 @@ extension Kernel.File.Direct {
             }
 
             // Use the bytes per sector as alignment, falling back to 4096 for non-standard sizes
-            let alignment: Binary.Alignment
-            switch bytesPerSector {
-            case 512: alignment = .`512`
-            case 1024: alignment = .`1024`
-            case 2048: alignment = .`2048`
-            case 4096: alignment = .`4096`
-            case 8192: alignment = .`8192`
-            default: alignment = .`4096`  // Safe default for unusual sector sizes
-            }
+            let alignment: Binary.Alignment = bytesPerSector == 512 ? .`512` : .`4096`
             self = .known(Alignment(uniform: alignment))
         }
 
