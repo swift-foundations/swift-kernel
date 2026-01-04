@@ -78,7 +78,8 @@ extension Kernel.Memory.Shared {
         @usableFromInline
         internal var windowsMapAccess: DWORD {
             let hasWrite = contains(.write)
-            return hasWrite ? DWORD(FILE_MAP_ALL_ACCESS) : DWORD(FILE_MAP_READ)
+            // FILE_MAP_ALL_ACCESS = 0xF001F (SECTION_ALL_ACCESS)
+            return hasWrite ? DWORD(0xF001F) : DWORD(FILE_MAP_READ)
         }
     }
 

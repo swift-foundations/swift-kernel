@@ -92,7 +92,7 @@ extension Kernel.Memory.Map {
                 throw .map(.captureLastError())
             }
 
-            return Kernel.Memory.Map.Region(base: address, length: length, mappingHandle: mappingHandle)
+            return Kernel.Memory.Map.Region(base: address, length: Kernel.File.Size(length), mappingHandle: mappingHandle)
         }
     }
 
