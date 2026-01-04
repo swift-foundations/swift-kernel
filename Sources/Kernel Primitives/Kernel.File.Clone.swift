@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-internal import SystemPackage
+public import SystemPackage
 
 /// Namespace for file cloning (copy-on-write reflink) operations.
 ///
@@ -59,9 +59,9 @@ extension Kernel.File {
 extension Kernel.File.Clone.Capability {
     /// Probes whether the filesystem at the given path supports cloning.
     #if os(macOS)
-        package static func probe(at path: String) throws(Kernel.File.Clone.Error.Syscall) -> Kernel.File.Clone.Capability {
+        public static func probe(at path: FilePath) throws(Kernel.File.Clone.Error.Syscall) -> Kernel.File.Clone.Capability {
             var statfsBuf = Darwin.statfs()
-            let result = path.withCString { p in
+            let result = path.withPlatformString { p in
                 statfs(p, &statfsBuf)
             }
 
@@ -82,10 +82,10 @@ extension Kernel.File.Clone.Capability {
             return .none
         }
     #elseif os(Linux)
-        package static func probe(at path: String) throws(Kernel.File.Clone.Error.Syscall) -> Kernel.File.Clone.Capability {
+        public static func probe(at path: FilePath) throws(Kernel.File.Clone.Error.Syscall) -> Kernel.File.Clone.Capability {
             let statfsBuf: Kernel.File.System.Stats
             do {
-                statfsBuf = try Kernel.File.System.Stats.get(path: FilePath(path))
+                statfsBuf = try Kernel.File.System.Stats.get(path: path)
             } catch {
                 throw .platform(code: .posix(errno), operation: .statfs)
             }
@@ -105,9 +105,10 @@ extension Kernel.File.Clone.Capability {
         /// Probes whether the filesystem at the given path supports cloning.
         ///
         /// On Windows, we conservatively return `.none` unless we can confirm ReFS.
-        package static func probe(at path: String) throws(Kernel.File.Clone.Error.Syscall) -> Kernel.File.Clone.Capability {
+        public static func probe(at path: FilePath) throws(Kernel.File.Clone.Error.Syscall) -> Kernel.File.Clone.Capability {
             // Would need GetVolumeInformationW to check for ReFS
             // For now, conservatively return .none
+            _ = path
             return .none
         }
     #endif
@@ -117,12 +118,12 @@ extension Kernel.File.Clone.Capability {
 
 extension Kernel.File.Clone {
     /// File metadata operations.
-    package enum Metadata {
+    public enum Metadata {
         /// Gets the size of a file.
         #if os(macOS)
-            package static func size(at path: String) throws(Kernel.File.Clone.Error.Syscall) -> Int {
+            public static func size(at path: FilePath) throws(Kernel.File.Clone.Error.Syscall) -> Int {
                 var statBuf = Darwin.stat()
-                let result = path.withCString { p in
+                let result = path.withPlatformString { p in
                     stat(p, &statBuf)
                 }
 
@@ -133,9 +134,9 @@ extension Kernel.File.Clone {
                 return Int(statBuf.st_size)
             }
         #elseif os(Linux)
-            package static func size(at path: String) throws(Kernel.File.Clone.Error.Syscall) -> Int {
+            public static func size(at path: FilePath) throws(Kernel.File.Clone.Error.Syscall) -> Int {
                 var statBuf = Glibc.stat()
-                let result = path.withCString { p in
+                let result = path.withPlatformString { p in
                     stat(p, &statBuf)
                 }
 
@@ -148,7 +149,7 @@ extension Kernel.File.Clone {
         #endif
 
         #if os(Windows)
-            package static func size(handle: UnsafeMutableRawPointer?) throws(Kernel.File.Clone.Error.Syscall) -> UInt64 {
+            public static func size(handle: UnsafeMutableRawPointer?) throws(Kernel.File.Clone.Error.Syscall) -> UInt64 {
                 var size: LARGE_INTEGER = LARGE_INTEGER()
                 guard GetFileSizeEx(handle, &size) else {
                     throw .platform(code: .win32(UInt32(GetLastError())), operation: .stat)
@@ -164,7 +165,7 @@ extension Kernel.File.Clone {
 #if os(macOS)
     extension Kernel.File.Clone {
         /// macOS clonefile() operations.
-        package enum Clonefile {
+        public enum Clonefile {
             /// Attempts to clone a file using clonefile().
             ///
             /// - Parameters:
@@ -172,12 +173,12 @@ extension Kernel.File.Clone {
             ///   - destination: Destination file path.
             /// - Returns: `true` if cloned, `false` if not supported.
             /// - Throws: `Kernel.File.Clone.Error.Syscall` for other errors.
-            package static func attempt(
-                source: String,
-                destination: String
+            public static func attempt(
+                source: FilePath,
+                destination: FilePath
             ) throws(Kernel.File.Clone.Error.Syscall) -> Bool {
-                let result = source.withCString { src in
-                    destination.withCString { dst in
+                let result = source.withPlatformString { src in
+                    destination.withPlatformString { dst in
                         clonefile(src, dst, 0)
                     }
                 }
@@ -197,23 +198,23 @@ extension Kernel.File.Clone {
         }
 
         /// macOS copyfile() operations.
-        package enum Copyfile {
+        public enum Copyfile {
             /// Copies a file using copyfile() with COPYFILE_CLONE flag.
             ///
             /// This attempts CoW clone first, falls back to copy.
-            package static func clone(
-                source: String,
-                destination: String
+            public static func clone(
+                source: FilePath,
+                destination: FilePath
             ) throws(Kernel.File.Clone.Error.Syscall) {
                 // Check if destination exists first (copyfile doesn't fail by default)
                 var statBuf = Darwin.stat()
-                let destExists = destination.withCString { stat($0, &statBuf) } == 0
+                let destExists = destination.withPlatformString { stat($0, &statBuf) } == 0
                 if destExists {
                     throw .platform(code: .posix(EEXIST), operation: .copyfile)
                 }
 
-                let result = source.withCString { src in
-                    destination.withCString { dst in
+                let result = source.withPlatformString { src in
+                    destination.withPlatformString { dst in
                         copyfile(src, dst, nil, copyfile_flags_t(COPYFILE_CLONE | COPYFILE_ALL))
                     }
                 }
@@ -224,19 +225,19 @@ extension Kernel.File.Clone {
             }
 
             /// Copies a file using copyfile() without clone attempt.
-            package static func data(
-                source: String,
-                destination: String
+            public static func data(
+                source: FilePath,
+                destination: FilePath
             ) throws(Kernel.File.Clone.Error.Syscall) {
                 // Check if destination exists first (copyfile doesn't fail by default)
                 var statBuf = Darwin.stat()
-                let destExists = destination.withCString { stat($0, &statBuf) } == 0
+                let destExists = destination.withPlatformString { stat($0, &statBuf) } == 0
                 if destExists {
                     throw .platform(code: .posix(EEXIST), operation: .copyfile)
                 }
 
-                let result = source.withCString { src in
-                    destination.withCString { dst in
+                let result = source.withPlatformString { src in
+                    destination.withPlatformString { dst in
                         copyfile(src, dst, nil, copyfile_flags_t(COPYFILE_DATA))
                     }
                 }
@@ -257,7 +258,7 @@ extension Kernel.File.Clone {
 
     extension Kernel.File.Clone {
         /// Linux FICLONE operations.
-        package enum Ficlone {
+        public enum Ficlone {
             /// Attempts to clone a file using ioctl(FICLONE).
             ///
             /// - Parameters:
@@ -265,7 +266,7 @@ extension Kernel.File.Clone {
             ///   - destFd: Destination file descriptor.
             /// - Returns: `true` if cloned, `false` if not supported.
             /// - Throws: `Kernel.File.Clone.Error.Syscall` for other errors.
-            package static func attempt(
+            public static func attempt(
                 sourceFd: Int32,
                 destFd: Int32
             ) throws(Kernel.File.Clone.Error.Syscall) -> Bool {
@@ -286,11 +287,11 @@ extension Kernel.File.Clone {
         }
 
         /// Linux copy_file_range operations.
-        package enum CopyRange {
+        public enum CopyRange {
             /// Copies file data using copy_file_range().
             ///
             /// This may use server-side copy or reflink on supported filesystems.
-            package static func copy(
+            public static func copy(
                 sourceFd: Int32,
                 destFd: Int32,
                 length: Int
@@ -329,12 +330,12 @@ extension Kernel.File.Clone {
 #if os(Windows)
     extension Kernel.File.Clone {
         /// Windows extent duplication operations.
-        package enum Extents {
+        public enum Extents {
             /// Attempts to duplicate file extents (ReFS block clone).
             ///
             /// This is highly constrained: same volume, ReFS only, specific alignment.
             /// Returns `false` if unsupported rather than erroring.
-            package static func attempt(
+            public static func attempt(
                 sourceHandle: UnsafeMutableRawPointer?,
                 destHandle: UnsafeMutableRawPointer?,
                 length: UInt64
@@ -355,14 +356,14 @@ extension Kernel.File.Clone {
         }
 
         /// Windows file copy operations.
-        package enum Copy {
+        public enum Copy {
             /// Copies a file using CopyFileW.
-            package static func file(
-                source: String,
-                destination: String
+            public static func file(
+                source: FilePath,
+                destination: FilePath
             ) throws(Kernel.File.Clone.Error.Syscall) {
-                let result = source.withCString(encodedAs: UTF16.self) { src in
-                    destination.withCString(encodedAs: UTF16.self) { dst in
+                let result = source.withPlatformString { src in
+                    destination.withPlatformString { dst in
                         CopyFileW(src, dst, true)
                     }
                 }

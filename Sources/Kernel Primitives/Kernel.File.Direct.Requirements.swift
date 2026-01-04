@@ -129,7 +129,7 @@ extension Kernel.File.Direct {
                 return
             }
 
-            self = .known(Alignment(uniform: Int(bytesPerSector)))
+            self = .known(Alignment(uniform: Binary.Alignment(Int(bytesPerSector))))
         }
 
         /// Extracts the root path from a file path.

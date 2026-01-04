@@ -14,7 +14,7 @@ extension Kernel.File.Clone.Error {
     ///
     /// This type captures the exact errno/win32 error code from syscalls.
     /// It is translated to the semantic `Kernel.File.Clone.Error` at API boundaries.
-    package enum Syscall: Swift.Error, Sendable {
+    public enum Syscall: Swift.Error, Sendable {
         /// Platform syscall failure.
         case platform(code: Kernel.Error.Code, operation: Operation)
 
