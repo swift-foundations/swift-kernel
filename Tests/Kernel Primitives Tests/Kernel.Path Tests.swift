@@ -54,5 +54,48 @@ extension Kernel.Path {
                 #expect(path.cString == cString)
             }
         }
+
+        @Test("Path with special characters")
+        func specialCharacters() {
+            "/tmp/test file with spaces.txt".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
+                #expect(path.cString == cString)
+            }
+        }
+
+        @Test("Path with unicode characters")
+        func unicodeCharacters() {
+            "/tmp/日本語/文件.txt".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
+                #expect(path.cString == cString)
+            }
+        }
+
+        @Test("Path with long name")
+        func longPathName() {
+            let longComponent = String(repeating: "a", count: 200)
+            "/tmp/\(longComponent)".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
+                #expect(path.cString == cString)
+            }
+        }
+
+        @Test("Path with relative components")
+        func relativeComponents() {
+            "../relative/path/./here".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
+                #expect(path.cString == cString)
+            }
+        }
+    }
+
+    // MARK: - Char Type Tests
+
+    extension Kernel.Path.Test.Unit {
+        @Test("Char typealias exists")
+        func charTypealiasExists() {
+            // Kernel.Path.Char should be CInterop.PlatformChar (CChar on POSIX)
+            let _: Kernel.Path.Char.Type = CChar.self
+        }
     }
 #endif

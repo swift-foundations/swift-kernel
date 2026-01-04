@@ -12,7 +12,7 @@ public import Kernel_Primitives
 
 
 #if canImport(Darwin)
-    import Darwin
+    public import Darwin
 
     extension Kernel.Kqueue {
         /// Filter types for kqueue events.

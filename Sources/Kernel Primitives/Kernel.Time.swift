@@ -168,7 +168,7 @@ extension Kernel.Time {
         public import Darwin
     #elseif canImport(Glibc)
         public import Glibc
-        import CLinuxShim
+        public import CLinuxShim
     #elseif canImport(Musl)
         public import Musl
     #endif

@@ -62,11 +62,20 @@ let package = Package(
                 .target(name: "Kernel Windows", condition: .when(platforms: [.windows]))
             ]
         ),
+        // Test support utilities (harnesses, helpers)
+        .target(
+            name: "Kernel Test Support",
+            dependencies: [
+                "Kernel Primitives"
+            ],
+            path: "Tests/Support"
+        ),
         // Cross-platform primitives tests
         .testTarget(
             name: "Kernel Primitives Tests",
             dependencies: [
                 "Kernel Primitives",
+                "Kernel Test Support",
                 .product(name: "StandardsTestSupport", package: "swift-standards")
             ],
             path: "Tests/Kernel Primitives Tests"
@@ -77,6 +86,7 @@ let package = Package(
             dependencies: [
                 .target(name: "Kernel Darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
                 "Kernel Primitives",
+                "Kernel Test Support",
                 .product(name: "StandardsTestSupport", package: "swift-standards")
             ],
             path: "Tests/Kernel Darwin Tests"
@@ -87,6 +97,7 @@ let package = Package(
             dependencies: [
                 .target(name: "Kernel Linux", condition: .when(platforms: [.linux])),
                 "Kernel Primitives",
+                "Kernel Test Support",
                 .product(name: "StandardsTestSupport", package: "swift-standards")
             ],
             path: "Tests/Kernel Linux Tests"

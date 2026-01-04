@@ -22,7 +22,8 @@ public import Kernel_Primitives
         /// maintaining layout compatibility for the container-of pattern.
         public struct Overlapped: @unchecked Sendable {
             /// The underlying Windows OVERLAPPED structure.
-            public var raw: OVERLAPPED
+            @usableFromInline
+            internal var raw: OVERLAPPED
 
             /// Creates a zero-initialized overlapped structure.
             @inlinable

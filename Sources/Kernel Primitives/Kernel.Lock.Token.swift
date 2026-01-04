@@ -13,11 +13,11 @@
     public import WinSDK
 #else
     #if canImport(Darwin)
-        import Darwin
+        public import Darwin
     #elseif canImport(Glibc)
-        import Glibc
+        public import Glibc
     #elseif canImport(Musl)
-        import Musl
+        public import Musl
     #endif
 #endif
 

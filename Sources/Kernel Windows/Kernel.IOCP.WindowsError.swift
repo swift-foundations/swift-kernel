@@ -25,19 +25,19 @@ public import Kernel_Primitives
 
     extension Kernel.IOCP.WindowsError {
         /// The I/O operation has been started but not yet completed.
-        public static let ioPending: DWORD = DWORD(ERROR_IO_PENDING)
+        public static let ioPending: UInt32 = UInt32(ERROR_IO_PENDING)
 
         /// The I/O operation was aborted due to cancellation.
-        public static let operationAborted: DWORD = DWORD(ERROR_OPERATION_ABORTED)
+        public static let operationAborted: UInt32 = UInt32(ERROR_OPERATION_ABORTED)
 
         /// The specified operation was not found.
-        public static let notFound: DWORD = DWORD(ERROR_NOT_FOUND)
+        public static let notFound: UInt32 = UInt32(ERROR_NOT_FOUND)
 
         /// The wait operation timed out.
-        public static let timeout: DWORD = DWORD(bitPattern: WAIT_TIMEOUT)
+        public static let timeout: UInt32 = UInt32(bitPattern: WAIT_TIMEOUT)
 
         /// Infinite timeout value.
-        public static let infinite: DWORD = INFINITE
+        public static let infinite: UInt32 = INFINITE
     }
 
 #endif

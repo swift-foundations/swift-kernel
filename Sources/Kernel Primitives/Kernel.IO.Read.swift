@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import SystemPackage
+public import SystemPackage
 public import Dimension
 
 // MARK: - Read Type

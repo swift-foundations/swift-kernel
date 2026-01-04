@@ -17,7 +17,7 @@ extension Kernel.Memory.Map {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    import WinSDK
+    public import WinSDK
 
     extension Kernel.Memory.Map.File {
         /// Maps a file into memory using Windows APIs.

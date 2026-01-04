@@ -12,11 +12,11 @@
 public import SystemPackage
 
 #if canImport(Darwin)
-    import Darwin
+    public import Darwin
 #elseif canImport(Glibc)
-    import Glibc
+    public import Glibc
 #elseif canImport(Musl)
-    import Musl
+    public import Musl
 #elseif os(Windows)
     import ucrt
 #endif
@@ -58,8 +58,18 @@ extension Kernel {
         /// The underlying null-terminated platform string.
         ///
         /// - Warning: This pointer is NOT owned. The caller must ensure validity.
-        public let cString: UnsafePointer<CInterop.PlatformChar>
+        public let cString: UnsafePointer<Char>
     }
+}
+
+// MARK: - Platform Character Type
+
+extension Kernel.Path {
+    /// Platform-native path character type.
+    ///
+    /// - POSIX (macOS, Linux): `CChar` (Int8, UTF-8)
+    /// - Windows: `UInt16` (UTF-16)
+    public typealias Char = CInterop.PlatformChar
 }
 
 // MARK: - Initialization
@@ -74,7 +84,7 @@ extension Kernel.Path {
     ///   - The pointer remains valid for the lifetime of this `Path`
     ///   - The string does not contain interior NUL bytes
     @inlinable
-    public init(unsafeCString cString: UnsafePointer<CInterop.PlatformChar>) {
+    public init(unsafeCString cString: UnsafePointer<Char>) {
         self.cString = cString
     }
 }
@@ -91,7 +101,7 @@ extension Kernel.Path {
     @usableFromInline
     internal struct String: ~Copyable {
         @usableFromInline
-        let buffer: UnsafeMutableBufferPointer<CInterop.PlatformChar>
+        let buffer: UnsafeMutableBufferPointer<Char>
 
         @inlinable
         init(copying path: FilePath) {
@@ -99,7 +109,7 @@ extension Kernel.Path {
             path.withPlatformString { p in
                 while p[length] != 0 { length += 1 }
             }
-            let buf = UnsafeMutableBufferPointer<CInterop.PlatformChar>.allocate(capacity: length + 1)
+            let buf = UnsafeMutableBufferPointer<Char>.allocate(capacity: length + 1)
             path.withPlatformString { p in
                 for i in 0...length {
                     buf[i] = p[i]
@@ -114,7 +124,7 @@ extension Kernel.Path {
         }
 
         @inlinable
-        var pointer: UnsafePointer<CInterop.PlatformChar> {
+        var pointer: UnsafePointer<Char> {
             UnsafePointer(buffer.baseAddress!)
         }
     }
@@ -136,7 +146,7 @@ extension Kernel {
     @inlinable
     public static func withPlatformString<R, E: Swift.Error>(
         _ path: FilePath,
-        _ body: (UnsafePointer<CInterop.PlatformChar>) throws(E) -> R
+        _ body: (UnsafePointer<Path.Char>) throws(E) -> R
     ) throws(E) -> R {
         let ps = Kernel.Path.String(copying: path)
         return try body(ps.pointer)
@@ -158,7 +168,7 @@ extension Kernel {
         _ path: FilePath,
         _ body: (borrowing Path) throws(Kernel.Error) -> R
     ) throws(Kernel.Error) -> R {
-        try Kernel.withPlatformString(path) { (cString: UnsafePointer<CInterop.PlatformChar>) throws(Kernel.Error) -> R in
+        try Kernel.withPlatformString(path) { (cString: UnsafePointer<Path.Char>) throws(Kernel.Error) -> R in
             try body(Path(unsafeCString: cString))
         }
     }

@@ -20,7 +20,8 @@ public import Kernel_Primitives
         /// Used with `GetQueuedCompletionStatusEx` for batched completion retrieval.
         public struct Entry: @unchecked Sendable {
             /// The underlying Windows OVERLAPPED_ENTRY structure.
-            public var raw: OVERLAPPED_ENTRY
+            @usableFromInline
+            internal var raw: OVERLAPPED_ENTRY
 
             /// Creates a zero-initialized entry.
             @inlinable
@@ -35,7 +36,7 @@ public import Kernel_Primitives
     extension Kernel.IOCP.Entry {
         /// Pointer to the OVERLAPPED structure for this completion.
         @inlinable
-        public var overlapped: UnsafeMutablePointer<OVERLAPPED>? {
+        internal var overlapped: UnsafeMutablePointer<OVERLAPPED>? {
             raw.lpOverlapped
         }
 

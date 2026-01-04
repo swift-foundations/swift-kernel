@@ -77,7 +77,7 @@ extension Kernel.File.Direct {
 #endif
 
 #if os(Linux)
-    import Glibc
+    public import Glibc
 
     extension Kernel.File.Direct.Requirements {
         /// Creates requirements for a path.
@@ -95,7 +95,7 @@ extension Kernel.File.Direct {
 #endif
 
 #if os(Windows)
-    import WinSDK
+    public import WinSDK
 
     extension Kernel.File.Direct.Requirements {
         /// Creates requirements for a path.

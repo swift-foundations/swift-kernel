@@ -13,10 +13,10 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     #if canImport(Glibc)
-        import Glibc
+        public import Glibc
         public import CLinuxShim
     #elseif canImport(Musl)
-        import Musl
+        public import Musl
     #endif
 
     extension Kernel.IOUring.Submission.Queue.Entry {

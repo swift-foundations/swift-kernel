@@ -19,12 +19,12 @@ extension Kernel.Memory.Map {
 #if !os(Windows)
 
     #if canImport(Darwin)
-        import Darwin
+        public import Darwin
     #elseif canImport(Glibc)
-        import Glibc
-        import CLinuxShim
+        public import Glibc
+        public import CLinuxShim
     #elseif canImport(Musl)
-        import Musl
+        public import Musl
     #endif
 
     extension Kernel.Memory.Map.Anonymous {
@@ -58,7 +58,7 @@ extension Kernel.Memory.Map {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    import WinSDK
+    public import WinSDK
 
     extension Kernel.Memory.Map.Anonymous {
         /// Maps anonymous memory (pagefile-backed) on Windows.

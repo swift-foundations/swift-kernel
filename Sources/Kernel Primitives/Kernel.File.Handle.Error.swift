@@ -84,13 +84,13 @@ extension Kernel.File.Handle {
 #endif
 
 #if canImport(Darwin)
-    import Darwin
+    public import Darwin
 #elseif canImport(Glibc)
-    import Glibc
+    public import Glibc
 #endif
 
 #if os(Windows)
-    import WinSDK
+    public import WinSDK
 
     extension Kernel.File.Handle.Error {
         /// Creates an error from a Windows error code.

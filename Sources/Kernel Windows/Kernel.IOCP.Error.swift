@@ -75,7 +75,7 @@ public import Kernel_Primitives
         ///
         /// Exposed so swift-io doesn't need to import WinSDK.
         @inlinable
-        public static func last() -> DWORD {
+        public static func last() -> UInt32 {
             GetLastError()
         }
     }

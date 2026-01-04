@@ -87,8 +87,8 @@ extension Kernel.File.Open.Options {
     #if canImport(Darwin)
         internal import Darwin
     #elseif canImport(Glibc)
-        import Glibc
-        import CLinuxShim
+        public import Glibc
+        public import CLinuxShim
     #elseif canImport(Musl)
         internal import Musl
     #endif

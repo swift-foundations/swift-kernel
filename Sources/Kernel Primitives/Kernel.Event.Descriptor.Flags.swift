@@ -12,10 +12,10 @@
 #if canImport(Glibc) || canImport(Musl)
 
     #if canImport(Glibc)
-        import Glibc
-        import CLinuxShim
+        public import Glibc
+        public import CLinuxShim
     #elseif canImport(Musl)
-        import Musl
+        public import Musl
     #endif
 
     extension Kernel.Event.Descriptor {

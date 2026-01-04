@@ -14,10 +14,10 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     #if canImport(Glibc)
-        import Glibc
+        public import Glibc
         public import CLinuxShim
     #elseif canImport(Musl)
-        import Musl
+        public import Musl
     #endif
 
     extension Kernel.IOUring.Completion.Queue {
@@ -43,11 +43,12 @@ public import Kernel_Primitives
         /// on the poll thread from the shared ring buffer.
         public struct Entry: Sendable {
             /// The underlying C struct.
-            public let cValue: io_uring_cqe
+            @usableFromInline
+            internal let cValue: io_uring_cqe
 
             /// Creates an Entry from a C struct.
             @inlinable
-            public init(_ cValue: io_uring_cqe) {
+            internal init(_ cValue: io_uring_cqe) {
                 self.cValue = cValue
             }
         }

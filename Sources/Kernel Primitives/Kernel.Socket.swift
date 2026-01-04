@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import SystemPackage
+public import SystemPackage
 
 // MARK: - Socket Types
 

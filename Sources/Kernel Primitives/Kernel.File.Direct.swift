@@ -177,12 +177,12 @@ extension Kernel.File.Direct.Requirements {
 }
 
 #if canImport(Darwin)
-    import Darwin
+    public import Darwin
 #elseif canImport(Glibc)
-    import Glibc
-    import CLinuxShim
+    public import Glibc
+    public import CLinuxShim
 #elseif os(Windows)
-    import WinSDK
+    public import WinSDK
 #endif
 
 // MARK: - macOS Implementation
