@@ -361,7 +361,7 @@ func printUsage() {
                     return 2
                 }
             default:
-                writeStderr("Failed to acquire lock: \(lockError)\n")
+                writeStderr("Failed to acquire lock: \(error)\n")
                 return 3
             }
         }
