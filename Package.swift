@@ -62,14 +62,53 @@ let package = Package(
                 .target(name: "Kernel Windows", condition: .when(platforms: [.windows]))
             ]
         ),
+        // Cross-platform primitives tests
+        .testTarget(
+            name: "Kernel Primitives Tests",
+            dependencies: [
+                "Kernel Primitives",
+                .product(name: "StandardsTestSupport", package: "swift-standards")
+            ],
+            path: "Tests/Kernel Primitives Tests"
+        ),
+        // Darwin-specific tests (macOS, iOS, tvOS, watchOS)
+        .testTarget(
+            name: "Kernel Darwin Tests",
+            dependencies: [
+                .target(name: "Kernel Darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
+                "Kernel Primitives",
+                .product(name: "StandardsTestSupport", package: "swift-standards")
+            ],
+            path: "Tests/Kernel Darwin Tests"
+        ),
+        // Linux-specific tests
+        .testTarget(
+            name: "Kernel Linux Tests",
+            dependencies: [
+                .target(name: "Kernel Linux", condition: .when(platforms: [.linux])),
+                "Kernel Primitives",
+                .product(name: "StandardsTestSupport", package: "swift-standards")
+            ],
+            path: "Tests/Kernel Linux Tests"
+        ),
+        // Windows-specific tests
+        .testTarget(
+            name: "Kernel Windows Tests",
+            dependencies: [
+                .target(name: "Kernel Windows", condition: .when(platforms: [.windows])),
+                "Kernel Primitives",
+                .product(name: "StandardsTestSupport", package: "swift-standards")
+            ],
+            path: "Tests/Kernel Windows Tests"
+        ),
+        // Integration tests (uses full Kernel module)
         .testTarget(
             name: "Kernel Tests",
             dependencies: [
                 "Kernel",
                 .product(name: "StandardsTestSupport", package: "swift-standards")
             ],
-            path: "Tests",
-            sources: ["Kernel Tests", "Support"]
+            path: "Tests/Kernel Tests"
         ),
         .executableTarget(
             name: "_Lock Test Process",

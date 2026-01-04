@@ -19,16 +19,6 @@ extension Kernel {
     #TestSuites
 }
 
-// MARK: - Unit Tests
-
-extension Kernel.Test.Unit {
-    @Test("Kernel namespace exists")
-    func namespaceExists() {
-        // Kernel is an enum namespace, verify it compiles
-        _ = Kernel.self
-    }
-}
-
 #if canImport(Darwin)
     import Darwin
 #elseif canImport(Glibc)
@@ -40,9 +30,15 @@ extension Kernel.Test.Unit {
     import WinSDK
 #endif
 
-// MARK: - Open/Close Unit Tests
+// MARK: - Integration Tests (require full Kernel module for file I/O)
 
 extension Kernel.Test.Unit {
+    @Test("Kernel namespace exists")
+    func namespaceExists() {
+        // Kernel is an enum namespace, verify it compiles
+        _ = Kernel.self
+    }
+
     @Test("open and close file")
     func openAndClose() throws {
         let path = Kernel.Temporary.filePath(prefix: "kernel-test")
@@ -81,11 +77,7 @@ extension Kernel.Test.Unit {
             )
         }
     }
-}
 
-// MARK: - Read/Write Unit Tests
-
-extension Kernel.Test.Unit {
     @Test("write and read data")
     func writeAndRead() throws {
         let path = Kernel.Temporary.filePath(prefix: "kernel-test-rw")
@@ -147,7 +139,7 @@ extension Kernel.Test.Unit {
     }
 }
 
-// MARK: - Edge Cases
+// MARK: - Edge Cases (Integration)
 
 extension Kernel.Test.EdgeCase {
     @Test("close invalid descriptor throws")
