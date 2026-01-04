@@ -30,48 +30,12 @@ extension Kernel.User {
     ///     // File is owned by root
     /// }
     /// ```
-    public struct ID: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
-        public let rawValue: UInt32
-
-        /// Creates a user ID from a raw value.
-        @inlinable
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
-        }
-
-        /// Creates a user ID from a UInt32 value.
-        @inlinable
-        public init(_ value: UInt32) {
-            self.rawValue = value
-        }
-
-        // MARK: - Common Values
-
-        /// The root user (uid 0).
-        public static let root = ID(0)
-
-        // MARK: - Comparable
-
-        @inlinable
-        public static func < (lhs: Self, rhs: Self) -> Bool {
-            lhs.rawValue < rhs.rawValue
-        }
-    }
+    public typealias ID = Tagged<Kernel.User, UInt32>
 }
 
-// MARK: - User.ID + ExpressibleByIntegerLiteral
+// MARK: - User.ID Constants
 
-extension Kernel.User.ID: ExpressibleByIntegerLiteral {
-    @inlinable
-    public init(integerLiteral value: UInt32) {
-        self.rawValue = value
-    }
-}
-
-// MARK: - User.ID + CustomStringConvertible
-
-extension Kernel.User.ID: CustomStringConvertible {
-    public var description: String {
-        "\(rawValue)"
-    }
+extension Tagged where Tag == Kernel.User, RawValue == UInt32 {
+    /// The root user (uid 0).
+    public static var root: Self { Self(0) }
 }

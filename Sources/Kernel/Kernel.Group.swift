@@ -30,48 +30,12 @@ extension Kernel.Group {
     ///     // File is owned by root group
     /// }
     /// ```
-    public struct ID: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
-        public let rawValue: UInt32
-
-        /// Creates a group ID from a raw value.
-        @inlinable
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
-        }
-
-        /// Creates a group ID from a UInt32 value.
-        @inlinable
-        public init(_ value: UInt32) {
-            self.rawValue = value
-        }
-
-        // MARK: - Common Values
-
-        /// The root group (gid 0).
-        public static let root = ID(0)
-
-        // MARK: - Comparable
-
-        @inlinable
-        public static func < (lhs: Self, rhs: Self) -> Bool {
-            lhs.rawValue < rhs.rawValue
-        }
-    }
+    public typealias ID = Tagged<Kernel.Group, UInt32>
 }
 
-// MARK: - Group.ID + ExpressibleByIntegerLiteral
+// MARK: - Group.ID Constants
 
-extension Kernel.Group.ID: ExpressibleByIntegerLiteral {
-    @inlinable
-    public init(integerLiteral value: UInt32) {
-        self.rawValue = value
-    }
-}
-
-// MARK: - Group.ID + CustomStringConvertible
-
-extension Kernel.Group.ID: CustomStringConvertible {
-    public var description: String {
-        "\(rawValue)"
-    }
+extension Tagged where Tag == Kernel.Group, RawValue == UInt32 {
+    /// The root group (gid 0).
+    public static var root: Self { Self(0) }
 }

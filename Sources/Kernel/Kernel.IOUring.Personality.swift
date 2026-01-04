@@ -34,46 +34,14 @@ extension Kernel.IOUring.Personality {
     /// // Use in SQE to run with those credentials
     /// sqe.personality = personality
     /// ```
-    public struct ID: RawRepresentable, Sendable, Equatable, Hashable {
-        public let rawValue: UInt16
-
-        /// Creates a personality ID from a raw value.
-        @inlinable
-        public init(rawValue: UInt16) {
-            self.rawValue = rawValue
-        }
-
-        /// Creates a personality ID from a UInt16 value.
-        @inlinable
-        public init(_ value: UInt16) {
-            self.rawValue = value
-        }
-
-        // MARK: - Common Values
-
-        /// No personality (use process credentials).
-        public static let none = ID(0)
-    }
+    public typealias ID = Tagged<Kernel.IOUring.Personality, UInt16>
 }
 
-// MARK: - Personality.ID + ExpressibleByIntegerLiteral
+// MARK: - Personality.ID Constants
 
-extension Kernel.IOUring.Personality.ID: ExpressibleByIntegerLiteral {
-    @inlinable
-    public init(integerLiteral value: UInt16) {
-        self.rawValue = value
-    }
-}
-
-// MARK: - Personality.ID + CustomStringConvertible
-
-extension Kernel.IOUring.Personality.ID: CustomStringConvertible {
-    public var description: String {
-        if self == .none {
-            return "none"
-        }
-        return "\(rawValue)"
-    }
+extension Tagged where Tag == Kernel.IOUring.Personality, RawValue == UInt16 {
+    /// No personality (use process credentials).
+    public static var none: Self { Self(0) }
 }
 
 #endif
