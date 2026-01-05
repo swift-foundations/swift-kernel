@@ -15,13 +15,7 @@ import Testing
 
 @testable import Kernel_Primitives
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#endif
+import SystemPackage
 
 extension Kernel.Close {
     #TestSuites
@@ -35,7 +29,7 @@ extension Kernel.Close {
         @Test("close succeeds on valid descriptor")
         func closeSucceedsOnValidDescriptor() throws {
             let (path, fd) = try KernelIOTest.createTempFile(prefix: "close-test")
-            defer { unlink(path) }
+            defer { try? Kernel.Unlink.unlink(path) }
 
             // Close should succeed
             try Kernel.Close.close(fd)
