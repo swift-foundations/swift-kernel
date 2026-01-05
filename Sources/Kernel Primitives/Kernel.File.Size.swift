@@ -111,6 +111,37 @@ extension Kernel.File.Size {
     }
 }
 
+// MARK: - Alignment
+
+extension Kernel.File.Size {
+    /// Whether this size is aligned to the given alignment.
+    ///
+    /// - Parameter alignment: The alignment boundary (power of 2).
+    /// - Returns: `true` if this size is a multiple of the alignment.
+    public func isAligned(to alignment: Binary.Alignment) -> Bool {
+        let mask: Int64 = alignment.mask()
+        return _rawValue & mask == 0
+    }
+
+    /// Rounds this size down to the nearest alignment boundary.
+    ///
+    /// - Parameter alignment: The alignment boundary (power of 2).
+    /// - Returns: The largest aligned size ≤ `self`.
+    public func alignedDown(to alignment: Binary.Alignment) -> Self {
+        let mask: Int64 = alignment.mask()
+        return Self(_rawValue & ~mask)
+    }
+
+    /// Rounds this size up to the nearest alignment boundary.
+    ///
+    /// - Parameter alignment: The alignment boundary (power of 2).
+    /// - Returns: The smallest aligned size ≥ `self`.
+    public func alignedUp(to alignment: Binary.Alignment) -> Self {
+        let mask: Int64 = alignment.mask()
+        return Self((_rawValue &+ mask) & ~mask)
+    }
+}
+
 // MARK: - Int from File.Size
 
 extension Int {
@@ -122,6 +153,7 @@ extension Int {
         self = Int(size._rawValue)
     }
 }
+
 
 // MARK: - Offset + Size Arithmetic
 

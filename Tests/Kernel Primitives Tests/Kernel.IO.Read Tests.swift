@@ -15,14 +15,6 @@ import Testing
 
 @testable import Kernel_Primitives
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#endif
-
 extension Kernel.IO.Read {
     #TestSuites
 }
@@ -38,7 +30,7 @@ extension Kernel.IO.Read {
             defer { KernelIOTest.cleanupTempFile(path: path, fd: fd) }
 
             // Seek to start
-            lseek(fd.rawValue, 0, SEEK_SET)
+            _ = try Kernel.Seek.toStart(fd)
 
             var buffer = [UInt8](repeating: 0, count: 13)
             let bytesRead = try buffer.withUnsafeMutableBytes { ptr in
@@ -55,7 +47,7 @@ extension Kernel.IO.Read {
             defer { KernelIOTest.cleanupTempFile(path: path, fd: fd) }
 
             // Seek to start and read all content
-            lseek(fd.rawValue, 0, SEEK_SET)
+            _ = try Kernel.Seek.toStart(fd)
             var buffer = [UInt8](repeating: 0, count: 10)
             _ = try buffer.withUnsafeMutableBytes { ptr in
                 try Kernel.IO.Read.read(fd, into: ptr)
@@ -85,7 +77,7 @@ extension Kernel.IO.Read {
             let (path, fd) = try KernelIOTest.createTempFileWithContent("Short", prefix: "read-test")
             defer { KernelIOTest.cleanupTempFile(path: path, fd: fd) }
 
-            lseek(fd.rawValue, 0, SEEK_SET)
+            _ = try Kernel.Seek.toStart(fd)
 
             // Request more bytes than available
             var buffer = [UInt8](repeating: 0, count: 100)
@@ -103,7 +95,7 @@ extension Kernel.IO.Read {
             defer { KernelIOTest.cleanupTempFile(path: path, fd: fd) }
 
             // Record initial position
-            let initialPos = lseek(fd.rawValue, 0, SEEK_CUR)
+            let initialPos = try Kernel.Seek.toCurrent(fd)
 
             // Read 3 bytes starting at offset 5
             var buffer = [UInt8](repeating: 0, count: 3)
@@ -115,7 +107,7 @@ extension Kernel.IO.Read {
             #expect(String(decoding: buffer, as: UTF8.self) == "567")
 
             // Position should be unchanged
-            let finalPos = lseek(fd.rawValue, 0, SEEK_CUR)
+            let finalPos = try Kernel.Seek.toCurrent(fd)
             #expect(finalPos == initialPos)
         }
 

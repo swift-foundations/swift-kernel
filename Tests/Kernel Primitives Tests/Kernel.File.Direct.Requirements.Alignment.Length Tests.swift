@@ -32,27 +32,27 @@ extension Kernel.File.Direct.Requirements.Alignment.Length.Test.Unit {
     func isValidMethodExists() {
         let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: .`4096`)
         let length = alignment.length
-        _ = length.isValid(0)
+        _ = length.isValid(Kernel.File.Size(0))
     }
 
     @Test("isValid returns true for valid lengths")
     func isValidTrue() {
         let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: .`4096`)
         let length = alignment.length
-        #expect(length.isValid(0) == true)
-        #expect(length.isValid(4096) == true)
-        #expect(length.isValid(8192) == true)
-        #expect(length.isValid(16384) == true)
+        #expect(length.isValid(Kernel.File.Size(0)) == true)
+        #expect(length.isValid(Kernel.File.Size(4096)) == true)
+        #expect(length.isValid(Kernel.File.Size(8192)) == true)
+        #expect(length.isValid(Kernel.File.Size(16384)) == true)
     }
 
     @Test("isValid returns false for invalid lengths")
     func isValidFalse() {
         let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: .`4096`)
         let length = alignment.length
-        #expect(length.isValid(1) == false)
-        #expect(length.isValid(100) == false)
-        #expect(length.isValid(4097) == false)
-        #expect(length.isValid(5000) == false)
+        #expect(length.isValid(Kernel.File.Size(1)) == false)
+        #expect(length.isValid(Kernel.File.Size(100)) == false)
+        #expect(length.isValid(Kernel.File.Size(4097)) == false)
+        #expect(length.isValid(Kernel.File.Size(5000)) == false)
     }
 }
 
@@ -75,7 +75,7 @@ extension Kernel.File.Direct.Requirements.Alignment.Length.Test.EdgeCase {
         let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: .`4096`)
         let length1 = alignment.length
         let length2 = alignment.length
-        #expect(length1.isValid(4096) == length2.isValid(4096))
+        #expect(length1.isValid(Kernel.File.Size(4096)) == length2.isValid(Kernel.File.Size(4096)))
     }
 
     @Test("zero length is always valid")
@@ -83,13 +83,18 @@ extension Kernel.File.Direct.Requirements.Alignment.Length.Test.EdgeCase {
         let alignments: [Binary.Alignment] = [.`512`, .`1024`, .`4096`, .`8192`]
         for value in alignments {
             let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: value)
-            #expect(alignment.length.isValid(0) == true)
+            #expect(alignment.length.isValid(Kernel.File.Size(0)) == true)
         }
     }
 
     @Test("alignment value is always valid length")
     func alignmentValueValid() {
-        let alignments: [(Binary.Alignment, Int)] = [(.`512`, 512), (.`1024`, 1024), (.`4096`, 4096), (.`8192`, 8192)]
+        let alignments: [(Binary.Alignment, Kernel.File.Size)] = [
+            (.`512`, Kernel.File.Size(512)),
+            (.`1024`, Kernel.File.Size(1024)),
+            (.`4096`, Kernel.File.Size(4096)),
+            (.`8192`, Kernel.File.Size(8192))
+        ]
         for (align, value) in alignments {
             let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: align)
             #expect(alignment.length.isValid(value) == true)

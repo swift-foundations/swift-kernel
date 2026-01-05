@@ -54,3 +54,33 @@ extension Kernel.Memory.Map {
         #endif
     }
 }
+
+// MARK: - Buffer Access
+
+extension Kernel.Memory.Map.Region {
+    /// The byte count of this region.
+    @inlinable
+    public var count: Int { Int(length) }
+
+    /// Calls the given closure with a pointer to the region's bytes.
+    ///
+    /// - Parameter body: A closure that receives the buffer pointer.
+    /// - Returns: The value returned by the closure.
+    @inlinable
+    public func withUnsafeBytes<R>(
+        _ body: (UnsafeRawBufferPointer) throws -> R
+    ) rethrows -> R {
+        try body(UnsafeRawBufferPointer(start: base.pointer, count: count))
+    }
+
+    /// Calls the given closure with a mutable pointer to the region's bytes.
+    ///
+    /// - Parameter body: A closure that receives the mutable buffer pointer.
+    /// - Returns: The value returned by the closure.
+    @inlinable
+    public func withUnsafeMutableBytes<R>(
+        _ body: (UnsafeMutableRawBufferPointer) throws -> R
+    ) rethrows -> R {
+        try body(UnsafeMutableRawBufferPointer(start: base.mutablePointer, count: count))
+    }
+}

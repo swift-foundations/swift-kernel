@@ -29,7 +29,7 @@ extension Kernel.Memory.Map {
             let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
             defer { try? Kernel.Memory.Map.unmap(region) }
 
-            #expect(Int(bitPattern: region.base) != 0)
+            #expect(region.base != .null)
             #expect(region.length == pageSize)
         }
 
@@ -55,13 +55,16 @@ extension Kernel.Memory.Map {
             defer { try? Kernel.Memory.Map.unmap(region) }
 
             // Write to the mapped memory
-            let ptr = region.base.assumingMemoryBound(to: UInt8.self)
-            ptr[0] = 42
-            ptr[1] = 123
+            region.withUnsafeMutableBytes { buffer in
+                buffer[0] = 42
+                buffer[1] = 123
+            }
 
             // Read back
-            #expect(ptr[0] == 42)
-            #expect(ptr[1] == 123)
+            region.withUnsafeBytes { buffer in
+                #expect(buffer[0] == 42)
+                #expect(buffer[1] == 123)
+            }
         }
 
         @Test("sync succeeds on mapped region")
@@ -84,8 +87,9 @@ extension Kernel.Memory.Map {
             defer { try? Kernel.Memory.Map.unmap(region) }
 
             // Write some data first
-            let ptr = region.base.assumingMemoryBound(to: UInt8.self)
-            ptr[0] = 99
+            region.withUnsafeMutableBytes { buffer in
+                buffer[0] = 99
+            }
 
             // Change to read-only (should succeed)
             try Kernel.Memory.Map.protect(
@@ -95,7 +99,9 @@ extension Kernel.Memory.Map {
             )
 
             // Reading should still work
-            #expect(ptr[0] == 99)
+            region.withUnsafeBytes { buffer in
+                #expect(buffer[0] == 99)
+            }
 
             // Note: Writing would now cause SIGBUS/SIGSEGV, which we can't test safely
         }
@@ -123,12 +129,15 @@ extension Kernel.Memory.Map {
             #expect(region.length == multiPageSize)
 
             // Write to first and last page
-            let ptr = region.base.assumingMemoryBound(to: UInt8.self)
-            ptr[0] = 1
-            ptr[Int(multiPageSize) - 1] = 255
+            region.withUnsafeMutableBytes { buffer in
+                buffer[0] = 1
+                buffer[buffer.count - 1] = 255
+            }
 
-            #expect(ptr[0] == 1)
-            #expect(ptr[Int(multiPageSize) - 1] == 255)
+            region.withUnsafeBytes { buffer in
+                #expect(buffer[0] == 1)
+                #expect(buffer[buffer.count - 1] == 255)
+            }
         }
 
         @Test("Region struct stores base and length")
@@ -138,7 +147,7 @@ extension Kernel.Memory.Map {
             defer { try? Kernel.Memory.Map.unmap(region) }
 
             // Verify region fields
-            #expect(Int(bitPattern: region.base) != 0)
+            #expect(region.base != .null)
             #expect(region.length == pageSize)
         }
     }

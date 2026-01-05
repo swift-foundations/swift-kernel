@@ -148,8 +148,8 @@ extension Kernel.File.Handle {
     /// - Throws: `Kernel.File.Handle.Error` on alignment violation.
     private func validateAlignment(
         buffer: Kernel.Memory.Address,
-        offset: Int64,
-        length: Int
+        offset: Kernel.File.Offset,
+        length: Kernel.File.Size
     ) throws(Error) {
         guard case .known(let alignment) = requirements else {
             throw .requirementsUnknown

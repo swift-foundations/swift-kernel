@@ -42,7 +42,7 @@ extension Kernel.Memory.Map.Anonymous.Test.Unit {
             let region = try Kernel.Memory.Map.Anonymous.map(length: pageSize)
             defer { try? Kernel.Memory.Map.unmap(region) }
 
-            #expect(Int(bitPattern: region.base) != 0)
+            #expect(region.base != .null)
             #expect(region.length == pageSize)
         }
 
@@ -55,7 +55,7 @@ extension Kernel.Memory.Map.Anonymous.Test.Unit {
             )
             defer { try? Kernel.Memory.Map.unmap(region) }
 
-            #expect(Int(bitPattern: region.base) != 0)
+            #expect(region.base != .null)
         }
 
         @Test("map private by default")
@@ -65,7 +65,7 @@ extension Kernel.Memory.Map.Anonymous.Test.Unit {
             defer { try? Kernel.Memory.Map.unmap(region) }
 
             // Should succeed (private is default)
-            #expect(Int(bitPattern: region.base) != 0)
+            #expect(region.base != .null)
         }
 
         @Test("map shared when specified")
@@ -77,7 +77,7 @@ extension Kernel.Memory.Map.Anonymous.Test.Unit {
             )
             defer { try? Kernel.Memory.Map.unmap(region) }
 
-            #expect(Int(bitPattern: region.base) != 0)
+            #expect(region.base != .null)
         }
     }
 #endif

@@ -49,8 +49,7 @@ extension Kernel.System {
     /// - Returns: The largest aligned size ≤ `size`.
     @inlinable
     public static func alignDown(_ size: Kernel.File.Size, to alignment: Binary.Alignment) -> Kernel.File.Size {
-        let mask: Int64 = alignment.mask()
-        return Kernel.File.Size(size._rawValue & ~mask)
+        size.alignedDown(to: alignment)
     }
 
     /// Rounds a file size up to the nearest alignment boundary.
@@ -61,8 +60,7 @@ extension Kernel.System {
     /// - Returns: The smallest aligned size ≥ `size`.
     @inlinable
     public static func alignUp(_ size: Kernel.File.Size, to alignment: Binary.Alignment) -> Kernel.File.Size {
-        let mask: Int64 = alignment.mask()
-        return Kernel.File.Size((size._rawValue &+ mask) & ~mask)
+        size.alignedUp(to: alignment)
     }
 }
 

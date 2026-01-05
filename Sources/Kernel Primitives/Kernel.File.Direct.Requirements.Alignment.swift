@@ -71,8 +71,8 @@ extension Kernel.File.Direct.Requirements.Alignment {
     /// - Returns: The first validation failure, or `nil` if all pass.
     public func validate(
         buffer bufferAddress: Kernel.Memory.Address,
-        offset fileOffset: Int64,
-        length transferLength: Int
+        offset fileOffset: Kernel.File.Offset,
+        length transferLength: Kernel.File.Size
     ) -> Kernel.File.Direct.Error? {
         if !buffer.isAligned(bufferAddress) {
             return .misalignedBuffer(
@@ -82,13 +82,13 @@ extension Kernel.File.Direct.Requirements.Alignment {
         }
         if !offset.isAligned(fileOffset) {
             return .misalignedOffset(
-                offset: fileOffset,
+                offset: fileOffset._rawValue,
                 required: offsetAlignment
             )
         }
         if !length.isValid(transferLength) {
             return .invalidLength(
-                length: transferLength,
+                length: Int(transferLength),
                 requiredMultiple: lengthMultiple
             )
         }
