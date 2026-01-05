@@ -76,46 +76,46 @@ extension Kernel {
 // MARK: - Typed Major/Minor (POSIX)
 
 #if !os(Windows)
-extension Kernel.Device {
-    /// Type-safe wrapper for a major device number.
-    ///
-    /// This is a semantic wrapper only, not a validated range.
-    /// Construction does not enforce kernel limits.
-    public struct Major: RawRepresentable, Sendable, Equatable, Hashable {
-        public let rawValue: UInt32
+    extension Kernel.Device {
+        /// Type-safe wrapper for a major device number.
+        ///
+        /// This is a semantic wrapper only, not a validated range.
+        /// Construction does not enforce kernel limits.
+        public struct Major: RawRepresentable, Sendable, Equatable, Hashable {
+            public let rawValue: UInt32
 
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
+            public init(rawValue: UInt32) {
+                self.rawValue = rawValue
+            }
+        }
+
+        /// Type-safe wrapper for a minor device number.
+        ///
+        /// This is a semantic wrapper only, not a validated range.
+        /// Construction does not enforce kernel limits.
+        public struct Minor: RawRepresentable, Sendable, Equatable, Hashable {
+            public let rawValue: UInt32
+
+            public init(rawValue: UInt32) {
+                self.rawValue = rawValue
+            }
+        }
+
+        /// Typed major device number.
+        public var typedMajor: Major {
+            Major(rawValue: major)
+        }
+
+        /// Typed minor device number.
+        public var typedMinor: Minor {
+            Minor(rawValue: minor)
+        }
+
+        /// Creates a device ID from typed major and minor numbers.
+        public init(major: Major, minor: Minor) {
+            self.init(major: major.rawValue, minor: minor.rawValue)
         }
     }
-
-    /// Type-safe wrapper for a minor device number.
-    ///
-    /// This is a semantic wrapper only, not a validated range.
-    /// Construction does not enforce kernel limits.
-    public struct Minor: RawRepresentable, Sendable, Equatable, Hashable {
-        public let rawValue: UInt32
-
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
-        }
-    }
-
-    /// Typed major device number.
-    public var typedMajor: Major {
-        Major(rawValue: major)
-    }
-
-    /// Typed minor device number.
-    public var typedMinor: Minor {
-        Minor(rawValue: minor)
-    }
-
-    /// Creates a device ID from typed major and minor numbers.
-    public init(major: Major, minor: Minor) {
-        self.init(major: major.rawValue, minor: minor.rawValue)
-    }
-}
 #endif
 
 // MARK: - ExpressibleByIntegerLiteral

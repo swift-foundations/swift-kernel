@@ -154,7 +154,6 @@ extension Int {
     }
 }
 
-
 // MARK: - Offset + Size Arithmetic
 
 /// Adds a file size to an offset.

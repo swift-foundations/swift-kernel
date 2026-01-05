@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
 public import Binary
+public import Kernel_Primitives
 
 #if canImport(Glibc) || canImport(Musl)
 

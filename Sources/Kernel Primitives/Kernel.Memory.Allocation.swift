@@ -63,6 +63,7 @@ extension Binary.Alignment {
     @inlinable
     public init(_ granularity: Kernel.Memory.Allocation.Granularity) {
         // Allocation granularities from the kernel are always powers of 2
+        // swiftlint:disable:next force_try
         self = try! Binary.Alignment(granularity._rawValue)
     }
 }

@@ -20,7 +20,6 @@ extension Kernel {
     #TestSuites
 }
 
-
 // MARK: - Integration Tests (require full Kernel module for file I/O)
 
 extension Kernel.Test.Unit {

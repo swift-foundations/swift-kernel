@@ -12,11 +12,10 @@
 import Binary
 import Kernel_Test_Support
 import StandardsTestSupport
+import SystemPackage
 import Testing
 
 @testable import Kernel_Primitives
-
-import SystemPackage
 
 extension Kernel.File.Handle {
     #TestSuites

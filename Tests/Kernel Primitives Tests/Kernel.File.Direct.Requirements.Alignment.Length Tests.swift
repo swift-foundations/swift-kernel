@@ -93,7 +93,7 @@ extension Kernel.File.Direct.Requirements.Alignment.Length.Test.EdgeCase {
             (.`512`, Kernel.File.Size(512)),
             (.`1024`, Kernel.File.Size(1024)),
             (.`4096`, Kernel.File.Size(4096)),
-            (.`8192`, Kernel.File.Size(8192))
+            (.`8192`, Kernel.File.Size(8192)),
         ]
         for (align, value) in alignments {
             let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: align)
