@@ -69,7 +69,8 @@ let package = Package(
                 "Kernel Primitives",
                 .target(name: "Kernel Darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
                 .target(name: "Kernel Linux", condition: .when(platforms: [.linux])),
-                .target(name: "Kernel Windows", condition: .when(platforms: [.windows]))
+                .target(name: "Kernel Windows", condition: .when(platforms: [.windows])),
+                .product(name: "Dimension", package: "swift-standards"),
             ]
         ),
         // Test support utilities (harnesses, helpers)
