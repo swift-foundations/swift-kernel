@@ -15,17 +15,6 @@ import Testing
 
 @testable import Kernel
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#elseif os(Windows)
-    import ucrt
-    import WinSDK
-#endif
-
 #if canImport(Foundation)
     import Foundation
 #endif
@@ -58,15 +47,7 @@ private func createTempFile(prefix: String) throws -> (path: FilePath, fd: Kerne
 /// Cleans up a temporary file.
 private func cleanupTempFile(path: FilePath, fd: Kernel.Descriptor) {
     try? Kernel.Close.close(fd)
-    #if os(Windows)
-        try? path.withPlatformString { wPath in
-            _ = DeleteFileW(wPath)
-        }
-    #else
-        path.withPlatformString { cPath in
-            _ = unlink(cPath)
-        }
-    #endif
+    try? Kernel.Unlink.unlink(path)
 }
 
 // MARK: - Token Integration Tests
@@ -116,15 +97,22 @@ extension KernelLockIntegration {
 
 #if canImport(Foundation) && !os(Windows)
 
-    /// POSIX-only helper that returns String path for use with Foundation.Process
-    private func createTempFileForProcess(prefix: String) -> (path: String, fd: Int32) {
-        let path = Kernel.Temporary.filePath(prefix: prefix).string
-        let fd = open(path, O_CREAT | O_RDWR, 0o644)
-        // Write some data so the file isn't empty
-        _ = "x".withCString { ptr in
-            write(fd, ptr, 1024)
+    /// POSIX-only helper that creates a temp file for cross-process lock testing.
+    /// Returns path (as String for Foundation.Process) and typed descriptor.
+    private func createTempFileForProcess(prefix: String) throws -> (path: String, fd: Kernel.Descriptor) {
+        let filePath = Kernel.Temporary.filePath(prefix: prefix)
+        let fd = try Kernel.File.Open.open(
+            path: filePath,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: 0o644
+        )
+        // Write some data so the file isn't empty (needed for byte-range locking)
+        let data = [UInt8](repeating: 0x78, count: 1024)
+        _ = try? data.withUnsafeBytes { buffer in
+            try Kernel.IO.Write.write(fd, from: buffer)
         }
-        return (path, fd)
+        return (filePath.string, fd)
     }
 
     extension KernelLockIntegration {
@@ -154,17 +142,17 @@ extension KernelLockIntegration {
 
         @Test("Exclusive lock blocks try-exclusive from another process")
         func exclusiveBlocksTryExclusive() throws {
-            let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
+            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
             defer {
-                close(fd)
-                unlink(path)
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(FilePath(path))
             }
 
-            #expect(fd >= 0, "Failed to create test file")
+            #expect(fd.isValid, "Failed to create test file")
 
             // Acquire exclusive lock in this process
             var token = try Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(rawValue: fd),
+                descriptor: fd,
                 range: .file,
                 kind: .exclusive,
                 acquire: .wait
@@ -192,17 +180,17 @@ extension KernelLockIntegration {
 
         @Test("Exclusive lock blocks try-shared from another process")
         func exclusiveBlocksTryShared() throws {
-            let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
+            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
             defer {
-                close(fd)
-                unlink(path)
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(FilePath(path))
             }
 
-            #expect(fd >= 0, "Failed to create test file")
+            #expect(fd.isValid, "Failed to create test file")
 
             // Acquire exclusive lock in this process
             var token = try Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(rawValue: fd),
+                descriptor: fd,
                 range: .file,
                 kind: .exclusive,
                 acquire: .wait
@@ -230,17 +218,17 @@ extension KernelLockIntegration {
 
         @Test("Shared lock allows try-shared from another process")
         func sharedAllowsTryShared() throws {
-            let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
+            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
             defer {
-                close(fd)
-                unlink(path)
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(FilePath(path))
             }
 
-            #expect(fd >= 0, "Failed to create test file")
+            #expect(fd.isValid, "Failed to create test file")
 
             // Acquire shared lock in this process
             var token = try Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(rawValue: fd),
+                descriptor: fd,
                 range: .file,
                 kind: .shared,
                 acquire: .wait
@@ -269,17 +257,17 @@ extension KernelLockIntegration {
 
         @Test("Shared lock blocks try-exclusive from another process")
         func sharedBlocksTryExclusive() throws {
-            let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
+            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
             defer {
-                close(fd)
-                unlink(path)
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(FilePath(path))
             }
 
-            #expect(fd >= 0, "Failed to create test file")
+            #expect(fd.isValid, "Failed to create test file")
 
             // Acquire shared lock in this process
             var token = try Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(rawValue: fd),
+                descriptor: fd,
                 range: .file,
                 kind: .shared,
                 acquire: .wait
@@ -307,17 +295,17 @@ extension KernelLockIntegration {
 
         @Test("Non-overlapping byte ranges don't conflict")
         func nonOverlappingRangesDontConflict() throws {
-            let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
+            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
             defer {
-                close(fd)
-                unlink(path)
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(FilePath(path))
             }
 
-            #expect(fd >= 0, "Failed to create test file")
+            #expect(fd.isValid, "Failed to create test file")
 
             // Acquire exclusive lock on bytes 0-100 in this process
             var token = try Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(rawValue: fd),
+                descriptor: fd,
                 range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(100)),
                 kind: .exclusive,
                 acquire: .wait
@@ -345,17 +333,17 @@ extension KernelLockIntegration {
 
         @Test("Overlapping byte ranges do conflict")
         func overlappingRangesConflict() throws {
-            let (path, fd) = createTempFileForProcess(prefix: "kernel-contention")
+            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
             defer {
-                close(fd)
-                unlink(path)
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(FilePath(path))
             }
 
-            #expect(fd >= 0, "Failed to create test file")
+            #expect(fd.isValid, "Failed to create test file")
 
             // Acquire exclusive lock on bytes 0-200 in this process
             var token = try Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(rawValue: fd),
+                descriptor: fd,
                 range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(200)),
                 kind: .exclusive,
                 acquire: .wait

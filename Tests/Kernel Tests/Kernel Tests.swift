@@ -19,16 +19,6 @@ extension Kernel {
     #TestSuites
 }
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#elseif os(Windows)
-    import ucrt
-    import WinSDK
-#endif
 
 // MARK: - Integration Tests (require full Kernel module for file I/O)
 
@@ -174,13 +164,5 @@ extension Kernel.Test.EdgeCase {
 
 /// Helper to unlink (delete) a file - used in test cleanup
 private func unlinkFile(at path: FilePath) throws {
-    #if os(Windows)
-        try path.withPlatformString { wPath in
-            _ = DeleteFileW(wPath)
-        }
-    #else
-        path.withPlatformString { cString in
-            _ = unlink(cString)
-        }
-    #endif
+    try Kernel.Unlink.unlink(path)
 }

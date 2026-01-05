@@ -23,7 +23,7 @@ extension Kernel.Memory.Map {
         /// Maps a file into memory using Windows APIs.
         ///
         /// - Parameters:
-        ///   - fileHandle: The file handle to map.
+        ///   - descriptor: The file descriptor (Windows HANDLE) to map.
         ///   - offset: Offset into the file.
         ///   - length: Number of bytes to map.
         ///   - protection: Memory protection flags.
@@ -31,19 +31,21 @@ extension Kernel.Memory.Map {
         /// - Returns: The mapped region.
         /// - Throws: `Error.map` on failure.
         public static func map(
-            handle fileHandle: UnsafeMutableRawPointer?,
-            offset: Int64,
-            length: Int,
+            descriptor: Kernel.Descriptor,
+            offset: Kernel.File.Offset,
+            length: Kernel.File.Size,
             protection: Kernel.Memory.Map.Protection,
             copyOnWrite: Bool = false
         ) throws(Kernel.Memory.Map.Error) -> Kernel.Memory.Map.Region {
-            guard length > 0 else {
+            guard length.isPositive else {
                 throw .invalid(.length)
             }
 
-            guard let fileHandle, fileHandle != INVALID_HANDLE_VALUE else {
+            guard descriptor.isValid else {
                 throw .map(.win32(UInt32(ERROR_INVALID_HANDLE)))
             }
+
+            let fileHandle = descriptor.rawValue
 
             var pageProtection = protection.windowsPageProtection
             if copyOnWrite {
@@ -54,7 +56,7 @@ extension Kernel.Memory.Map {
                 }
             }
 
-            let maxSize = UInt64(offset) + UInt64(length)
+            let maxSize = UInt64(offset._rawValue) + UInt64(length._rawValue)
             let maxSizeHigh = DWORD(maxSize >> 32)
             let maxSizeLow = DWORD(maxSize & 0xFFFF_FFFF)
 
@@ -76,15 +78,15 @@ extension Kernel.Memory.Map {
                 access = DWORD(FILE_MAP_COPY)
             }
 
-            let offsetHigh = DWORD(UInt64(offset) >> 32)
-            let offsetLow = DWORD(UInt64(offset) & 0xFFFF_FFFF)
+            let offsetHigh = DWORD(UInt64(offset._rawValue) >> 32)
+            let offsetLow = DWORD(UInt64(offset._rawValue) & 0xFFFF_FFFF)
 
             let viewAddress = MapViewOfFile(
                 mappingHandle,
                 access,
                 offsetHigh,
                 offsetLow,
-                SIZE_T(length)
+                SIZE_T(length._rawValue)
             )
 
             guard let address = viewAddress else {
@@ -92,7 +94,7 @@ extension Kernel.Memory.Map {
                 throw .map(.captureLastError())
             }
 
-            return Kernel.Memory.Map.Region(base: address, length: Kernel.File.Size(length), mappingHandle: mappingHandle)
+            return Kernel.Memory.Map.Region(base: address, length: length, mappingHandle: mappingHandle)
         }
     }
 

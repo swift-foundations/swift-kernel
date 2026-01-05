@@ -10,17 +10,10 @@
 // ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
+import SystemPackage
 import Testing
 
 @testable import Kernel_Primitives
-
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#endif
 
 extension Kernel.Lock {
     #TestSuites
@@ -176,8 +169,8 @@ extension Kernel.Lock.Test.Unit {
             let (path, fd1) = try createTempFile(prefix: "lock-test")
             defer { cleanupTempFile(path: path, fd: fd1) }
 
-            let fd2 = Kernel.Descriptor(rawValue: open(path, O_RDWR))
-            defer { close(fd2.rawValue) }
+            let fd2 = try Kernel.File.Open.open(path: path, mode: [.read, .write], options: [])
+            defer { try? Kernel.Close.close(fd2) }
 
             try Kernel.Lock.lock(fd1, range: .file, kind: .shared)
             let acquired = try Kernel.Lock.tryLock(fd2, range: .file, kind: .shared)
@@ -352,35 +345,25 @@ extension Kernel.Lock.Test.Unit {
 
     // MARK: - Test Helpers
 
-    private func createTempFile(prefix: String) throws -> (path: String, fd: Kernel.Descriptor) {
-        // Respect TMPDIR if set, otherwise use /tmp
-        let tmpdir = getenv("TMPDIR").map { String(cString: $0) } ?? "/tmp"
-        let template = "\(tmpdir)/\(prefix)-XXXXXX"
-        var templateBytes = Array(template.utf8) + [0]
-        let fd = templateBytes.withUnsafeMutableBufferPointer { buffer in
-            mkstemp(buffer.baseAddress!)
-        }
-        guard fd >= 0 else {
-            struct TempFileError: Error {}
-            throw TempFileError()
-        }
-        let path: String
-        if let nullIndex = templateBytes.firstIndex(of: 0) {
-            path = String(decoding: templateBytes[..<nullIndex], as: UTF8.self)
-        } else {
-            path = String(decoding: templateBytes, as: UTF8.self)
-        }
+    private func createTempFile(prefix: String) throws -> (path: FilePath, fd: Kernel.Descriptor) {
+        let path = Kernel.Temporary.filePath(prefix: prefix)
+        let fd = try Kernel.File.Open.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate, .exclusive],
+            permissions: 0o600
+        )
         // Write some content (POSIX locks work on empty files too, but this is clearer for byte-range tests)
         var buf = [UInt8](repeating: 0x78, count: 1024)
-        _ = buf.withUnsafeMutableBytes { ptr in
-            write(fd, ptr.baseAddress, ptr.count)
+        _ = try? buf.withUnsafeMutableBytes { ptr in
+            try Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
         }
-        return (path, Kernel.Descriptor(rawValue: fd))
+        return (path, fd)
     }
 
-    private func cleanupTempFile(path: String, fd: Kernel.Descriptor) {
-        close(fd.rawValue)
-        unlink(path)
+    private func cleanupTempFile(path: FilePath, fd: Kernel.Descriptor) {
+        try? Kernel.Close.close(fd)
+        try? Kernel.Unlink.unlink(path)
     }
 
 #endif

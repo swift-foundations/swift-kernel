@@ -9,13 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#endif
+import SystemPackage
 
 #if !os(Windows)
 
@@ -35,20 +29,19 @@
         /// - Throws: `TempFileError` if creation fails
         public static func createTempFile(
             prefix: String = "io-test"
-        ) throws -> (path: String, fd: Kernel.Descriptor) {
-            let tmpdir = getenv("TMPDIR").map { String(cString: $0) } ?? "/tmp"
-            let template = "\(tmpdir)/\(prefix)-XXXXXX"
-            var templateBytes = Array(template.utf8) + [0]
-
-            let fd = templateBytes.withUnsafeMutableBufferPointer { buffer in
-                mkstemp(buffer.baseAddress!)
-            }
-            guard fd >= 0 else {
+        ) throws -> (path: FilePath, fd: Kernel.Descriptor) {
+            let path = Kernel.Temporary.filePath(prefix: prefix)
+            do {
+                let fd = try Kernel.File.Open.open(
+                    path: path,
+                    mode: [.read, .write],
+                    options: [.create, .truncate, .exclusive],
+                    permissions: 0o600
+                )
+                return (path, fd)
+            } catch {
                 throw TempFileError()
             }
-
-            let path = String(decoding: templateBytes.dropLast(), as: UTF8.self)
-            return (path, Kernel.Descriptor(rawValue: fd))
         }
 
         /// Creates a temporary file with initial content.
@@ -61,12 +54,12 @@
         public static func createTempFileWithContent(
             _ content: String,
             prefix: String = "io-test"
-        ) throws -> (path: String, fd: Kernel.Descriptor) {
+        ) throws -> (path: FilePath, fd: Kernel.Descriptor) {
             let (path, fd) = try createTempFile(prefix: prefix)
 
             var contentBytes = Array(content.utf8)
-            _ = contentBytes.withUnsafeMutableBytes { ptr in
-                write(fd.rawValue, ptr.baseAddress, ptr.count)
+            _ = try? contentBytes.withUnsafeMutableBytes { ptr in
+                try Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
             }
 
             return (path, fd)
@@ -82,27 +75,27 @@
         public static func createTempFileForHandle(
             _ content: String? = nil,
             prefix: String = "handle-test"
-        ) throws -> (path: String, fd: Kernel.File.Descriptor) {
-            let tmpdir = getenv("TMPDIR").map { String(cString: $0) } ?? "/tmp"
-            let template = "\(tmpdir)/\(prefix)-XXXXXX"
-            var templateBytes = Array(template.utf8) + [0]
+        ) throws -> (path: FilePath, fd: Kernel.File.Descriptor) {
+            let path = Kernel.Temporary.filePath(prefix: prefix)
+            do {
+                let fd = try Kernel.File.Open.open(
+                    path: path,
+                    mode: [.read, .write],
+                    options: [.create, .truncate, .exclusive],
+                    permissions: 0o600
+                )
 
-            let fd = templateBytes.withUnsafeMutableBufferPointer { buffer in
-                mkstemp(buffer.baseAddress!)
-            }
-            guard fd >= 0 else {
+                if let content = content {
+                    var contentBytes = Array(content.utf8)
+                    _ = try? contentBytes.withUnsafeMutableBytes { ptr in
+                        try Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
+                    }
+                }
+
+                return (path, Kernel.File.Descriptor(rawValue: fd.rawValue))
+            } catch {
                 throw TempFileError()
             }
-
-            if let content = content {
-                var contentBytes = Array(content.utf8)
-                _ = contentBytes.withUnsafeMutableBytes { ptr in
-                    write(fd, ptr.baseAddress, ptr.count)
-                }
-            }
-
-            let path = String(decoding: templateBytes.dropLast(), as: UTF8.self)
-            return (path, Kernel.File.Descriptor(rawValue: fd))
         }
 
         /// Cleans up a temporary file.
@@ -110,9 +103,9 @@
         /// - Parameters:
         ///   - path: The file path to unlink
         ///   - fd: The descriptor to close
-        public static func cleanupTempFile(path: String, fd: Kernel.Descriptor) {
-            close(fd.rawValue)
-            unlink(path)
+        public static func cleanupTempFile(path: FilePath, fd: Kernel.Descriptor) {
+            try? Kernel.Close.close(fd)
+            try? Kernel.Unlink.unlink(path)
         }
     }
 

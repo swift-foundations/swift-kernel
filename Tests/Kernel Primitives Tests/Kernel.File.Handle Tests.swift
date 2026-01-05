@@ -16,13 +16,7 @@ import Testing
 
 @testable import Kernel_Primitives
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#endif
+import SystemPackage
 
 extension Kernel.File.Handle {
     #TestSuites
@@ -36,7 +30,7 @@ extension Kernel.File.Handle {
         @Test("init stores descriptor and mode")
         func initStoresDescriptorAndMode() throws {
             let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { unlink(path) }
+            defer { try? Kernel.Unlink.unlink(path) }
 
             let handle = Kernel.File.Handle(
                 descriptor: fd,
@@ -53,7 +47,7 @@ extension Kernel.File.Handle {
         @Test("read returns bytes from file")
         func readReturnsBytesFromFile() throws {
             let (path, fd) = try KernelIOTest.createTempFileForHandle("TestData", prefix: "handle-test")
-            defer { unlink(path) }
+            defer { try? Kernel.Unlink.unlink(path) }
 
             let handle = Kernel.File.Handle(
                 descriptor: fd,
@@ -75,7 +69,7 @@ extension Kernel.File.Handle {
         @Test("write writes bytes to file")
         func writeWritesBytesToFile() throws {
             let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { unlink(path) }
+            defer { try? Kernel.Unlink.unlink(path) }
 
             let handle = Kernel.File.Handle(
                 descriptor: fd,
@@ -103,7 +97,7 @@ extension Kernel.File.Handle {
         @Test("close explicitly closes handle")
         func closeExplicitlyClosesHandle() throws {
             let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { unlink(path) }
+            defer { try? Kernel.Unlink.unlink(path) }
 
             var handle = Kernel.File.Handle(
                 descriptor: fd,
@@ -122,7 +116,7 @@ extension Kernel.File.Handle {
         @Test("withDescriptor provides access to raw descriptor")
         func withDescriptorProvidesAccess() throws {
             let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { unlink(path) }
+            defer { try? Kernel.Unlink.unlink(path) }
 
             let handle = Kernel.File.Handle(
                 descriptor: fd,
@@ -142,7 +136,7 @@ extension Kernel.File.Handle {
         @Test("handle closes on deinit")
         func handleClosesOnDeinit() throws {
             let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { unlink(path) }
+            defer { try? Kernel.Unlink.unlink(path) }
 
             // Create and immediately drop handle
             do {

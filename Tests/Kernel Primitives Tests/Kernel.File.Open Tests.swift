@@ -117,14 +117,6 @@ extension Kernel.File.Open.Test.EdgeCase {
 
 #if !os(Windows)
 
-    #if canImport(Darwin)
-        import Darwin
-    #elseif canImport(Glibc)
-        import Glibc
-    #elseif canImport(Musl)
-        import Musl
-    #endif
-
     import Kernel_Test_Support
     import SystemPackage
 
@@ -134,90 +126,84 @@ extension Kernel.File.Open.Test.EdgeCase {
             let (path, fd) = try KernelIOTest.createTempFileWithContent("test", prefix: "open-test")
             defer { KernelIOTest.cleanupTempFile(path: path, fd: fd) }
 
-            let filePath = FilePath(path)
             let readFd = try Kernel.File.Open.open(
-                path: filePath,
+                path: path,
                 mode: .read,
                 options: [],
                 permissions: Kernel.File.Permissions(rawValue: 0o644)
             )
-            defer { close(readFd.rawValue) }
+            defer { try? Kernel.Close.close(readFd) }
 
             #expect(readFd.isValid)
         }
 
         @Test("open with create creates new file")
         func openWithCreateCreatesFile() throws {
-            let tmpdir = getenv("TMPDIR").map { String(cString: $0) } ?? "/tmp"
-            let path = "\(tmpdir)/open-create-test-\(UInt32.random(in: 0...UInt32.max))"
-            defer { unlink(path) }
+            let path = Kernel.Temporary.filePath(prefix: "open-create-test")
+            defer { try? Kernel.Unlink.unlink(path) }
 
-            let filePath = FilePath(path)
             let fd = try Kernel.File.Open.open(
-                path: filePath,
+                path: path,
                 mode: [.read, .write],
                 options: .create,
                 permissions: Kernel.File.Permissions(rawValue: 0o644)
             )
-            defer { close(fd.rawValue) }
+            defer { try? Kernel.Close.close(fd) }
 
             #expect(fd.isValid)
 
-            // Verify file exists
-            var stat_buf = stat()
-            let result = stat(path, &stat_buf)
-            #expect(result == 0, "File should exist after create")
+            // Verify file exists by checking stats
+            let stats = try Kernel.File.Stats.stats(path)
+            #expect(stats.kind == .regular, "File should exist after create")
         }
 
         @Test("open with truncate truncates existing file")
         func openWithTruncateTruncatesFile() throws {
             let (path, fd) = try KernelIOTest.createTempFileWithContent("original content", prefix: "open-test")
-            close(fd.rawValue)
-            defer { unlink(path) }
+            try? Kernel.Close.close(fd)
+            defer { try? Kernel.Unlink.unlink(path) }
 
             // Re-open with truncate
-            let filePath = FilePath(path)
             let truncFd = try Kernel.File.Open.open(
-                path: filePath,
+                path: path,
                 mode: [.read, .write],
                 options: .truncate,
                 permissions: Kernel.File.Permissions(rawValue: 0o644)
             )
-            defer { close(truncFd.rawValue) }
+            defer { try? Kernel.Close.close(truncFd) }
 
-            // Check file size is 0
-            let size = lseek(truncFd.rawValue, 0, SEEK_END)
-            #expect(size == 0, "File should be truncated to 0 bytes")
+            // Check file size is 0 using seek
+            let size = try Kernel.Seek.seek(truncFd, offset: Kernel.File.Offset(0), from: .end)
+            #expect(size._rawValue == 0, "File should be truncated to 0 bytes")
         }
 
         @Test("open with append positions at end")
         func openWithAppendPositionsAtEnd() throws {
             let (path, fd) = try KernelIOTest.createTempFileWithContent("initial", prefix: "open-test")
-            close(fd.rawValue)
-            defer { unlink(path) }
+            try? Kernel.Close.close(fd)
+            defer { try? Kernel.Unlink.unlink(path) }
 
             // Re-open with append
-            let filePath = FilePath(path)
             let appendFd = try Kernel.File.Open.open(
-                path: filePath,
+                path: path,
                 mode: .write,
                 options: .append,
                 permissions: Kernel.File.Permissions(rawValue: 0o644)
             )
-            defer { close(appendFd.rawValue) }
+            defer { try? Kernel.Close.close(appendFd) }
 
             // Write more data
-            let extra = Array("_extra".utf8)
-            _ = extra.withUnsafeBytes { ptr in
-                write(appendFd.rawValue, ptr.baseAddress, ptr.count)
+            var extra = Array("_extra".utf8)
+            _ = try? extra.withUnsafeMutableBytes { ptr in
+                try Kernel.IO.Write.write(appendFd, from: UnsafeRawBufferPointer(ptr))
             }
 
-            // Verify total content
-            let readFd = open(path, O_RDONLY)
-            defer { close(readFd) }
+            // Verify total content by re-reading
+            let readFd = try Kernel.File.Open.open(path: path, mode: .read, options: [])
+            defer { try? Kernel.Close.close(readFd) }
             var buffer = [UInt8](repeating: 0, count: 20)
-            let bytesRead = buffer.withUnsafeMutableBytes { ptr in
-                read(readFd, ptr.baseAddress, ptr.count)
+            let bytesRead = try buffer.withUnsafeMutableBytes { ptr in
+                try Kernel.IO.Read.read(readFd, into: ptr)
             }
             let content = String(decoding: buffer.prefix(bytesRead), as: UTF8.self)
             #expect(content == "initial_extra")
@@ -226,13 +212,12 @@ extension Kernel.File.Open.Test.EdgeCase {
         @Test("open with exclusive fails if file exists")
         func openWithExclusiveFailsIfExists() throws {
             let (path, fd) = try KernelIOTest.createTempFile(prefix: "open-test")
-            close(fd.rawValue)
-            defer { unlink(path) }
+            try? Kernel.Close.close(fd)
+            defer { try? Kernel.Unlink.unlink(path) }
 
-            let filePath = FilePath(path)
             #expect(throws: Kernel.File.Open.Error.self) {
                 _ = try Kernel.File.Open.open(
-                    path: filePath,
+                    path: path,
                     mode: [.read, .write],
                     options: [.create, .exclusive],
                     permissions: Kernel.File.Permissions(rawValue: 0o644)
