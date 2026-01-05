@@ -33,7 +33,7 @@
         func defaultInit() {
             let entry = Kernel.IOCP.Entry()
             #expect(entry.key.rawValue == 0)
-            #expect(entry.bytes.transferred == 0)
+            #expect(entry.bytes.transferred == .zero)
         }
     }
 
@@ -78,7 +78,7 @@
 
             var entry = Kernel.IOCP.Entry()
             entry.raw = entries[0]
-            #expect(entry.bytes.transferred == expectedBytes)
+            #expect(entry.bytes.transferred == Kernel.File.Size(Int64(expectedBytes)))
         }
 
         @Test("Bytes struct is Sendable")
@@ -131,7 +131,7 @@
             for (i, tc) in testCases.enumerated() {
                 var entry = Kernel.IOCP.Entry()
                 entry.raw = rawEntries[i]
-                #expect(entry.bytes.transferred == tc.bytes)
+                #expect(entry.bytes.transferred == Kernel.File.Size(Int64(tc.bytes)))
                 #expect(entry.key.rawValue == ULONG_PTR(tc.key))
             }
         }
@@ -154,7 +154,7 @@
 
             var entry = Kernel.IOCP.Entry()
             entry.raw = entries[0]
-            #expect(entry.bytes.transferred == 0)
+            #expect(entry.bytes.transferred == .zero)
             #expect(entry.key.rawValue == 0)
         }
 
@@ -175,7 +175,7 @@
 
             var entry = Kernel.IOCP.Entry()
             entry.raw = entries[0]
-            #expect(entry.bytes.transferred == maxBytes)
+            #expect(entry.bytes.transferred == Kernel.File.Size(Int64(maxBytes)))
             #expect(entry.key == maxKey)
         }
 
@@ -203,7 +203,7 @@
             for i in 0..<count {
                 var entry = Kernel.IOCP.Entry()
                 entry.raw = entries[i]
-                #expect(entry.bytes.transferred == DWORD(i * 111))
+                #expect(entry.bytes.transferred == Kernel.File.Size(Int64(i * 111)))
                 #expect(entry.key.rawValue == ULONG_PTR(i * 222))
             }
         }
