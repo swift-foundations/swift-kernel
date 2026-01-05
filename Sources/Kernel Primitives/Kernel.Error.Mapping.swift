@@ -153,7 +153,7 @@
 
     // MARK: - Platform (catch-all)
 
-    extension Kernel.Errno.Unmapped.Error {
+    extension Kernel.Error.Unmapped.Error {
         /// Creates a platform error from an errno value.
         @inlinable
         public init(errno: Errno) {
@@ -244,7 +244,7 @@
         }
     }
 
-    extension Kernel.Errno.Unmapped.Error {
+    extension Kernel.Error.Unmapped.Error {
         /// Creates a platform error from a Windows error code.
         @inlinable
         public init(windowsError error: DWORD) {

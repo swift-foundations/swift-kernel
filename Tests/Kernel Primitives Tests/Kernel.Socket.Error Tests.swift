@@ -39,7 +39,7 @@ extension Kernel.Socket.Error.Test.Unit {
 
     @Test("platform case exists")
     func platformCase() {
-        let platformError = Kernel.Errno.Unmapped.Error.unmapped(code: .posix(999), message: nil)
+        let platformError = Kernel.Error.Unmapped.Error.unmapped(code: .posix(999), message: nil)
         let error = Kernel.Socket.Error.platform(platformError)
         if case .platform(let e) = error {
             #expect(e == platformError)
@@ -85,7 +85,7 @@ extension Kernel.Socket.Error.Test.Unit {
 
     @Test("platform error description")
     func platformDescription() {
-        let platformError = Kernel.Errno.Unmapped.Error.unmapped(code: .posix(42), message: nil)
+        let platformError = Kernel.Error.Unmapped.Error.unmapped(code: .posix(42), message: nil)
         let error = Kernel.Socket.Error.platform(platformError)
         #expect(!error.description.isEmpty)
     }

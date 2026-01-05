@@ -19,7 +19,7 @@ extension Kernel.File.Open {
         case signal(Kernel.Signal.Error)
         case space(Kernel.Storage.Error)
         case io(Kernel.IO.Error)
-        case platform(Kernel.Errno.Unmapped.Error)
+        case platform(Kernel.Error.Unmapped.Error)
     }
 }
 
@@ -91,7 +91,7 @@ extension Kernel.File.Open.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
+            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
         }
 
         @inlinable
@@ -130,7 +130,7 @@ extension Kernel.File.Open.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
+            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
         }
 
         @inlinable

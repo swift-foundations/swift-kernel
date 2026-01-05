@@ -43,19 +43,19 @@ extension Kernel.Link.Test.Unit {
     @Test("Link.Count from UInt32")
     func countFromUInt32() {
         let count = Kernel.Link.Count(5)
-        #expect(count._rawValue == 5)
+        #expect(count == 5)
     }
 
     @Test("Link.Count.one constant")
     func oneConstant() {
         let one = Kernel.Link.Count.one
-        #expect(one._rawValue == 1)
+        #expect(one == 1)
     }
 
     @Test("Link.Count.zero constant")
     func zeroConstant() {
         let zero = Kernel.Link.Count.zero
-        #expect(zero._rawValue == 0)
+        #expect(zero == 0)
     }
 }
 

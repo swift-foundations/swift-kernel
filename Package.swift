@@ -127,6 +127,7 @@ let package = Package(
             name: "Kernel Tests",
             dependencies: [
                 "Kernel",
+                "Kernel Test Support",
                 .product(name: "StandardsTestSupport", package: "swift-standards")
             ],
             path: "Tests/Kernel Tests"

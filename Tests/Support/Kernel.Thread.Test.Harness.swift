@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
+import Kernel_Primitives
 
 /// Test harness utilities for threading tests.
 ///

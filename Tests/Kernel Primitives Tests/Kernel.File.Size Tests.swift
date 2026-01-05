@@ -25,31 +25,31 @@ struct FileSizeTests {
     @Test("Size from integer literal")
     func literalInit() {
         let size: Kernel.File.Size = 4096
-        #expect(size._rawValue == 4096)
+        #expect(size == 4096)
     }
 
     @Test("Size from Int")
     func intInit() {
         let size = Kernel.File.Size(100)
-        #expect(size._rawValue == 100)
+        #expect(size == 100)
     }
 
     @Test("Size from Int64")
     func int64Init() {
         let size = Kernel.File.Size(Int64(5000))
-        #expect(size._rawValue == 5000)
+        #expect(size == 5000)
     }
 
     @Test("Size from UInt64")
     func uint64Init() {
         let size = Kernel.File.Size(UInt64(8192))
-        #expect(size._rawValue == 8192)
+        #expect(size == 8192)
     }
 
     @Test("Size from pages")
     func pagesInit() {
         let size = Kernel.File.Size(pages: 2)
-        let expectedBytes = 2 * Kernel.System.pageSize
+        let expectedBytes = 2 * Int(Kernel.System.pageSize)
         #expect(size._rawValue == Int64(expectedBytes))
     }
 
@@ -57,12 +57,12 @@ struct FileSizeTests {
 
     @Test("zero constant")
     func zeroConstant() {
-        #expect(Kernel.File.Size.zero._rawValue == 0)
+        #expect(Kernel.File.Size.zero == 0)
     }
 
     @Test("kilobyte constant")
     func kilobyteConstant() {
-        #expect(Kernel.File.Size.kilobyte._rawValue == 1024)
+        #expect(Kernel.File.Size.kilobyte == 1024)
     }
 
     @Test("megabyte constant")
@@ -78,7 +78,7 @@ struct FileSizeTests {
     @Test("page constant")
     func pageConstant() {
         let pageSize = Kernel.File.Size.page
-        #expect(pageSize._rawValue == Int64(Kernel.System.pageSize))
+        #expect(pageSize._rawValue == Int64(Int(Kernel.System.pageSize)))
     }
 
     // MARK: - Queries
@@ -112,7 +112,7 @@ struct FileSizeTests {
         let a: Kernel.File.Size = 1000
         let b: Kernel.File.Size = 2000
         let result = a + b
-        #expect(result._rawValue == 3000)
+        #expect(result == 3000)
     }
 
     @Test("Size minus Size")
@@ -120,7 +120,7 @@ struct FileSizeTests {
         let a: Kernel.File.Size = 3000
         let b: Kernel.File.Size = 1000
         let result = a - b
-        #expect(result._rawValue == 2000)
+        #expect(result == 2000)
     }
 
     // MARK: - Int Conversion

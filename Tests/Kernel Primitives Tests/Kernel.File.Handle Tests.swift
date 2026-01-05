@@ -151,10 +151,14 @@ extension Kernel.File.Handle {
             // After deinit, descriptor should be closed
             // Attempting to use it should fail
             var buffer = [UInt8](repeating: 0, count: 1)
-            let result = buffer.withUnsafeMutableBytes { ptr in
-                read(fd.rawValue, ptr.baseAddress, ptr.count)
+            do {
+                _ = try buffer.withUnsafeMutableBytes { ptr in
+                    try Kernel.IO.Read.read(fd, into: ptr)
+                }
+                Issue.record("Read on closed descriptor should fail")
+            } catch {
+                // Expected - descriptor is closed
             }
-            #expect(result == -1, "Read on closed descriptor should fail")
         }
     }
 

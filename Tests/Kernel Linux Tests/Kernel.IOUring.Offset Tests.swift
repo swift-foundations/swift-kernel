@@ -31,7 +31,7 @@
         @Test("Offset.zero constant")
         func zeroConstant() {
             let zero = Kernel.IOUring.Offset.zero
-            #expect(zero._rawValue == 0)
+            #expect(zero == 0)
         }
 
         @Test("Offset.current constant")
@@ -43,7 +43,7 @@
         @Test("Offset from UInt64")
         func fromUInt64() {
             let offset = Kernel.IOUring.Offset(4096)
-            #expect(offset._rawValue == 4096)
+            #expect(offset == 4096)
         }
     }
 
@@ -105,14 +105,14 @@
         func fromPositiveFileOffset() {
             let fileOffset = Kernel.File.Offset(1000)
             let offset = Kernel.IOUring.Offset(fileOffset)
-            #expect(offset._rawValue == 1000)
+            #expect(offset == 1000)
         }
 
         @Test("Offset from zero File.Offset")
         func fromZeroFileOffset() {
             let fileOffset = Kernel.File.Offset(0)
             let offset = Kernel.IOUring.Offset(fileOffset)
-            #expect(offset._rawValue == 0)
+            #expect(offset == 0)
         }
 
         @Test("Offset from negative File.Offset becomes current")

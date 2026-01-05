@@ -50,7 +50,7 @@ extension Kernel {
         case blocking(Kernel.IO.Blocking.Error)
 
         /// Unmapped platform-specific errors.
-        case platform(Kernel.Errno.Unmapped.Error)
+        case platform(Kernel.Error.Unmapped.Error)
     }
 }
 

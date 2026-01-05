@@ -53,11 +53,11 @@ public import Kernel_Primitives
         public init(_ error: Kernel.IOUring.Error) {
             switch error {
             case .setup(let code):
-                self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Error.Unmapped.Error(code))
             case .enter(let code):
-                self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Error.Unmapped.Error(code))
             case .register(let code):
-                self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
+                self = Kernel.Error(code) ?? .platform(Kernel.Error.Unmapped.Error(code))
             case .interrupted:
                 self = .signal(.interrupted)
             }

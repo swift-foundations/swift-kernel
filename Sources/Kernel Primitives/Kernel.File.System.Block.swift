@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Binary
+
 extension Kernel.File.System {
     /// Filesystem block types.
     public enum Block {}
@@ -19,62 +21,26 @@ extension Kernel.File.System {
 extension Kernel.File.System.Block {
     /// Filesystem block size.
     ///
-    /// A type-safe wrapper for the fundamental block size of a filesystem.
-    /// All I/O operations are ultimately performed in multiples of this size.
+    /// A type-safe size value using the Dimension pattern.
+    /// Follows the same pattern as `Kernel.File.Size`.
     ///
     /// ## Usage
     ///
     /// ```swift
     /// let stats = try Kernel.File.System.Stats.get(path)
-    /// let totalBytes = stats.blocks.rawValue * stats.blockSize.rawValue
+    /// let totalBytes = stats.blocks._rawValue * stats.blockSize._rawValue
     /// ```
-    public struct Size: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
-        public let rawValue: UInt64
-
-        /// Creates a block size from a raw value.
-        @inlinable
-        public init(rawValue: UInt64) {
-            self.rawValue = rawValue
-        }
-
-        /// Creates a block size from a UInt64 value.
-        @inlinable
-        public init(_ value: UInt64) {
-            self.rawValue = value
-        }
-
-        // MARK: - Common Block Sizes
-
-        /// 512-byte sector (traditional disk sector).
-        public static let sector512 = Size(rawValue: 512)
-
-        /// 4096-byte page (common filesystem block size).
-        public static let page4096 = Size(rawValue: 4096)
-
-        // MARK: - Comparable
-
-        @inlinable
-        public static func < (lhs: Self, rhs: Self) -> Bool {
-            lhs.rawValue < rhs.rawValue
-        }
-    }
+    public typealias Size = Magnitude<Kernel.File.System.Block>.Value<UInt64>
 }
 
-// MARK: - Block.Size + ExpressibleByIntegerLiteral
+// MARK: - Block.Size Constants
 
-extension Kernel.File.System.Block.Size: ExpressibleByIntegerLiteral {
-    @inlinable
-    public init(integerLiteral value: UInt64) {
-        self.rawValue = value
-    }
-}
+extension Kernel.File.System.Block.Size {
+    /// 512-byte sector (traditional disk sector).
+    public static let sector512: Self = 512
 
-// MARK: - Block.Size + CustomStringConvertible
-
-extension Kernel.File.System.Block.Size: CustomStringConvertible {
-    public var description: String {
-        "\(rawValue)"
-    }
+    /// 4096-byte page (common filesystem block size).
+    public static let page4096: Self = 4096
 }
 
 // MARK: - Block.Count
@@ -89,7 +55,7 @@ extension Kernel.File.System.Block {
     ///
     /// ```swift
     /// let stats = try Kernel.File.System.Stats.get(path)
-    /// let freeBytes = stats.freeBlocks._rawValue * stats.blockSize.rawValue
+    /// let freeBytes = stats.freeBlocks._rawValue * stats.blockSize._rawValue
     /// ```
     public typealias Count = Tagged<Kernel.File.System.Block, UInt64>
 }

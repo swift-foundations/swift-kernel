@@ -15,7 +15,7 @@ extension Kernel.Pipe {
     public enum Error: Swift.Error, Sendable {
         case handle(Kernel.Descriptor.Validity.Error)
         case io(Kernel.IO.Error)
-        case platform(Kernel.Errno.Unmapped.Error)
+        case platform(Kernel.Error.Unmapped.Error)
     }
 }
 
@@ -63,7 +63,7 @@ extension Kernel.Pipe.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
+            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
         }
 
         @inlinable
@@ -90,7 +90,7 @@ extension Kernel.Pipe.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
+            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
         }
 
         @inlinable

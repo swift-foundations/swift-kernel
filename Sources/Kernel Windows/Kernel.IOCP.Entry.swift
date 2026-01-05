@@ -64,8 +64,8 @@ public import Kernel_Primitives
 
             /// Number of bytes transferred in the completed operation.
             @inlinable
-            public var transferred: UInt32 {
-                entry.raw.dwNumberOfBytesTransferred
+            public var transferred: Kernel.File.Size {
+                Kernel.File.Size(Int64(entry.raw.dwNumberOfBytesTransferred))
             }
         }
     }

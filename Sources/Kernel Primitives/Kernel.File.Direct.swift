@@ -124,7 +124,7 @@ extension Kernel.File.Direct {
     /// - Parameter path: The file path to query.
     /// - Returns: The alignment requirements, or `.unknown` with a reason.
     public static func requirements(
-        for path: String
+        for path: FilePath
     ) -> Requirements {
         #if os(macOS)
             return .unknown(reason: .platformUnsupported)
@@ -132,7 +132,7 @@ extension Kernel.File.Direct {
             // Fail closed - alignment not reliably discoverable
             return .unknown(reason: .sectorSizeUndetermined)
         #elseif os(Windows)
-            return Requirements(FilePath(path))
+            return Requirements(path)
         #else
             return .unknown(reason: .platformUnsupported)
         #endif

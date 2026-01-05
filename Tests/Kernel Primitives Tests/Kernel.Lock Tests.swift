@@ -9,6 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import Kernel_Test_Support
 import StandardsTestSupport
 import SystemPackage
 import Testing
@@ -169,7 +170,7 @@ extension Kernel.Lock.Test.Unit {
             let (path, fd1) = try createTempFile(prefix: "lock-test")
             defer { cleanupTempFile(path: path, fd: fd1) }
 
-            let fd2 = try Kernel.File.Open.open(path: path, mode: [.read, .write], options: [])
+            let fd2 = try Kernel.File.Open.open(path: path, mode: [.read, .write], options: [], permissions: .privateFile)
             defer { try? Kernel.Close.close(fd2) }
 
             try Kernel.Lock.lock(fd1, range: .file, kind: .shared)

@@ -19,7 +19,7 @@ extension Kernel.IO.Read {
         case blocking(Kernel.IO.Blocking.Error)
         case io(Kernel.IO.Error)
         case memory(Kernel.Memory.Error)
-        case platform(Kernel.Errno.Unmapped.Error)
+        case platform(Kernel.Error.Unmapped.Error)
     }
 }
 
@@ -89,7 +89,7 @@ extension Kernel.IO.Read.Error: CustomStringConvertible {
                 self = .memory(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
+            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
         }
 
         @inlinable
@@ -116,7 +116,7 @@ extension Kernel.IO.Read.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
+            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
         }
 
         @inlinable

@@ -47,7 +47,7 @@ extension Kernel.Lock {
             forMappingAt offset: Kernel.File.Offset,
             length: Kernel.File.Size
         ) {
-            let granularity = Kernel.System.allocationGranularity
+            let granularity = Kernel.System.allocationGranularity.alignment
             let endOffset = offset + length
             let roundedEnd = Kernel.System.alignUp(endOffset, to: granularity)
             self = .bytes(start: offset, end: roundedEnd)

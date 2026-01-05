@@ -113,8 +113,8 @@ public import Kernel_Primitives
         /// Buffer length.
         @inlinable
         public var len: Kernel.IOUring.Length {
-            get { Kernel.IOUring.Length(rawValue: cValue.len) }
-            set { cValue.len = newValue.rawValue }
+            get { Kernel.IOUring.Length(cValue.len) }
+            set { cValue.len = newValue._rawValue }
         }
 
         /// Operation data returned with completion.

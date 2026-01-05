@@ -16,7 +16,7 @@ extension Kernel.Close {
         case handle(Kernel.Descriptor.Validity.Error)
         case signal(Kernel.Signal.Error)
         case io(Kernel.IO.Error)
-        case platform(Kernel.Errno.Unmapped.Error)
+        case platform(Kernel.Error.Unmapped.Error)
     }
 }
 
@@ -70,7 +70,7 @@ extension Kernel.Close.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
+            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
         }
 
         @inlinable
@@ -97,7 +97,7 @@ extension Kernel.Close.Error: CustomStringConvertible {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
+            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
         }
 
         @inlinable

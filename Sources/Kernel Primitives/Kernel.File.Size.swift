@@ -50,7 +50,7 @@ extension Kernel.File.Size {
 
     /// One system page.
     public static var page: Self {
-        Self(Int64(Kernel.System.pageSize))
+        Self(Int64(Int(Kernel.System.pageSize)))
     }
 }
 
@@ -62,7 +62,7 @@ extension Kernel.File.Size {
     /// - Parameter pages: Number of pages.
     @inlinable
     public init(pages: Int) {
-        self.init(Int64(pages * Kernel.System.pageSize))
+        self.init(Int64(pages * Int(Kernel.System.pageSize)))
     }
 
     /// Creates a file size from an Int value.

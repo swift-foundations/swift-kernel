@@ -106,12 +106,12 @@ public import Kernel_Primitives
             res == -125  // ECANCELED
         }
 
-        /// The errno value (for failed operations).
+        /// The error number (for failed operations).
         ///
         /// Returns nil if the operation succeeded.
         @inlinable
-        public var errno: Int32? {
-            isError ? -res : nil
+        public var errorNumber: Kernel.Error.Number? {
+            isError ? Kernel.Error.Number(-res) : nil
         }
     }
 

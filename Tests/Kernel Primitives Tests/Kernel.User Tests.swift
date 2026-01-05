@@ -43,13 +43,13 @@ extension Kernel.User.Test.Unit {
     @Test("User.ID from UInt32")
     func idFromUInt32() {
         let uid = Kernel.User.ID(501)
-        #expect(uid._rawValue == 501)
+        #expect(uid == 501)
     }
 
     @Test("User.ID root constant")
     func rootConstant() {
         let root = Kernel.User.ID.root
-        #expect(root._rawValue == 0)
+        #expect(root == 0)
     }
 }
 

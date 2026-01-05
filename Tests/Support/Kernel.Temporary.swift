@@ -11,9 +11,9 @@
 
 /// Test support for cross-platform temporary file paths.
 
-import SystemPackage
+public import SystemPackage
 
-@testable import Kernel
+@testable public import Kernel_Primitives
 
 // Platform imports only for getpid/GetCurrentProcessId (acceptable in test support)
 #if canImport(Darwin)
@@ -28,7 +28,7 @@ import SystemPackage
 
 extension Kernel {
     /// Namespace for temporary path operations in tests.
-    enum Temporary {}
+    public enum Temporary {}
 }
 
 extension Kernel.Temporary {
@@ -37,7 +37,7 @@ extension Kernel.Temporary {
     /// Uses platform-appropriate environment variables:
     /// - Unix: `TMPDIR`, falling back to "/tmp"
     /// - Windows: `TEMP` or `TMP`, falling back to "C:\Temp"
-    static var directory: FilePath {
+    public static var directory: FilePath {
         #if os(Windows)
             FilePath(
                 Kernel.Environment.get("TEMP")
@@ -53,7 +53,7 @@ extension Kernel.Temporary {
     ///
     /// - Parameter prefix: Prefix for the filename (e.g., "kernel-test").
     /// - Returns: A unique FilePath in the system temp directory.
-    static func filePath(prefix: String) -> FilePath {
+    public static func filePath(prefix: String) -> FilePath {
         #if os(Windows)
             let pid = Int(GetCurrentProcessId())
         #else

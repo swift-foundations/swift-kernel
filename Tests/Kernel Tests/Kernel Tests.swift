@@ -9,6 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import Kernel_Test_Support
 import StandardsTestSupport
 import SystemPackage
 import Testing

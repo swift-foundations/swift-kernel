@@ -8,21 +8,23 @@
 // See LICENSE for license information
 //
 // ===----------------------------------------------------------------------===//
+
 public import Kernel_Primitives
+public import Binary
 
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
         /// Buffer length for io_uring operations.
         ///
-        /// A type-safe wrapper for the 32-bit length field used in io_uring
-        /// submission queue entries.
+        /// A type-safe 32-bit length value using the Dimension pattern.
+        /// Follows the same pattern as `Kernel.File.Size`.
         ///
         /// ## Usage
         ///
         /// ```swift
-        /// // From a raw value
-        /// let length = Kernel.IOUring.Length(rawValue: 4096)
+        /// // From an integer literal
+        /// let length: Kernel.IOUring.Length = 4096
         ///
         /// // From a File.Size
         /// let length = Kernel.IOUring.Length(fileSize)
@@ -30,71 +32,39 @@ public import Kernel_Primitives
         /// // From a buffer pointer
         /// let length = Kernel.IOUring.Length(buffer)
         /// ```
-        public struct Length: RawRepresentable, Sendable, Equatable, Hashable, Comparable {
-            public let rawValue: UInt32
-
-            /// Creates a length value.
-            ///
-            /// - Parameter rawValue: The 32-bit length value.
-            @inlinable
-            public init(rawValue: UInt32) {
-                self.rawValue = rawValue
-            }
-
-            /// Creates a length from an integer.
-            ///
-            /// Values larger than `UInt32.max` are clamped.
-            ///
-            /// - Parameter count: The length in bytes.
-            @inlinable
-            public init(_ count: Int) {
-                self.rawValue = UInt32(clamping: count)
-            }
-
-            /// Creates a length from a buffer pointer.
-            ///
-            /// - Parameter buffer: The buffer whose count to use.
-            @inlinable
-            public init(_ buffer: UnsafeRawBufferPointer) {
-                self.rawValue = UInt32(clamping: buffer.count)
-            }
-
-            /// Creates a length from a mutable buffer pointer.
-            ///
-            /// - Parameter buffer: The buffer whose count to use.
-            @inlinable
-            public init(_ buffer: UnsafeMutableRawBufferPointer) {
-                self.rawValue = UInt32(clamping: buffer.count)
-            }
-
-            // MARK: - Common Values
-
-            /// Zero length.
-            public static let zero = Length(rawValue: 0)
-
-            // MARK: - Comparable
-
-            @inlinable
-            public static func < (lhs: Length, rhs: Length) -> Bool {
-                lhs.rawValue < rhs.rawValue
-            }
-        }
+        public typealias Length = Magnitude<Space>.Value<UInt32>
     }
 
-    // MARK: - ExpressibleByIntegerLiteral
+    // MARK: - Convenience Initializers
 
-    extension Kernel.IOUring.Length: ExpressibleByIntegerLiteral {
+    extension Kernel.IOUring.Length {
+        /// Zero length.
+        public static let zero: Self = 0
+
+        /// Creates a length from an integer.
+        ///
+        /// Values larger than `UInt32.max` are clamped.
+        ///
+        /// - Parameter count: The length in bytes.
         @inlinable
-        public init(integerLiteral value: UInt32) {
-            self.rawValue = value
+        public init(_ count: Int) {
+            self.init(UInt32(clamping: count))
         }
-    }
 
-    // MARK: - CustomStringConvertible
+        /// Creates a length from a buffer pointer.
+        ///
+        /// - Parameter buffer: The buffer whose count to use.
+        @inlinable
+        public init(_ buffer: UnsafeRawBufferPointer) {
+            self.init(UInt32(clamping: buffer.count))
+        }
 
-    extension Kernel.IOUring.Length: CustomStringConvertible {
-        public var description: String {
-            "\(rawValue)"
+        /// Creates a length from a mutable buffer pointer.
+        ///
+        /// - Parameter buffer: The buffer whose count to use.
+        @inlinable
+        public init(_ buffer: UnsafeMutableRawBufferPointer) {
+            self.init(UInt32(clamping: buffer.count))
         }
     }
 
@@ -107,11 +77,11 @@ public import Kernel_Primitives
         @inlinable
         public init(_ size: Kernel.File.Size) {
             if size._rawValue > Int64(UInt32.max) {
-                self.init(rawValue: UInt32.max)
+                self.init(UInt32.max)
             } else if size._rawValue < 0 {
-                self.init(rawValue: 0)
+                self.init(UInt32(0))
             } else {
-                self.init(rawValue: UInt32(size._rawValue))
+                self.init(UInt32(size._rawValue))
             }
         }
     }

@@ -57,7 +57,7 @@ extension Kernel.Close.Error.Test.Unit {
     @Test("platform case stores Errno.Unmapped.Error")
     func platformCase() {
         let code = Kernel.Error.Code.posix(999)
-        let unmappedError = Kernel.Errno.Unmapped.Error.unmapped(code: code, message: "test")
+        let unmappedError = Kernel.Error.Unmapped.Error.unmapped(code: code, message: "test")
         let error = Kernel.Close.Error.platform(unmappedError)
         if case .platform(let stored) = error {
             #expect(stored == unmappedError)

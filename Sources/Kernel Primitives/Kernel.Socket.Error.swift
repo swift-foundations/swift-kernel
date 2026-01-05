@@ -18,7 +18,7 @@ extension Kernel.Socket {
         case handle(Kernel.Descriptor.Validity.Error)
 
         /// A platform-specific error.
-        case platform(Kernel.Errno.Unmapped.Error)
+        case platform(Kernel.Error.Unmapped.Error)
     }
 }
 
@@ -64,7 +64,7 @@ extension Kernel.Socket.Error: CustomStringConvertible {
                 self = .handle(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
+            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
         }
 
         @inlinable
@@ -87,7 +87,7 @@ extension Kernel.Socket.Error: CustomStringConvertible {
                 self = .handle(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
+            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
         }
 
         @inlinable

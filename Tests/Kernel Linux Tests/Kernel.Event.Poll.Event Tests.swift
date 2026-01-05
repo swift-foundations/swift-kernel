@@ -41,7 +41,7 @@
             let data = Kernel.Event.Poll.Data(42)
             let event = Kernel.Event.Poll.Event(events: .out, data: data)
             #expect(event.events == .out)
-            #expect(event.data._rawValue == 42)
+            #expect(event.data == 42)
         }
 
         @Test("events property is mutable")
@@ -55,7 +55,7 @@
         func dataIsMutable() {
             var event = Kernel.Event.Poll.Event(events: .in)
             event.data = Kernel.Event.Poll.Data(100)
-            #expect(event.data._rawValue == 100)
+            #expect(event.data == 100)
         }
 
         @Test("combined events are preserved")
@@ -119,7 +119,7 @@
         @Test("event with zero data")
         func zeroData() {
             let event = Kernel.Event.Poll.Event(events: .in, data: .zero)
-            #expect(event.data._rawValue == 0)
+            #expect(event.data == 0)
         }
     }
 #endif

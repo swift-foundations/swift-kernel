@@ -59,7 +59,7 @@ extension Kernel.System.Test.Unit {
 
     @Test("pageSize is power of 2")
     func pageSizePowerOfTwo() {
-        let size = Kernel.System.pageSize
+        let size = Int(Kernel.System.pageSize)
         // A power of 2 has exactly one bit set
         #expect(size & (size - 1) == 0)
     }
@@ -88,14 +88,16 @@ extension Kernel.System.Test.Unit {
 
     @Test("allocationGranularity is power of 2")
     func allocationGranularityPowerOfTwo() {
-        let size = Kernel.System.allocationGranularity
+        let size = Int(Kernel.System.allocationGranularity)
+        // A power of 2 has exactly one bit set
         #expect(size & (size - 1) == 0)
     }
 
     #if !os(Windows)
         @Test("allocationGranularity equals pageSize on POSIX")
         func allocationGranularityEqualsPageSize() {
-            #expect(Kernel.System.allocationGranularity == Kernel.System.pageSize)
+            // Compare underlying values since these are different Tagged types
+            #expect(Int(Kernel.System.allocationGranularity) == Int(Kernel.System.pageSize))
         }
     #endif
 }

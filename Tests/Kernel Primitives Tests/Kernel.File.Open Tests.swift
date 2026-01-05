@@ -9,7 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import Kernel_Test_Support
 import StandardsTestSupport
+import SystemPackage
 import Testing
 
 @testable import Kernel_Primitives
@@ -146,15 +148,15 @@ extension Kernel.File.Open.Test.EdgeCase {
                 path: path,
                 mode: [.read, .write],
                 options: .create,
-                permissions: Kernel.File.Permissions(rawValue: 0o644)
+                permissions: .standard
             )
             defer { try? Kernel.Close.close(fd) }
 
             #expect(fd.isValid)
 
             // Verify file exists by checking stats
-            let stats = try Kernel.File.Stats.stats(path)
-            #expect(stats.kind == .regular, "File should exist after create")
+            let stats = try Kernel.File.Stats.get(descriptor: fd)
+            #expect(stats.type == .regular, "File should exist after create")
         }
 
         @Test("open with truncate truncates existing file")
@@ -168,13 +170,13 @@ extension Kernel.File.Open.Test.EdgeCase {
                 path: path,
                 mode: [.read, .write],
                 options: .truncate,
-                permissions: Kernel.File.Permissions(rawValue: 0o644)
+                permissions: .standard
             )
             defer { try? Kernel.Close.close(truncFd) }
 
-            // Check file size is 0 using seek
-            let size = try Kernel.Seek.seek(truncFd, offset: Kernel.File.Offset(0), from: .end)
-            #expect(size._rawValue == 0, "File should be truncated to 0 bytes")
+            // Check file size is 0 using stats
+            let stats = try Kernel.File.Stats.get(descriptor: truncFd)
+            #expect(stats.size == 0, "File should be truncated to 0 bytes")
         }
 
         @Test("open with append positions at end")
@@ -199,7 +201,7 @@ extension Kernel.File.Open.Test.EdgeCase {
             }
 
             // Verify total content by re-reading
-            let readFd = try Kernel.File.Open.open(path: path, mode: .read, options: [])
+            let readFd = try Kernel.File.Open.open(path: path, mode: .read, options: [], permissions: .privateFile)
             defer { try? Kernel.Close.close(readFd) }
             var buffer = [UInt8](repeating: 0, count: 20)
             let bytesRead = try buffer.withUnsafeMutableBytes { ptr in

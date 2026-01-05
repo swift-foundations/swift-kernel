@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Errno.Unmapped {
+extension Kernel.Error.Unmapped {
     /// Platform-specific errors not mapped to semantic cases.
     public enum Error: Swift.Error, Sendable, Hashable {
         /// Unmapped platform error code.
@@ -23,7 +23,7 @@ extension Kernel.Errno.Unmapped {
 
 // MARK: - CustomStringConvertible
 
-extension Kernel.Errno.Unmapped.Error: CustomStringConvertible {
+extension Kernel.Error.Unmapped.Error: CustomStringConvertible {
     public var description: Swift.String {
         switch self {
         case .unmapped(let code, let message):
@@ -36,7 +36,7 @@ extension Kernel.Errno.Unmapped.Error: CustomStringConvertible {
 
 // MARK: - Convenience Initializers
 
-extension Kernel.Errno.Unmapped.Error {
+extension Kernel.Error.Unmapped.Error {
     public init(_ code: Kernel.Error.Code) {
         self = .unmapped(code: code, message: nil)
     }

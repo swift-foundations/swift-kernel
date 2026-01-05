@@ -200,7 +200,7 @@ public enum Error: Swift.Error, Sendable, Equatable {
     case space(Kernel.Storage.Error)
     case signal(Kernel.Signal.Error)
     case blocking(Kernel.IO.Blocking.Error)
-    case platform(Kernel.Errno.Unmapped.Error)
+    case platform(Kernel.Error.Unmapped.Error)
 }
 ```
 

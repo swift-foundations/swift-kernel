@@ -49,28 +49,22 @@ extension Kernel.File.System.Block.Test.Unit {
 // MARK: - Size Tests
 
 extension Kernel.File.System.Block.Test.Unit {
-    @Test("Size from rawValue")
-    func sizeRawValueInit() {
-        let size = Kernel.File.System.Block.Size(rawValue: 4096)
-        #expect(size.rawValue == 4096)
-    }
-
     @Test("Size from UInt64")
     func sizeUInt64Init() {
         let size = Kernel.File.System.Block.Size(512)
-        #expect(size.rawValue == 512)
+        #expect(size == 512)
     }
 
     @Test("Size sector512 constant")
     func sizeSector512() {
         let size = Kernel.File.System.Block.Size.sector512
-        #expect(size.rawValue == 512)
+        #expect(size == 512)
     }
 
     @Test("Size page4096 constant")
     func sizePage4096() {
         let size = Kernel.File.System.Block.Size.page4096
-        #expect(size.rawValue == 4096)
+        #expect(size == 4096)
     }
 
     @Test("Size is Comparable")
@@ -84,7 +78,7 @@ extension Kernel.File.System.Block.Test.Unit {
     @Test("Size is ExpressibleByIntegerLiteral")
     func sizeIntegerLiteral() {
         let size: Kernel.File.System.Block.Size = 8192
-        #expect(size.rawValue == 8192)
+        #expect(size == 8192)
     }
 
     @Test("Size is Sendable")
@@ -110,12 +104,6 @@ extension Kernel.File.System.Block.Test.Unit {
         set.insert(Kernel.File.System.Block.Size(512))  // duplicate
         #expect(set.count == 2)
     }
-
-    @Test("Size is CustomStringConvertible")
-    func sizeDescription() {
-        let size = Kernel.File.System.Block.Size(4096)
-        #expect(size.description == "4096")
-    }
 }
 
 // MARK: - Count Tests
@@ -124,7 +112,7 @@ extension Kernel.File.System.Block.Test.Unit {
     @Test("Count zero constant")
     func countZero() {
         let count = Kernel.File.System.Block.Count.zero
-        #expect(count._rawValue == 0)
+        #expect(count == 0)
     }
 
     @Test("Count addition")
@@ -132,7 +120,7 @@ extension Kernel.File.System.Block.Test.Unit {
         let a = Kernel.File.System.Block.Count(100)
         let b = Kernel.File.System.Block.Count(50)
         let sum = a + b
-        #expect(sum._rawValue == 150)
+        #expect(sum == 150)
     }
 
     @Test("Count subtraction")
@@ -140,7 +128,7 @@ extension Kernel.File.System.Block.Test.Unit {
         let a = Kernel.File.System.Block.Count(100)
         let b = Kernel.File.System.Block.Count(30)
         let diff = a - b
-        #expect(diff._rawValue == 70)
+        #expect(diff == 70)
     }
 }
 
@@ -150,21 +138,21 @@ extension Kernel.File.System.Block.Test.EdgeCase {
     @Test("Size zero value")
     func sizeZero() {
         let size = Kernel.File.System.Block.Size(0)
-        #expect(size.rawValue == 0)
+        #expect(size == 0)
     }
 
     @Test("Size maximum value")
     func sizeMax() {
         let size = Kernel.File.System.Block.Size(UInt64.max)
-        #expect(size.rawValue == UInt64.max)
+        #expect(size._rawValue == UInt64.max)
     }
 
     @Test("Count zero additions")
     func countZeroAddition() {
         let zero = Kernel.File.System.Block.Count.zero
         let hundred = Kernel.File.System.Block.Count(100)
-        #expect((zero + hundred)._rawValue == 100)
-        #expect((hundred + zero)._rawValue == 100)
+        #expect((zero + hundred) == 100)
+        #expect((hundred + zero) == 100)
     }
 
     @Test("Size ordering consistency")

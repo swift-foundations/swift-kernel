@@ -25,26 +25,26 @@ struct FileOffsetTests {
     @Test("Offset from integer literal")
     func literalInit() {
         let offset: Kernel.File.Offset = 1000
-        #expect(offset._rawValue == 1000)
+        #expect(offset == 1000)
     }
 
     @Test("Offset from Int")
     func intInit() {
         let offset = Kernel.File.Offset(100)
-        #expect(offset._rawValue == 100)
+        #expect(offset == 100)
     }
 
     @Test("Offset from Int64")
     func int64Init() {
         let offset = Kernel.File.Offset(Int64(5000))
-        #expect(offset._rawValue == 5000)
+        #expect(offset == 5000)
     }
 
     // MARK: - Constants
 
     @Test("zero constant")
     func zeroConstant() {
-        #expect(Kernel.File.Offset.zero._rawValue == 0)
+        #expect(Kernel.File.Offset.zero == 0)
     }
 
     @Test("max constant")
@@ -59,7 +59,7 @@ struct FileOffsetTests {
         let start: Kernel.File.Offset = 1000
         let end: Kernel.File.Offset = 5000
         let delta = end - start
-        #expect(delta._rawValue == 4000)
+        #expect(delta == 4000)
     }
 
     @Test("Offset plus Delta equals Offset")
@@ -67,7 +67,7 @@ struct FileOffsetTests {
         let offset: Kernel.File.Offset = 1000
         let delta = Kernel.File.Delta(3000)
         let result = offset + delta
-        #expect(result._rawValue == 4000)
+        #expect(result == 4000)
     }
 
     @Test("Offset minus Delta equals Offset")
@@ -75,7 +75,7 @@ struct FileOffsetTests {
         let offset: Kernel.File.Offset = 5000
         let delta = Kernel.File.Delta(2000)
         let result = offset - delta
-        #expect(result._rawValue == 3000)
+        #expect(result == 3000)
     }
 
     // MARK: - Arithmetic with Size
@@ -85,7 +85,7 @@ struct FileOffsetTests {
         let offset: Kernel.File.Offset = 1000
         let size: Kernel.File.Size = 4096
         let result = offset + size
-        #expect(result._rawValue == 5096)
+        #expect(result == 5096)
     }
 
     @Test("Offset minus Size equals Offset")
@@ -93,7 +93,7 @@ struct FileOffsetTests {
         let offset: Kernel.File.Offset = 5096
         let size: Kernel.File.Size = 4096
         let result = offset - size
-        #expect(result._rawValue == 1000)
+        #expect(result == 1000)
     }
 
     @Test("Offset plus Size in place")
@@ -101,7 +101,7 @@ struct FileOffsetTests {
         var offset: Kernel.File.Offset = 1000
         let size: Kernel.File.Size = 500
         offset += size
-        #expect(offset._rawValue == 1500)
+        #expect(offset == 1500)
     }
 
     @Test("Offset minus Size in place")
@@ -109,7 +109,7 @@ struct FileOffsetTests {
         var offset: Kernel.File.Offset = 1500
         let size: Kernel.File.Size = 500
         offset -= size
-        #expect(offset._rawValue == 1000)
+        #expect(offset == 1000)
     }
 
     // MARK: - Conformances
@@ -155,13 +155,13 @@ struct FileDeltaTests {
     @Test("Delta from integer literal")
     func literalInit() {
         let delta: Kernel.File.Delta = 500
-        #expect(delta._rawValue == 500)
+        #expect(delta == 500)
     }
 
     @Test("Negative Delta")
     func negativeDelta() {
         let delta = Kernel.File.Delta(-100)
-        #expect(delta._rawValue == -100)
+        #expect(delta == -100)
     }
 
     @Test("Delta is Equatable")

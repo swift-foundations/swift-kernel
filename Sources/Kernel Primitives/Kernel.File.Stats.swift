@@ -24,7 +24,7 @@ extension Kernel.File {
         /// POSIX file permissions (mode_t lower 12 bits).
         ///
         /// On Windows, this is synthesized from file attributes.
-        public let permissions: UInt16
+        public let permissions: Kernel.File.Permissions
 
         /// Owner user ID.
         ///
@@ -71,7 +71,7 @@ extension Kernel.File {
         public init(
             size: Kernel.File.Size,
             type: Kind,
-            permissions: UInt16,
+            permissions: Kernel.File.Permissions,
             uid: Kernel.User.ID,
             gid: Kernel.Group.ID,
             inode: Kernel.Inode,

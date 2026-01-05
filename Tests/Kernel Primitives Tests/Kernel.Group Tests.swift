@@ -43,13 +43,13 @@ extension Kernel.Group.Test.Unit {
     @Test("Group.ID from UInt32")
     func idFromUInt32() {
         let gid = Kernel.Group.ID(100)
-        #expect(gid._rawValue == 100)
+        #expect(gid == 100)
     }
 
     @Test("Group.ID root constant")
     func rootConstant() {
         let root = Kernel.Group.ID.root
-        #expect(root._rawValue == 0)
+        #expect(root == 0)
     }
 }
 

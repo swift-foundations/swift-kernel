@@ -57,13 +57,13 @@
         @Test("event data roundtrips value")
         func eventDataRoundtripsValue() {
             let data = Kernel.Kqueue.Event.Data(12345)
-            #expect(data._rawValue == 12345)
+            #expect(data == 12345)
         }
 
         @Test("event data zero constant exists")
         func eventDataZeroConstantExists() {
             let data = Kernel.Kqueue.Event.Data.zero
-            #expect(data._rawValue == 0)
+            #expect(data == 0)
         }
 
         @Test("event conforms to Equatable")

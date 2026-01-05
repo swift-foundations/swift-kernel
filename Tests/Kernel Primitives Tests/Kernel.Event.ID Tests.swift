@@ -25,13 +25,13 @@ struct EventIDTests {
     @Test("ID can be created from UInt literal")
     func literalInit() {
         let id: Kernel.Event.ID = 42
-        #expect(id._rawValue == 42)
+        #expect(id == 42)
     }
 
     @Test("ID zero is valid")
     func zeroValue() {
         let id: Kernel.Event.ID = 0
-        #expect(id._rawValue == 0)
+        #expect(id == 0)
     }
 
     @Test("ID max value")
@@ -49,7 +49,7 @@ struct EventIDTests {
         #else
             let descriptor = Kernel.Descriptor(rawValue: 5)
             let id = Kernel.Event.ID(descriptor: descriptor)
-            #expect(id._rawValue == 5)
+            #expect(id == 5)
         #endif
     }
 
@@ -80,7 +80,7 @@ struct EventIDTests {
     @Test("ID from Int32")
     func fromInt32() {
         let id = Kernel.Event.ID(Int32(15))
-        #expect(id._rawValue == 15)
+        #expect(id == 15)
     }
 
     @Test("ID from negative Int32")
@@ -99,7 +99,7 @@ struct EventIDTests {
         #else
             let socket = Kernel.Socket.Descriptor(rawValue: 7)
             let id = Kernel.Event.ID(socket: socket)
-            #expect(id._rawValue == 7)
+            #expect(id == 7)
         #endif
     }
 

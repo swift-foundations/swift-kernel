@@ -28,25 +28,25 @@
         @Test("zero constant equals 0")
         func zeroConstant() {
             let zero = Kernel.Kqueue.Filter.Data.zero
-            #expect(zero._rawValue == 0)
+            #expect(zero == 0)
         }
 
         @Test("init from Int stores value")
         func initFromInt() {
             let data = Kernel.Kqueue.Filter.Data(42)
-            #expect(data._rawValue == 42)
+            #expect(data == 42)
         }
 
         @Test("literal initialization works")
         func literalInit() {
             let data: Kernel.Kqueue.Filter.Data = 100
-            #expect(data._rawValue == 100)
+            #expect(data == 100)
         }
 
         @Test("negative values are preserved")
         func negativeValues() {
             let data = Kernel.Kqueue.Filter.Data(-1)
-            #expect(data._rawValue == -1)
+            #expect(data == -1)
         }
 
         // MARK: - Conformance Tests

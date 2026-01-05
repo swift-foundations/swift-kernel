@@ -14,22 +14,22 @@ import Testing
 
 @testable import Kernel_Primitives
 
-extension Kernel.Errno.Unmapped.Error {
+extension Kernel.Error.Unmapped.Error {
     #TestSuites
 }
 
 // MARK: - Unit Tests
 
-extension Kernel.Errno.Unmapped.Error.Test.Unit {
+extension Kernel.Error.Unmapped.Error.Test.Unit {
     @Test("Error type exists")
     func typeExists() {
-        let _: Kernel.Errno.Unmapped.Error.Type = Kernel.Errno.Unmapped.Error.self
+        let _: Kernel.Error.Unmapped.Error.Type = Kernel.Error.Unmapped.Error.self
     }
 
     @Test("unmapped case exists")
     func unmappedCase() {
         let code = Kernel.Error.Code.posix(42)
-        let error = Kernel.Errno.Unmapped.Error.unmapped(code: code, message: nil)
+        let error = Kernel.Error.Unmapped.Error.unmapped(code: code, message: nil)
         if case .unmapped(let c, let m) = error {
             #expect(c == code)
             #expect(m == nil)
@@ -41,7 +41,7 @@ extension Kernel.Errno.Unmapped.Error.Test.Unit {
     @Test("unmapped case with message")
     func unmappedCaseWithMessage() {
         let code = Kernel.Error.Code.posix(42)
-        let error = Kernel.Errno.Unmapped.Error.unmapped(code: code, message: "test message")
+        let error = Kernel.Error.Unmapped.Error.unmapped(code: code, message: "test message")
         if case .unmapped(let c, let m) = error {
             #expect(c == code)
             #expect(m == "test message")
@@ -53,11 +53,11 @@ extension Kernel.Errno.Unmapped.Error.Test.Unit {
 
 // MARK: - Convenience Init Tests
 
-extension Kernel.Errno.Unmapped.Error.Test.Unit {
+extension Kernel.Error.Unmapped.Error.Test.Unit {
     @Test("convenience init from Error.Code")
     func convenienceInit() {
         let code = Kernel.Error.Code.posix(99)
-        let error = Kernel.Errno.Unmapped.Error(code)
+        let error = Kernel.Error.Unmapped.Error(code)
         if case .unmapped(let c, let m) = error {
             #expect(c == code)
             #expect(m == nil)
@@ -69,35 +69,35 @@ extension Kernel.Errno.Unmapped.Error.Test.Unit {
 
 // MARK: - Conformance Tests
 
-extension Kernel.Errno.Unmapped.Error.Test.Unit {
+extension Kernel.Error.Unmapped.Error.Test.Unit {
     @Test("Error conforms to Swift.Error")
     func isError() {
-        let error: any Swift.Error = Kernel.Errno.Unmapped.Error(.posix(1))
-        #expect(error is Kernel.Errno.Unmapped.Error)
+        let error: any Swift.Error = Kernel.Error.Unmapped.Error(.posix(1))
+        #expect(error is Kernel.Error.Unmapped.Error)
     }
 
     @Test("Error is Sendable")
     func isSendable() {
-        let value: any Sendable = Kernel.Errno.Unmapped.Error(.posix(1))
-        #expect(value is Kernel.Errno.Unmapped.Error)
+        let value: any Sendable = Kernel.Error.Unmapped.Error(.posix(1))
+        #expect(value is Kernel.Error.Unmapped.Error)
     }
 
     @Test("Error is Hashable")
     func isHashable() {
-        var set = Set<Kernel.Errno.Unmapped.Error>()
-        set.insert(Kernel.Errno.Unmapped.Error(.posix(1)))
-        set.insert(Kernel.Errno.Unmapped.Error(.posix(2)))
-        set.insert(Kernel.Errno.Unmapped.Error(.posix(1)))  // duplicate
+        var set = Set<Kernel.Error.Unmapped.Error>()
+        set.insert(Kernel.Error.Unmapped.Error(.posix(1)))
+        set.insert(Kernel.Error.Unmapped.Error(.posix(2)))
+        set.insert(Kernel.Error.Unmapped.Error(.posix(1)))  // duplicate
         #expect(set.count == 2)
     }
 }
 
 // MARK: - Description Tests
 
-extension Kernel.Errno.Unmapped.Error.Test.Unit {
+extension Kernel.Error.Unmapped.Error.Test.Unit {
     @Test("description uses message if provided")
     func descriptionWithMessage() {
-        let error = Kernel.Errno.Unmapped.Error.unmapped(
+        let error = Kernel.Error.Unmapped.Error.unmapped(
             code: .posix(42),
             message: "custom message"
         )
@@ -106,17 +106,17 @@ extension Kernel.Errno.Unmapped.Error.Test.Unit {
 
     @Test("description fallback for no message")
     func descriptionWithoutMessage() {
-        let error = Kernel.Errno.Unmapped.Error(.posix(999))
+        let error = Kernel.Error.Unmapped.Error(.posix(999))
         #expect(!error.description.isEmpty)
     }
 }
 
 // MARK: - Edge Cases
 
-extension Kernel.Errno.Unmapped.Error.Test.EdgeCase {
+extension Kernel.Error.Unmapped.Error.Test.EdgeCase {
     @Test("POSIX error code")
     func posixErrorCode() {
-        let error = Kernel.Errno.Unmapped.Error(.posix(42))
+        let error = Kernel.Error.Unmapped.Error(.posix(42))
         if case .unmapped(let code, _) = error {
             if case .posix(let value) = code {
                 #expect(value == 42)
@@ -129,7 +129,7 @@ extension Kernel.Errno.Unmapped.Error.Test.EdgeCase {
     #if os(Windows)
         @Test("Windows error code")
         func windowsErrorCode() {
-            let error = Kernel.Errno.Unmapped.Error(.win32(5))
+            let error = Kernel.Error.Unmapped.Error(.win32(5))
             if case .unmapped(let code, _) = error {
                 if case .win32(let value) = code {
                     #expect(value == 5)

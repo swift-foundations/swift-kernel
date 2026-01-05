@@ -61,6 +61,6 @@ extension Kernel.Error {
         case .join(let c): code = c
         case .detach(let c): code = c
         }
-        self = Kernel.Error(code) ?? .platform(Kernel.Errno.Unmapped.Error(code))
+        self = Kernel.Error(code) ?? .platform(Kernel.Error.Unmapped.Error(code))
     }
 }

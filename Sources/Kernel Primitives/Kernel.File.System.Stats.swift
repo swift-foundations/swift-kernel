@@ -52,16 +52,16 @@ extension Kernel.File.System {
         public let availableBlocks: Kernel.File.System.Block.Count
 
         /// Total file nodes (inodes) in filesystem.
-        public let files: UInt64
+        public let files: Kernel.File.System.File.Count
 
         /// Free file nodes in filesystem.
-        public let freeFiles: UInt64
+        public let freeFiles: Kernel.File.System.File.Count
 
         /// Filesystem ID.
-        public let fsid: UInt64
+        public let fsid: Kernel.File.System.ID
 
         /// Maximum length of filenames.
-        public let nameMax: UInt64
+        public let nameMax: Kernel.File.System.Name.Length
 
         /// Filesystem type name.
         ///
@@ -79,10 +79,10 @@ extension Kernel.File.System {
             blocks: Kernel.File.System.Block.Count,
             freeBlocks: Kernel.File.System.Block.Count,
             availableBlocks: Kernel.File.System.Block.Count,
-            files: UInt64,
-            freeFiles: UInt64,
-            fsid: UInt64,
-            nameMax: UInt64,
+            files: Kernel.File.System.File.Count,
+            freeFiles: Kernel.File.System.File.Count,
+            fsid: Kernel.File.System.ID,
+            nameMax: Kernel.File.System.Name.Length,
             fsTypeName: String? = nil
         ) {
             self.type = type
@@ -171,10 +171,10 @@ extension Kernel.File.System {
                     blocks: Kernel.File.System.Block.Count(UInt64(buf.f_blocks)),
                     freeBlocks: Kernel.File.System.Block.Count(UInt64(buf.f_bfree)),
                     availableBlocks: Kernel.File.System.Block.Count(UInt64(buf.f_bavail)),
-                    files: UInt64(buf.f_files),
-                    freeFiles: UInt64(buf.f_ffree),
-                    fsid: UInt64(buf.f_fsid.val.0) | (UInt64(buf.f_fsid.val.1) << 32),
-                    nameMax: UInt64(NAME_MAX),
+                    files: Kernel.File.System.File.Count(UInt64(buf.f_files)),
+                    freeFiles: Kernel.File.System.File.Count(UInt64(buf.f_ffree)),
+                    fsid: Kernel.File.System.ID(UInt64(buf.f_fsid.val.0) | (UInt64(buf.f_fsid.val.1) << 32)),
+                    nameMax: Kernel.File.System.Name.Length(UInt64(NAME_MAX)),
                     fsTypeName: withUnsafeBytes(of: buf.f_fstypename) { ptr in
                         String(cString: ptr.baseAddress!.assumingMemoryBound(to: CChar.self))
                     }
@@ -186,10 +186,10 @@ extension Kernel.File.System {
                     blocks: Kernel.File.System.Block.Count(UInt64(buf.f_blocks)),
                     freeBlocks: Kernel.File.System.Block.Count(UInt64(buf.f_bfree)),
                     availableBlocks: Kernel.File.System.Block.Count(UInt64(buf.f_bavail)),
-                    files: UInt64(buf.f_files),
-                    freeFiles: UInt64(buf.f_ffree),
-                    fsid: UInt64(buf.f_fsid.__val.0) | (UInt64(buf.f_fsid.__val.1) << 32),
-                    nameMax: UInt64(buf.f_namelen),
+                    files: Kernel.File.System.File.Count(UInt64(buf.f_files)),
+                    freeFiles: Kernel.File.System.File.Count(UInt64(buf.f_ffree)),
+                    fsid: Kernel.File.System.ID(UInt64(buf.f_fsid.__val.0) | (UInt64(buf.f_fsid.__val.1) << 32)),
+                    nameMax: Kernel.File.System.Name.Length(UInt64(buf.f_namelen)),
                     fsTypeName: nil
                 )
             #endif
@@ -268,10 +268,10 @@ extension Kernel.File.System {
                 blocks: Kernel.File.System.Block.Count(UInt64(totalClusters)),
                 freeBlocks: Kernel.File.System.Block.Count(UInt64(freeClusters)),
                 availableBlocks: Kernel.File.System.Block.Count(UInt64(freeClusters)),
-                files: 0,
-                freeFiles: 0,
-                fsid: UInt64(volumeSerial),
-                nameMax: UInt64(maxComponentLength),
+                files: Kernel.File.System.File.Count(0),
+                freeFiles: Kernel.File.System.File.Count(0),
+                fsid: Kernel.File.System.ID(UInt64(volumeSerial)),
+                nameMax: Kernel.File.System.Name.Length(UInt64(maxComponentLength)),
                 fsTypeName: fsTypeName
             )
         }

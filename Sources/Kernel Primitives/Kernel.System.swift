@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Binary
+
 extension Kernel {
     /// System information queries.
     public enum System {}
@@ -17,78 +19,48 @@ extension Kernel {
 // MARK: - Alignment Helpers
 
 extension Kernel.System {
-    /// Rounds a value down to the nearest multiple of alignment.
-    ///
-    /// - Parameters:
-    ///   - value: The value to align.
-    ///   - alignment: The alignment boundary (must be a power of 2).
-    /// - Returns: The largest multiple of `alignment` that is ≤ `value`.
-    ///
-    /// - Precondition: `alignment` must be a power of 2.
-    @inlinable
-    public static func alignDown(_ value: Int, to alignment: Int) -> Int {
-        value & ~(alignment - 1)
-    }
-
-    /// Rounds a value up to the nearest multiple of alignment.
-    ///
-    /// - Parameters:
-    ///   - value: The value to align.
-    ///   - alignment: The alignment boundary (must be a power of 2).
-    /// - Returns: The smallest multiple of `alignment` that is ≥ `value`.
-    ///
-    /// - Precondition: `alignment` must be a power of 2.
-    @inlinable
-    public static func alignUp(_ value: Int, to alignment: Int) -> Int {
-        (value + alignment - 1) & ~(alignment - 1)
-    }
-
-    // MARK: - Typed Alignment (File.Offset)
-
-    /// Rounds a file offset down to the nearest multiple of alignment.
+    /// Rounds a file offset down to the nearest alignment boundary.
     ///
     /// - Parameters:
     ///   - offset: The offset to align.
-    ///   - alignment: The alignment boundary (must be a power of 2).
-    /// - Returns: The largest multiple of `alignment` that is ≤ `offset`.
+    ///   - alignment: The alignment boundary (power of 2).
+    /// - Returns: The largest aligned offset ≤ `offset`.
     @inlinable
-    public static func alignDown(_ offset: Kernel.File.Offset, to alignment: Int) -> Kernel.File.Offset {
-        Kernel.File.Offset(alignDown(Int(offset._rawValue), to: alignment))
+    public static func alignDown(_ offset: Kernel.File.Offset, to alignment: Binary.Alignment) -> Kernel.File.Offset {
+        Kernel.File.Offset(alignment.alignDown(offset._rawValue))
     }
 
-    /// Rounds a file offset up to the nearest multiple of alignment.
+    /// Rounds a file offset up to the nearest alignment boundary.
     ///
     /// - Parameters:
     ///   - offset: The offset to align.
-    ///   - alignment: The alignment boundary (must be a power of 2).
-    /// - Returns: The smallest multiple of `alignment` that is ≥ `offset`.
+    ///   - alignment: The alignment boundary (power of 2).
+    /// - Returns: The smallest aligned offset ≥ `offset`.
     @inlinable
-    public static func alignUp(_ offset: Kernel.File.Offset, to alignment: Int) -> Kernel.File.Offset {
-        Kernel.File.Offset(alignUp(Int(offset._rawValue), to: alignment))
+    public static func alignUp(_ offset: Kernel.File.Offset, to alignment: Binary.Alignment) -> Kernel.File.Offset {
+        Kernel.File.Offset(alignment.alignUp(offset._rawValue))
     }
 
-    // MARK: - Typed Alignment (File.Size)
-
-    /// Rounds a file size down to the nearest multiple of alignment.
+    /// Rounds a file size down to the nearest alignment boundary.
     ///
     /// - Parameters:
     ///   - size: The size to align.
-    ///   - alignment: The alignment boundary (must be a power of 2).
-    /// - Returns: The largest multiple of `alignment` that is ≤ `size`.
+    ///   - alignment: The alignment boundary (power of 2).
+    /// - Returns: The largest aligned size ≤ `size`.
     @inlinable
-    public static func alignDown(_ size: Kernel.File.Size, to alignment: Int) -> Kernel.File.Size {
-        Kernel.File.Size(alignDown(Int(size._rawValue), to: alignment))
+    public static func alignDown(_ size: Kernel.File.Size, to alignment: Binary.Alignment) -> Kernel.File.Size {
+        Kernel.File.Size(alignment.alignDown(size._rawValue))
     }
 
-    /// Rounds a file size up to the nearest multiple of alignment.
+    /// Rounds a file size up to the nearest alignment boundary.
     ///
     /// - Parameters:
     ///   - size: The size to align.
-    ///   - alignment: The alignment boundary (must be a power of 2).
-    /// - Returns: The smallest multiple of `alignment` that is ≥ `size`.
+    ///   - alignment: The alignment boundary (power of 2).
+    /// - Returns: The smallest aligned size ≥ `size`.
     @inlinable
-    public static func alignUp(_ size: Kernel.File.Size, to alignment: Int) -> Kernel.File.Size {
-        Kernel.File.Size(alignUp(Int(size._rawValue), to: alignment))
+    public static func alignUp(_ size: Kernel.File.Size, to alignment: Binary.Alignment) -> Kernel.File.Size {
+        Kernel.File.Size(alignment.alignUp(size._rawValue))
     }
 }
 
@@ -107,11 +79,11 @@ extension Kernel.System {
         ///
         /// Falls back to 4096 if the platform constant is undefined.
         /// Note: This is a conservative limit, not a universal truth.
-        public static var pathMax: Int {
+        public static var pathMax: Kernel.System.Path.Length {
             #if canImport(Darwin)
-                return Int(PATH_MAX)  // 1024
+                return Kernel.System.Path.Length(Int(PATH_MAX))  // 1024
             #else
-                return Int(PATH_MAX)  // Usually 4096
+                return Kernel.System.Path.Length(Int(PATH_MAX))  // Usually 4096
             #endif
         }
 
@@ -119,8 +91,8 @@ extension Kernel.System {
         ///
         /// This is the fundamental unit of memory management.
         /// Typically 4096 bytes on most systems, 16384 on Apple Silicon.
-        public static var pageSize: Int {
-            Int(sysconf(Int32(_SC_PAGESIZE)))
+        public static var pageSize: Kernel.Memory.Page.Size {
+            Kernel.Memory.Page.Size(Int(sysconf(Int32(_SC_PAGESIZE))))
         }
 
         /// Number of active/online processors.
@@ -129,9 +101,9 @@ extension Kernel.System {
         /// processors currently online (not just configured).
         ///
         /// Returns 1 as a fallback if the syscall fails.
-        public static var processorCount: Int {
+        public static var processorCount: Kernel.System.Processor.Count {
             let count = sysconf(Int32(_SC_NPROCESSORS_ONLN))
-            return count > 0 ? Int(count) : 1
+            return Kernel.System.Processor.Count(count > 0 ? Int(count) : 1)
         }
 
         /// Allocation granularity in bytes.
@@ -140,8 +112,8 @@ extension Kernel.System {
         /// On Windows, this is typically 64KB (larger than page size).
         ///
         /// Use this for memory mapping offset alignment.
-        public static var allocationGranularity: Int {
-            pageSize
+        public static var allocationGranularity: Kernel.Memory.Allocation.Granularity {
+            Kernel.Memory.Allocation.Granularity(Int(pageSize))
         }
 
         /// Sleeps for the specified number of nanoseconds.
@@ -193,28 +165,28 @@ extension Kernel.System {
         ///
         /// Note: This is a conservative limit. Extended-length paths
         /// on Windows can exceed MAX_PATH using \\?\ prefix.
-        public static var pathMax: Int {
-            Int(MAX_PATH)  // 260
+        public static var pathMax: Kernel.System.Path.Length {
+            Kernel.System.Path.Length(Int(MAX_PATH))  // 260
         }
 
         /// Memory page size in bytes.
-        public static var pageSize: Int {
-            Int(cachedSystemInfo.dwPageSize)
+        public static var pageSize: Kernel.Memory.Page.Size {
+            Kernel.Memory.Page.Size(Int(cachedSystemInfo.dwPageSize))
         }
 
         /// Allocation granularity in bytes.
         ///
         /// On Windows, this is typically 64KB and differs from page size.
         /// Memory mapping offsets must be aligned to this value.
-        public static var allocationGranularity: Int {
-            Int(cachedSystemInfo.dwAllocationGranularity)
+        public static var allocationGranularity: Kernel.Memory.Allocation.Granularity {
+            Kernel.Memory.Allocation.Granularity(Int(cachedSystemInfo.dwAllocationGranularity))
         }
 
         /// Number of active processors.
         ///
         /// Uses the cached `SYSTEM_INFO` from `GetSystemInfo`.
-        public static var processorCount: Int {
-            Int(cachedSystemInfo.dwNumberOfProcessors)
+        public static var processorCount: Kernel.System.Processor.Count {
+            Kernel.System.Processor.Count(Int(cachedSystemInfo.dwNumberOfProcessors))
         }
 
         /// Sleeps for the specified number of nanoseconds.

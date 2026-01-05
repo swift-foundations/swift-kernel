@@ -14,29 +14,29 @@ import Testing
 
 @testable import Kernel_Primitives
 
-extension Kernel.Errno.Unmapped {
+extension Kernel.Error.Unmapped {
     #TestSuites
 }
 
 // MARK: - Unit Tests
 
-extension Kernel.Errno.Unmapped.Test.Unit {
+extension Kernel.Error.Unmapped.Test.Unit {
     @Test("Unmapped namespace exists")
     func namespaceExists() {
-        _ = Kernel.Errno.Unmapped.self
+        _ = Kernel.Error.Unmapped.self
     }
 
     @Test("Unmapped is an enum")
     func isEnum() {
-        let _: Kernel.Errno.Unmapped.Type = Kernel.Errno.Unmapped.self
+        let _: Kernel.Error.Unmapped.Type = Kernel.Error.Unmapped.self
     }
 }
 
 // MARK: - Nested Types
 
-extension Kernel.Errno.Unmapped.Test.Unit {
+extension Kernel.Error.Unmapped.Test.Unit {
     @Test("Unmapped.Error type exists")
     func errorTypeExists() {
-        let _: Kernel.Errno.Unmapped.Error.Type = Kernel.Errno.Unmapped.Error.self
+        let _: Kernel.Error.Unmapped.Error.Type = Kernel.Error.Unmapped.Error.self
     }
 }

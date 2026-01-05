@@ -228,7 +228,7 @@ import Testing
     struct ErrnoUnmappedErrorMappingTests {
         @Test("creates platform error from errno")
         func fromErrno() {
-            let error = Kernel.Errno.Unmapped.Error(errno: .interrupted)
+            let error = Kernel.Error.Unmapped.Error(errno: .interrupted)
             if case .unmapped(let code, _) = error {
                 if case .posix(let value) = code {
                     #expect(value == Errno.interrupted.rawValue)

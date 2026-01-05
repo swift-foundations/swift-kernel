@@ -67,7 +67,7 @@ extension Kernel.File.Stats {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
+            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
         }
     }
 
@@ -87,7 +87,7 @@ extension Kernel.File.Stats {
             self.init(
                 size: Kernel.File.Size(Int64(sb.st_size)),
                 type: Kind(mode: sb.st_mode),
-                permissions: UInt16(sb.st_mode & 0o7777),
+                permissions: Kernel.File.Permissions(rawValue: UInt16(sb.st_mode & 0o7777)),
                 uid: Kernel.User.ID(UInt32(sb.st_uid)),
                 gid: Kernel.Group.ID(UInt32(sb.st_gid)),
                 inode: Kernel.Inode(UInt64(sb.st_ino)),
@@ -151,7 +151,7 @@ extension Kernel.File.Stats {
             }
 
             // Synthesize POSIX-like permissions from Windows attributes
-            var permissions: UInt16 = 0o644  // Default: rw-r--r--
+            var permissions: Kernel.File.Permissions = .standard  // Default: rw-r--r-- (0o644)
             if (info.dwFileAttributes & DWORD(FILE_ATTRIBUTE_READONLY)) != 0 {
                 permissions = 0o444  // r--r--r--
             }
@@ -187,7 +187,7 @@ extension Kernel.File.Stats {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
+            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
         }
     }
 

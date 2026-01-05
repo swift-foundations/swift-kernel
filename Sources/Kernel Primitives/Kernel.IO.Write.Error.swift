@@ -20,7 +20,7 @@ extension Kernel.IO.Write {
         case io(Kernel.IO.Error)
         case space(Kernel.Storage.Error)
         case memory(Kernel.Memory.Error)
-        case platform(Kernel.Errno.Unmapped.Error)
+        case platform(Kernel.Error.Unmapped.Error)
     }
 }
 
@@ -96,7 +96,7 @@ extension Kernel.IO.Write.Error: CustomStringConvertible {
                 self = .memory(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(errno: errno))
+            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
         }
 
         @inlinable
@@ -127,7 +127,7 @@ extension Kernel.IO.Write.Error: CustomStringConvertible {
                 self = .space(e)
                 return
             }
-            self = .platform(Kernel.Errno.Unmapped.Error(windowsError: error))
+            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
         }
 
         @inlinable

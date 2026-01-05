@@ -28,19 +28,19 @@
         @Test("zero constant equals 0")
         func zeroConstant() {
             let zero = Kernel.Kqueue.Event.Data.zero
-            #expect(zero._rawValue == 0)
+            #expect(zero == 0)
         }
 
         @Test("init from UInt64 stores value")
         func initFromUInt64() {
             let data = Kernel.Kqueue.Event.Data(42)
-            #expect(data._rawValue == 42)
+            #expect(data == 42)
         }
 
         @Test("literal initialization works")
         func literalInit() {
             let data: Kernel.Kqueue.Event.Data = 100
-            #expect(data._rawValue == 100)
+            #expect(data == 100)
         }
 
         // MARK: - Pointer Conversion Tests
@@ -59,7 +59,7 @@
         func initFromNilPointer() {
             let pointer: UnsafeMutableRawPointer? = nil
             let data = Kernel.Kqueue.Event.Data(pointer)
-            #expect(data._rawValue == 0)
+            #expect(data == 0)
         }
 
         @Test("init from raw pointer preserves bitPattern")
@@ -68,7 +68,7 @@
             let data = withUnsafePointer(to: &value) { ptr in
                 Kernel.Kqueue.Event.Data(UnsafeRawPointer(ptr))
             }
-            #expect(data._rawValue != 0)
+            #expect(data != 0)
         }
 
         @Test("init from typed pointer preserves bitPattern")
@@ -77,7 +77,7 @@
             let data = withUnsafePointer(to: &value) { ptr in
                 Kernel.Kqueue.Event.Data(pointer: ptr)
             }
-            #expect(data._rawValue != 0)
+            #expect(data != 0)
         }
 
         @Test("init from mutable typed pointer preserves bitPattern")
@@ -86,7 +86,7 @@
             let data = withUnsafeMutablePointer(to: &value) { ptr in
                 Kernel.Kqueue.Event.Data(pointer: ptr)
             }
-            #expect(data._rawValue != 0)
+            #expect(data != 0)
         }
 
         // MARK: - Pointer Extraction Tests
