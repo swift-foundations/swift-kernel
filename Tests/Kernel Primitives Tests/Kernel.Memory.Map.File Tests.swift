@@ -40,16 +40,16 @@ extension Kernel.Memory.Map.File.Test.Unit {
         func mapSignatureExists() {
             // Verify the function exists with correct signature
             typealias MapFunc = (
-                UnsafeMutableRawPointer?,
-                Int64,
-                Int,
+                Kernel.Descriptor,
+                Kernel.File.Offset,
+                Kernel.File.Size,
                 Kernel.Memory.Map.Protection,
                 Bool
             ) throws -> Kernel.Memory.Map.Region
 
-            let _: MapFunc = { handle, offset, length, protection, cow in
+            let _: MapFunc = { descriptor, offset, length, protection, cow in
                 try Kernel.Memory.Map.File.map(
-                    handle: handle,
+                    descriptor: descriptor,
                     offset: offset,
                     length: length,
                     protection: protection,
