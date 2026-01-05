@@ -19,7 +19,7 @@ public import Kernel_Primitives
         internal import Musl
     #endif
 
-    extension Kernel.Event.Poll {
+    extension Kernel.Event.Poll.Create {
         /// Flags for creating an epoll instance.
         ///
         /// Used with `epoll_create1` to control the behavior of the
@@ -39,7 +39,7 @@ public import Kernel_Primitives
         ///
         /// - ``Kernel/Event/Poll``
         /// - ``Kernel/Event/Poll/Operation``
-        public struct CreateFlags: Sendable, Equatable, Hashable {
+        public struct Flags: Sendable, Equatable, Hashable {
             public let rawValue: Int32
 
             @inlinable
@@ -49,7 +49,7 @@ public import Kernel_Primitives
         }
     }
 
-    extension Kernel.Event.Poll.CreateFlags {
+    extension Kernel.Event.Poll.Create.Flags {
         /// No flags.
         public static let none = Self(rawValue: 0)
 

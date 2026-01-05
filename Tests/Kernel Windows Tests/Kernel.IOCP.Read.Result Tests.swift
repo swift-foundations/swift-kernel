@@ -17,30 +17,30 @@
     @testable import Kernel_Windows
     import Kernel_Primitives
 
-    extension Kernel.IOCP.WriteResult {
+    extension Kernel.IOCP.Read.Result {
         #TestSuites
     }
 
     // MARK: - Unit Tests
 
-    extension Kernel.IOCP.WriteResult.Test.Unit {
-        @Test("WriteResult type exists")
+    extension Kernel.IOCP.Read.Result.Test.Unit {
+        @Test("Read.Result type exists")
         func typeExists() {
-            let _: Kernel.IOCP.WriteResult.Type = Kernel.IOCP.WriteResult.self
+            let _: Kernel.IOCP.Read.Result.Type = Kernel.IOCP.Read.Result.self
         }
 
-        @Test("WriteResult is an enum")
+        @Test("Read.Result is an enum")
         func isEnum() {
-            let _: Kernel.IOCP.WriteResult.Type = Kernel.IOCP.WriteResult.self
+            let _: Kernel.IOCP.Read.Result.Type = Kernel.IOCP.Read.Result.self
         }
     }
 
     // MARK: - Case Tests
 
-    extension Kernel.IOCP.WriteResult.Test.Unit {
+    extension Kernel.IOCP.Read.Result.Test.Unit {
         @Test("pending case exists")
         func pendingCase() {
-            let result = Kernel.IOCP.WriteResult.pending
+            let result = Kernel.IOCP.Read.Result.pending
             if case .pending = result {
                 // Expected
             } else {
@@ -50,9 +50,9 @@
 
         @Test("completed case exists with bytes")
         func completedCase() {
-            let result = Kernel.IOCP.WriteResult.completed(bytes: 2048)
+            let result = Kernel.IOCP.Read.Result.completed(bytes: 1024)
             if case .completed(let bytes) = result {
-                #expect(bytes == 2048)
+                #expect(bytes == 1024)
             } else {
                 Issue.record("Expected .completed case")
             }
@@ -60,7 +60,7 @@
 
         @Test("completed with zero bytes")
         func completedZeroBytes() {
-            let result = Kernel.IOCP.WriteResult.completed(bytes: 0)
+            let result = Kernel.IOCP.Read.Result.completed(bytes: 0)
             if case .completed(let bytes) = result {
                 #expect(bytes == 0)
             } else {
@@ -70,7 +70,7 @@
 
         @Test("completed with maximum bytes")
         func completedMaxBytes() {
-            let result = Kernel.IOCP.WriteResult.completed(bytes: UInt32.max)
+            let result = Kernel.IOCP.Read.Result.completed(bytes: UInt32.max)
             if case .completed(let bytes) = result {
                 #expect(bytes == UInt32.max)
             } else {
@@ -81,20 +81,20 @@
 
     // MARK: - Conformance Tests
 
-    extension Kernel.IOCP.WriteResult.Test.Unit {
-        @Test("WriteResult is Sendable")
+    extension Kernel.IOCP.Read.Result.Test.Unit {
+        @Test("Read.Result is Sendable")
         func isSendable() {
-            let value: any Sendable = Kernel.IOCP.WriteResult.pending
-            #expect(value is Kernel.IOCP.WriteResult)
+            let value: any Sendable = Kernel.IOCP.Read.Result.pending
+            #expect(value is Kernel.IOCP.Read.Result)
         }
 
-        @Test("WriteResult is Equatable")
+        @Test("Read.Result is Equatable")
         func isEquatable() {
-            let pending1 = Kernel.IOCP.WriteResult.pending
-            let pending2 = Kernel.IOCP.WriteResult.pending
-            let completed1 = Kernel.IOCP.WriteResult.completed(bytes: 100)
-            let completed2 = Kernel.IOCP.WriteResult.completed(bytes: 100)
-            let completed3 = Kernel.IOCP.WriteResult.completed(bytes: 200)
+            let pending1 = Kernel.IOCP.Read.Result.pending
+            let pending2 = Kernel.IOCP.Read.Result.pending
+            let completed1 = Kernel.IOCP.Read.Result.completed(bytes: 100)
+            let completed2 = Kernel.IOCP.Read.Result.completed(bytes: 100)
+            let completed3 = Kernel.IOCP.Read.Result.completed(bytes: 200)
 
             #expect(pending1 == pending2)
             #expect(completed1 == completed2)
@@ -105,13 +105,13 @@
 
     // MARK: - Pattern Matching Tests
 
-    extension Kernel.IOCP.WriteResult.Test.Unit {
+    extension Kernel.IOCP.Read.Result.Test.Unit {
         @Test("switch exhaustively matches all cases")
         func switchExhaustive() {
-            let results: [Kernel.IOCP.WriteResult] = [
+            let results: [Kernel.IOCP.Read.Result] = [
                 .pending,
                 .completed(bytes: 0),
-                .completed(bytes: 1024),
+                .completed(bytes: 512),
             ]
 
             for result in results {
@@ -126,8 +126,8 @@
 
         @Test("if-case pattern matching works")
         func ifCasePatternMatching() {
-            let pending = Kernel.IOCP.WriteResult.pending
-            let completed = Kernel.IOCP.WriteResult.completed(bytes: 512)
+            let pending = Kernel.IOCP.Read.Result.pending
+            let completed = Kernel.IOCP.Read.Result.completed(bytes: 256)
 
             if case .pending = pending {
                 // Expected
@@ -136,39 +136,22 @@
             }
 
             if case .completed(let bytes) = completed {
-                #expect(bytes == 512)
+                #expect(bytes == 256)
             } else {
                 Issue.record("Expected completed")
             }
         }
     }
 
-    // MARK: - Comparison with ReadResult Tests
-
-    extension Kernel.IOCP.WriteResult.Test.Unit {
-        @Test("WriteResult and ReadResult have same structure")
-        func sameStructureAsReadResult() {
-            // Both should have pending and completed(bytes:) cases
-            let writeResult = Kernel.IOCP.WriteResult.completed(bytes: 100)
-            let readResult = Kernel.IOCP.ReadResult.completed(bytes: 100)
-
-            if case .completed(let writeBytes) = writeResult,
-                case .completed(let readBytes) = readResult
-            {
-                #expect(writeBytes == readBytes)
-            }
-        }
-    }
-
     // MARK: - Edge Cases
 
-    extension Kernel.IOCP.WriteResult.Test.EdgeCase {
+    extension Kernel.IOCP.Read.Result.Test.EdgeCase {
         @Test("completed with various byte values")
         func completedVariousBytes() {
             let testValues: [UInt32] = [0, 1, 512, 4096, 65536, UInt32.max - 1, UInt32.max]
 
             for value in testValues {
-                let result = Kernel.IOCP.WriteResult.completed(bytes: value)
+                let result = Kernel.IOCP.Read.Result.completed(bytes: value)
                 if case .completed(let bytes) = result {
                     #expect(bytes == value)
                 } else {
@@ -179,9 +162,9 @@
 
         @Test("pending cases are always equal")
         func pendingAlwaysEqual() {
-            let p1 = Kernel.IOCP.WriteResult.pending
-            let p2 = Kernel.IOCP.WriteResult.pending
-            let p3 = Kernel.IOCP.WriteResult.pending
+            let p1 = Kernel.IOCP.Read.Result.pending
+            let p2 = Kernel.IOCP.Read.Result.pending
+            let p3 = Kernel.IOCP.Read.Result.pending
 
             #expect(p1 == p2)
             #expect(p2 == p3)
@@ -190,36 +173,18 @@
 
         @Test("completed cases with same bytes are equal")
         func completedSameBytesEqual() {
-            let c1 = Kernel.IOCP.WriteResult.completed(bytes: 42)
-            let c2 = Kernel.IOCP.WriteResult.completed(bytes: 42)
+            let c1 = Kernel.IOCP.Read.Result.completed(bytes: 42)
+            let c2 = Kernel.IOCP.Read.Result.completed(bytes: 42)
 
             #expect(c1 == c2)
         }
 
         @Test("completed cases with different bytes are not equal")
         func completedDifferentBytesNotEqual() {
-            let c1 = Kernel.IOCP.WriteResult.completed(bytes: 42)
-            let c2 = Kernel.IOCP.WriteResult.completed(bytes: 43)
+            let c1 = Kernel.IOCP.Read.Result.completed(bytes: 42)
+            let c2 = Kernel.IOCP.Read.Result.completed(bytes: 43)
 
             #expect(c1 != c2)
-        }
-
-        @Test("typical write buffer sizes")
-        func typicalWriteBufferSizes() {
-            let commonSizes: [UInt32] = [
-                512,  // Disk sector
-                4096,  // Page size
-                8192,  // Common buffer
-                65536,  // 64KB
-                1_048_576,  // 1MB
-            ]
-
-            for size in commonSizes {
-                let result = Kernel.IOCP.WriteResult.completed(bytes: size)
-                if case .completed(let bytes) = result {
-                    #expect(bytes == size)
-                }
-            }
         }
     }
 

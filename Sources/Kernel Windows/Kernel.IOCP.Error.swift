@@ -131,6 +131,49 @@ public import Kernel_Primitives
         }
     }
 
+    // MARK: - Windows Error Code Constants
+
+    extension Kernel.IOCP.Error {
+        /// The I/O operation has been started but not yet completed.
+        ///
+        /// This is the normal return code for an asynchronous operation
+        /// that was successfully queued. A completion packet will be
+        /// posted to the IOCP when the operation finishes.
+        ///
+        /// - Win32: `ERROR_IO_PENDING`
+        public static let ioPending: UInt32 = UInt32(ERROR_IO_PENDING)
+
+        /// The I/O operation was aborted due to cancellation.
+        ///
+        /// Returned when an overlapped operation is cancelled via
+        /// `CancelIo` or `CancelIoEx`.
+        ///
+        /// - Win32: `ERROR_OPERATION_ABORTED`
+        public static let operationAborted: UInt32 = UInt32(ERROR_OPERATION_ABORTED)
+
+        /// The specified operation was not found.
+        ///
+        /// Returned when attempting to cancel an operation that doesn't exist.
+        ///
+        /// - Win32: `ERROR_NOT_FOUND`
+        public static let notFound: UInt32 = UInt32(ERROR_NOT_FOUND)
+
+        /// The wait operation timed out.
+        ///
+        /// Returned by `GetQueuedCompletionStatus[Ex]` when the timeout
+        /// expires without receiving a completion packet.
+        ///
+        /// - Win32: `WAIT_TIMEOUT`
+        public static let waitTimeout: UInt32 = UInt32(bitPattern: WAIT_TIMEOUT)
+
+        /// Infinite timeout value.
+        ///
+        /// Pass to timeout parameters to wait indefinitely.
+        ///
+        /// - Win32: `INFINITE`
+        public static let infinite: UInt32 = INFINITE
+    }
+
     // MARK: - Kernel.Error Conversion
 
     extension Kernel.Error {

@@ -129,7 +129,7 @@ public import Kernel_Primitives
             _ handle: HANDLE,
             into buffer: UnsafeMutableRawBufferPointer,
             overlapped: UnsafeMutablePointer<OVERLAPPED>
-        ) throws(Error) -> ReadResult {
+        ) throws(Error) -> Read.Result {
             var bytesRead: DWORD = 0
             let success = ReadFile(
                 handle,
@@ -144,7 +144,7 @@ public import Kernel_Primitives
             }
 
             let error = GetLastError()
-            if error == WindowsError.ioPending {
+            if error == Error.ioPending {
                 return .pending
             }
 
@@ -164,7 +164,7 @@ public import Kernel_Primitives
             _ handle: HANDLE,
             from buffer: UnsafeRawBufferPointer,
             overlapped: UnsafeMutablePointer<OVERLAPPED>
-        ) throws(Error) -> WriteResult {
+        ) throws(Error) -> Write.Result {
             var bytesWritten: DWORD = 0
             let success = WriteFile(
                 handle,
@@ -179,7 +179,7 @@ public import Kernel_Primitives
             }
 
             let error = GetLastError()
-            if error == WindowsError.ioPending {
+            if error == Error.ioPending {
                 return .pending
             }
 

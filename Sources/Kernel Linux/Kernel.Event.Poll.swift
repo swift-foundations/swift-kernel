@@ -39,7 +39,7 @@ public import Kernel_Primitives
         /// - Returns: A file descriptor for the new epoll instance.
         /// - Throws: `Error.create` if creation fails.
         @inlinable
-        public static func create(flags: CreateFlags = .cloexec) throws(Error) -> Kernel.Descriptor {
+        public static func create(flags: Create.Flags = .cloexec) throws(Error) -> Kernel.Descriptor {
             let epfd = epoll_create1(flags.rawValue)
             guard epfd >= 0 else {
                 throw .create(.captureErrno())

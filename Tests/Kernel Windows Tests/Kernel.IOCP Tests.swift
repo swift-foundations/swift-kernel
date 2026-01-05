@@ -260,19 +260,14 @@
             let _: Kernel.IOCP.Cancel.Type = Kernel.IOCP.Cancel.self
         }
 
-        @Test("WindowsError type exists")
-        func windowsErrorTypeExists() {
-            let _: Kernel.IOCP.WindowsError.Type = Kernel.IOCP.WindowsError.self
-        }
-
-        @Test("ReadResult type exists")
+        @Test("Read.Result type exists")
         func readResultTypeExists() {
-            let _: Kernel.IOCP.ReadResult.Type = Kernel.IOCP.ReadResult.self
+            let _: Kernel.IOCP.Read.Result.Type = Kernel.IOCP.Read.Result.self
         }
 
-        @Test("WriteResult type exists")
+        @Test("Write.Result type exists")
         func writeResultTypeExists() {
-            let _: Kernel.IOCP.WriteResult.Type = Kernel.IOCP.WriteResult.self
+            let _: Kernel.IOCP.Write.Result.Type = Kernel.IOCP.Write.Result.self
         }
     }
 

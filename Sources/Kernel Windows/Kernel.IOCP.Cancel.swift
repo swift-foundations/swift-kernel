@@ -63,7 +63,7 @@ public import Kernel_Primitives
             if CancelIoEx(descriptor.rawValue, nil) {
                 return true
             }
-            return GetLastError() != Kernel.IOCP.WindowsError.notFound
+            return GetLastError() != Kernel.IOCP.Error.notFound
         }
     }
 
@@ -102,7 +102,7 @@ public import Kernel_Primitives
                 if CancelIoEx(descriptor.rawValue, ptr) {
                     return true
                 }
-                return GetLastError() != Kernel.IOCP.WindowsError.notFound
+                return GetLastError() != Kernel.IOCP.Error.notFound
             }
         }
     }

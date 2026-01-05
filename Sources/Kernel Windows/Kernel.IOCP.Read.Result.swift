@@ -12,7 +12,7 @@ public import Kernel_Primitives
 
 #if os(Windows)
 
-    extension Kernel.IOCP {
+    extension Kernel.IOCP.Read {
         /// Result of initiating an overlapped read operation.
         ///
         /// Windows overlapped I/O can complete either synchronously (immediately)
@@ -35,9 +35,9 @@ public import Kernel_Primitives
         ///
         /// ## See Also
         ///
-        /// - ``Kernel/IOCP/WriteResult``
+        /// - ``Kernel/IOCP/Write/Result``
         /// - ``Kernel/IOCP/read(_:into:overlapped:)``
-        public enum ReadResult: Sendable, Equatable {
+        public enum Result: Sendable, Equatable {
             /// The operation is pending asynchronously.
             ///
             /// A completion packet will be posted to the IOCP when the

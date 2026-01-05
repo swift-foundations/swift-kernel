@@ -149,13 +149,13 @@
         }
     }
 
-    // MARK: - WindowsError Integration Tests
+    // MARK: - Error Integration Tests
 
     extension Kernel.IOCP.Cancel.Test.Unit {
-        @Test("Cancel uses WindowsError.notFound for comparison")
+        @Test("Cancel uses Error.notFound for comparison")
         func usesNotFoundConstant() {
             // Verify that the implementation checks against ERROR_NOT_FOUND
-            let notFound = Kernel.IOCP.WindowsError.notFound
+            let notFound = Kernel.IOCP.Error.notFound
             #expect(notFound == 1168)  // ERROR_NOT_FOUND
         }
     }
