@@ -9,6 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Binary
 public import Dimension
 
 extension Kernel.Memory {
@@ -60,7 +61,7 @@ extension Kernel.Memory {
             }
 
             let result = mmap(
-                addr,
+                addr?.mutablePointer,
                 Int(length),
                 protection.rawValue,
                 flags.rawValue,
@@ -72,7 +73,7 @@ extension Kernel.Memory {
                 throw .map(.captureErrno())
             }
 
-            return result!
+            return Kernel.Memory.Address(result!)
         }
 
         /// Unmaps a previously mapped region.
@@ -86,7 +87,7 @@ extension Kernel.Memory {
             addr: Kernel.Memory.Address,
             length: Kernel.File.Size
         ) throws(Error) {
-            guard munmap(addr, Int(length)) == 0 else {
+            guard munmap(addr.mutablePointer, Int(length)) == 0 else {
                 throw .unmap(.captureErrno())
             }
         }
@@ -113,7 +114,7 @@ extension Kernel.Memory {
             length: Kernel.File.Size,
             flags: Sync.Flags = .sync
         ) throws(Error) {
-            guard msync(addr, Int(length), flags.rawValue) == 0 else {
+            guard msync(addr.mutablePointer, Int(length), flags.rawValue) == 0 else {
                 throw .sync(.captureErrno())
             }
         }
@@ -131,7 +132,7 @@ extension Kernel.Memory {
             length: Kernel.File.Size,
             protection: Protection
         ) throws(Error) {
-            guard mprotect(addr, Int(length), protection.rawValue) == 0 else {
+            guard mprotect(addr.mutablePointer, Int(length), protection.rawValue) == 0 else {
                 throw .protect(.captureErrno())
             }
         }
@@ -150,7 +151,7 @@ extension Kernel.Memory {
             length: Kernel.File.Size,
             advice: Advice
         ) {
-            _ = madvise(addr, Int(length), advice.rawValue)
+            _ = madvise(addr.mutablePointer, Int(length), advice.rawValue)
         }
     }
 
@@ -167,7 +168,7 @@ extension Kernel.Memory {
         /// - Parameter region: The region to unmap.
         /// - Throws: `Error.unmap` on failure.
         public static func unmap(_ region: Region) throws(Error) {
-            let unmapResult = UnmapViewOfFile(region.base)
+            let unmapResult = UnmapViewOfFile(region.base.pointer)
             CloseHandle(region.mappingHandle)
 
             guard unmapResult else {
@@ -185,7 +186,7 @@ extension Kernel.Memory {
             addr: Kernel.Memory.Address,
             length: Kernel.File.Size
         ) throws(Error) {
-            guard FlushViewOfFile(addr, SIZE_T(Int(length))) else {
+            guard FlushViewOfFile(addr.pointer, SIZE_T(Int(length))) else {
                 throw .sync(.captureLastError())
             }
         }
@@ -205,7 +206,7 @@ extension Kernel.Memory {
             var oldProtection: DWORD = 0
             guard
                 VirtualProtect(
-                    addr,
+                    addr.mutablePointer,
                     SIZE_T(Int(length)),
                     protection.windowsPageProtection,
                     &oldProtection

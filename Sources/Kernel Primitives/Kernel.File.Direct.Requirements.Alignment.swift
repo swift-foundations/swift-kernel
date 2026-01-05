@@ -70,13 +70,13 @@ extension Kernel.File.Direct.Requirements.Alignment {
     ///   - transferLength: The transfer length.
     /// - Returns: The first validation failure, or `nil` if all pass.
     public func validate(
-        buffer bufferAddress: UnsafeRawPointer,
+        buffer bufferAddress: Kernel.Memory.Address,
         offset fileOffset: Int64,
         length transferLength: Int
     ) -> Kernel.File.Direct.Error? {
         if !buffer.isAligned(bufferAddress) {
             return .misalignedBuffer(
-                address: Int(bitPattern: bufferAddress),
+                address: bufferAddress,
                 required: bufferAlignment
             )
         }

@@ -147,7 +147,7 @@ extension Kernel.File.Handle {
     ///   - length: The transfer length.
     /// - Throws: `Kernel.File.Handle.Error` on alignment violation.
     private func validateAlignment(
-        buffer: UnsafeRawPointer,
+        buffer: Kernel.Memory.Address,
         offset: Int64,
         length: Int
     ) throws(Error) {

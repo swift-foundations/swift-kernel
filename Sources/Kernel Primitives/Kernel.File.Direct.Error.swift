@@ -34,7 +34,7 @@ extension Kernel.File.Direct {
         ///
         /// Direct I/O requires the buffer to be aligned to the sector size.
         /// Use `Buffer.Aligned` for portable aligned allocation.
-        case misalignedBuffer(address: Int, required: Binary.Alignment)
+        case misalignedBuffer(address: Kernel.Memory.Address, required: Binary.Alignment)
 
         /// The file offset is not properly aligned.
         ///
@@ -65,11 +65,11 @@ extension Kernel.File.Direct.Error: CustomStringConvertible {
         case .notSupported:
             return "Direct I/O not supported"
         case .misalignedBuffer(let address, let required):
-            return "Buffer address \(address.formatted(.hex.prefix)) not aligned to \(required)"
+            return "Buffer address \(address) not aligned to \(required)"
         case .misalignedOffset(let offset, let required):
-            return "File offset \(offset) not aligned to \(required.rawValue) bytes"
+            return "File offset \(offset) not aligned to \(required) bytes"
         case .invalidLength(let length, let requiredMultiple):
-            return "Length \(length) is not a multiple of \(requiredMultiple.rawValue)"
+            return "Length \(length) is not a multiple of \(requiredMultiple)"
         case .modeChange:
             return "Failed to change cache mode"
         case .invalidHandle:

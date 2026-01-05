@@ -27,7 +27,7 @@ extension Kernel.File.Handle {
         case noSpace
 
         /// Buffer alignment violation for Direct I/O (detected by pre-validation).
-        case misalignedBuffer(address: Int, required: Binary.Alignment)
+        case misalignedBuffer(address: Kernel.Memory.Address, required: Binary.Alignment)
 
         /// Offset alignment violation for Direct I/O (detected by pre-validation).
         case misalignedOffset(offset: Int64, required: Binary.Alignment)
@@ -225,11 +225,11 @@ extension Kernel.File.Handle.Error: CustomStringConvertible {
         case .noSpace:
             return "No space left on device"
         case .misalignedBuffer(let address, let required):
-            return "Buffer address \(address.formatted(.hex.prefix)) not aligned to \(required)"
+            return "Buffer address \(address) not aligned to \(required)"
         case .misalignedOffset(let offset, let required):
-            return "File offset \(offset) not aligned to \(required.rawValue) bytes"
+            return "File offset \(offset) not aligned to \(required) bytes"
         case .invalidLength(let length, let requiredMultiple):
-            return "Length \(length) is not a multiple of \(requiredMultiple.rawValue)"
+            return "Length \(length) is not a multiple of \(requiredMultiple)"
         case .requirementsUnknown:
             return "Direct I/O requirements unknown"
         case .alignmentViolation(let operation):

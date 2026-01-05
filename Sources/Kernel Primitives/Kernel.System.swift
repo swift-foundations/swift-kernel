@@ -27,7 +27,7 @@ extension Kernel.System {
     /// - Returns: The largest aligned offset ≤ `offset`.
     @inlinable
     public static func alignDown(_ offset: Kernel.File.Offset, to alignment: Binary.Alignment) -> Kernel.File.Offset {
-        Kernel.File.Offset(alignment.alignDown(offset._rawValue))
+        alignment.alignDown(offset)
     }
 
     /// Rounds a file offset up to the nearest alignment boundary.
@@ -38,7 +38,7 @@ extension Kernel.System {
     /// - Returns: The smallest aligned offset ≥ `offset`.
     @inlinable
     public static func alignUp(_ offset: Kernel.File.Offset, to alignment: Binary.Alignment) -> Kernel.File.Offset {
-        Kernel.File.Offset(alignment.alignUp(offset._rawValue))
+        alignment.alignUp(offset)
     }
 
     /// Rounds a file size down to the nearest alignment boundary.
@@ -49,7 +49,8 @@ extension Kernel.System {
     /// - Returns: The largest aligned size ≤ `size`.
     @inlinable
     public static func alignDown(_ size: Kernel.File.Size, to alignment: Binary.Alignment) -> Kernel.File.Size {
-        Kernel.File.Size(alignment.alignDown(size._rawValue))
+        let mask: Int64 = alignment.mask()
+        return Kernel.File.Size(size._rawValue & ~mask)
     }
 
     /// Rounds a file size up to the nearest alignment boundary.
@@ -60,7 +61,8 @@ extension Kernel.System {
     /// - Returns: The smallest aligned size ≥ `size`.
     @inlinable
     public static func alignUp(_ size: Kernel.File.Size, to alignment: Binary.Alignment) -> Kernel.File.Size {
-        Kernel.File.Size(alignment.alignUp(size._rawValue))
+        let mask: Int64 = alignment.mask()
+        return Kernel.File.Size((size._rawValue &+ mask) & ~mask)
     }
 }
 

@@ -62,7 +62,8 @@ extension Binary.Alignment {
     /// Allocation granularities are always powers of two and valid alignment values.
     @inlinable
     public init(_ granularity: Kernel.Memory.Allocation.Granularity) {
-        self = Binary.Alignment(__unchecked: (), granularity._rawValue)
+        // Allocation granularities from the kernel are always powers of 2
+        self = try! Binary.Alignment(granularity._rawValue)
     }
 }
 

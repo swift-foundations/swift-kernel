@@ -21,7 +21,8 @@ extension Kernel.File.Direct.Requirements.Alignment {
         /// - Parameter length: The transfer length to validate.
         /// - Returns: `true` if the length is a multiple of `lengthMultiple`.
         public func isValid(_ length: Int) -> Bool {
-            alignment.lengthMultiple.isAligned(length)
+            let mask: Int = alignment.lengthMultiple.mask()
+            return length & mask == 0
         }
     }
 

@@ -55,7 +55,8 @@ extension Binary.Alignment {
     /// Page sizes are always powers of two and valid alignment values.
     @inlinable
     public init(_ pageSize: Kernel.Memory.Page.Size) {
-        self = Binary.Alignment(__unchecked: (), pageSize._rawValue)
+        // Page sizes from the kernel are always powers of 2
+        self = try! Binary.Alignment(pageSize._rawValue)
     }
 }
 
