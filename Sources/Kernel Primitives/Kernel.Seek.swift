@@ -120,7 +120,7 @@ extension Kernel.Seek.Error: CustomStringConvertible {
             offset: Kernel.File.Offset,
             from origin: Origin
         ) throws(Error) -> Kernel.File.Offset {
-            let result = lseek(descriptor.rawValue, offset._rawValue, origin.posixWhence)
+            let result = lseek(descriptor.rawValue, off_t(offset._rawValue), origin.posixWhence)
             guard result != -1 else {
                 throw Error(posixErrno: errno)
             }

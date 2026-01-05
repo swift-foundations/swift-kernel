@@ -40,7 +40,7 @@ extension Kernel.Socket {
             #if canImport(Darwin)
                 let result = Darwin.socketpair(AF_UNIX, SOCK_STREAM, 0, &fds)
             #elseif canImport(Glibc)
-                let result = Glibc.socketpair(AF_UNIX, SOCK_STREAM, 0, &fds)
+                let result = Glibc.socketpair(AF_UNIX, Int32(SOCK_STREAM.rawValue), 0, &fds)
             #elseif canImport(Musl)
                 let result = Musl.socketpair(AF_UNIX, SOCK_STREAM, 0, &fds)
             #endif
