@@ -77,7 +77,7 @@ extension Kernel.File.Direct {
 #endif
 
 #if os(Linux)
-    public import Glibc
+    internal import Glibc
 
     extension Kernel.File.Direct.Requirements {
         /// Creates requirements for a path.

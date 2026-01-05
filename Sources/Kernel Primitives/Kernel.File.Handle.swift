@@ -12,7 +12,7 @@
 #if canImport(Darwin)
     internal import Darwin
 #elseif canImport(Glibc)
-    public import Glibc
+    internal import Glibc
 #elseif os(Windows)
     public import WinSDK
 #endif

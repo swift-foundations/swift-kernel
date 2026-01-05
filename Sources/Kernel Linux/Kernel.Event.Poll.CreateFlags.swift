@@ -13,10 +13,10 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     #if canImport(Glibc)
-        public import Glibc
-        public import CLinuxShim
+        internal import Glibc
+        internal import CLinuxShim
     #elseif canImport(Musl)
-        public import Musl
+        internal import Musl
     #endif
 
     extension Kernel.Event.Poll {

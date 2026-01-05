@@ -13,7 +13,7 @@
 
 public import SystemPackage
 
-@testable public import Kernel_Primitives
+public import Kernel_Primitives
 
 // Platform imports only for getpid/GetCurrentProcessId (acceptable in test support)
 #if canImport(Darwin)

@@ -86,7 +86,7 @@ extension Kernel.File.Handle {
 #if canImport(Darwin)
     internal import Darwin
 #elseif canImport(Glibc)
-    public import Glibc
+    internal import Glibc
 #endif
 
 #if os(Windows)

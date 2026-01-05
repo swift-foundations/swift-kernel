@@ -38,8 +38,8 @@ extension Kernel.File.Open.Mode {
     #if canImport(Darwin)
         internal import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
-        public import CLinuxShim
+        internal import Glibc
+        internal import CLinuxShim
     #elseif canImport(Musl)
         internal import Musl
     #endif
