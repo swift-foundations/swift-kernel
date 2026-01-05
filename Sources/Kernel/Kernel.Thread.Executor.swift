@@ -52,7 +52,7 @@ extension Kernel.Thread {
     /// If you need a more forgiving API, consider wrapping this in a helper that
     /// tracks shutdown state and handles edge cases for your use case.
     public final class Executor: SerialExecutor, TaskExecutor, @unchecked Sendable {
-        private let sync: Synchronization
+        private let sync: Synchronization<1>
         private var jobs: Job.Queue
         private var isRunning: Bool = true
         private var threadHandle: Kernel.Thread.Handle?
