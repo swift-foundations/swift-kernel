@@ -108,7 +108,7 @@ extension Kernel.Memory.Map {
                 throw .map(.captureLastError())
             }
 
-            return Kernel.Memory.Map.Region(base: address, length: length, mappingHandle: mappingHandle)
+            return Kernel.Memory.Map.Region(base: Kernel.Memory.Address(address), length: length, mappingHandle: mappingHandle)
         }
     }
 
