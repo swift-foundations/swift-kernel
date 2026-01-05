@@ -262,15 +262,15 @@ extension Kernel.File.Clone {
             /// Attempts to clone a file using ioctl(FICLONE).
             ///
             /// - Parameters:
-            ///   - sourceFd: Source file descriptor.
-            ///   - destFd: Destination file descriptor.
+            ///   - source: Source file descriptor.
+            ///   - destination: Destination file descriptor.
             /// - Returns: `true` if cloned, `false` if not supported.
             /// - Throws: `Kernel.File.Clone.Error.Syscall` for other errors.
             public static func attempt(
-                sourceFd: Int32,
-                destFd: Int32
+                source: Kernel.Descriptor,
+                destination: Kernel.Descriptor
             ) throws(Kernel.File.Clone.Error.Syscall) -> Bool {
-                let result = ioctl(destFd, FICLONE, sourceFd)
+                let result = ioctl(destination.rawValue, FICLONE, source.rawValue)
 
                 if result == 0 {
                     return true
@@ -292,8 +292,8 @@ extension Kernel.File.Clone {
             ///
             /// This may use server-side copy or reflink on supported filesystems.
             public static func copy(
-                sourceFd: Int32,
-                destFd: Int32,
+                source: Kernel.Descriptor,
+                destination: Kernel.Descriptor,
                 length: Int
             ) throws(Kernel.File.Clone.Error.Syscall) {
                 var remaining = Kernel.File.Size(length)
@@ -304,9 +304,9 @@ extension Kernel.File.Clone {
                     let copied: Kernel.File.Size
                     do {
                         copied = try Kernel.Copy.Range.copy(
-                            from: Kernel.Descriptor(rawValue: sourceFd),
+                            from: source,
                             sourceOffset: &srcOffset,
-                            to: Kernel.Descriptor(rawValue: destFd),
+                            to: destination,
                             destOffset: &dstOffset,
                             length: remaining
                         )

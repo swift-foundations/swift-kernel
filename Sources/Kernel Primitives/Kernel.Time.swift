@@ -153,14 +153,14 @@ extension Kernel.Time {
         ///
         /// - Returns: Nanoseconds since an arbitrary fixed point in time.
         @inlinable
-        public static func monotonicNanoseconds() -> Int64 {
+        public static func monotonicNanoseconds() -> UInt64 {
             var counter = LARGE_INTEGER()
             var frequency = LARGE_INTEGER()
             QueryPerformanceCounter(&counter)
             QueryPerformanceFrequency(&frequency)
             let seconds = counter.QuadPart / frequency.QuadPart
             let remainder = counter.QuadPart % frequency.QuadPart
-            return Int64(seconds) * 1_000_000_000 + Int64(remainder * 1_000_000_000 / frequency.QuadPart)
+            return UInt64(seconds) * 1_000_000_000 + UInt64(remainder * 1_000_000_000 / frequency.QuadPart)
         }
     }
 #else
@@ -201,7 +201,7 @@ extension Kernel.Time {
         ///
         /// - Returns: Nanoseconds since an arbitrary fixed point in time.
         @inlinable
-        public static func monotonicNanoseconds() -> Int64 {
+        public static func monotonicNanoseconds() -> UInt64 {
             #if canImport(Darwin)
                 var ts = Darwin.timespec()
             #elseif canImport(Glibc)
@@ -210,7 +210,7 @@ extension Kernel.Time {
                 var ts = Musl.timespec()
             #endif
             clock_gettime(CLOCK_MONOTONIC, &ts)
-            return Int64(ts.tv_sec) * 1_000_000_000 + Int64(ts.tv_nsec)
+            return UInt64(ts.tv_sec) * 1_000_000_000 + UInt64(ts.tv_nsec)
         }
     }
 #endif
