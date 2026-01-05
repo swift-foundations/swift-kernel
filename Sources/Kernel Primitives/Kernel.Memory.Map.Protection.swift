@@ -10,10 +10,58 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel.Memory.Map {
-    /// Memory protection flags.
+    /// Memory protection flags controlling access to mapped pages.
     ///
-    /// This is a custom value type (not OptionSet) to stay faithful
-    /// to the OS model and avoid policy creep.
+    /// Specifies what operations are permitted on a memory mapping. The kernel
+    /// enforces these protections at the hardware level using page table entries.
+    /// Violating protection (e.g., writing to read-only memory) triggers a signal
+    /// (`SIGSEGV` on POSIX, access violation on Windows).
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// // Map a file read-only
+    /// let ptr = try Kernel.Memory.Map.map(
+    ///     fd: fd,
+    ///     length: size,
+    ///     protection: .read,
+    ///     flags: .private
+    /// )
+    /// defer { try? Kernel.Memory.Map.unmap(ptr, length: size) }
+    ///
+    /// // Map with read-write access
+    /// let rwPtr = try Kernel.Memory.Map.map(
+    ///     fd: fd,
+    ///     length: size,
+    ///     protection: .read | .write,
+    ///     flags: .shared
+    /// )
+    ///
+    /// // Executable mapping (JIT, etc.)
+    /// let execPtr = try Kernel.Memory.Map.map(
+    ///     fd: fd,
+    ///     length: size,
+    ///     protection: .read | .execute,
+    ///     flags: .private
+    /// )
+    /// ```
+    ///
+    /// ## Platform Behavior
+    ///
+    /// | Protection | POSIX | Windows |
+    /// |------------|-------|---------|
+    /// | `.read` | `PROT_READ` | `PAGE_READONLY` |
+    /// | `.write` | `PROT_WRITE` | `PAGE_READWRITE` |
+    /// | `.execute` | `PROT_EXEC` | `PAGE_EXECUTE*` |
+    /// | `.none` | `PROT_NONE` | `PAGE_NOACCESS` |
+    ///
+    /// - Note: On some platforms, `.write` implies `.read`. On Windows,
+    ///   specific combinations map to discrete protection constants.
+    ///
+    /// ## See Also
+    ///
+    /// - ``Kernel/Memory/Map/Flags``
+    /// - ``Kernel/Memory/Map/map(fd:length:protection:flags:offset:)``
     public struct Protection: Sendable, Equatable, Hashable {
         public let rawValue: Int32
 
@@ -23,6 +71,12 @@ extension Kernel.Memory.Map {
         }
 
         /// No access permitted.
+        ///
+        /// Any access to pages with this protection will fault. Useful for guard
+        /// pages or reserving address space without committing memory.
+        ///
+        /// - POSIX: `PROT_NONE`
+        /// - Windows: `PAGE_NOACCESS`
         public static let none = Protection(rawValue: 0)
 
         /// Combines multiple protection flags.
@@ -52,16 +106,38 @@ extension Kernel.Memory.Map {
     #endif
 
     extension Kernel.Memory.Map.Protection {
-        /// Pages may be read.
+        /// Permits reading from mapped pages.
+        ///
+        /// Data can be loaded from the mapping. Required for most use cases.
+        /// Combine with `.write` for mutable access or `.execute` for code.
+        ///
+        /// - POSIX: `PROT_READ`
         public static let read = Self(rawValue: PROT_READ)
 
-        /// Pages may be written.
+        /// Permits writing to mapped pages.
+        ///
+        /// Data can be stored to the mapping. For file mappings with `.shared`,
+        /// writes are visible to other processes and may be written back to disk.
+        /// For `.private` mappings, a copy-on-write copy is made.
+        ///
+        /// - POSIX: `PROT_WRITE`
         public static let write = Self(rawValue: PROT_WRITE)
 
-        /// Pages may be executed.
+        /// Permits executing code from mapped pages.
+        ///
+        /// CPU can execute instructions from the mapping. Required for JIT
+        /// compilation, dynamic code generation, and loading executable code.
+        ///
+        /// - Warning: Some platforms require W^X (write XOR execute) policy:
+        ///   pages cannot be both writable and executable simultaneously.
+        ///   Typical pattern: map writable, write code, change to executable.
+        ///
+        /// - POSIX: `PROT_EXEC`
         public static let execute = Self(rawValue: PROT_EXEC)
 
-        /// Read and write access.
+        /// Convenience for read and write access.
+        ///
+        /// Equivalent to `.read | .write`. Most common for mutable data mappings.
         public static let readWrite = read | write
     }
 
@@ -73,16 +149,22 @@ extension Kernel.Memory.Map {
     internal import WinSDK
 
     extension Kernel.Memory.Map.Protection {
-        /// Pages may be read.
+        /// Permits reading from mapped pages.
+        ///
+        /// - Windows: Contributes to `PAGE_READONLY` or `PAGE_READWRITE`
         public static let read = Self(rawValue: 1)
 
-        /// Pages may be written.
+        /// Permits writing to mapped pages.
+        ///
+        /// - Windows: Contributes to `PAGE_READWRITE`
         public static let write = Self(rawValue: 2)
 
-        /// Pages may be executed.
+        /// Permits executing code from mapped pages.
+        ///
+        /// - Windows: Contributes to `PAGE_EXECUTE*` variants
         public static let execute = Self(rawValue: 4)
 
-        /// Read and write access.
+        /// Convenience for read and write access.
         public static let readWrite = read | write
 
         /// Converts to Windows page protection constant.

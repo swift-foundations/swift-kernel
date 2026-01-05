@@ -20,6 +20,24 @@ extension Kernel {
     /// Higher layers (swift-io, swift-file-system) wrap this in `~Copyable` types
     /// to enforce ownership and prevent double-close.
     ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// // Open a file and get a descriptor
+    /// let fd = try Kernel.File.Open.open(
+    ///     path: "/tmp/data.txt",
+    ///     mode: [.read],
+    ///     options: []
+    /// )
+    /// defer { try? Kernel.Close.close(fd) }
+    ///
+    /// // Read from the descriptor
+    /// var buffer = [UInt8](repeating: 0, count: 4096)
+    /// let bytesRead = try buffer.withUnsafeMutableBytes { buf in
+    ///     try Kernel.IO.Read.read(fd, into: buf)
+    /// }
+    /// ```
+    ///
     /// ## Thread Safety
     ///
     /// `Kernel.Descriptor` is `Sendable` (it's just an integer or pointer value).
@@ -34,6 +52,12 @@ extension Kernel {
     ///
     /// The descriptor value itself can be safely passed between threads; it's the
     /// underlying kernel resource that requires coordination.
+    ///
+    /// ## See Also
+    ///
+    /// - ``Kernel/File/Open/open(path:mode:options:permissions:)``
+    /// - ``Kernel/Close/close(_:)``
+    /// - ``Kernel/File/Handle``
     public struct Descriptor: RawRepresentable, Equatable, Hashable {
         #if os(Windows)
             public typealias RawValue = HANDLE

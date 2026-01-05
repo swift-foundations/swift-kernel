@@ -13,7 +13,15 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
-        /// Setup namespace for io_uring setup-related types.
+        /// Namespace for io_uring setup and configuration types.
+        ///
+        /// Contains types used when creating an io_uring instance,
+        /// including setup flags and configuration parameters.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring/Setup/Flags``
+        /// - ``Kernel/IOUring/Params``
         public enum Setup {}
     }
 

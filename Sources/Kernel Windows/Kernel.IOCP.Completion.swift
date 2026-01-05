@@ -13,7 +13,15 @@ public import Kernel_Primitives
 #if os(Windows)
 
     extension Kernel.IOCP {
-        /// Completion-related types for IOCP.
+        /// Namespace for completion-related types.
+        ///
+        /// Contains types used for identifying and routing completed
+        /// I/O operations, such as completion keys.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOCP``
+        /// - ``Kernel/IOCP/Completion/Key``
         public enum Completion {}
     }
 

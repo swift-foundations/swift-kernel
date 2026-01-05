@@ -13,7 +13,16 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
-        /// Completion-related types for io_uring.
+        /// Namespace for completion queue types.
+        ///
+        /// Contains types for the completion queue (CQ) side of io_uring,
+        /// including queue entries, entry flags, and ring buffer offsets.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring/Completion/Queue``
+        /// - ``Kernel/IOUring/Completion/Queue/Entry``
+        /// - ``Kernel/IOUring/Submission``
         public enum Completion {}
     }
 

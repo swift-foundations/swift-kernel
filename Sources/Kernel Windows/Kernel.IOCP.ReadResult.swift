@@ -13,11 +13,41 @@ public import Kernel_Primitives
 #if os(Windows)
 
     extension Kernel.IOCP {
-        /// Result of an overlapped read operation.
+        /// Result of initiating an overlapped read operation.
+        ///
+        /// Windows overlapped I/O can complete either synchronously (immediately)
+        /// or asynchronously (later via IOCP). This enum distinguishes the two cases.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// let result = try Kernel.IOCP.read(handle, into: buffer, overlapped: &overlapped)
+        /// switch result {
+        /// case .pending:
+        ///     // Wait for completion via IOCP
+        ///     let entry = try Kernel.IOCP.Dequeue.single(port, timeout: INFINITE)
+        ///     let bytesRead = entry.0
+        /// case .completed(let bytes):
+        ///     // Completed immediately, no IOCP notification
+        ///     processData(buffer.prefix(Int(bytes)))
+        /// }
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOCP/WriteResult``
+        /// - ``Kernel/IOCP/read(_:into:overlapped:)``
         public enum ReadResult: Sendable, Equatable {
             /// The operation is pending asynchronously.
+            ///
+            /// A completion packet will be posted to the IOCP when the
+            /// operation finishes. Do not access the buffer until then.
             case pending
-            /// The operation completed synchronously with the given byte count.
+
+            /// The operation completed synchronously.
+            ///
+            /// No completion packet will be posted to the IOCP. The data
+            /// is immediately available in the buffer.
             case completed(bytes: UInt32)
         }
     }

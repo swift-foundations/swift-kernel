@@ -13,7 +13,15 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
-        /// Personality-related types for io_uring.
+        /// Namespace for personality (credential) types.
+        ///
+        /// Personalities allow io_uring operations to run with different
+        /// credentials than the process's default.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring/Personality/ID``
+        /// - ``Kernel/IOUring/RegisterOpcode/registerPersonality``
         public enum Personality {}
     }
 

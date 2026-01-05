@@ -14,7 +14,32 @@ public import Kernel_Primitives
     public import WinSDK
 
     extension Kernel.IOCP {
-        /// Dequeue operations.
+        /// Operations for retrieving completed I/O from an IOCP.
+        ///
+        /// Provides both single-entry and batch dequeue operations. Batch
+        /// dequeuing is more efficient when multiple completions are expected.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Single completion
+        /// let (bytes, key, overlapped) = try Kernel.IOCP.Dequeue.single(
+        ///     port,
+        ///     timeout: INFINITE
+        /// )
+        ///
+        /// // Batch completion (more efficient)
+        /// var entries = [OVERLAPPED_ENTRY](repeating: .init(), count: 64)
+        /// let count = try entries.withUnsafeMutableBufferPointer { buffer in
+        ///     try Kernel.IOCP.Dequeue.batch(port, entries: buffer, timeout: 100)
+        /// }
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOCP``
+        /// - ``Kernel/IOCP/Entry``
+        /// - ``Kernel/IOCP/Completion/Key``
         public enum Dequeue {
 
         }

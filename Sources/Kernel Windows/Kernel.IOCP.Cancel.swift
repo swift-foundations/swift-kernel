@@ -14,7 +14,30 @@ public import Kernel_Primitives
     public import WinSDK
 
     extension Kernel.IOCP {
-        /// Cancel operations for IOCP-associated handles.
+        /// Operations for cancelling pending I/O on IOCP-associated handles.
+        ///
+        /// Provides both fire-and-forget and status-returning variants for
+        /// cancelling all pending operations or specific operations.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Cancel all pending I/O on a handle
+        /// Kernel.IOCP.Cancel.all(handle)
+        ///
+        /// // Cancel a specific operation
+        /// Kernel.IOCP.Cancel.pending(handle, overlapped: &myOverlapped)
+        ///
+        /// // Check if cancellation succeeded
+        /// if Kernel.IOCP.Cancel.allWithStatus(handle) {
+        ///     // Operations were cancelled
+        /// }
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOCP``
+        /// - ``Kernel/IOCP/Overlapped``
         public enum Cancel {}
     }
 

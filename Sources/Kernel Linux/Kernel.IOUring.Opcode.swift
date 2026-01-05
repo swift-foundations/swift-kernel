@@ -13,10 +13,35 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
-        /// Opcodes for io_uring submission queue entries.
+        /// Opcodes specifying which operation to submit to io_uring.
         ///
-        /// These values correspond to the `IORING_OP_*` constants from `<linux/io_uring.h>`.
-        /// Each opcode specifies what operation the kernel should perform.
+        /// Each opcode corresponds to an `IORING_OP_*` constant from `<linux/io_uring.h>`.
+        /// When preparing a submission queue entry (SQE), the opcode determines what
+        /// the kernel will do when processing that entry.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Prepare a read operation
+        /// sqe.opcode = .read
+        /// sqe.fd = fd.rawValue
+        /// sqe.addr = UInt64(UInt(bitPattern: buffer.baseAddress))
+        /// sqe.len = UInt32(buffer.count)
+        /// sqe.off = offset
+        /// ```
+        ///
+        /// ## Kernel Version Requirements
+        ///
+        /// Some opcodes require newer kernel versions:
+        /// - `.read`/`.write`: 5.6+
+        /// - `.sendZc`: 6.0+
+        /// - `.futexWait`/`.futexWake`: 6.7+
+        /// - `.ftruncate`: 6.9+
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring``
+        /// - ``Kernel/IOUring/Submission``
         public struct Opcode: RawRepresentable, Sendable, Equatable, Hashable {
             public let rawValue: UInt8
 

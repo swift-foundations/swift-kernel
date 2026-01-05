@@ -20,10 +20,33 @@ public import Kernel_Primitives
     #endif
 
     extension Kernel.IOUring {
-        /// Swift wrapper for io_uring_params C struct.
+        /// Configuration and result parameters for io_uring setup.
         ///
-        /// Contains setup parameters passed to io_uring_setup, and ring offsets
-        /// returned by the kernel after setup.
+        /// This struct serves dual purpose: you provide setup flags and thread
+        /// configuration as input, and the kernel fills in ring sizes, offsets,
+        /// and feature flags as output.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Create params with configuration
+        /// var params = Kernel.IOUring.Params(
+        ///     flags: [.sqPoll, .singleIssuer],
+        ///     submission: .init(thread: .init(idle: 1000))
+        /// )
+        ///
+        /// // Setup fills in kernel-provided values
+        /// let fd = try Kernel.IOUring.setup(entries: 256, params: &params)
+        ///
+        /// // Now params contains ring offsets for mmap
+        /// print("SQ entries: \(params.sqEntries)")
+        /// print("CQ entries: \(params.cqEntries)")
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring``
+        /// - ``Kernel/IOUring/Setup/Flags``
         public struct Params: Sendable, Equatable {
             /// Number of submission queue entries (filled by kernel).
             public private(set) var sqEntries: UInt32

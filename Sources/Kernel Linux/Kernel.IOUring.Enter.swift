@@ -13,7 +13,36 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
-        /// Flags for `io_uring_enter`.
+        /// Flags controlling `io_uring_enter` behavior.
+        ///
+        /// These flags control what `io_uring_enter` does: submit operations,
+        /// wait for completions, or both. They also control interaction with
+        /// the kernel polling thread.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Submit and wait for at least one completion
+        /// let submitted = try Kernel.IOUring.enter(
+        ///     ring,
+        ///     toSubmit: pendingCount,
+        ///     minComplete: 1,
+        ///     flags: [.getEvents]
+        /// )
+        ///
+        /// // Just submit, don't wait
+        /// let submitted = try Kernel.IOUring.enter(
+        ///     ring,
+        ///     toSubmit: pendingCount,
+        ///     minComplete: 0,
+        ///     flags: []
+        /// )
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring``
+        /// - ``Kernel/IOUring/Setup/Flags``
         public struct EnterFlags: OptionSet, Sendable {
             public let rawValue: UInt32
 
@@ -22,19 +51,44 @@ public import Kernel_Primitives
                 self.rawValue = rawValue
             }
 
-            /// Wait for events from the CQ ring.
+            /// Waits for events from the completion queue.
+            ///
+            /// The call blocks until at least `minComplete` completions are
+            /// available or the timeout expires.
+            ///
+            /// - Linux: `IORING_ENTER_GETEVENTS`
             public static let getEvents = EnterFlags(rawValue: 1 << 0)
 
-            /// Wake up the SQ poll thread.
+            /// Wakes up the SQ poll thread.
+            ///
+            /// Use when the kernel polling thread has gone to sleep and you've
+            /// added new submissions. Only needed with `.sqPoll` setup flag.
+            ///
+            /// - Linux: `IORING_ENTER_SQ_WAKEUP`
             public static let sqWakeup = EnterFlags(rawValue: 1 << 1)
 
-            /// Wait for SQ ring space to become available.
+            /// Waits for SQ ring space to become available.
+            ///
+            /// Blocks if the submission queue is full until space becomes
+            /// available (completions are reaped).
+            ///
+            /// - Linux: `IORING_ENTER_SQ_WAIT`
             public static let sqWait = EnterFlags(rawValue: 1 << 2)
 
-            /// Use extended argument format (kernel 5.11+).
+            /// Uses extended argument format (kernel 5.11+).
+            ///
+            /// Enables passing additional parameters like sigmask or timeout
+            /// via the `arg` parameter.
+            ///
+            /// - Linux: `IORING_ENTER_EXT_ARG`
             public static let extArg = EnterFlags(rawValue: 1 << 3)
 
-            /// Register ring fd with the ring (kernel 5.18+).
+            /// Uses a registered ring fd (kernel 5.18+).
+            ///
+            /// The fd passed is an index into the registered ring fd array
+            /// rather than a raw file descriptor.
+            ///
+            /// - Linux: `IORING_ENTER_REGISTERED_RING`
             public static let registeredRing = EnterFlags(rawValue: 1 << 4)
         }
     }

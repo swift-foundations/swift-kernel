@@ -13,7 +13,15 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring.Submission {
-        /// Submission queue types.
+        /// Namespace for submission queue ring buffer types.
+        ///
+        /// The submission queue is a ring buffer where applications place
+        /// I/O operation requests (SQEs) for the kernel to process.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring/Submission/Queue/Entry``
+        /// - ``Kernel/IOUring/Submission/Queue/Offsets``
         public enum Queue {}
     }
 

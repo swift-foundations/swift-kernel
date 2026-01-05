@@ -10,9 +10,45 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel.File.Open {
-    /// File access mode as an OptionSet.
+    /// File access mode specifying read and/or write permissions.
     ///
-    /// Use `[.read]`, `[.write]`, or `[.read, .write]` for access modes.
+    /// Controls how the opened file can be accessed. At least one mode must be specified
+    /// for most operations. The file must have appropriate permissions for the requested mode.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// // Read-only access
+    /// let fd = try Kernel.File.Open.open(path: path, mode: [.read], options: [])
+    /// defer { try? Kernel.Close.close(fd) }
+    ///
+    /// // Write-only access (for logging, etc.)
+    /// let logFd = try Kernel.File.Open.open(
+    ///     path: "/var/log/app.log",
+    ///     mode: [.write],
+    ///     options: [.create, .append]
+    /// )
+    ///
+    /// // Read-write access
+    /// let dbFd = try Kernel.File.Open.open(
+    ///     path: "data.db",
+    ///     mode: [.read, .write],
+    ///     options: [.create]
+    /// )
+    /// ```
+    ///
+    /// ## Platform Behavior
+    ///
+    /// | Mode | POSIX | Windows |
+    /// |------|-------|---------|
+    /// | `[.read]` | `O_RDONLY` | `GENERIC_READ` |
+    /// | `[.write]` | `O_WRONLY` | `GENERIC_WRITE` |
+    /// | `[.read, .write]` | `O_RDWR` | `GENERIC_READ \| GENERIC_WRITE` |
+    ///
+    /// ## See Also
+    ///
+    /// - ``Kernel/File/Open/Options``
+    /// - ``Kernel/File/Open/open(path:mode:options:permissions:)``
     public struct Mode: OptionSet, Sendable, Hashable {
         public let rawValue: UInt8
 
@@ -25,10 +61,24 @@ extension Kernel.File.Open {
 // MARK: - Static Members
 
 extension Kernel.File.Open.Mode {
-    /// Open for reading.
+    /// Opens the file for reading.
+    ///
+    /// The file must exist unless combined with `.create` in options.
+    /// Read operations (`Kernel.IO.Read.read`, `pread`) will succeed;
+    /// write operations will fail with a bad file descriptor error.
+    ///
+    /// - POSIX: Maps to `O_RDONLY` (alone) or contributes to `O_RDWR`
+    /// - Windows: Maps to `GENERIC_READ`
     public static let read = Self(rawValue: 1 << 0)
 
-    /// Open for writing.
+    /// Opens the file for writing.
+    ///
+    /// Write operations (`Kernel.IO.Write.write`, `pwrite`) will succeed.
+    /// Without `.read`, read operations will fail. Combine with `.append`
+    /// in options to write at end of file.
+    ///
+    /// - POSIX: Maps to `O_WRONLY` (alone) or contributes to `O_RDWR`
+    /// - Windows: Maps to `GENERIC_WRITE` (or `FILE_APPEND_DATA` with append option)
     public static let write = Self(rawValue: 1 << 1)
 }
 

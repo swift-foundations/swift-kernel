@@ -13,7 +13,15 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring.Completion {
-        /// Completion queue types.
+        /// Namespace for completion queue ring buffer types.
+        ///
+        /// The completion queue is a ring buffer where the kernel places
+        /// results of completed I/O operations (CQEs) for applications to consume.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring/Completion/Queue/Entry``
+        /// - ``Kernel/IOUring/Completion/Queue/Offsets``
         public enum Queue {}
     }
 

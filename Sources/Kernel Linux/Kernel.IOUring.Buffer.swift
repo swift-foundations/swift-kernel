@@ -13,7 +13,16 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
-        /// Buffer-related types for io_uring.
+        /// Namespace for buffer-related types.
+        ///
+        /// Contains types for working with registered buffers and buffer
+        /// groups (automatic buffer selection) in io_uring.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring/Buffer/Index``
+        /// - ``Kernel/IOUring/Buffer/Group``
+        /// - ``Kernel/IOUring/RegisterOpcode/registerBuffers``
         public enum Buffer {}
     }
 

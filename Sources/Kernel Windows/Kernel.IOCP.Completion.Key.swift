@@ -14,20 +14,41 @@ public import Kernel_Primitives
     public import WinSDK
 
     extension Kernel.IOCP.Completion {
-        /// Completion key for identifying handles.
+        /// Completion key for routing I/O completions to handlers.
         ///
         /// The completion key is an application-defined value associated with
-        /// a file handle when it's registered with an IOCP.
+        /// a file handle when it's registered with an IOCP. When a completion
+        /// arrives, the key identifies which handle completed the operation.
         ///
-        /// ## Usage
+        /// ## Common Patterns
         ///
+        /// **Index-based:** Use small integers to index into an array of handlers:
         /// ```swift
-        /// // Use as an identifier
-        /// let key = Kernel.IOCP.Completion.Key(rawValue: id)
+        /// let handlers: [Handler] = ...
+        /// let key = Kernel.IOCP.Completion.Key(UInt(handlerIndex))
+        /// try Kernel.IOCP.associate(port, handle: fileHandle, key: key)
         ///
-        /// // Use with pointer-based context lookup
-        /// let key = Kernel.IOCP.Completion.Key(pointer: contextPtr)
+        /// // On completion:
+        /// let handler = handlers[Int(entry.key.rawValue)]
         /// ```
+        ///
+        /// **Pointer-based:** Store a pointer to context directly:
+        /// ```swift
+        /// let context = UnsafeMutablePointer<MyContext>.allocate(capacity: 1)
+        /// context.initialize(to: MyContext(...))
+        /// let key = Kernel.IOCP.Completion.Key(pointer: context)
+        /// try Kernel.IOCP.associate(port, handle: fileHandle, key: key)
+        ///
+        /// // On completion:
+        /// let context = UnsafeMutablePointer<MyContext>(
+        ///     bitPattern: UInt(entry.key.rawValue)
+        /// )!
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOCP``
+        /// - ``Kernel/IOCP/Entry``
         public struct Key: RawRepresentable, Sendable, Equatable, Hashable {
             public let rawValue: ULONG_PTR
 

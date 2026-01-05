@@ -13,7 +13,15 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
-        /// Operation-related types for io_uring.
+        /// Namespace for operation-related types.
+        ///
+        /// Contains types for associating user data with operations
+        /// to correlate submissions with completions.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring/Operation/Data``
+        /// - ``Kernel/IOUring/Opcode``
         public enum Operation {}
     }
 

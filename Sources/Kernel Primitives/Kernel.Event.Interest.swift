@@ -14,16 +14,33 @@ extension Kernel.Event {
     ///
     /// Interests represent what readiness conditions the caller wants to be
     /// notified about. Multiple interests can be combined using set operations.
+    /// This is a cross-platform abstraction over platform-specific event flags.
     ///
     /// ## Usage
+    ///
     /// ```swift
+    /// // Monitor for both read and write readiness
     /// let interest: Interest = [.read, .write]
+    ///
+    /// // Check if interest includes read
+    /// if interest.contains(.read) {
+    ///     // Will be notified when data is available
+    /// }
     /// ```
     ///
     /// ## Platform Mapping
-    /// - **kqueue**: `EVFILT_READ`, `EVFILT_WRITE`
-    /// - **epoll**: `EPOLLIN`, `EPOLLOUT`, `EPOLLPRI`
-    /// - **IOCP**: Mapped to overlapped operation types
+    ///
+    /// | Interest | kqueue | epoll | IOCP |
+    /// |----------|--------|-------|------|
+    /// | `.read` | `EVFILT_READ` | `EPOLLIN` | Read operation |
+    /// | `.write` | `EVFILT_WRITE` | `EPOLLOUT` | Write operation |
+    /// | `.priority` | N/A | `EPOLLPRI` | N/A |
+    ///
+    /// ## See Also
+    ///
+    /// - ``Kernel/Kqueue`` (Darwin)
+    /// - ``Kernel/Event/Poll`` (Linux epoll)
+    /// - ``Kernel/IOCP`` (Windows)
     public struct Interest: OptionSet, Sendable, Hashable {
         public let rawValue: UInt8
 

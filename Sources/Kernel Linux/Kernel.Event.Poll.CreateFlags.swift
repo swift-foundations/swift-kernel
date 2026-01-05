@@ -20,7 +20,25 @@ public import Kernel_Primitives
     #endif
 
     extension Kernel.Event.Poll {
-        /// Flags for `epoll_create1`.
+        /// Flags for creating an epoll instance.
+        ///
+        /// Used with `epoll_create1` to control the behavior of the
+        /// newly created epoll file descriptor.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Create epoll with close-on-exec (recommended)
+        /// let epfd = try Kernel.Event.Poll.create(flags: .cloexec)
+        /// defer { try? Kernel.Close.close(epfd) }
+        ///
+        /// // Add descriptors and poll for events...
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/Event/Poll``
+        /// - ``Kernel/Event/Poll/Operation``
         public struct CreateFlags: Sendable, Equatable, Hashable {
             public let rawValue: Int32
 
@@ -35,7 +53,12 @@ public import Kernel_Primitives
         /// No flags.
         public static let none = Self(rawValue: 0)
 
-        /// Set close-on-exec flag on the new file descriptor.
+        /// Sets the close-on-exec flag on the epoll file descriptor.
+        ///
+        /// Prevents the epoll fd from leaking to child processes created
+        /// with `exec()`. Recommended for most applications.
+        ///
+        /// - Linux: `EPOLL_CLOEXEC`
         public static let cloexec = Self(rawValue: Int32(EPOLL_CLOEXEC))
 
         /// Combines multiple flags.

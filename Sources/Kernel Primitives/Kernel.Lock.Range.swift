@@ -11,17 +11,47 @@
 
 extension Kernel.Lock {
     /// The range of bytes to lock within a file.
+    ///
+    /// File locking operates on byte ranges, allowing fine-grained concurrency
+    /// control. Different processes can hold non-overlapping locks on the same
+    /// file simultaneously.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// // Lock entire file (most common)
+    /// try Kernel.Lock.lock(fd, range: .file, kind: .exclusive)
+    /// defer { try? Kernel.Lock.unlock(fd, range: .file) }
+    ///
+    /// // Lock specific byte range (database pages, etc.)
+    /// let pageRange = Lock.Range.bytes(start: 4096, length: 4096)
+    /// try Kernel.Lock.lock(fd, range: pageRange, kind: .shared)
+    ///
+    /// // Lock from offset to end of file
+    /// let toEnd = Lock.Range.bytes(start: offset, end: .max)
+    /// ```
+    ///
+    /// ## See Also
+    ///
+    /// - ``Kernel/Lock/Kind``
+    /// - ``Kernel/Lock/lock(_:range:kind:)``
+    /// - ``Kernel/Lock/unlock(_:range:)``
     public enum Range: Sendable, Equatable, Hashable {
-        /// Lock the entire file.
+        /// Locks the entire file.
+        ///
+        /// Equivalent to `.bytes(start: 0, end: .max)`. Use this for simple
+        /// mutual exclusion when you don't need fine-grained locking.
         case file
 
-        /// Lock a specific byte range.
+        /// Locks a specific byte range.
         ///
         /// - Parameters:
         ///   - start: The starting byte offset (inclusive).
         ///   - end: The ending byte offset (exclusive). Use `.max` to lock to EOF.
         ///
-        /// This matches Swift's `Range` semantics (half-open interval).
+        /// Follows Swift's `Range` semantics (half-open interval). Locks on
+        /// non-overlapping ranges don't conflict, enabling concurrent access
+        /// to different parts of a file.
         case bytes(start: Kernel.File.Offset, end: Kernel.File.Offset)
 
         /// Creates a byte range from start to end offsets.

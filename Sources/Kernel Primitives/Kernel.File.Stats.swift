@@ -12,8 +12,37 @@
 extension Kernel.File {
     /// File metadata from stat/fstat syscalls.
     ///
-    /// This is a minimal, cross-platform representation of file metadata.
-    /// Platform-specific fields are normalized to common types.
+    /// A minimal, cross-platform representation of file metadata. Platform-specific
+    /// fields are normalized to common types. Use `get(path:)` or `get(descriptor:)`
+    /// to retrieve stats.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// // Get stats by path
+    /// let stats = try Kernel.File.Stats.get(path: "/tmp/data.txt")
+    /// print("Size: \(stats.size) bytes")
+    /// print("Type: \(stats.type)")
+    /// print("Permissions: \(stats.permissions)")
+    ///
+    /// // Get stats by descriptor
+    /// let fd = try Kernel.File.Open.open(path: path, mode: [.read], options: [])
+    /// defer { try? Kernel.Close.close(fd) }
+    /// let fdStats = try Kernel.File.Stats.get(descriptor: fd)
+    /// ```
+    ///
+    /// ## Platform Notes
+    ///
+    /// Some fields are synthesized on Windows:
+    /// - `uid`/`gid`: Always 0 (Windows doesn't have POSIX ownership)
+    /// - `inode`: From file ID
+    /// - `device`: From volume serial number
+    /// - `changeTime`: Uses `ftLastWriteTime` (closest to POSIX ctime)
+    ///
+    /// ## See Also
+    ///
+    /// - ``Kernel/File/Stats/Kind``
+    /// - ``Kernel/File/Permissions``
     public struct Stats: Sendable, Equatable {
         /// File size in bytes.
         public let size: Kernel.File.Size

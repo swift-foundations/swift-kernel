@@ -20,9 +20,41 @@ public import Kernel_Primitives
     #endif
 
     extension Kernel.Event.Poll {
-        /// Swift wrapper for epoll_event C struct.
+        /// An epoll event describing readiness conditions and associated data.
         ///
-        /// Provides a Sendable, Swift-native interface to epoll events.
+        /// Events are used both for registering interest (via `epoll_ctl`) and
+        /// receiving notifications (via `epoll_wait`). When registering, you
+        /// specify what conditions to monitor; when receiving, you get details
+        /// about what happened.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Register interest
+        /// let event = Kernel.Event.Poll.Event(
+        ///     events: [.in, .et],
+        ///     data: .init(connectionId)
+        /// )
+        /// try Kernel.Event.Poll.control(
+        ///     epfd,
+        ///     operation: .add,
+        ///     descriptor: socketFd,
+        ///     event: event
+        /// )
+        ///
+        /// // Process returned events
+        /// for event in readyEvents {
+        ///     if event.events.contains(.in) {
+        ///         // Data available for reading
+        ///     }
+        /// }
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/Event/Poll``
+        /// - ``Kernel/Event/Poll/Events``
+        /// - ``Kernel/Event/Poll/Data``
         public struct Event: Sendable, Equatable, Hashable {
             /// The event flags that occurred or are being monitored.
             public var events: Events

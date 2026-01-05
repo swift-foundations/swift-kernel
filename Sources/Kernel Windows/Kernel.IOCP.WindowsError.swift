@@ -15,6 +15,25 @@ public import Kernel_Primitives
 
     extension Kernel.IOCP {
         /// Common Windows error codes used with IOCP operations.
+        ///
+        /// These constants provide Swift access to Win32 error codes commonly
+        /// encountered in IOCP programming, avoiding the need to import WinSDK
+        /// in higher layers.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// let error = GetLastError()
+        /// if error == Kernel.IOCP.WindowsError.ioPending {
+        ///     // Operation started successfully, will complete async
+        /// } else if error == Kernel.IOCP.WindowsError.operationAborted {
+        ///     // Operation was cancelled
+        /// }
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOCP/Error``
         public enum WindowsError: Sendable {
 
         }

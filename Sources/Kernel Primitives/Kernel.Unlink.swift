@@ -14,7 +14,40 @@ public import SystemPackage
 // MARK: - Unlink Type
 
 extension Kernel {
-    /// Unlink operations.
+    /// File removal (unlink) operations.
+    ///
+    /// Removes directory entries (file names) from the filesystem. On POSIX,
+    /// the underlying data is freed when the last link is removed and no
+    /// processes have the file open. On Windows, deletion may be delayed
+    /// until all handles are closed.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// // Remove a file
+    /// try Kernel.Unlink.unlink("/tmp/tempfile.txt")
+    ///
+    /// // Remove and ignore "file not found"
+    /// do {
+    ///     try Kernel.Unlink.unlink(path)
+    /// } catch .notFound {
+    ///     // Already deleted, that's fine
+    /// }
+    /// ```
+    ///
+    /// ## Platform Behavior
+    ///
+    /// | Platform | Syscall | Notes |
+    /// |----------|---------|-------|
+    /// | POSIX | `unlink()` | Removes link; data freed when refcount = 0 |
+    /// | Windows | `DeleteFileW()` | DELETE_ON_CLOSE semantics |
+    ///
+    /// - Note: To remove directories, use a separate directory removal
+    ///   function (not provided by Kernel).
+    ///
+    /// ## See Also
+    ///
+    /// - ``Kernel/Close``
     public enum Unlink: Sendable {
 
     }

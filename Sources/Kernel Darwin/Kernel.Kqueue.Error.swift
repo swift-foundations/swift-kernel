@@ -14,14 +14,48 @@ public import Kernel_Primitives
 
     extension Kernel.Kqueue {
         /// Errors from kqueue operations.
+        ///
+        /// Low-level errors from kqueue syscalls. Each case wraps the
+        /// underlying `Kernel.Error.Code` for platform-specific details.
+        /// Convert to `Kernel.Error` for semantic error handling.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// do {
+        ///     let kq = try Kernel.Kqueue.create()
+        /// } catch let error as Kernel.Kqueue.Error {
+        ///     switch error {
+        ///     case .create(let code):
+        ///         print("kqueue creation failed: \(code)")
+        ///     case .interrupted:
+        ///         // Retry the operation
+        ///     default:
+        ///         throw Kernel.Error(error)
+        ///     }
+        /// }
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/Kqueue``
+        /// - ``Kernel/Error``
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-            /// Failed to create kqueue.
+            /// Failed to create a kqueue instance.
+            ///
+            /// Returned by `kqueue()` syscall. Common causes: process
+            /// has too many open file descriptors, system limit reached.
             case create(Kernel.Error.Code)
 
-            /// Failed to register/modify events.
+            /// Failed to register, modify, or query events.
+            ///
+            /// Returned by `kevent()` syscall. Common causes: invalid
+            /// kqueue descriptor, bad event specification, invalid filter.
             case kevent(Kernel.Error.Code)
 
             /// Operation was interrupted by a signal.
+            ///
+            /// The operation should typically be retried.
             case interrupted
         }
     }

@@ -14,9 +14,37 @@ public import Kernel_Primitives
     public import Darwin
 
     extension Kernel.Kqueue {
-        /// Swift wrapper for the kevent structure.
+        /// A kqueue event describing an event source and its state.
         ///
-        /// Provides a Sendable, Swift-native interface to kqueue events.
+        /// Events are used both for registering interest (input) and receiving
+        /// notifications (output). When registering, you specify what to monitor;
+        /// when receiving, you get details about what happened.
+        ///
+        /// ## Usage
+        ///
+        /// ```swift
+        /// // Register interest in read events on a socket
+        /// let event = Kernel.Kqueue.Event(
+        ///     id: Kernel.Event.ID(socketFd.rawValue),
+        ///     filter: .read,
+        ///     flags: [.add, .enable]
+        /// )
+        /// try Kernel.Kqueue.kevent(kq, changes: [event], events: &results)
+        ///
+        /// // Process returned events
+        /// for event in results {
+        ///     if event.filter == .read {
+        ///         let bytesAvailable = event.filterData
+        ///         // Read from event.id
+        ///     }
+        /// }
+        /// ```
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/Kqueue``
+        /// - ``Kernel/Kqueue/Filter``
+        /// - ``Kernel/Kqueue/Flags``
         public struct Event: Sendable, Equatable, Hashable {
             /// Identifier for this event.
             ///

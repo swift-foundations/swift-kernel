@@ -13,7 +13,16 @@ public import Kernel_Primitives
 #if canImport(Glibc) || canImport(Musl)
 
     extension Kernel.IOUring {
-        /// Submission-related types for io_uring.
+        /// Namespace for submission queue types.
+        ///
+        /// Contains types for the submission queue (SQ) side of io_uring,
+        /// including queue entries, entry flags, and ring buffer offsets.
+        ///
+        /// ## See Also
+        ///
+        /// - ``Kernel/IOUring/Submission/Queue``
+        /// - ``Kernel/IOUring/Submission/Queue/Entry``
+        /// - ``Kernel/IOUring/Completion``
         public enum Submission {}
     }
 
