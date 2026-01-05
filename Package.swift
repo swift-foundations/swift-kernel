@@ -24,7 +24,7 @@ let package = Package(
         // swift-system for internal use only (Errno, FilePath bridging)
         // NOT re-exported from Kernel's public API
         .package(url: "https://github.com/apple/swift-system", from: "1.4.0"),
-        .package(path: "../../swift-standards/swift-standards")
+        .package(url: "https://github.com/swift-standards/swift-standards", from: "0.28.0")
     ],
     targets: [
         .target(
