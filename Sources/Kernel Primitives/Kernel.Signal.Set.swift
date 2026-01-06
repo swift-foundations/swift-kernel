@@ -69,28 +69,41 @@ extension Kernel.Signal {
         /// Creates a set containing a single signal.
         ///
         /// - Parameter signal: The signal to include.
-        /// - Note: Traps if the signal number is invalid (should not happen with named constants).
+        /// - Throws: `Error.set` if the signal number is invalid.
         @inlinable
-        public init(_ signal: Number) {
+        public init(_ signal: Number) throws(Error) {
             self.init()
-            // Named constants should always be valid, so trap on error
             guard sigaddset(&self.storage, signal.rawValue) == 0 else {
-                preconditionFailure("Invalid signal number: \(signal.rawValue)")
+                throw .set(.captureErrno())
             }
         }
 
         /// Creates a set containing multiple signals.
         ///
         /// - Parameter signals: The signals to include.
-        /// - Note: Traps if any signal number is invalid.
+        /// - Throws: `Error.set` on first invalid signal (deterministic failure point).
         @inlinable
-        public init(_ signals: some Sequence<Number>) {
+        public init(_ signals: some Sequence<Number>) throws(Error) {
             self.init()
             for signal in signals {
                 guard sigaddset(&self.storage, signal.rawValue) == 0 else {
-                    preconditionFailure("Invalid signal number: \(signal.rawValue)")
+                    throw .set(.captureErrno())
                 }
             }
+        }
+
+        /// Creates a set containing a single signal without validation.
+        ///
+        /// **Warning**: Bypasses signal number validation. Only use for:
+        /// - Static constants (`.user1`, `.terminate`)
+        /// - Pre-validated signal numbers
+        /// - Internal construction after validation
+        ///
+        /// For user-provided signal numbers, use the throwing `init(_:)`.
+        @inlinable
+        public init(__unchecked: Void, _ signal: Number) {
+            self.init()
+            _ = sigaddset(&self.storage, signal.rawValue)
         }
 
         /// Adds a signal to the set.
