@@ -72,7 +72,7 @@ extension Kernel {
         /// - Throws: `Kernel.Unlink.Error` on failure.
         @inlinable
         public static func unlink(_ path: borrowing Kernel.Path) throws(Error) {
-            try unlink(path.cString)
+            try unlink(path.unsafeCString)
         }
 
         /// Removes a file or symbolic link.
@@ -105,7 +105,7 @@ extension Kernel {
         /// - Throws: `Kernel.Unlink.Error` on failure.
         @inlinable
         public static func unlink(_ path: borrowing Kernel.Path) throws(Error) {
-            try unlink(path.cString)
+            try unlink(path.unsafeCString)
         }
 
         /// Removes a file.

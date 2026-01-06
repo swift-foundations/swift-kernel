@@ -11,7 +11,7 @@
 
 #if !os(Windows)
 
-    public import Kernel_Primitives
+    public import Kernel
 
     /// Test utilities for I/O operations.
     public enum KernelIOTest {

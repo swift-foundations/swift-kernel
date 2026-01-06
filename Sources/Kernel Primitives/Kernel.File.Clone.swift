@@ -59,7 +59,7 @@ extension Kernel.File.Clone.Capability {
     #if os(macOS)
         public static func probe(at path: borrowing Kernel.Path) throws(Kernel.File.Clone.Error.Syscall) -> Kernel.File.Clone.Capability {
             var statfsBuf = Darwin.statfs()
-            let result = statfs(path.cString, &statfsBuf)
+            let result = statfs(path.unsafeCString, &statfsBuf)
 
             guard result == 0 else {
                 throw .platform(code: .posix(errno), operation: .statfs)
@@ -119,7 +119,7 @@ extension Kernel.File.Clone {
         #if os(macOS)
             public static func size(at path: borrowing Kernel.Path) throws(Kernel.File.Clone.Error.Syscall) -> Int {
                 var statBuf = Darwin.stat()
-                let result = stat(path.cString, &statBuf)
+                let result = stat(path.unsafeCString, &statBuf)
 
                 guard result == 0 else {
                     throw .platform(code: .posix(errno), operation: .stat)
@@ -130,7 +130,7 @@ extension Kernel.File.Clone {
         #elseif os(Linux)
             public static func size(at path: borrowing Kernel.Path) throws(Kernel.File.Clone.Error.Syscall) -> Int {
                 var statBuf = Glibc.stat()
-                let result = stat(path.cString, &statBuf)
+                let result = stat(path.unsafeCString, &statBuf)
 
                 guard result == 0 else {
                     throw .platform(code: .posix(errno), operation: .stat)
@@ -169,7 +169,7 @@ extension Kernel.File.Clone {
                 source: borrowing Kernel.Path,
                 destination: borrowing Kernel.Path
             ) throws(Kernel.File.Clone.Error.Syscall) -> Bool {
-                let result = clonefile(source.cString, destination.cString, 0)
+                let result = clonefile(source.unsafeCString, destination.unsafeCString, 0)
 
                 if result == 0 {
                     return true
@@ -196,12 +196,12 @@ extension Kernel.File.Clone {
             ) throws(Kernel.File.Clone.Error.Syscall) {
                 // Check if destination exists first (copyfile doesn't fail by default)
                 var statBuf = Darwin.stat()
-                let destExists = stat(destination.cString, &statBuf) == 0
+                let destExists = stat(destination.unsafeCString, &statBuf) == 0
                 if destExists {
                     throw .platform(code: .posix(EEXIST), operation: .copyfile)
                 }
 
-                let result = copyfile(source.cString, destination.cString, nil, copyfile_flags_t(COPYFILE_CLONE | COPYFILE_ALL))
+                let result = copyfile(source.unsafeCString, destination.unsafeCString, nil, copyfile_flags_t(COPYFILE_CLONE | COPYFILE_ALL))
 
                 guard result == 0 else {
                     throw .platform(code: .posix(errno), operation: .copyfile)
@@ -215,12 +215,12 @@ extension Kernel.File.Clone {
             ) throws(Kernel.File.Clone.Error.Syscall) {
                 // Check if destination exists first (copyfile doesn't fail by default)
                 var statBuf = Darwin.stat()
-                let destExists = stat(destination.cString, &statBuf) == 0
+                let destExists = stat(destination.unsafeCString, &statBuf) == 0
                 if destExists {
                     throw .platform(code: .posix(EEXIST), operation: .copyfile)
                 }
 
-                let result = copyfile(source.cString, destination.cString, nil, copyfile_flags_t(COPYFILE_DATA))
+                let result = copyfile(source.unsafeCString, destination.unsafeCString, nil, copyfile_flags_t(COPYFILE_DATA))
 
                 guard result == 0 else {
                     throw .platform(code: .posix(errno), operation: .copyfile)
@@ -342,7 +342,7 @@ extension Kernel.File.Clone {
                 source: borrowing Kernel.Path,
                 destination: borrowing Kernel.Path
             ) throws(Kernel.File.Clone.Error.Syscall) {
-                let result = CopyFileW(source.cString, destination.cString, true)
+                let result = CopyFileW(source.unsafeCString, destination.unsafeCString, true)
 
                 guard result else {
                     throw .platform(code: .win32(UInt32(GetLastError())), operation: .copy)

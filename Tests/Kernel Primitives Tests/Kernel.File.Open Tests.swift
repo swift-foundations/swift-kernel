@@ -138,7 +138,8 @@ extension Kernel.File.Open.Test.EdgeCase {
         @Test("open with create creates new file")
         func openWithCreateCreatesFile() throws {
             let pathString = Kernel.Temporary.filePath(prefix: "open-create-test")
-            try Kernel.Path.withCString(pathString) { path in
+            try pathString.withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
                 defer { try? Kernel.Unlink.unlink(path) }
 
                 let fd = try Kernel.File.Open.open(
@@ -228,8 +229,9 @@ extension Kernel.File.Open.Test.EdgeCase {
 
     extension Kernel.File.Open.Test.EdgeCase {
         @Test("open nonexistent file without create throws")
-        func openNonexistentFileThrows() throws {
-            try Kernel.Path.withCString("/nonexistent/path/to/file") { path in
+        func openNonexistentFileThrows() {
+            "/nonexistent/path/to/file".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
                 #expect(throws: Kernel.File.Open.Error.self) {
                     _ = try Kernel.File.Open.open(
                         path: path,
@@ -242,8 +244,9 @@ extension Kernel.File.Open.Test.EdgeCase {
         }
 
         @Test("open directory for write throws")
-        func openDirectoryForWriteThrows() throws {
-            try Kernel.Path.withCString("/tmp") { path in
+        func openDirectoryForWriteThrows() {
+            "/tmp".withCString { cString in
+                let path = Kernel.Path(unsafeCString: cString)
                 #expect(throws: Kernel.File.Open.Error.self) {
                     _ = try Kernel.File.Open.open(
                         path: path,

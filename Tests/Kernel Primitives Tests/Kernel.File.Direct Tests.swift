@@ -61,8 +61,9 @@ extension Kernel.File.Direct.Test.Unit {
 
 extension Kernel.File.Direct.Test.Unit {
     @Test("requirements(for:) returns Requirements")
-    func requirementsForPath() throws {
-        try Kernel.Path.withCString("/tmp") { path in
+    func requirementsForPath() {
+        "/tmp".withCString { cString in
+            let path = Kernel.Path(unsafeCString: cString)
             let requirements = Kernel.File.Direct.requirements(for: path)
             switch requirements {
             case .known:

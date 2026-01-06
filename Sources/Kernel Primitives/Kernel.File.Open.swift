@@ -37,7 +37,7 @@ extension Kernel.File {
             options: Kernel.File.Open.Options,
             permissions: Kernel.File.Permissions
         ) throws(Error) -> Kernel.Descriptor {
-            try open(unsafePath: path.cString, mode: mode, options: options, permissions: permissions)
+            try open(unsafePath: path.unsafeCString, mode: mode, options: options, permissions: permissions)
         }
 
         /// Opens a file at the specified path.
@@ -101,7 +101,7 @@ extension Kernel.File {
             options: Kernel.File.Open.Options,
             permissions: Kernel.File.Permissions
         ) throws(Error) -> Kernel.Descriptor {
-            try open(unsafePath: path.cString, mode: mode, options: options, permissions: permissions)
+            try open(unsafePath: path.unsafeCString, mode: mode, options: options, permissions: permissions)
         }
 
         /// Opens a file at the specified path (Windows wide string).

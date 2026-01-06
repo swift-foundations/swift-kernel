@@ -28,7 +28,7 @@ extension Kernel.Path {
         func storesCString() {
             "/tmp/test".withCString { cString in
                 let path = Kernel.Path(unsafeCString: cString)
-                #expect(path.cString == cString)
+                #expect(path.unsafeCString == cString)
             }
         }
 
@@ -39,7 +39,7 @@ extension Kernel.Path {
             "/tmp/test".withCString { cString in
                 let path = Kernel.Path(unsafeCString: cString)
                 // Cannot do: let copy = path (would not compile)
-                _ = path.cString
+                _ = path.unsafeCString
             }
         }
     }
@@ -51,7 +51,7 @@ extension Kernel.Path {
         func emptyString() {
             "".withCString { cString in
                 let path = Kernel.Path(unsafeCString: cString)
-                #expect(path.cString == cString)
+                #expect(path.unsafeCString == cString)
             }
         }
 
@@ -59,7 +59,7 @@ extension Kernel.Path {
         func specialCharacters() {
             "/tmp/test file with spaces.txt".withCString { cString in
                 let path = Kernel.Path(unsafeCString: cString)
-                #expect(path.cString == cString)
+                #expect(path.unsafeCString == cString)
             }
         }
 
@@ -67,7 +67,7 @@ extension Kernel.Path {
         func unicodeCharacters() {
             "/tmp/日本語/文件.txt".withCString { cString in
                 let path = Kernel.Path(unsafeCString: cString)
-                #expect(path.cString == cString)
+                #expect(path.unsafeCString == cString)
             }
         }
 
@@ -76,7 +76,7 @@ extension Kernel.Path {
             let longComponent = String(repeating: "a", count: 200)
             "/tmp/\(longComponent)".withCString { cString in
                 let path = Kernel.Path(unsafeCString: cString)
-                #expect(path.cString == cString)
+                #expect(path.unsafeCString == cString)
             }
         }
 
@@ -84,7 +84,7 @@ extension Kernel.Path {
         func relativeComponents() {
             "../relative/path/./here".withCString { cString in
                 let path = Kernel.Path(unsafeCString: cString)
-                #expect(path.cString == cString)
+                #expect(path.unsafeCString == cString)
             }
         }
     }
@@ -94,7 +94,7 @@ extension Kernel.Path {
     extension Kernel.Path.Test.Unit {
         @Test("Char typealias exists")
         func charTypealiasExists() {
-            // Kernel.Path.Char should be CInterop.PlatformChar (CChar on POSIX)
+            // Kernel.Path.Char is CChar on POSIX, UInt16 on Windows
             let _: Kernel.Path.Char.Type = CChar.self
         }
     }

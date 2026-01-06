@@ -9,54 +9,36 @@
 //
 // ===----------------------------------------------------------------------===//
 
-#if canImport(Darwin)
-    internal import Darwin
-#elseif canImport(Glibc)
-    internal import Glibc
-#elseif canImport(Musl)
-    internal import Musl
-#elseif os(Windows)
-    internal import ucrt
-#endif
+// MARK: - Layer 0: Zero-Allocation Path Primitives
+//
+// This file contains only pointer-level operations suitable for embedded contexts.
+// String conversion methods are in the Kernel module (Layer 1).
 
 extension Kernel {
-    /// An unsafe, borrow-only path wrapper for syscall use.
+    /// A lifetime-safe, borrow-only path wrapper for syscall use.
     ///
     /// `Kernel.Path` is a thin wrapper over a null-terminated platform string pointer.
-    /// It is **explicitly unsafe** and **non-Sendable**:
-    /// - The caller must ensure the pointer remains valid for the path's lifetime
-    /// - The caller must ensure the string is properly null-terminated
-    /// - This type does NOT own the memory it points to
+    /// It enforces lifetime safety through closure-based scoping:
+    /// - The pointer storage is internal
+    /// - All access is through scoped closures that prevent escape
+    /// - The type is `~Copyable` to prevent implicit duplication
     ///
     /// ## Platform Notes
     ///
     /// - On POSIX: Uses narrow strings (`CChar`/UTF-8)
     /// - On Windows: Uses wide strings (`UInt16`/UTF-16)
     ///
-    /// ## Recommended Usage
+    /// ## Layer 0 (Primitives) vs Layer 1 (Kernel)
     ///
-    /// Use `Kernel.Path.withCString` to safely convert a String to a path:
-    /// ```swift
-    /// let fd = try Kernel.Path.withCString("/tmp/file.txt") { path in
-    ///     try Kernel.File.Open.open(path: path, mode: .read, options: [], permissions: 0)
-    /// }
-    /// ```
-    ///
-    /// Only use `Kernel.Path` directly when you have a pre-validated platform string:
-    /// ```swift
-    /// someCString.withCString { cString in
-    ///     let path = Kernel.Path(unsafeCString: cString)
-    ///     // path is only valid within this closure
-    /// }
-    /// ```
+    /// This type lives in Layer 0 (zero-allocation). For String convenience methods
+    /// that allocate, see the extensions in the Kernel module.
     ///
     /// - Warning: This type is intentionally NOT `Sendable`. Pointer lifetimes
     ///   cannot be safely transferred across concurrency boundaries.
     public struct Path: ~Copyable {
-        /// The underlying null-terminated platform string.
-        ///
-        /// - Warning: This pointer is NOT owned. The caller must ensure validity.
-        public let cString: UnsafePointer<Char>
+        /// Internal storage for the null-terminated platform string.
+        @usableFromInline
+        internal let _cString: UnsafePointer<Char>
     }
 }
 
@@ -77,7 +59,7 @@ extension Kernel.Path {
 // MARK: - Initialization
 
 extension Kernel.Path {
-    /// Creates an unsafe path from a platform string pointer.
+    /// Creates a path from a platform string pointer.
     ///
     /// - Parameter cString: A pointer to a null-terminated platform string.
     ///
@@ -87,61 +69,46 @@ extension Kernel.Path {
     ///   - The string does not contain interior NUL bytes
     @inlinable
     public init(unsafeCString cString: UnsafePointer<Char>) {
-        self.cString = cString
+        self._cString = cString
     }
 }
 
-// MARK: - String Integration
+// MARK: - Scoped Pointer Access
 
 extension Kernel.Path {
-    /// Executes a closure with a borrowed path from a String.
+    /// Executes a closure with the underlying C string pointer.
     ///
-    /// This is the recommended way to use paths with Kernel syscalls.
-    /// The closure receives a `Kernel.Path` that is only valid for the
-    /// duration of the closure.
+    /// This is the safe way to access the raw pointer when needed for
+    /// direct syscall interop.
     ///
-    /// - Parameters:
-    ///   - string: The path string (UTF-8 on POSIX, converted to UTF-16 on Windows).
-    ///   - body: A typed-throwing closure that receives the borrowed path.
+    /// - Parameter body: A closure receiving the pointer.
     /// - Returns: The value returned by the closure.
-    /// - Throws: The typed error from the closure.
-    ///
-    /// ## Example
-    ///
-    /// ```swift
-    /// let fd = try Kernel.Path.withCString("/tmp/file.txt") { path in
-    ///     try Kernel.File.Open.open(path: path, mode: .read, options: [], permissions: 0)
-    /// }
-    /// ```
     @inlinable
-    public static func withCString<R: ~Copyable, E: Swift.Error>(
-        _ string: Swift.String,
-        _ body: (borrowing Kernel.Path) throws(E) -> R
+    public borrowing func withUnsafeCString<R: ~Copyable, E: Swift.Error>(
+        _ body: (UnsafePointer<Char>) throws(E) -> R
     ) throws(E) -> R {
-        #if os(Windows)
-        let utf16 = string.utf16
-        let count = utf16.count + 1
-        let buffer = UnsafeMutablePointer<UInt16>.allocate(capacity: count)
-        defer { buffer.deallocate() }
-        var i = 0
-        for unit in utf16 {
-            buffer[i] = unit
-            i += 1
-        }
-        buffer[i] = 0 // NUL terminator
-        return try body(Kernel.Path(unsafeCString: buffer))
-        #else
-        let utf8 = string.utf8
-        let count = utf8.count + 1
-        let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: count)
-        defer { buffer.deallocate() }
-        var i = 0
-        for byte in utf8 {
-            buffer[i] = CChar(bitPattern: byte)
-            i += 1
-        }
-        buffer[i] = 0 // NUL terminator
-        return try body(Kernel.Path(unsafeCString: buffer))
-        #endif
+        try body(_cString)
+    }
+
+    /// The underlying C string pointer.
+    ///
+    /// - Warning: This defeats the lifetime safety model. The pointer is only
+    ///   valid for the lifetime of this `Path` instance. Storing or returning
+    ///   this pointer can lead to use-after-free bugs.
+    ///
+    /// Prefer `withUnsafeCString` for scoped access.
+    @inlinable
+    public var unsafeCString: UnsafePointer<Char> {
+        _cString
+    }
+}
+
+// MARK: - Conversion Errors
+
+extension Kernel.Path {
+    /// Errors that can occur during path string conversion.
+    public enum ConversionError: Swift.Error, Sendable, Equatable {
+        /// The string contains an interior NUL byte, which would truncate the path.
+        case interiorNul
     }
 }

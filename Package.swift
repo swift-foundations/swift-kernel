@@ -73,7 +73,7 @@ let package = Package(
         .target(
             name: "Kernel Test Support",
             dependencies: [
-                "Kernel Primitives"
+                "Kernel"
             ],
             path: "Tests/Support"
         ),

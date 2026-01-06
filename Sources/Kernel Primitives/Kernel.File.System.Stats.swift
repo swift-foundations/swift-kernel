@@ -127,7 +127,7 @@ extension Kernel.File.System {
         /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
         public static func get(path: borrowing Kernel.Path) throws(Error) -> Kernel.File.System.Stats {
-            try get(unsafePath: path.cString)
+            try get(unsafePath: path.unsafeCString)
         }
 
         /// Gets filesystem statistics for an unsafe path pointer.
@@ -207,7 +207,7 @@ extension Kernel.File.System {
         /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
         public static func get(path: borrowing Kernel.Path) throws(Error) -> Kernel.File.System.Stats {
-            try get(unsafePath: path.cString)
+            try get(unsafePath: path.unsafeCString)
         }
 
         /// Gets filesystem statistics for an unsafe path pointer.
