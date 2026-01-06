@@ -82,6 +82,12 @@ extension Kernel.Error {
 
         /// Bad file descriptor (EBADF).
         public static var badDescriptor: Self { Self(EBADF) }
+
+        /// I/O error (EIO).
+        public static var ioError: Self { Self(EIO) }
+
+        /// Out of memory (ENOMEM).
+        public static var noMemory: Self { Self(ENOMEM) }
     }
 
 #endif
