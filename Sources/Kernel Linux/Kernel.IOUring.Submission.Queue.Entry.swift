@@ -100,7 +100,7 @@ public import Kernel_Primitives
         @inlinable
         public var offset: Kernel.IOUring.Offset {
             get { Kernel.IOUring.Offset(cValue.off) }
-            set { cValue.off = newValue._rawValue }
+            set { cValue.off = newValue.rawValue }
         }
 
         /// Buffer address or other address field.
@@ -114,21 +114,21 @@ public import Kernel_Primitives
         @inlinable
         public var len: Kernel.IOUring.Length {
             get { Kernel.IOUring.Length(cValue.len) }
-            set { cValue.len = newValue._rawValue }
+            set { cValue.len = newValue.rawValue }
         }
 
         /// Operation data returned with completion.
         @inlinable
         public var data: Kernel.IOUring.Operation.Data {
             get { Kernel.IOUring.Operation.Data(cValue.user_data) }
-            set { cValue.user_data = newValue._rawValue }
+            set { cValue.user_data = newValue.rawValue }
         }
 
         /// Personality ID (for credentials).
         @inlinable
         public var personality: Kernel.IOUring.Personality.ID {
             get { Kernel.IOUring.Personality.ID(cValue.personality) }
-            set { cValue.personality = newValue._rawValue }
+            set { cValue.personality = newValue.rawValue }
         }
     }
 

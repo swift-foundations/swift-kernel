@@ -54,8 +54,8 @@ public import Kernel_Primitives
         /// converted to `.current` (UInt64.max).
         @inlinable
         public init(_ fileOffset: Kernel.File.Offset) {
-            if fileOffset._rawValue >= 0 {
-                self.init(UInt64(fileOffset._rawValue))
+            if fileOffset.rawValue >= 0 {
+                self.init(UInt64(fileOffset.rawValue))
             } else {
                 self = .current
             }
@@ -69,7 +69,7 @@ public import Kernel_Primitives
             if self == .current {
                 return "current"
             }
-            return "\(_rawValue)"
+            return "\(rawValue)"
         }
     }
 

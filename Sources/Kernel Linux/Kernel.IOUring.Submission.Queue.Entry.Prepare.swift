@@ -101,7 +101,7 @@ public import Kernel_Primitives
             ) {
                 entry.cValue = io_uring_sqe()
                 entry.opcode = .asyncCancel
-                entry.addr = target._rawValue
+                entry.addr = target.rawValue
                 entry.data = data
             }
 

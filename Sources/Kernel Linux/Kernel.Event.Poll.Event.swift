@@ -93,7 +93,7 @@ public import Kernel_Primitives
         internal var cValue: epoll_event {
             var event = epoll_event()
             event.events = events.rawValue
-            event.data.u64 = data._rawValue
+            event.data.u64 = data.rawValue
             return event
         }
     }

@@ -76,12 +76,12 @@ public import Kernel_Primitives
         /// Saturates at `UInt32.max` for sizes larger than 4GB.
         @inlinable
         public init(_ size: Kernel.File.Size) {
-            if size._rawValue > Int64(UInt32.max) {
+            if size.rawValue > Int64(UInt32.max) {
                 self.init(UInt32.max)
-            } else if size._rawValue < 0 {
+            } else if size.rawValue < 0 {
                 self.init(UInt32(0))
             } else {
-                self.init(UInt32(size._rawValue))
+                self.init(UInt32(size.rawValue))
             }
         }
     }
