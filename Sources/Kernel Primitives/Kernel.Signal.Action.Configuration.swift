@@ -92,6 +92,22 @@ extension Kernel.Signal.Action {
                 self.flags = flags
             }
         }
+
+        /// Creates a configuration without invariant enforcement.
+        ///
+        /// Used internally when reconstructing from kernel state where
+        /// the handler/flags relationship is already correct.
+        @usableFromInline
+        internal init(
+            __unchecked: Void,
+            handler: Handler,
+            mask: Kernel.Signal.Set,
+            flags: Flags
+        ) {
+            self.handler = handler
+            self.mask = mask
+            self.flags = flags
+        }
     }
 }
 

@@ -44,16 +44,14 @@ extension Kernel.Signal.Action {
         signal: Kernel.Signal.Number,
         _ configuration: Configuration
     ) throws(Kernel.Signal.Error) -> Configuration {
-        var newAction = sigaction()
+        var newAction = sigaction(configuration)
         var oldAction = sigaction()
-
-        configurationToSigaction(configuration, &newAction)
 
         guard sigaction(signal.rawValue, &newAction, &oldAction) == 0 else {
             throw .action(.captureErrno())
         }
 
-        return sigactionToConfiguration(oldAction)
+        return Configuration(oldAction)
     }
 
     /// Gets the current signal action configuration.
@@ -83,69 +81,83 @@ extension Kernel.Signal.Action {
             throw .action(.captureErrno())
         }
 
-        return sigactionToConfiguration(action)
+        return Configuration(action)
     }
 }
 
-// MARK: - Internal Conversion Helpers
+// MARK: - sigaction ← Configuration
 
-extension Kernel.Signal.Action {
-    /// Converts a Configuration to a raw sigaction struct.
+extension sigaction {
+    /// Creates a sigaction struct from a Configuration.
     @usableFromInline
-    internal static func configurationToSigaction(
-        _ configuration: Configuration,
-        _ action: inout sigaction
-    ) {
+    internal init(_ configuration: Kernel.Signal.Action.Configuration) {
+        self.init()
+
         // Set mask
-        action.sa_mask = configuration.mask.storage
+        self.sa_mask = configuration.mask.storage
 
         // Set flags
-        action.sa_flags = configuration.flags.rawValue
+        self.sa_flags = configuration.flags.rawValue
 
         // Set handler based on type
         #if canImport(Darwin)
             switch configuration.handler {
             case .default:
-                action.__sigaction_u.__sa_handler = SIG_DFL
+                self.__sigaction_u.__sa_handler = SIG_DFL
             case .ignore:
-                action.__sigaction_u.__sa_handler = SIG_IGN
+                self.__sigaction_u.__sa_handler = SIG_IGN
             case .custom(let handler):
-                action.__sigaction_u.__sa_handler = handler
+                self.__sigaction_u.__sa_handler = handler
             case .customInfo(let handler):
-                action.__sigaction_u.__sa_sigaction = handler
+                self.__sigaction_u.__sa_sigaction = handler
             }
-        #else
-            // Linux/Glibc/Musl
+        #elseif canImport(Glibc)
             switch configuration.handler {
             case .default:
-                action.__sigaction_handler.sa_handler = SIG_DFL
+                self.__sigaction_handler.sa_handler = SIG_DFL
             case .ignore:
-                action.__sigaction_handler.sa_handler = SIG_IGN
+                self.__sigaction_handler.sa_handler = SIG_IGN
             case .custom(let handler):
-                action.__sigaction_handler.sa_handler = handler
+                self.__sigaction_handler.sa_handler = handler
             case .customInfo(let handler):
-                action.__sigaction_handler.sa_sigaction = handler
+                self.__sigaction_handler.sa_sigaction = handler
+            }
+        #elseif canImport(Musl)
+            switch configuration.handler {
+            case .default:
+                self.sa_handler = SIG_DFL
+            case .ignore:
+                self.sa_handler = SIG_IGN
+            case .custom(let handler):
+                self.sa_handler = handler
+            case .customInfo(let handler):
+                self.sa_sigaction = handler
             }
         #endif
     }
+}
 
-    /// Converts a raw sigaction struct to a Configuration.
+// MARK: - Configuration ← sigaction
+
+extension Kernel.Signal.Action.Configuration {
+    /// Creates a Configuration from a raw sigaction struct.
     @usableFromInline
-    internal static func sigactionToConfiguration(
-        _ action: sigaction
-    ) -> Configuration {
-        let flags = Flags(rawValue: action.sa_flags)
+    internal init(_ action: sigaction) {
+        let flags = Kernel.Signal.Action.Flags(rawValue: action.sa_flags)
         let mask = Kernel.Signal.Set(storage: action.sa_mask)
 
         // Determine handler type
-        let handler: Handler
+        let handler: Kernel.Signal.Action.Handler
 
         #if canImport(Darwin)
             let handlerPtr = action.__sigaction_u.__sa_handler
             let sigactionPtr = action.__sigaction_u.__sa_sigaction
-        #else
+        #elseif canImport(Glibc)
             let handlerPtr = action.__sigaction_handler.sa_handler
             let sigactionPtr = action.__sigaction_handler.sa_sigaction
+        #elseif canImport(Musl)
+            let handlerPtr = action.sa_handler
+            let sigactionPtr = action.sa_sigaction
         #endif
 
         if flags.contains(.sigInfo) {
@@ -174,7 +186,8 @@ extension Kernel.Signal.Action {
             }
         }
 
-        return Configuration(handler: handler, mask: mask, flags: flags)
+        // Use unchecked init - kernel state has correct handler/flags relationship
+        self.init(__unchecked: (), handler: handler, mask: mask, flags: flags)
     }
 }
 
