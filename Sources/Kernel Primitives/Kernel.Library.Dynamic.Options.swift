@@ -13,6 +13,7 @@
 
 #if canImport(Darwin)
     public import Darwin
+    public import CDarwinShim
 #elseif canImport(Glibc)
     public import Glibc
 #elseif canImport(Musl)
@@ -76,6 +77,12 @@ extension Kernel.Library.Dynamic.Options {
     /// Keeps the library in memory even after `close`.
     /// The library's static destructors will not run.
     public static let noDelete = Self(rawValue: RTLD_NODELETE)
+
+    /// Search only this library, not dependencies (RTLD_FIRST).
+    ///
+    /// When combined with other flags, restricts symbol lookup
+    /// to the library itself, not its dependencies.
+    public static let first = Self(rawValue: swift_RTLD_FIRST())
 }
 
 #endif

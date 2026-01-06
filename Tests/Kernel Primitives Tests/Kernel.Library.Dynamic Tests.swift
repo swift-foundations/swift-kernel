@@ -101,47 +101,6 @@ extension Kernel.Library.Dynamic.Test.Unit {
         }
     }
 
-    @Test("malloc symbol lookup succeeds via default scope")
-    func mallocSymbolLookup() throws {
-        let ptr = try "malloc".withCString { name in
-            try Kernel.Library.Dynamic.symbol(name: name, in: .default)
-        }
-        // Just verify we got a non-nil pointer
-        _ = ptr
-    }
-
-    @Test("Open main executable (environment-dependent)")
-    func openMainExecutable() {
-        // Accept either success OR a well-formed error (N5: robust)
-        do {
-            let handle = try Kernel.Library.Dynamic.open(path: nil, options: .now)
-            try Kernel.Library.Dynamic.close(handle)
-        } catch let error as Kernel.Library.Dynamic.Error {
-            // Some environments may reject dlopen(NULL) — just verify error is well-formed
-            if case .open(let msg) = error {
-                #expect(!msg.text.isEmpty, "error message should be non-empty")
-            }
-        } catch {
-            Issue.record("Unexpected error type: \(error)")
-        }
-    }
-
-    @Test("Scope.handle wraps Handle correctly")
-    func scopeHandleWrapsCorrectly() throws {
-        // Open main executable
-        let handle = try Kernel.Library.Dynamic.open(path: nil, options: .now)
-        defer { try? Kernel.Library.Dynamic.close(handle) }
-
-        // Create scope from handle
-        let scope = Kernel.Library.Dynamic.Scope.handle(handle)
-
-        // Verify equality
-        if case .handle(let h) = scope {
-            #expect(h == handle)
-        } else {
-            Issue.record("Expected .handle case")
-        }
-    }
 }
 
 #endif

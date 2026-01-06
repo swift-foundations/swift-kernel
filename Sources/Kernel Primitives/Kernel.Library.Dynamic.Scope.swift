@@ -33,6 +33,13 @@ extension Kernel.Library.Dynamic {
     /// This enum separates closable `Handle` values from lookup-only sentinels.
     /// This makes `close(.default)` a **compile-time error** rather than
     /// a runtime failure.
+    ///
+    /// ## Pointer Lifetime
+    ///
+    /// - For `.handle(h)`: returned pointer validity is bounded by that handle's lifetime
+    /// - For `.default`/`.next`/`.main`: lookups are not tied to a specific library lifetime,
+    ///   but returned pointers can be invalidated by unloading a library that owns the symbol
+    /// - **Never assume** `.default` means "stable forever"
     public enum Scope: Sendable, Equatable {
         /// Search in a specific loaded library.
         case handle(Handle)

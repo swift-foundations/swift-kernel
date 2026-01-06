@@ -88,6 +88,10 @@ static inline void *swift_RTLD_MAIN_ONLY(void) {
     return RTLD_MAIN_ONLY;
 }
 
+static inline int32_t swift_RTLD_FIRST(void) {
+    return RTLD_FIRST;
+}
+
 #endif /* __APPLE__ */
 
 #endif /* CDARWIN_SHIM_H */

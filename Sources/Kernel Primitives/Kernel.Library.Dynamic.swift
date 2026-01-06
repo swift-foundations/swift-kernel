@@ -60,7 +60,9 @@ extension Kernel.Library.Dynamic {
     ///     try Kernel.Library.Dynamic.open(path: path, options: .now)
     /// }
     ///
-    /// // Load main executable (for symbol lookup)
+    /// // Open main executable for symbol lookup
+    /// // Note: The returned handle is primarily for dlsym; closing it is
+    /// // platform-dependent and not recommended for portable code.
     /// let main = try Kernel.Library.Dynamic.open(path: nil, options: .now)
     /// ```
     @inlinable
