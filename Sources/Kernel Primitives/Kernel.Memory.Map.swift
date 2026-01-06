@@ -66,7 +66,7 @@ extension Kernel.Memory {
                 protection.rawValue,
                 flags.rawValue,
                 fd.rawValue,
-                off_t(offset._rawValue)
+                off_t(offset.rawValue)
             )
 
             guard result != MAP_FAILED else {

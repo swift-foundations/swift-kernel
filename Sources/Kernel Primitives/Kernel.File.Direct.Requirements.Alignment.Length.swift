@@ -22,7 +22,7 @@ extension Kernel.File.Direct.Requirements.Alignment {
         /// - Returns: `true` if the length is a multiple of `lengthMultiple`.
         public func isValid(_ length: Kernel.File.Size) -> Bool {
             let mask: Int64 = alignment.lengthMultiple.mask()
-            return length._rawValue & mask == 0
+            return length.rawValue & mask == 0
         }
     }
 

@@ -44,7 +44,7 @@ extension Int {
     /// Creates an Int from an allocation granularity.
     @inlinable
     public init(_ granularity: Kernel.Memory.Allocation.Granularity) {
-        self = granularity._rawValue
+        self = granularity.rawValue
     }
 }
 
@@ -52,7 +52,7 @@ extension Int64 {
     /// Creates an Int64 from an allocation granularity.
     @inlinable
     public init(_ granularity: Kernel.Memory.Allocation.Granularity) {
-        self = Int64(granularity._rawValue)
+        self = Int64(granularity.rawValue)
     }
 }
 
@@ -64,7 +64,7 @@ extension Binary.Alignment {
     public init(_ granularity: Kernel.Memory.Allocation.Granularity) {
         // Allocation granularities from the kernel are always powers of 2
         // swiftlint:disable:next force_try
-        self = try! Binary.Alignment(granularity._rawValue)
+        self = try! Binary.Alignment(granularity.rawValue)
     }
 }
 

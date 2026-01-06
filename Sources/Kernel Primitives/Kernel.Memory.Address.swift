@@ -51,7 +51,7 @@ extension Kernel.Memory.Address {
     /// Returns `nil` for the zero address.
     @inlinable
     public var pointer: UnsafeRawPointer? {
-        UnsafeRawPointer(bitPattern: _rawValue)
+        UnsafeRawPointer(bitPattern: rawValue)
     }
 
     /// The mutable raw pointer for syscall interop.
@@ -59,7 +59,7 @@ extension Kernel.Memory.Address {
     /// Returns `nil` for the zero address.
     @inlinable
     public var mutablePointer: UnsafeMutableRawPointer? {
-        UnsafeMutableRawPointer(bitPattern: _rawValue)
+        UnsafeMutableRawPointer(bitPattern: rawValue)
     }
 }
 

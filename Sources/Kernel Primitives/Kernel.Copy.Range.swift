@@ -52,8 +52,8 @@
             guard source.isValid else { throw .invalidDescriptor }
             guard destination.isValid else { throw .invalidDescriptor }
 
-            var srcOff = off_t(sourceOffset._rawValue)
-            var dstOff = off_t(destOffset._rawValue)
+            var srcOff = off_t(sourceOffset.rawValue)
+            var dstOff = off_t(destOffset.rawValue)
 
             let result = Int(
                 swift_copy_file_range(

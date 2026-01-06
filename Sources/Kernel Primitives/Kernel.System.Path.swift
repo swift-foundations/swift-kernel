@@ -40,6 +40,6 @@ extension Int {
     /// Creates an Int from a path length for comparison.
     @inlinable
     public init(_ length: Kernel.System.Path.Length) {
-        self = length._rawValue
+        self = length.rawValue
     }
 }

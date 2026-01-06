@@ -56,7 +56,7 @@ extension Kernel.Memory.Map {
                 }
             }
 
-            let maxSize = UInt64(offset._rawValue) + UInt64(length._rawValue)
+            let maxSize = UInt64(offset.rawValue) + UInt64(length.rawValue)
             let maxSizeHigh = DWORD(maxSize >> 32)
             let maxSizeLow = DWORD(maxSize & 0xFFFF_FFFF)
 
@@ -78,15 +78,15 @@ extension Kernel.Memory.Map {
                 access = DWORD(FILE_MAP_COPY)
             }
 
-            let offsetHigh = DWORD(UInt64(offset._rawValue) >> 32)
-            let offsetLow = DWORD(UInt64(offset._rawValue) & 0xFFFF_FFFF)
+            let offsetHigh = DWORD(UInt64(offset.rawValue) >> 32)
+            let offsetLow = DWORD(UInt64(offset.rawValue) & 0xFFFF_FFFF)
 
             let viewAddress = MapViewOfFile(
                 mappingHandle,
                 access,
                 offsetHigh,
                 offsetLow,
-                SIZE_T(length._rawValue)
+                SIZE_T(length.rawValue)
             )
 
             guard let address = viewAddress else {

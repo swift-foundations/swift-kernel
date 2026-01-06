@@ -45,7 +45,7 @@ extension Int {
     /// Creates an Int from a page size.
     @inlinable
     public init(_ size: Kernel.Memory.Page.Size) {
-        self = size._rawValue
+        self = size.rawValue
     }
 }
 
@@ -57,7 +57,7 @@ extension Binary.Alignment {
     public init(_ pageSize: Kernel.Memory.Page.Size) {
         // Page sizes from the kernel are always powers of 2
         // swiftlint:disable:next force_try
-        self = try! Binary.Alignment(pageSize._rawValue)
+        self = try! Binary.Alignment(pageSize.rawValue)
     }
 }
 

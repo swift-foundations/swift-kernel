@@ -82,7 +82,7 @@ extension Kernel.File.Direct.Requirements.Alignment {
         }
         if !offset.isAligned(fileOffset) {
             return .misalignedOffset(
-                offset: fileOffset._rawValue,
+                offset: fileOffset.rawValue,
                 required: offsetAlignment
             )
         }

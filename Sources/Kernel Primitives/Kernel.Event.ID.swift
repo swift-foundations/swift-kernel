@@ -77,11 +77,11 @@ extension Kernel.Descriptor {
     @inlinable
     public init?(_ id: Kernel.Event.ID) {
         #if os(Windows)
-            guard let handle = HANDLE(bitPattern: Int(id._rawValue)) else { return nil }
+            guard let handle = HANDLE(bitPattern: Int(id.rawValue)) else { return nil }
             self.init(rawValue: handle)
         #else
-            guard id._rawValue <= UInt(Int32.max) else { return nil }
-            self.init(rawValue: Int32(id._rawValue))
+            guard id.rawValue <= UInt(Int32.max) else { return nil }
+            self.init(rawValue: Int32(id.rawValue))
         #endif
     }
 }

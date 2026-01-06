@@ -120,7 +120,7 @@ extension Kernel.Seek.Error: CustomStringConvertible {
             offset: Kernel.File.Offset,
             from origin: Origin
         ) throws(Error) -> Kernel.File.Offset {
-            let result = lseek(descriptor.rawValue, off_t(offset._rawValue), origin.posixWhence)
+            let result = lseek(descriptor.rawValue, off_t(offset.rawValue), origin.posixWhence)
             guard result != -1 else {
                 throw Error(posixErrno: errno)
             }
@@ -178,7 +178,7 @@ extension Kernel.Seek.Error: CustomStringConvertible {
             from origin: Origin
         ) throws(Error) -> Kernel.File.Offset {
             var distanceToMove = LARGE_INTEGER()
-            distanceToMove.QuadPart = offset._rawValue
+            distanceToMove.QuadPart = offset.rawValue
 
             var newPosition = LARGE_INTEGER()
 

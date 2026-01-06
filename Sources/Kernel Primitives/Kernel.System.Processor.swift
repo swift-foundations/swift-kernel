@@ -39,6 +39,6 @@ extension Int {
     /// Creates an Int from a processor count.
     @inlinable
     public init(_ count: Kernel.System.Processor.Count) {
-        self = count._rawValue
+        self = count.rawValue
     }
 }

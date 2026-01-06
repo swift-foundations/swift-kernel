@@ -30,6 +30,6 @@ extension Int {
     /// Creates an Int from a thread count.
     @inlinable
     public init(_ count: Kernel.Thread.Count) {
-        self = count._rawValue
+        self = count.rawValue
     }
 }

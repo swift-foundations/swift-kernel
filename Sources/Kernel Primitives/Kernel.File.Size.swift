@@ -90,8 +90,8 @@ extension Kernel.File.Size {
     /// - Precondition: `delta` must be non-negative.
     @inlinable
     public init(_ delta: Kernel.File.Delta) {
-        precondition(delta._rawValue >= 0, "Delta must be non-negative to convert to Size")
-        self.init(delta._rawValue)
+        precondition(delta.rawValue >= 0, "Delta must be non-negative to convert to Size")
+        self.init(delta.rawValue)
     }
 }
 
@@ -101,13 +101,13 @@ extension Kernel.File.Size {
     /// Whether this size is zero.
     @inlinable
     public var isZero: Bool {
-        _rawValue == 0
+        rawValue == 0
     }
 
     /// Whether this size is positive (greater than zero).
     @inlinable
     public var isPositive: Bool {
-        _rawValue > 0
+        rawValue > 0
     }
 }
 
@@ -120,7 +120,7 @@ extension Kernel.File.Size {
     /// - Returns: `true` if this size is a multiple of the alignment.
     public func isAligned(to alignment: Binary.Alignment) -> Bool {
         let mask: Int64 = alignment.mask()
-        return _rawValue & mask == 0
+        return rawValue & mask == 0
     }
 
     /// Rounds this size down to the nearest alignment boundary.
@@ -129,7 +129,7 @@ extension Kernel.File.Size {
     /// - Returns: The largest aligned size ≤ `self`.
     public func alignedDown(to alignment: Binary.Alignment) -> Self {
         let mask: Int64 = alignment.mask()
-        return Self(_rawValue & ~mask)
+        return Self(rawValue & ~mask)
     }
 
     /// Rounds this size up to the nearest alignment boundary.
@@ -138,7 +138,7 @@ extension Kernel.File.Size {
     /// - Returns: The smallest aligned size ≥ `self`.
     public func alignedUp(to alignment: Binary.Alignment) -> Self {
         let mask: Int64 = alignment.mask()
-        return Self((_rawValue &+ mask) & ~mask)
+        return Self((rawValue &+ mask) & ~mask)
     }
 }
 
@@ -150,7 +150,7 @@ extension Int {
     /// - Parameter size: The file size.
     @inlinable
     public init(_ size: Kernel.File.Size) {
-        self = Int(size._rawValue)
+        self = Int(size.rawValue)
     }
 }
 
@@ -159,7 +159,7 @@ extension Int {
 /// Adds a file size to an offset.
 @inlinable
 public func + (lhs: Kernel.File.Offset, rhs: Kernel.File.Size) -> Kernel.File.Offset {
-    Kernel.File.Offset(lhs._rawValue + rhs._rawValue)
+    Kernel.File.Offset(lhs.rawValue + rhs.rawValue)
 }
 
 /// Adds a file size to an offset in place.
@@ -171,7 +171,7 @@ public func += (lhs: inout Kernel.File.Offset, rhs: Kernel.File.Size) {
 /// Subtracts a file size from an offset.
 @inlinable
 public func - (lhs: Kernel.File.Offset, rhs: Kernel.File.Size) -> Kernel.File.Offset {
-    Kernel.File.Offset(lhs._rawValue - rhs._rawValue)
+    Kernel.File.Offset(lhs.rawValue - rhs.rawValue)
 }
 
 /// Subtracts a file size from an offset in place.

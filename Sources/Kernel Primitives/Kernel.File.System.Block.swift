@@ -28,7 +28,7 @@ extension Kernel.File.System.Block {
     ///
     /// ```swift
     /// let stats = try Kernel.File.System.Stats.get(path)
-    /// let totalBytes = stats.blocks._rawValue * stats.blockSize._rawValue
+    /// let totalBytes = stats.blocks.rawValue * stats.blockSize.rawValue
     /// ```
     public typealias Size = Magnitude<Kernel.File.System.Block>.Value<UInt64>
 }
@@ -55,7 +55,7 @@ extension Kernel.File.System.Block {
     ///
     /// ```swift
     /// let stats = try Kernel.File.System.Stats.get(path)
-    /// let freeBytes = stats.freeBlocks._rawValue * stats.blockSize._rawValue
+    /// let freeBytes = stats.freeBlocks.rawValue * stats.blockSize.rawValue
     /// ```
     public typealias Count = Tagged<Kernel.File.System.Block, UInt64>
 }
@@ -69,12 +69,12 @@ extension Tagged where Tag == Kernel.File.System.Block, RawValue == UInt64 {
     /// Adds two block counts.
     @inlinable
     public static func + (lhs: Self, rhs: Self) -> Self {
-        Self(lhs._rawValue + rhs._rawValue)
+        Self(lhs.rawValue + rhs.rawValue)
     }
 
     /// Subtracts two block counts.
     @inlinable
     public static func - (lhs: Self, rhs: Self) -> Self {
-        Self(lhs._rawValue - rhs._rawValue)
+        Self(lhs.rawValue - rhs.rawValue)
     }
 }

@@ -95,19 +95,19 @@ extension Kernel.IO {
             }
             #if canImport(Darwin)
                 return try Kernel.Syscall.require(
-                    Darwin.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset._rawValue)),
+                    Darwin.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
             #elseif canImport(Glibc)
                 return try Kernel.Syscall.require(
-                    Glibc.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset._rawValue)),
+                    Glibc.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
             #elseif canImport(Musl)
                 return try Kernel.Syscall.require(
-                    Musl.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset._rawValue)),
+                    Musl.pwrite(descriptor.rawValue, baseAddress, buffer.count, off_t(offset.rawValue)),
                     .nonNegative,
                     orThrow: Error.current()
                 )
@@ -204,8 +204,8 @@ extension Kernel.IO.Write {
             }
 
             var overlapped = OVERLAPPED()
-            overlapped.Offset = DWORD(offset._rawValue & 0xFFFF_FFFF)
-            overlapped.OffsetHigh = DWORD(offset._rawValue >> 32)
+            overlapped.Offset = DWORD(offset.rawValue & 0xFFFF_FFFF)
+            overlapped.OffsetHigh = DWORD(offset.rawValue >> 32)
 
             var bytesWritten: DWORD = 0
             let result = WriteFile(

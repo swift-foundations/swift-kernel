@@ -149,7 +149,7 @@ extension Kernel.Memory {
             options: Options = []
         ) throws(Error) -> Kernel.Descriptor {
             // Convert size to high/low DWORD parts
-            let sizeValue = UInt64(size._rawValue)
+            let sizeValue = UInt64(size.rawValue)
             let sizeHigh = DWORD((sizeValue >> 32) & 0xFFFF_FFFF)
             let sizeLow = DWORD(sizeValue & 0xFFFF_FFFF)
 
