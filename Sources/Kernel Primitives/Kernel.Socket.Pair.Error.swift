@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
+import SystemPackage
 
 extension Kernel.Socket.Pair {
     /// Errors that can occur during socket pair operations.

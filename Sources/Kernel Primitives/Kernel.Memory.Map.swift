@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Binary
+import Binary
 public import Dimension
 
 extension Kernel.Memory {
