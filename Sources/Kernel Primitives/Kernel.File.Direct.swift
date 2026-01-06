@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 
 public import Binary
-public import SystemPackage
 
 /// Namespace for Direct I/O operations (cache bypass).
 ///
@@ -124,7 +123,7 @@ extension Kernel.File.Direct {
     /// - Parameter path: The file path to query.
     /// - Returns: The alignment requirements, or `.unknown` with a reason.
     public static func requirements(
-        for path: FilePath
+        for path: borrowing Kernel.Path
     ) -> Requirements {
         #if os(macOS)
             return .unknown(reason: .platformUnsupported)
@@ -214,7 +213,7 @@ extension Kernel.File.Direct.Requirements {
         ///
         /// On macOS, only `.uncached` mode (F_NOCACHE) is available.
         /// True Direct I/O with alignment requirements is not supported.
-        public static func probeCapability(at path: FilePath) -> Capability {
+        public static func probeCapability(at path: borrowing Kernel.Path) -> Capability {
             // macOS doesn't have true Direct I/O, only F_NOCACHE hint
             // We always return .uncachedOnly since F_NOCACHE is universally available
             return .uncachedOnly
@@ -249,7 +248,7 @@ extension Kernel.File.Direct.Requirements {
         ///
         /// On Linux, Direct I/O is filesystem-dependent but widely supported.
         /// The main exceptions are network filesystems and some FUSE implementations.
-        public static func probeCapability(at path: FilePath) -> Capability {
+        public static func probeCapability(at path: borrowing Kernel.Path) -> Capability {
             // Get filesystem type via statfs
             let statfsBuf: Kernel.File.System.Stats
             do {
@@ -322,7 +321,7 @@ extension Kernel.File.Direct.Requirements {
         /// On Windows, NO_BUFFERING is widely supported but requires knowing
         /// the sector size for alignment. If we can't determine sector size,
         /// we report buffered-only.
-        public static func probeCapability(at path: FilePath) -> Capability {
+        public static func probeCapability(at path: borrowing Kernel.Path) -> Capability {
             let requirements = Requirements(path)
             if case .known(let alignment) = requirements {
                 return .directSupported(alignment)

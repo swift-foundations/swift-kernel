@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 extension Kernel.File.System.Stats {
     /// Error type for filesystem statistics operations.
     public enum Error: Swift.Error, Sendable, Equatable {
@@ -36,88 +34,40 @@ extension Kernel.File.System.Stats.Error: CustomStringConvertible {
     }
 }
 
-// MARK: - POSIX Initialization
+// MARK: - Error Code Mapping
 
-#if !os(Windows)
-
-    #if canImport(Darwin)
-        public import Darwin
-    #elseif canImport(Glibc)
-        public import Glibc
-        public import CLinuxShim
-    #elseif canImport(Musl)
-        public import Musl
-    #endif
-
-    extension Kernel.File.System.Stats.Error {
-        @inlinable
-        init(errno: Errno) {
-            if let e = Kernel.Path.Resolution.Error(errno: errno) {
-                self = .path(e)
-                return
-            }
-            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.Permission.Error(errno: errno) {
-                self = .permission(e)
-                return
-            }
-            if let e = Kernel.Memory.Error(errno: errno) {
-                self = .memory(e)
-                return
-            }
-            if let e = Kernel.IO.Error(errno: errno) {
-                self = .io(e)
-                return
-            }
-            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
+extension Kernel.File.System.Stats.Error {
+    @usableFromInline
+    internal init(code: Kernel.Error.Code) {
+        if let e = Kernel.Path.Resolution.Error(code: code) {
+            self = .path(e)
+            return
         }
-
-        @inlinable
-        static func current() -> Self {
-            Self(errno: Errno(rawValue: errno))
+        if let e = Kernel.Descriptor.Validity.Error(code: code) {
+            self = .handle(e)
+            return
         }
+        if let e = Kernel.Permission.Error(code: code) {
+            self = .permission(e)
+            return
+        }
+        if let e = Kernel.Memory.Error(code: code) {
+            self = .memory(e)
+            return
+        }
+        if let e = Kernel.IO.Error(code: code) {
+            self = .io(e)
+            return
+        }
+        self = .platform(Kernel.Error.Unmapped.Error(code: code))
     }
 
-#endif
-
-// MARK: - Windows Initialization
-
-#if os(Windows)
-    public import WinSDK
-
-    extension Kernel.File.System.Stats.Error {
-        @inlinable
-        init(windowsError error: DWORD) {
-            if let e = Kernel.Path.Resolution.Error(windowsError: error) {
-                self = .path(e)
-                return
-            }
-            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.Permission.Error(windowsError: error) {
-                self = .permission(e)
-                return
-            }
-            if let e = Kernel.Memory.Error(windowsError: error) {
-                self = .memory(e)
-                return
-            }
-            if let e = Kernel.IO.Error(windowsError: error) {
-                self = .io(e)
-                return
-            }
-            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(windowsError: GetLastError())
-        }
+    @usableFromInline
+    internal static func current() -> Self {
+        #if os(Windows)
+            Self(code: .captureLastError())
+        #else
+            Self(code: .captureErrno())
+        #endif
     }
-
-#endif
+}

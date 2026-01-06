@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 
 public import Kernel_Primitives
-public import SystemPackage
 
 // MARK: - Configuration
 
@@ -67,7 +66,7 @@ extension Kernel.File {
     /// - Returns: A file handle with Direct I/O state.
     /// - Throws: `Kernel.File.Open.Error` on failure.
     public static func open(
-        _ path: FilePath,
+        _ path: borrowing Kernel.Path,
         configuration: Open.Configuration = .init()
     ) throws(Open.Error) -> Handle {
         // 1. Discover requirements
@@ -93,7 +92,7 @@ extension Kernel.File {
             path: path,
             mode: configuration.mode,
             options: kernelOptions,
-            permissions: 0o644
+            permissions: .standard
         )
 
         return Handle(
@@ -101,16 +100,5 @@ extension Kernel.File {
             direct: resolved,
             requirements: requirements
         )
-    }
-
-    /// Opens a file from a String path.
-    ///
-    /// Convenience overload that converts String to FilePath.
-    @inlinable
-    public static func open(
-        _ path: String,
-        configuration: Open.Configuration = .init()
-    ) throws(Open.Error) -> Handle {
-        try open(FilePath(path), configuration: configuration)
     }
 }

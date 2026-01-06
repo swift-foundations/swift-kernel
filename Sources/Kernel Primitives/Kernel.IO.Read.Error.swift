@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 extension Kernel.IO.Read {
     /// Errors that can occur during read operations.
     public enum Error: Swift.Error, Sendable {
@@ -54,75 +52,40 @@ extension Kernel.IO.Read.Error: CustomStringConvertible {
     }
 }
 
-// MARK: - POSIX Initialization
+// MARK: - Error Code Mapping
 
-#if !os(Windows)
-
-    #if canImport(Darwin)
-        public import Darwin
-    #elseif canImport(Glibc)
-        public import Glibc
-    #elseif canImport(Musl)
-        public import Musl
-    #endif
-
-    extension Kernel.IO.Read.Error {
-        @inlinable
-        init(errno: Errno) {
-            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.Signal.Error(errno: errno) {
-                self = .signal(e)
-                return
-            }
-            if let e = Kernel.IO.Blocking.Error(errno: errno) {
-                self = .blocking(e)
-                return
-            }
-            if let e = Kernel.IO.Error(errno: errno) {
-                self = .io(e)
-                return
-            }
-            if let e = Kernel.Memory.Error(errno: errno) {
-                self = .memory(e)
-                return
-            }
-            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
+extension Kernel.IO.Read.Error {
+    @inlinable
+    init(code: Kernel.Error.Code) {
+        if let e = Kernel.Descriptor.Validity.Error(code: code) {
+            self = .handle(e)
+            return
         }
-
-        @inlinable
-        static func current() -> Self {
-            Self(errno: Errno(rawValue: errno))
+        if let e = Kernel.Signal.Error(code: code) {
+            self = .signal(e)
+            return
         }
+        if let e = Kernel.IO.Blocking.Error(code: code) {
+            self = .blocking(e)
+            return
+        }
+        if let e = Kernel.IO.Error(code: code) {
+            self = .io(e)
+            return
+        }
+        if let e = Kernel.Memory.Error(code: code) {
+            self = .memory(e)
+            return
+        }
+        self = .platform(Kernel.Error.Unmapped.Error(code: code))
     }
 
-#endif
-
-// MARK: - Windows Initialization
-
-#if os(Windows)
-    public import WinSDK
-
-    extension Kernel.IO.Read.Error {
-        @inlinable
-        init(windowsError error: DWORD) {
-            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.IO.Error(windowsError: error) {
-                self = .io(e)
-                return
-            }
-            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(windowsError: GetLastError())
-        }
+    @inlinable
+    static func current() -> Self {
+        #if os(Windows)
+            Self(code: .captureLastError())
+        #else
+            Self(code: .captureErrno())
+        #endif
     }
-
-#endif
+}

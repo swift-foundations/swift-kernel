@@ -83,10 +83,6 @@ extension Kernel.Error: CustomStringConvertible {
     }
 }
 
-#if !os(Windows)
-    internal import SystemPackage
-#endif
-
 #if os(Windows)
     internal import WinSDK
 #endif
@@ -95,37 +91,17 @@ extension Kernel.Error {
     public init?(
         _ code: Kernel.Error.Code
     ) {
-        switch code {
-        case .posix(let rawValue):
-            #if !os(Windows)
-                let errno = Errno(rawValue: rawValue)
-                // Try each domain in priority order
-                if let e = Kernel.Path.Resolution.Error(errno: errno) { self = .path(e) }
-                if let e = Kernel.Permission.Error(errno: errno) { self = .permission(e) }
-                if let e = Kernel.Descriptor.Validity.Error(errno: errno) { self = .handle(e) }
-                if let e = Kernel.Signal.Error(errno: errno) { self = .signal(e) }
-                if let e = Kernel.IO.Blocking.Error(errno: errno) { self = .blocking(e) }
-                if let e = Kernel.Storage.Error(errno: errno) { self = .space(e) }
-                if let e = Kernel.Memory.Error(errno: errno) { self = .memory(e) }
-                if let e = Kernel.IO.Error(errno: errno) { self = .io(e) }
-                if let e = Kernel.Lock.Error(errno: errno) { self = .lock(e) }
-            #endif
-            return nil
-
-        case .win32(let code):
-            #if os(Windows)
-                // Explicit DWORD conversion to call existing mapping entry points
-                let dword = DWORD(code)
-                if let e = Kernel.Path.Resolution.Error(windowsError: dword) { self = .path(e) }
-                if let e = Kernel.Permission.Error(windowsError: dword) { self = .permission(e) }
-                if let e = Kernel.Descriptor.Validity.Error(windowsError: dword) { self = .handle(e) }
-                if let e = Kernel.Storage.Error(windowsError: dword) { self = .space(e) }
-                if let e = Kernel.Memory.Error(windowsError: dword) { self = .memory(e) }
-                if let e = Kernel.IO.Error(windowsError: dword) { self = .io(e) }
-                if let e = Kernel.Lock.Error(windowsError: dword) { self = .lock(e) }
-            #endif
-            return nil
-        }
+        // Try each domain in priority order
+        if let e = Kernel.Path.Resolution.Error(code: code) { self = .path(e); return }
+        if let e = Kernel.Permission.Error(code: code) { self = .permission(e); return }
+        if let e = Kernel.Descriptor.Validity.Error(code: code) { self = .handle(e); return }
+        if let e = Kernel.Signal.Error(code: code) { self = .signal(e); return }
+        if let e = Kernel.IO.Blocking.Error(code: code) { self = .blocking(e); return }
+        if let e = Kernel.Storage.Error(code: code) { self = .space(e); return }
+        if let e = Kernel.Memory.Error(code: code) { self = .memory(e); return }
+        if let e = Kernel.IO.Error(code: code) { self = .io(e); return }
+        if let e = Kernel.Lock.Error(code: code) { self = .lock(e); return }
+        return nil
     }
 }
 

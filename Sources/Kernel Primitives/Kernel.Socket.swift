@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-internal import SystemPackage
-
 // MARK: - Socket Types
 
 extension Kernel {

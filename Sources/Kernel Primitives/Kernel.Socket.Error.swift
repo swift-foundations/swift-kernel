@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 extension Kernel.Socket {
     /// Errors that can occur during socket operations.
     public enum Error: Swift.Error, Sendable {
@@ -45,55 +43,24 @@ extension Kernel.Socket.Error: CustomStringConvertible {
     }
 }
 
-// MARK: - POSIX Initialization
+// MARK: - Error Code Mapping
 
-#if !os(Windows)
-
-    #if canImport(Darwin)
-        public import Darwin
-    #elseif canImport(Glibc)
-        public import Glibc
-    #elseif canImport(Musl)
-        public import Musl
-    #endif
-
-    extension Kernel.Socket.Error {
-        @inlinable
-        init(errno: Errno) {
-            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
-                self = .handle(e)
-                return
-            }
-            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
+extension Kernel.Socket.Error {
+    @inlinable
+    init(code: Kernel.Error.Code) {
+        if let e = Kernel.Descriptor.Validity.Error(code: code) {
+            self = .handle(e)
+            return
         }
-
-        @inlinable
-        static func current() -> Self {
-            Self(errno: Errno(rawValue: errno))
-        }
+        self = .platform(Kernel.Error.Unmapped.Error(code: code))
     }
 
-#endif
-
-// MARK: - Windows Initialization
-
-#if os(Windows)
-    public import WinSDK
-
-    extension Kernel.Socket.Error {
-        @inlinable
-        init(windowsError error: DWORD) {
-            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
-                self = .handle(e)
-                return
-            }
-            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(windowsError: DWORD(WSAGetLastError()))
-        }
+    @inlinable
+    static func current() -> Self {
+        #if os(Windows)
+            Self(code: .captureLastError())
+        #else
+            Self(code: .captureErrno())
+        #endif
     }
-
-#endif
+}

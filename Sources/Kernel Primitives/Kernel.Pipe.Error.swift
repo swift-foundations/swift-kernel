@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 extension Kernel.Pipe {
     public enum Error: Swift.Error, Sendable {
         case handle(Kernel.Descriptor.Validity.Error)
@@ -40,63 +38,28 @@ extension Kernel.Pipe.Error: CustomStringConvertible {
     }
 }
 
-// MARK: - POSIX Error Mapping
+// MARK: - Error Code Mapping
 
-#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-
-    #if canImport(Darwin)
-        public import Darwin
-    #elseif canImport(Glibc)
-        public import Glibc
-    #elseif canImport(Musl)
-        public import Musl
-    #endif
-
-    extension Kernel.Pipe.Error {
-        @inlinable
-        init(errno: Errno) {
-            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.IO.Error(errno: errno) {
-                self = .io(e)
-                return
-            }
-            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
+extension Kernel.Pipe.Error {
+    @inlinable
+    init(code: Kernel.Error.Code) {
+        if let e = Kernel.Descriptor.Validity.Error(code: code) {
+            self = .handle(e)
+            return
         }
-
-        @inlinable
-        static func current() -> Self {
-            Self(errno: Errno(rawValue: errno))
+        if let e = Kernel.IO.Error(code: code) {
+            self = .io(e)
+            return
         }
+        self = .platform(Kernel.Error.Unmapped.Error(code: code))
     }
 
-#endif
-
-// MARK: - Windows Error Mapping
-
-#if os(Windows)
-    public import WinSDK
-
-    extension Kernel.Pipe.Error {
-        @inlinable
-        init(windowsError error: DWORD) {
-            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
-                self = .handle(e)
-                return
-            }
-            if let e = Kernel.IO.Error(windowsError: error) {
-                self = .io(e)
-                return
-            }
-            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
-        }
-
-        @inlinable
-        static func current() -> Self {
-            Self(windowsError: GetLastError())
-        }
+    @inlinable
+    static func current() -> Self {
+        #if os(Windows)
+            Self(code: .captureLastError())
+        #else
+            Self(code: .captureErrno())
+        #endif
     }
-
-#endif
+}

@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 extension Kernel.File.System {
     /// Filesystem statistics.
     ///
@@ -128,10 +126,8 @@ extension Kernel.File.System {
         /// - Returns: The filesystem statistics.
         /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(path: FilePath) throws(Error) -> Kernel.File.System.Stats {
-            try Kernel.withPlatformString(path) { (cString: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.File.System.Stats in
-                try get(unsafePath: cString)
-            }
+        public static func get(path: borrowing Kernel.Path) throws(Error) -> Kernel.File.System.Stats {
+            try get(unsafePath: path.cString)
         }
 
         /// Gets filesystem statistics for an unsafe path pointer.
@@ -140,7 +136,7 @@ extension Kernel.File.System {
         /// - Returns: The filesystem statistics.
         /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(unsafePath: UnsafePointer<CChar>) throws(Error) -> Kernel.File.System.Stats {
+        public static func get(unsafePath: UnsafePointer<Kernel.Path.Char>) throws(Error) -> Kernel.File.System.Stats {
             var buf = PlatformStatfs()
             try Kernel.Syscall.require(statfs(unsafePath, &buf), .equals(0), orThrow: Error.current())
             return Kernel.File.System.Stats(from: buf)
@@ -201,7 +197,7 @@ extension Kernel.File.System {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 
     extension Kernel.File.System.Stats {
         /// Gets filesystem statistics for a path.
@@ -210,10 +206,8 @@ extension Kernel.File.System {
         /// - Returns: The filesystem statistics.
         /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(path: FilePath) throws(Error) -> Kernel.File.System.Stats {
-            try Kernel.withPlatformString(path) { (wpath: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.File.System.Stats in
-                try get(unsafePath: wpath)
-            }
+        public static func get(path: borrowing Kernel.Path) throws(Error) -> Kernel.File.System.Stats {
+            try get(unsafePath: path.cString)
         }
 
         /// Gets filesystem statistics for an unsafe path pointer.
@@ -222,7 +216,7 @@ extension Kernel.File.System {
         /// - Returns: The filesystem statistics.
         /// - Throws: `Kernel.File.System.Stats.Error` on failure.
         @inlinable
-        public static func get(unsafePath: UnsafePointer<WCHAR>) throws(Error) -> Kernel.File.System.Stats {
+        public static func get(unsafePath: UnsafePointer<Kernel.Path.Char>) throws(Error) -> Kernel.File.System.Stats {
             var sectorsPerCluster: DWORD = 0
             var bytesPerSector: DWORD = 0
             var freeClusters: DWORD = 0

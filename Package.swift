@@ -21,10 +21,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        // swift-system for internal use only (Errno, FilePath bridging)
-        // NOT re-exported from Kernel's public API
-        .package(url: "https://github.com/apple/swift-system", from: "1.4.0"),
-        .package(url: "https://github.com/swift-standards/swift-standards", from: "0.28.0")
+        .package(path: "../../swift-standards/swift-standards")
     ],
     targets: [
         .target(
@@ -38,7 +35,6 @@ let package = Package(
         .target(
             name: "Kernel Primitives",
             dependencies: [
-                .product(name: "SystemPackage", package: "swift-system"),
                 .product(name: "Binary", package: "swift-standards"),
                 .target(name: "CDarwinShim", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
                 .target(name: "CLinuxShim", condition: .when(platforms: [.linux])),

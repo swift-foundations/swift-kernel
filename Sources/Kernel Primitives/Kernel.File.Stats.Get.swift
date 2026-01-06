@@ -12,7 +12,6 @@
 #if os(Windows)
     internal import WinSDK
 #else
-    internal import SystemPackage
     internal import Dimension
 
     #if canImport(Darwin)
@@ -57,17 +56,18 @@ extension Kernel.File.Stats {
     }
 
     extension Kernel.File.Stats.Error {
+        @usableFromInline
         internal init(posixErrno code: Int32) {
-            let errno = Errno(rawValue: code)
-            if let e = Kernel.Descriptor.Validity.Error(errno: errno) {
+            let errorCode = Kernel.Error.Code.posix(code)
+            if let e = Kernel.Descriptor.Validity.Error(code: errorCode) {
                 self = .handle(e)
                 return
             }
-            if let e = Kernel.IO.Error(errno: errno) {
+            if let e = Kernel.IO.Error(code: errorCode) {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Error.Unmapped.Error(errno: errno))
+            self = .platform(Kernel.Error.Unmapped.Error(code: errorCode))
         }
     }
 
@@ -178,16 +178,18 @@ extension Kernel.File.Stats {
     }
 
     extension Kernel.File.Stats.Error {
+        @usableFromInline
         internal init(windowsError error: DWORD) {
-            if let e = Kernel.Descriptor.Validity.Error(windowsError: error) {
+            let errorCode = Kernel.Error.Code.win32(error)
+            if let e = Kernel.Descriptor.Validity.Error(code: errorCode) {
                 self = .handle(e)
                 return
             }
-            if let e = Kernel.IO.Error(windowsError: error) {
+            if let e = Kernel.IO.Error(code: errorCode) {
                 self = .io(e)
                 return
             }
-            self = .platform(Kernel.Error.Unmapped.Error(windowsError: error))
+            self = .platform(Kernel.Error.Unmapped.Error(code: errorCode))
         }
     }
 

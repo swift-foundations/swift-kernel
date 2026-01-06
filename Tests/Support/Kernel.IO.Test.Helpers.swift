@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 #if !os(Windows)
 
     public import Kernel_Primitives
@@ -29,15 +27,17 @@ public import SystemPackage
         /// - Throws: `TempFileError` if creation fails
         public static func createTempFile(
             prefix: String = "io-test"
-        ) throws -> (path: FilePath, fd: Kernel.Descriptor) {
+        ) throws -> (path: String, fd: Kernel.Descriptor) {
             let path = Kernel.Temporary.filePath(prefix: prefix)
             do {
-                let fd = try Kernel.File.Open.open(
-                    path: path,
-                    mode: [.read, .write],
-                    options: [.create, .truncate, .exclusive],
-                    permissions: 0o600
-                )
+                let fd = try Kernel.Path.withCString(path) { kernelPath in
+                    try Kernel.File.Open.open(
+                        path: kernelPath,
+                        mode: [.read, .write],
+                        options: [.create, .truncate, .exclusive],
+                        permissions: .ownerReadWrite
+                    )
+                }
                 return (path, fd)
             } catch {
                 throw TempFileError()
@@ -54,7 +54,7 @@ public import SystemPackage
         public static func createTempFileWithContent(
             _ content: String,
             prefix: String = "io-test"
-        ) throws -> (path: FilePath, fd: Kernel.Descriptor) {
+        ) throws -> (path: String, fd: Kernel.Descriptor) {
             let (path, fd) = try createTempFile(prefix: prefix)
 
             var contentBytes = Array(content.utf8)
@@ -75,15 +75,17 @@ public import SystemPackage
         public static func createTempFileForHandle(
             _ content: String? = nil,
             prefix: String = "handle-test"
-        ) throws -> (path: FilePath, fd: Kernel.File.Descriptor) {
+        ) throws -> (path: String, fd: Kernel.File.Descriptor) {
             let path = Kernel.Temporary.filePath(prefix: prefix)
             do {
-                let fd = try Kernel.File.Open.open(
-                    path: path,
-                    mode: [.read, .write],
-                    options: [.create, .truncate, .exclusive],
-                    permissions: 0o600
-                )
+                let fd = try Kernel.Path.withCString(path) { kernelPath in
+                    try Kernel.File.Open.open(
+                        path: kernelPath,
+                        mode: [.read, .write],
+                        options: [.create, .truncate, .exclusive],
+                        permissions: .ownerReadWrite
+                    )
+                }
 
                 if let content = content {
                     var contentBytes = Array(content.utf8)
@@ -103,9 +105,11 @@ public import SystemPackage
         /// - Parameters:
         ///   - path: The file path to unlink
         ///   - fd: The descriptor to close
-        public static func cleanupTempFile(path: FilePath, fd: Kernel.Descriptor) {
+        public static func cleanupTempFile(path: String, fd: Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
-            try? Kernel.Unlink.unlink(path)
+            try? Kernel.Path.withCString(path) { kernelPath in
+                try Kernel.Unlink.unlink(kernelPath)
+            }
         }
     }
 

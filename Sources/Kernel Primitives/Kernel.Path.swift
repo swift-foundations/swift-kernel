@@ -9,16 +9,14 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 #if canImport(Darwin)
     internal import Darwin
 #elseif canImport(Glibc)
-    public import Glibc
+    internal import Glibc
 #elseif canImport(Musl)
-    public import Musl
+    internal import Musl
 #elseif os(Windows)
-    import ucrt
+    internal import ucrt
 #endif
 
 extension Kernel {
@@ -37,14 +35,14 @@ extension Kernel {
     ///
     /// ## Recommended Usage
     ///
-    /// For safe path handling, prefer the `FilePath`-based syscall overloads:
+    /// Use `Kernel.Path.withCString` to safely convert a String to a path:
     /// ```swift
-    /// let path = FilePath("/tmp/file.txt")
-    /// let fd = try Kernel.File.Open.open(path: path, mode: .read, options: [], permissions: 0)
+    /// let fd = try Kernel.Path.withCString("/tmp/file.txt") { path in
+    ///     try Kernel.File.Open.open(path: path, mode: .read, options: [], permissions: 0)
+    /// }
     /// ```
     ///
-    /// Only use `Kernel.Path` when you have a pre-validated platform string and need
-    /// to avoid the FilePath conversion overhead:
+    /// Only use `Kernel.Path` directly when you have a pre-validated platform string:
     /// ```swift
     /// someCString.withCString { cString in
     ///     let path = Kernel.Path(unsafeCString: cString)
@@ -69,7 +67,11 @@ extension Kernel.Path {
     ///
     /// - POSIX (macOS, Linux): `CChar` (Int8, UTF-8)
     /// - Windows: `UInt16` (UTF-16)
-    public typealias Char = CInterop.PlatformChar
+    #if os(Windows)
+        public typealias Char = UInt16
+    #else
+        public typealias Char = CChar
+    #endif
 }
 
 // MARK: - Initialization
@@ -89,87 +91,57 @@ extension Kernel.Path {
     }
 }
 
-// MARK: - Owned Platform String
+// MARK: - String Integration
 
 extension Kernel.Path {
-    /// An owned, null-terminated platform string buffer.
+    /// Executes a closure with a borrowed path from a String.
     ///
-    /// This type copies a `FilePath`'s platform string into Kernel-owned storage,
-    /// enabling typed-throwing syscalls without existential error handling.
-    /// The copy happens in a non-throwing closure, and typed-throwing operations
-    /// occur outside the rethrows boundary.
-    @usableFromInline
-    internal struct String: ~Copyable {
-        @usableFromInline
-        let buffer: UnsafeMutableBufferPointer<Char>
-
-        @inlinable
-        init(copying path: FilePath) {
-            var length = 0
-            path.withPlatformString { p in
-                while p[length] != 0 { length += 1 }
-            }
-            let buf = UnsafeMutableBufferPointer<Char>.allocate(capacity: length + 1)
-            path.withPlatformString { p in
-                for i in 0...length {
-                    buf[i] = p[i]
-                }
-            }
-            self.buffer = buf
-        }
-
-        @usableFromInline
-        deinit {
-            buffer.deallocate()
-        }
-
-        @inlinable
-        var pointer: UnsafePointer<Char> {
-            UnsafePointer(buffer.baseAddress!)
-        }
-    }
-}
-
-// MARK: - FilePath Integration
-
-extension Kernel {
-    /// Calls a typed-throwing closure with a platform string pointer.
-    ///
-    /// This wrapper preserves 100% typed throws when using `FilePath.withPlatformString`,
-    /// which uses `rethrows` and would otherwise erase typed error information.
+    /// This is the recommended way to use paths with Kernel syscalls.
+    /// The closure receives a `Kernel.Path` that is only valid for the
+    /// duration of the closure.
     ///
     /// - Parameters:
-    ///   - path: The file path.
-    ///   - body: A typed-throwing closure that receives the platform string pointer.
+    ///   - string: The path string (UTF-8 on POSIX, converted to UTF-16 on Windows).
+    ///   - body: A typed-throwing closure that receives the borrowed path.
     /// - Returns: The value returned by the closure.
     /// - Throws: The typed error from the closure.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let fd = try Kernel.Path.withCString("/tmp/file.txt") { path in
+    ///     try Kernel.File.Open.open(path: path, mode: .read, options: [], permissions: 0)
+    /// }
+    /// ```
     @inlinable
-    public static func withPlatformString<R, E: Swift.Error>(
-        _ path: FilePath,
-        _ body: (UnsafePointer<Path.Char>) throws(E) -> R
+    public static func withCString<R: ~Copyable, E: Swift.Error>(
+        _ string: Swift.String,
+        _ body: (borrowing Kernel.Path) throws(E) -> R
     ) throws(E) -> R {
-        let ps = Kernel.Path.String(copying: path)
-        return try body(ps.pointer)
-    }
-
-    /// Executes a closure with a path suitable for syscall use.
-    ///
-    /// This is the safe way to use paths with Kernel syscalls. It leverages
-    /// `FilePath.withPlatformString` internally to ensure proper lifetime
-    /// and null-termination, while preserving 100% typed throws.
-    ///
-    /// - Parameters:
-    ///   - path: The file path.
-    ///   - body: A closure that receives the path for syscall use.
-    /// - Returns: The value returned by the closure.
-    /// - Throws: The typed error from the closure.
-    @inlinable
-    public static func withPath<R>(
-        _ path: FilePath,
-        _ body: (borrowing Path) throws(Kernel.Error) -> R
-    ) throws(Kernel.Error) -> R {
-        try Kernel.withPlatformString(path) { (cString: UnsafePointer<Path.Char>) throws(Kernel.Error) -> R in
-            try body(Path(unsafeCString: cString))
+        #if os(Windows)
+        let utf16 = string.utf16
+        let count = utf16.count + 1
+        let buffer = UnsafeMutablePointer<UInt16>.allocate(capacity: count)
+        defer { buffer.deallocate() }
+        var i = 0
+        for unit in utf16 {
+            buffer[i] = unit
+            i += 1
         }
+        buffer[i] = 0 // NUL terminator
+        return try body(Kernel.Path(unsafeCString: buffer))
+        #else
+        let utf8 = string.utf8
+        let count = utf8.count + 1
+        let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: count)
+        defer { buffer.deallocate() }
+        var i = 0
+        for byte in utf8 {
+            buffer[i] = CChar(bitPattern: byte)
+            i += 1
+        }
+        buffer[i] = 0 // NUL terminator
+        return try body(Kernel.Path(unsafeCString: buffer))
+        #endif
     }
 }

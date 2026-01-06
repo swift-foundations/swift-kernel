@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 
 internal import Dimension
-internal import SystemPackage
 
 // MARK: - Read Type
 

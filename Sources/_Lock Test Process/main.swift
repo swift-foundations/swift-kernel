@@ -30,7 +30,6 @@
 
 import Binary
 import Kernel
-internal import SystemPackage
 
 #if canImport(Darwin)
     internal import Darwin
@@ -43,17 +42,38 @@ internal import SystemPackage
 // MARK: - IO Helpers
 
 func writeStdout(_ message: String) {
-    _ = try? FileDescriptor.standardOutput.writeAll(message.utf8)
+    let bytes = Array(message.utf8)
+    bytes.withUnsafeBytes { ptr in
+        #if os(Windows)
+            var written: DWORD = 0
+            _ = WriteFile(GetStdHandle(DWORD(STD_OUTPUT_HANDLE)), ptr.baseAddress, DWORD(ptr.count), &written, nil)
+        #else
+            _ = write(STDOUT_FILENO, ptr.baseAddress, ptr.count)
+        #endif
+    }
 }
 
 func writeStderr(_ message: String) {
-    _ = try? FileDescriptor.standardError.writeAll(message.utf8)
+    let bytes = Array(message.utf8)
+    bytes.withUnsafeBytes { ptr in
+        #if os(Windows)
+            var written: DWORD = 0
+            _ = WriteFile(GetStdHandle(DWORD(STD_ERROR_HANDLE)), ptr.baseAddress, DWORD(ptr.count), &written, nil)
+        #else
+            _ = write(STDERR_FILENO, ptr.baseAddress, ptr.count)
+        #endif
+    }
 }
 
 func readStdinByte() {
     var buffer: UInt8 = 0
-    _ = try? withUnsafeMutableBytes(of: &buffer) { ptr in
-        try FileDescriptor.standardInput.read(into: ptr)
+    _ = withUnsafeMutableBytes(of: &buffer) { ptr in
+        #if os(Windows)
+            var read: DWORD = 0
+            _ = ReadFile(GetStdHandle(DWORD(STD_INPUT_HANDLE)), ptr.baseAddress, 1, &read, nil)
+        #else
+            _ = read(STDIN_FILENO, ptr.baseAddress, 1)
+        #endif
     }
 }
 

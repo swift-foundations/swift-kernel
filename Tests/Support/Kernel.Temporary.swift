@@ -12,7 +12,6 @@
 /// Test support for cross-platform temporary file paths.
 
 public import Kernel_Primitives
-public import SystemPackage
 
 // Platform imports only for getpid/GetCurrentProcessId (acceptable in test support)
 #if canImport(Darwin)
@@ -36,23 +35,21 @@ extension Kernel.Temporary {
     /// Uses platform-appropriate environment variables:
     /// - Unix: `TMPDIR`, falling back to "/tmp"
     /// - Windows: `TEMP` or `TMP`, falling back to "C:\Temp"
-    public static var directory: FilePath {
+    public static var directory: String {
         #if os(Windows)
-            FilePath(
-                Kernel.Environment.get("TEMP")
-                    ?? Kernel.Environment.get("TMP")
-                    ?? "C:\\Temp"
-            )
+            Kernel.Environment.get("TEMP")
+                ?? Kernel.Environment.get("TMP")
+                ?? "C:\\Temp"
         #else
-            FilePath(Kernel.Environment.get("TMPDIR") ?? "/tmp")
+            Kernel.Environment.get("TMPDIR") ?? "/tmp"
         #endif
     }
 
     /// Generates a unique temporary file path.
     ///
     /// - Parameter prefix: Prefix for the filename (e.g., "kernel-test").
-    /// - Returns: A unique FilePath in the system temp directory.
-    public static func filePath(prefix: String) -> FilePath {
+    /// - Returns: A unique path string in the system temp directory.
+    public static func filePath(prefix: String) -> String {
         #if os(Windows)
             let pid = Int(GetCurrentProcessId())
         #else
@@ -62,9 +59,9 @@ extension Kernel.Temporary {
         let name = "\(prefix)-\(pid)-\(random)"
 
         #if os(Windows)
-            return FilePath(directory.string + "\\" + name)
+            return directory + "\\" + name
         #else
-            return FilePath(directory.string + "/" + name)
+            return directory + "/" + name
         #endif
     }
 }

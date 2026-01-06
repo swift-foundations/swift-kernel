@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import SystemPackage
-
 extension Kernel.Socket.Pair {
     /// Errors that can occur during socket pair operations.
     public enum Error: Swift.Error, Sendable {
@@ -57,16 +55,16 @@ extension Kernel.Socket.Pair.Error: CustomStringConvertible {
 #if !os(Windows)
 
     #if canImport(Darwin)
-        public import Darwin
+        internal import Darwin
     #elseif canImport(Glibc)
-        public import Glibc
+        internal import Glibc
     #elseif canImport(Musl)
-        public import Musl
+        internal import Musl
     #endif
 
     extension Kernel.Socket.Pair.Error {
-        @inlinable
-        static func current() -> Self {
+        @usableFromInline
+        internal static func current() -> Self {
             .platform(.posix(errno))
         }
     }
@@ -79,8 +77,8 @@ extension Kernel.Socket.Pair.Error: CustomStringConvertible {
     public import WinSDK
 
     extension Kernel.Socket.Pair.Error {
-        @inlinable
-        static func current() -> Self {
+        @usableFromInline
+        internal static func current() -> Self {
             .platform(.posix(Int32(WSAGetLastError())))
         }
     }

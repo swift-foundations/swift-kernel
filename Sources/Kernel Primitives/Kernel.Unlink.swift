@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 // MARK: - Unlink Type
 
 extension Kernel {
@@ -25,7 +23,9 @@ extension Kernel {
     ///
     /// ```swift
     /// // Remove a file
-    /// try Kernel.Unlink.unlink("/tmp/tempfile.txt")
+    /// try Kernel.Path.withCString("/tmp/tempfile.txt") { path in
+    ///     try Kernel.Unlink.unlink(path)
+    /// }
     ///
     /// // Remove and ignore "file not found"
     /// do {
@@ -71,17 +71,8 @@ extension Kernel {
         /// - Parameter path: The path to the file to remove.
         /// - Throws: `Kernel.Unlink.Error` on failure.
         @inlinable
-        public static func unlink(_ path: FilePath) throws(Error) {
-            let result = path.withPlatformString { cPath in
-                #if canImport(Darwin)
-                    Darwin.unlink(cPath)
-                #elseif canImport(Glibc)
-                    Glibc.unlink(cPath)
-                #elseif canImport(Musl)
-                    Musl.unlink(cPath)
-                #endif
-            }
-            try Kernel.Syscall.require(result, .equals(0), orThrow: Error.current())
+        public static func unlink(_ path: borrowing Kernel.Path) throws(Error) {
+            try unlink(path.cString)
         }
 
         /// Removes a file or symbolic link.
@@ -89,7 +80,7 @@ extension Kernel {
         /// - Parameter path: The path to the file to remove as a C string.
         /// - Throws: `Kernel.Unlink.Error` on failure.
         @inlinable
-        public static func unlink(_ path: UnsafePointer<CChar>) throws(Error) {
+        public static func unlink(_ path: UnsafePointer<Kernel.Path.Char>) throws(Error) {
             #if canImport(Darwin)
                 try Kernel.Syscall.require(Darwin.unlink(path), .equals(0), orThrow: Error.current())
             #elseif canImport(Glibc)
@@ -105,7 +96,7 @@ extension Kernel {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 
     extension Kernel.Unlink {
         /// Removes a file.
@@ -113,10 +104,17 @@ extension Kernel {
         /// - Parameter path: The path to the file to remove.
         /// - Throws: `Kernel.Unlink.Error` on failure.
         @inlinable
-        public static func unlink(_ path: FilePath) throws(Error) {
-            let result = path.withPlatformString { wPath in
-                DeleteFileW(wPath)
-            }
+        public static func unlink(_ path: borrowing Kernel.Path) throws(Error) {
+            try unlink(path.cString)
+        }
+
+        /// Removes a file.
+        ///
+        /// - Parameter path: The path to the file to remove as a wide string.
+        /// - Throws: `Kernel.Unlink.Error` on failure.
+        @inlinable
+        public static func unlink(_ path: UnsafePointer<Kernel.Path.Char>) throws(Error) {
+            let result = DeleteFileW(path)
             try Kernel.Syscall.require(result, .isTrue, orThrow: Error.current())
         }
     }

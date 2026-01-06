@@ -12,165 +12,175 @@
 // MARK: - Error Mapping
 //
 // Extension initializers that map platform error codes to domain errors.
-// Each domain error type has init?(errno:) for POSIX and init?(windowsError:) for Windows.
+// Each domain error type has init?(code:) that accepts a Kernel.Error.Code
+// and extracts the appropriate platform-specific error code.
 
 #if !os(Windows)
-    public import SystemPackage
 
-    #if canImport(Darwin)
-        internal import Darwin
-    #elseif canImport(Glibc)
-        internal import Glibc
-    #elseif canImport(Musl)
-        internal import Musl
-    #endif
+#if canImport(Darwin)
+    internal import Darwin
+#elseif canImport(Glibc)
+    internal import Glibc
+#elseif canImport(Musl)
+    internal import Musl
+#endif
 
-    // MARK: - Path Resolution
+// MARK: - Path Resolution
 
-    extension Kernel.Path.Resolution.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .noSuchFileOrDirectory: self = .notFound
-            case .fileExists: self = .exists
-            case .isDirectory: self = .isDirectory
-            case .notDirectory: self = .notDirectory
-            case .directoryNotEmpty: self = .notEmpty
-            case .tooManySymbolicLinkLevels: self = .loop
-            case .improperLink: self = .crossDevice
-            case .fileNameTooLong: self = .nameTooLong
-            default: return nil
-            }
+extension Kernel.Path.Resolution.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case ENOENT: self = .notFound
+        case EEXIST: self = .exists
+        case EISDIR: self = .isDirectory
+        case ENOTDIR: self = .notDirectory
+        case ENOTEMPTY: self = .notEmpty
+        case ELOOP: self = .loop
+        case EXDEV: self = .crossDevice
+        case ENAMETOOLONG: self = .nameTooLong
+        default: return nil
         }
     }
+}
 
-    // MARK: - Permission
+// MARK: - Permission
 
-    extension Kernel.Permission.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .permissionDenied: self = .denied
-            case .notPermitted: self = .notPermitted
-            case .readOnlyFileSystem: self = .readOnlyFilesystem
-            default: return nil
-            }
+extension Kernel.Permission.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case EACCES: self = .denied
+        case EPERM: self = .notPermitted
+        case EROFS: self = .readOnlyFilesystem
+        default: return nil
         }
     }
+}
 
-    // MARK: - Handle
+// MARK: - Handle
 
-    extension Kernel.Descriptor.Validity.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .badFileDescriptor: self = .invalid
-            case .tooManyOpenFiles: self = .limit(.process)
-            case .tooManyOpenFilesInSystem: self = .limit(.system)
-            default: return nil
-            }
+extension Kernel.Descriptor.Validity.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case EBADF: self = .invalid
+        case EMFILE: self = .limit(.process)
+        case ENFILE: self = .limit(.system)
+        default: return nil
         }
     }
+}
 
-    // MARK: - Signal
+// MARK: - Signal
 
-    extension Kernel.Signal.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .interrupted: self = .interrupted
-            default: return nil
-            }
+extension Kernel.Signal.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case EINTR: self = .interrupted
+        default: return nil
         }
     }
+}
 
-    // MARK: - Blocking
+// MARK: - Blocking
 
-    extension Kernel.IO.Blocking.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .wouldBlock, .resourceTemporarilyUnavailable: self = .wouldBlock
-            default: return nil
-            }
+extension Kernel.IO.Blocking.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case EAGAIN, EWOULDBLOCK: self = .wouldBlock
+        default: return nil
         }
     }
+}
 
-    // MARK: - Space
+// MARK: - Space
 
-    extension Kernel.Storage.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .noSpace: self = .exhausted
-            case .diskQuotaExceeded: self = .quota
-            default: return nil
-            }
+extension Kernel.Storage.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case ENOSPC: self = .exhausted
+        case EDQUOT: self = .quota
+        default: return nil
         }
     }
+}
 
-    // MARK: - Memory
+// MARK: - Memory
 
-    extension Kernel.Memory.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .badAddress: self = .fault
-            case .noMemory: self = .exhausted
-            default: return nil
-            }
+extension Kernel.Memory.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case EFAULT: self = .fault
+        case ENOMEM: self = .exhausted
+        default: return nil
         }
     }
+}
 
-    // MARK: - IO
+// MARK: - IO
 
-    extension Kernel.IO.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .ioError: self = .hardware
-            case .brokenPipe: self = .broken
-            case .connectionReset: self = .reset
-            case .illegalSeek: self = .illegalSeek
-            case .notSupported: self = .unsupported
-            default: return nil
-            }
+extension Kernel.IO.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case EIO: self = .hardware
+        case EPIPE: self = .broken
+        case ECONNRESET: self = .reset
+        case ESPIPE: self = .illegalSeek
+        case ENOTSUP: self = .unsupported
+        default: return nil
         }
     }
+}
 
-    // MARK: - Lock
+// MARK: - Lock
 
-    extension Kernel.Lock.Error {
-        @inlinable
-        public init?(errno: Errno) {
-            switch errno {
-            case .noLocks: self = .unavailable
-            case .deadlock: self = .deadlock
-            default: return nil
-            }
+extension Kernel.Lock.Error {
+    @usableFromInline
+    internal init?(code: Kernel.Error.Code) {
+        guard case .posix(let errno) = code else { return nil }
+        switch errno {
+        case ENOLCK: self = .unavailable
+        case EDEADLK: self = .deadlock
+        default: return nil
         }
     }
+}
 
-    // MARK: - Platform (catch-all)
+// MARK: - Platform (catch-all)
 
-    extension Kernel.Error.Unmapped.Error {
-        /// Creates a platform error from an errno value.
-        @inlinable
-        public init(errno: Errno) {
-            self = .unmapped(code: .posix(errno.rawValue), message: nil)
-        }
+extension Kernel.Error.Unmapped.Error {
+    /// Creates a platform error from an error code.
+    @usableFromInline
+    internal init(code: Kernel.Error.Code) {
+        self = .unmapped(code: code, message: nil)
     }
+}
 
 #endif
 
 // MARK: - Windows Error Mapping
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 
     extension Kernel.Path.Resolution.Error {
-        @inlinable
-        public init?(windowsError error: DWORD) {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_FILE_NOT_FOUND, ERROR_PATH_NOT_FOUND: self = .notFound
             case ERROR_FILE_EXISTS, ERROR_ALREADY_EXISTS: self = .exists
@@ -184,8 +194,9 @@
     }
 
     extension Kernel.Permission.Error {
-        @inlinable
-        public init?(windowsError error: DWORD) {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_ACCESS_DENIED: self = .denied
             default: return nil
@@ -194,8 +205,9 @@
     }
 
     extension Kernel.Descriptor.Validity.Error {
-        @inlinable
-        public init?(windowsError error: DWORD) {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_INVALID_HANDLE: self = .invalid
             case ERROR_TOO_MANY_OPEN_FILES: self = .limit(.process)
@@ -205,8 +217,9 @@
     }
 
     extension Kernel.Storage.Error {
-        @inlinable
-        public init?(windowsError error: DWORD) {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_DISK_FULL: self = .exhausted
             default: return nil
@@ -215,8 +228,9 @@
     }
 
     extension Kernel.Memory.Error {
-        @inlinable
-        public init?(windowsError error: DWORD) {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_NOT_ENOUGH_MEMORY, ERROR_OUTOFMEMORY: self = .exhausted
             default: return nil
@@ -225,8 +239,9 @@
     }
 
     extension Kernel.IO.Error {
-        @inlinable
-        public init?(windowsError error: DWORD) {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_BROKEN_PIPE: self = .broken
             default: return nil
@@ -235,8 +250,9 @@
     }
 
     extension Kernel.Lock.Error {
-        @inlinable
-        public init?(windowsError error: DWORD) {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_LOCK_VIOLATION: self = .contention
             default: return nil
@@ -245,10 +261,10 @@
     }
 
     extension Kernel.Error.Unmapped.Error {
-        /// Creates a platform error from a Windows error code.
-        @inlinable
-        public init(windowsError error: DWORD) {
-            self = .unmapped(code: .win32(UInt32(error)), message: nil)
+        /// Creates a platform error from an error code.
+        @usableFromInline
+        internal init(code: Kernel.Error.Code) {
+            self = .unmapped(code: code, message: nil)
         }
     }
 

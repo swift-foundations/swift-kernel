@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import SystemPackage
-
 extension Kernel.File {
     /// Types and options for opening files.
     public struct Open {
@@ -34,19 +32,6 @@ extension Kernel.File {
         /// Opens a file at the specified path.
         @inlinable
         public static func open(
-            path: FilePath,
-            mode: Kernel.File.Open.Mode,
-            options: Kernel.File.Open.Options,
-            permissions: Kernel.File.Permissions
-        ) throws(Error) -> Kernel.Descriptor {
-            try Kernel.withPlatformString(path) { (cString: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.Descriptor in
-                try open(unsafePath: cString, mode: mode, options: options, permissions: permissions)
-            }
-        }
-
-        /// Opens a file at the specified path.
-        @inlinable
-        public static func open(
             path: borrowing Kernel.Path,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
@@ -58,7 +43,7 @@ extension Kernel.File {
         /// Opens a file at the specified path.
         @inlinable
         public static func open(
-            unsafePath: UnsafePointer<CChar>,
+            unsafePath: UnsafePointer<Kernel.Path.Char>,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
             permissions: Kernel.File.Permissions
@@ -105,22 +90,9 @@ extension Kernel.File {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    public import WinSDK
+    internal import WinSDK
 
     extension Kernel.File.Open {
-        /// Opens a file at the specified path.
-        @inlinable
-        public static func open(
-            path: FilePath,
-            mode: Kernel.File.Open.Mode,
-            options: Kernel.File.Open.Options,
-            permissions: Kernel.File.Permissions
-        ) throws(Error) -> Kernel.Descriptor {
-            try Kernel.withPlatformString(path) { (wpath: UnsafePointer<CInterop.PlatformChar>) throws(Error) -> Kernel.Descriptor in
-                try open(unsafePath: wpath, mode: mode, options: options, permissions: permissions)
-            }
-        }
-
         /// Opens a file at the specified path.
         @inlinable
         public static func open(
@@ -135,7 +107,7 @@ extension Kernel.File {
         /// Opens a file at the specified path (Windows wide string).
         @inlinable
         public static func open(
-            unsafePath: UnsafePointer<WCHAR>,
+            unsafePath: UnsafePointer<Kernel.Path.Char>,
             mode: Kernel.File.Open.Mode,
             options: Kernel.File.Open.Options,
             permissions: Kernel.File.Permissions
