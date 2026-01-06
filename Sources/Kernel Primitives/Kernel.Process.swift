@@ -60,6 +60,10 @@ extension Tagged where Tag == Kernel.Process, RawValue == pid_t {
     /// The current process.
     @inlinable
     public static var current: Self { Self(getpid()) }
+
+    /// The parent process.
+    @inlinable
+    public static var parent: Self { Self(getppid()) }
 }
 
 #else

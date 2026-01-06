@@ -36,6 +36,7 @@ extern int ioctl(int __fd, unsigned long int __request, ...) __attribute__((__no
 
 #include <stddef.h>  // for size_t
 #include <sys/types.h>  // for off_t, ssize_t
+#include <sys/wait.h>   // for wait status macros
 
 static inline ssize_t swift_copy_file_range(
     int fd_in, off_t *off_in,
@@ -65,6 +66,43 @@ static inline int swift_io_uring_register(
 ) {
     return (int)syscall(SYS_io_uring_register, fd, opcode, arg, nr_args);
 }
+
+// POSIX wait status macros - Swift cannot import C macros directly.
+// These wrapper functions expose the macros to Swift.
+
+static inline int swift_WIFEXITED(int status) {
+    return WIFEXITED(status);
+}
+
+static inline int swift_WEXITSTATUS(int status) {
+    return WEXITSTATUS(status);
+}
+
+static inline int swift_WIFSIGNALED(int status) {
+    return WIFSIGNALED(status);
+}
+
+static inline int swift_WTERMSIG(int status) {
+    return WTERMSIG(status);
+}
+
+static inline int swift_WIFSTOPPED(int status) {
+    return WIFSTOPPED(status);
+}
+
+static inline int swift_WSTOPSIG(int status) {
+    return WSTOPSIG(status);
+}
+
+static inline int swift_WIFCONTINUED(int status) {
+    return WIFCONTINUED(status);
+}
+
+#ifdef WCOREDUMP
+static inline int swift_WCOREDUMP(int status) {
+    return WCOREDUMP(status);
+}
+#endif
 
 #endif /* __linux__ */
 
