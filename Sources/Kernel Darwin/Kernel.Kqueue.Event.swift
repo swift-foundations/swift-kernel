@@ -117,11 +117,11 @@ public import Kernel_Primitives
         @usableFromInline
         internal var cValue: Darwin.kevent {
             var ev = Darwin.kevent()
-            ev.ident = id._rawValue
+            ev.ident = id.rawValue
             ev.filter = filter.rawValue
             ev.flags = flags.rawValue
             ev.fflags = fflags.rawValue
-            ev.data = filterData._rawValue
+            ev.data = filterData.rawValue
             ev.udata = UnsafeMutableRawPointer(data)
             return ev
         }

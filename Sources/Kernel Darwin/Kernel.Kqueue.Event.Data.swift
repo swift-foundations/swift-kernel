@@ -82,7 +82,7 @@ public import Kernel_Primitives
         /// - Parameter data: The event data to convert.
         @inlinable
         public init?(_ data: Kernel.Kqueue.Event.Data) {
-            self.init(bitPattern: UInt(data._rawValue))
+            self.init(bitPattern: UInt(data.rawValue))
         }
     }
 
