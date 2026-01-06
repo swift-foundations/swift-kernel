@@ -15,7 +15,7 @@ extension Kernel.Thread {
     /// This queue provides no internal locking - all access must be
     /// protected by an external `Synchronization` or `Mutex`.
     ///
-    /// Uses ring buffer for O(1) enqueue/dequeue with geometric growth.
+    /// Uses `Deque` internally for O(1) enqueue/dequeue with automatic growth.
     ///
     /// ## Usage
     /// ```swift
@@ -33,39 +33,31 @@ extension Kernel.Thread {
     /// ## Thread Safety
     /// NOT thread-safe. All access must be protected by external synchronization.
     public struct Queue<Element> {
-        private var storage: [Element?]
-        private var head: Int = 0
-        private var tail: Int = 0
-        private var _count: Int = 0
+        private var storage: Deque<Element>
 
         /// Creates a queue with the given initial capacity.
         ///
         /// - Parameter initialCapacity: Initial buffer size. Defaults to 64.
         public init(initialCapacity: Int = 64) {
-            let capacity = max(initialCapacity, 1)
-            self.storage = [Element?](repeating: nil, count: capacity)
+            self.storage = Deque()
+            storage.reserve(initialCapacity)
         }
 
         /// Number of elements in the queue.
-        public var count: Int { _count }
+        public var count: Int { storage.count }
 
         /// Whether the queue is empty.
-        public var isEmpty: Bool { _count == 0 }
+        public var isEmpty: Bool { storage.isEmpty }
 
         /// Current capacity of the queue.
-        public var capacity: Int { storage.count }
+        public var capacity: Int { storage.capacity }
 
         /// Enqueue an element. Grows the buffer if needed.
         ///
         /// - Parameter element: Element to add.
         /// - Complexity: O(1) amortized.
         public mutating func enqueue(_ element: Element) {
-            if _count >= storage.count {
-                grow()
-            }
-            storage[tail] = element
-            tail = (tail + 1) % storage.count
-            _count += 1
+            storage.push.back(element)
         }
 
         /// Dequeue an element, or nil if empty.
@@ -73,50 +65,19 @@ extension Kernel.Thread {
         /// - Returns: The front element, or nil if the queue is empty.
         /// - Complexity: O(1).
         public mutating func dequeue() -> Element? {
-            guard _count > 0 else { return nil }
-            let element = storage[head]
-            storage[head] = nil
-            head = (head + 1) % storage.count
-            _count -= 1
-            return element
+            storage.take.front
         }
 
         /// Peek at the front element without removing it.
         ///
         /// - Returns: The front element, or nil if the queue is empty.
         public func peek() -> Element? {
-            guard _count > 0 else { return nil }
-            return storage[head]
+            storage.peek.front
         }
 
         /// Remove all elements from the queue.
         public mutating func removeAll(keepingCapacity: Bool = false) {
-            if keepingCapacity {
-                for i in 0..<storage.count {
-                    storage[i] = nil
-                }
-            } else {
-                storage = [Element?](repeating: nil, count: 1)
-            }
-            head = 0
-            tail = 0
-            _count = 0
-        }
-
-        /// Double the capacity and rehash existing elements.
-        private mutating func grow() {
-            let oldCapacity = storage.count
-            let newCapacity = oldCapacity * 2
-            var newStorage = [Element?](repeating: nil, count: newCapacity)
-
-            // Copy elements in order from head to tail
-            for i in 0..<_count {
-                newStorage[i] = storage[(head + i) % oldCapacity]
-            }
-
-            storage = newStorage
-            head = 0
-            tail = _count
+            storage.removeAll(keepingCapacity: keepingCapacity)
         }
     }
 }

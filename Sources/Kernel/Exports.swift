@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 @_exported public import Kernel_Primitives
+@_exported public import StandardsCollections
 
 #if canImport(Darwin)
     @_exported public import Kernel_Darwin

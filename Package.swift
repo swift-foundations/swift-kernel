@@ -67,6 +67,7 @@ let package = Package(
                 .target(name: "Kernel Linux", condition: .when(platforms: [.linux])),
                 .target(name: "Kernel Windows", condition: .when(platforms: [.windows])),
                 .product(name: "Dimension", package: "swift-standards"),
+                .product(name: "StandardsCollections", package: "swift-standards"),
             ]
         ),
         // Test support utilities (harnesses, helpers)

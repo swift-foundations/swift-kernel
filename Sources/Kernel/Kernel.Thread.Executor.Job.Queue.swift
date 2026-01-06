@@ -6,65 +6,36 @@
 //
 
 extension Kernel.Thread.Executor.Job {
-    /// Unbounded ring buffer queue for executor jobs.
+    /// Unbounded queue for executor jobs.
     ///
-    /// O(1) enqueue and dequeue. Grows geometrically when full.
+    /// O(1) enqueue and dequeue. Grows automatically when full.
     ///
     /// ## Thread Safety
     /// All access must be protected by `Synchronization`.
     struct Queue {
-        private var storage: [Kernel.Thread.Executor.Job?]
-        private var head: Int = 0
-        private var tail: Int = 0
-        private var _count: Int = 0
+        private var storage: Deque<Kernel.Thread.Executor.Job>
 
         init(initialCapacity: Int = 64) {
-            let capacity = max(initialCapacity, 1)
-            self.storage = [Kernel.Thread.Executor.Job?](repeating: nil, count: capacity)
+            self.storage = Deque()
+            storage.reserve(initialCapacity)
         }
     }
 }
 
 extension Kernel.Thread.Executor.Job.Queue {
-    var count: Int { _count }
-    var isEmpty: Bool { _count == 0 }
-    var capacity: Int { storage.count }
+    var count: Int { storage.count }
+    var isEmpty: Bool { storage.isEmpty }
+    var capacity: Int { storage.capacity }
 }
 
 extension Kernel.Thread.Executor.Job.Queue {
     /// Enqueue a job. Grows the buffer if needed.
     mutating func enqueue(_ job: Kernel.Thread.Executor.Job) {
-        if _count >= storage.count {
-            grow()
-        }
-        storage[tail] = job
-        tail = (tail + 1) % storage.count
-        _count += 1
+        storage.push.back(job)
     }
 
     /// Dequeue a job, or nil if empty.
     mutating func dequeue() -> Kernel.Thread.Executor.Job? {
-        guard _count > 0 else { return nil }
-        let job = storage[head]
-        storage[head] = nil
-        head = (head + 1) % storage.count
-        _count -= 1
-        return job
-    }
-
-    /// Double the capacity and rehash existing elements.
-    private mutating func grow() {
-        let oldCapacity = storage.count
-        let newCapacity = oldCapacity * 2
-        var newStorage = [Kernel.Thread.Executor.Job?](repeating: nil, count: newCapacity)
-
-        // Copy elements in order from head to tail
-        for i in 0..<_count {
-            newStorage[i] = storage[(head + i) % oldCapacity]
-        }
-
-        storage = newStorage
-        head = 0
-        tail = _count
+        storage.take.front
     }
 }
