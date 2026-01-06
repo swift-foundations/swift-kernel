@@ -144,7 +144,7 @@ extension Kernel.File.System.Block.Test.EdgeCase {
     @Test("Size maximum value")
     func sizeMax() {
         let size = Kernel.File.System.Block.Size(UInt64.max)
-        #expect(size._rawValue == UInt64.max)
+        #expect(size.rawValue == UInt64.max)
     }
 
     @Test("Count zero additions")

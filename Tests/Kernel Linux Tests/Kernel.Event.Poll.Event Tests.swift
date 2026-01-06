@@ -113,7 +113,7 @@
         @Test("event with max data value")
         func maxDataValue() {
             let event = Kernel.Event.Poll.Event(events: .in, data: Kernel.Event.Poll.Data(UInt64.max))
-            #expect(event.data._rawValue == UInt64.max)
+            #expect(event.data.rawValue == UInt64.max)
         }
 
         @Test("event with zero data")

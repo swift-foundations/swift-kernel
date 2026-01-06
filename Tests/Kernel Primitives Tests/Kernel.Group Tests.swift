@@ -94,7 +94,7 @@ extension Kernel.Group.Test.EdgeCase {
     func rawValueRoundtrip() {
         for value: UInt32 in [0, 1, 100, 1000, UInt32.max] {
             let gid = Kernel.Group.ID(value)
-            #expect(gid._rawValue == value)
+            #expect(gid.rawValue == value)
         }
     }
 }

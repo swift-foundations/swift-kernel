@@ -165,7 +165,7 @@ extension Kernel.Lock.Range.Test.EdgeCase {
 
     @Test("bytes factory with max length")
     func maxLengthBytes() {
-        let range = Kernel.Lock.Range.bytes(start: 0, length: Kernel.File.Size(Kernel.File.Offset.max._rawValue))
+        let range = Kernel.Lock.Range.bytes(start: 0, length: Kernel.File.Size(Kernel.File.Offset.max.rawValue))
         if case .bytes(let start, let end) = range {
             #expect(start == Kernel.File.Offset(0))
             #expect(end == .max)

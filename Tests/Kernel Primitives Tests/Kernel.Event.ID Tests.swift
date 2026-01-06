@@ -37,7 +37,7 @@ struct EventIDTests {
     @Test("ID max value")
     func maxValue() {
         let id = Kernel.Event.ID(UInt.max)
-        #expect(id._rawValue == UInt.max)
+        #expect(id.rawValue == UInt.max)
     }
 
     // MARK: - Descriptor Conversion
@@ -87,7 +87,7 @@ struct EventIDTests {
     func fromNegativeInt32() {
         // Negative values wrap around as unsigned
         let id = Kernel.Event.ID(Int32(-1))
-        #expect(id._rawValue == UInt(bitPattern: -1))
+        #expect(id.rawValue == UInt(bitPattern: -1))
     }
 
     // MARK: - Socket Conversion

@@ -103,7 +103,7 @@ extension Kernel.Link.Test.EdgeCase {
     func rawValueRoundtrip() {
         for value: UInt32 in [0, 1, 2, 100, UInt32.max] {
             let count = Kernel.Link.Count(value)
-            #expect(count._rawValue == value)
+            #expect(count.rawValue == value)
         }
     }
 }

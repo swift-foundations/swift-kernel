@@ -83,7 +83,7 @@
             withUnsafeMutablePointer(to: &value) { ptr in
                 let originalBitPattern = UInt(bitPattern: ptr)
                 let data = Kernel.Event.Poll.Data(pointer: ptr)
-                #expect(data._rawValue == UInt64(originalBitPattern))
+                #expect(data.rawValue == UInt64(originalBitPattern))
             }
         }
 
@@ -118,14 +118,14 @@
         @Test("UInt64.max is preserved")
         func uint64MaxPreserved() {
             let data = Kernel.Event.Poll.Data(UInt64.max)
-            #expect(data._rawValue == UInt64.max)
+            #expect(data.rawValue == UInt64.max)
         }
 
         @Test("large values are preserved")
         func largeValues() {
             let largeValue: UInt64 = 0x7FFF_FFFF_FFFF_FFFF
             let data = Kernel.Event.Poll.Data(largeValue)
-            #expect(data._rawValue == largeValue)
+            #expect(data.rawValue == largeValue)
         }
     }
 #endif

@@ -52,7 +52,7 @@
                 UnsafeMutableRawPointer($0)
             }
             let data = Kernel.Kqueue.Event.Data(pointer)
-            #expect(data._rawValue == UInt64(UInt(bitPattern: pointer)))
+            #expect(data.rawValue == UInt64(UInt(bitPattern: pointer)))
         }
 
         @Test("init from nil pointer gives zero")
@@ -151,7 +151,7 @@
         @Test("UInt64.max is preserved")
         func uint64MaxPreserved() {
             let data = Kernel.Kqueue.Event.Data(UInt64.max)
-            #expect(data._rawValue == UInt64.max)
+            #expect(data.rawValue == UInt64.max)
         }
 
         @Test("large pointer values are preserved")
@@ -159,7 +159,7 @@
             // Create data from a large value simulating a high memory address
             let largeValue: UInt64 = 0x7FFF_FFFF_FFFF_FFFF
             let data = Kernel.Kqueue.Event.Data(largeValue)
-            #expect(data._rawValue == largeValue)
+            #expect(data.rawValue == largeValue)
         }
     }
 #endif

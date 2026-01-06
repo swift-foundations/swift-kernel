@@ -80,13 +80,13 @@
         @Test("Int.max is preserved")
         func intMaxPreserved() {
             let data = Kernel.Kqueue.Filter.Data(Int.max)
-            #expect(data._rawValue == Int.max)
+            #expect(data.rawValue == Int.max)
         }
 
         @Test("Int.min is preserved")
         func intMinPreserved() {
             let data = Kernel.Kqueue.Filter.Data(Int.min)
-            #expect(data._rawValue == Int.min)
+            #expect(data.rawValue == Int.min)
         }
     }
 #endif

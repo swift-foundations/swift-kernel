@@ -50,7 +50,7 @@ struct FileSizeTests {
     func pagesInit() {
         let size = Kernel.File.Size(pages: 2)
         let expectedBytes = 2 * Int(Kernel.System.pageSize)
-        #expect(size._rawValue == Int64(expectedBytes))
+        #expect(size.rawValue == Int64(expectedBytes))
     }
 
     // MARK: - Constants
@@ -67,18 +67,18 @@ struct FileSizeTests {
 
     @Test("megabyte constant")
     func megabyteConstant() {
-        #expect(Kernel.File.Size.megabyte._rawValue == 1024 * 1024)
+        #expect(Kernel.File.Size.megabyte.rawValue == 1024 * 1024)
     }
 
     @Test("gigabyte constant")
     func gigabyteConstant() {
-        #expect(Kernel.File.Size.gigabyte._rawValue == 1024 * 1024 * 1024)
+        #expect(Kernel.File.Size.gigabyte.rawValue == 1024 * 1024 * 1024)
     }
 
     @Test("page constant")
     func pageConstant() {
         let pageSize = Kernel.File.Size.page
-        #expect(pageSize._rawValue == Int64(Int(Kernel.System.pageSize)))
+        #expect(pageSize.rawValue == Int64(Int(Kernel.System.pageSize)))
     }
 
     // MARK: - Queries

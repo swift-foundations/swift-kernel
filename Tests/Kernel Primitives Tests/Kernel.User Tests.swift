@@ -94,7 +94,7 @@ extension Kernel.User.Test.EdgeCase {
     func rawValueRoundtrip() {
         for value: UInt32 in [0, 1, 501, 65534, UInt32.max] {
             let uid = Kernel.User.ID(value)
-            #expect(uid._rawValue == value)
+            #expect(uid.rawValue == value)
         }
     }
 }
