@@ -26,7 +26,7 @@
         /// Caller is responsible for cleanup via `cleanupTempFile`.
         public static func createTempFile(prefix: String = "io-test") throws -> (path: String, fd: Kernel.Descriptor) {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
-            let fd = try Kernel.Path.withCString(pathString) { path in
+            let fd = try Kernel.Path.scope(pathString) { path in
                 try Kernel.File.Open.open(
                     path: path,
                     mode: [.read, .write],
@@ -51,8 +51,8 @@
         /// Cleans up a temporary file created by `createTempFile` or `createTempFileWithContent`.
         public static func cleanupTempFile(path: String, fd: Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
-            Kernel.Path.withCString(path) { p in
-                try? Kernel.Unlink.unlink(p)
+            try? Kernel.Path.scope(path) { p in
+                try Kernel.Unlink.unlink(p)
             }
         }
 
@@ -72,7 +72,7 @@
             _ body: (borrowing Kernel.Path, Kernel.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
-            return try Kernel.Path.withCString(pathString) { path in
+            return try Kernel.Path.scope(pathString) { path in
                 let fd: Kernel.Descriptor
                 do {
                     fd = try Kernel.File.Open.open(
@@ -132,7 +132,7 @@
             _ body: (borrowing Kernel.Path, Kernel.File.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
-            return try Kernel.Path.withCString(pathString) { path in
+            return try Kernel.Path.scope(pathString) { path in
                 let fd: Kernel.Descriptor
                 do {
                     fd = try Kernel.File.Open.open(

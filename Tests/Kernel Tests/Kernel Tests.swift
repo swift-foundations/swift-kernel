@@ -32,7 +32,7 @@ extension Kernel.Test.Unit {
     func openAndClose() throws {
         let pathString = Kernel.Temporary.filePath(prefix: "kernel-test")
 
-        try Kernel.Path.withCString(pathString) { path in
+        try Kernel.Path.scope(pathString) { path in
             // Create and open
             let fd = try Kernel.File.Open.open(
                 path: path,
@@ -59,7 +59,7 @@ extension Kernel.Test.Unit {
             let pathString = "/nonexistent/path/that/does/not/exist/file.txt"
         #endif
 
-        Kernel.Path.withCString(pathString) { path in
+        try Kernel.Path.scope(pathString) { path in
             #expect(throws: (any Error).self) {
                 try Kernel.File.Open.open(
                     path: path,
@@ -76,7 +76,7 @@ extension Kernel.Test.Unit {
         let pathString = Kernel.Temporary.filePath(prefix: "kernel-test-rw")
         let testData: [UInt8] = [0x48, 0x65, 0x6C, 0x6C, 0x6F]  // "Hello"
 
-        try Kernel.Path.withCString(pathString) { path in
+        try Kernel.Path.scope(pathString) { path in
             // Create file
             let fd = try Kernel.File.Open.open(
                 path: path,
@@ -111,7 +111,7 @@ extension Kernel.Test.Unit {
     func readEOF() throws {
         let pathString = Kernel.Temporary.filePath(prefix: "kernel-test-eof")
 
-        try Kernel.Path.withCString(pathString) { path in
+        try Kernel.Path.scope(pathString) { path in
             // Create empty file
             let fd = try Kernel.File.Open.open(
                 path: path,

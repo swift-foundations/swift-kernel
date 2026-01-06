@@ -36,7 +36,7 @@ private func withTempFile<R>(
     _ body: (borrowing Kernel.Path, Kernel.Descriptor) throws -> R
 ) throws -> R {
     let pathString = Kernel.Temporary.filePath(prefix: prefix)
-    return try Kernel.Path.withCString(pathString) { path in
+    return try Kernel.Path.scope(pathString) { path in
         let fd = try Kernel.File.Open.open(
             path: path,
             mode: [.read, .write],
@@ -109,7 +109,7 @@ extension KernelLockIntegration {
         _ body: (_ pathString: String, _ fd: Kernel.Descriptor) throws -> R
     ) throws -> R {
         let pathString = Kernel.Temporary.filePath(prefix: prefix)
-        return try Kernel.Path.withCString(pathString) { path in
+        return try Kernel.Path.scope(pathString) { path in
             let fd = try Kernel.File.Open.open(
                 path: path,
                 mode: [.read, .write],

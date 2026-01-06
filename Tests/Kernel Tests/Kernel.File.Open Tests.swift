@@ -94,7 +94,7 @@ struct FileOpenConfigurationTests {
             let pathString = makeTempFile(prefix: "handle-test", content: content)
             defer { removeTempFile(pathString) }
 
-            try Kernel.Path.withCString(pathString) { path in
+            try Kernel.Path.scope(pathString) { path in
                 let config = Kernel.File.Open.Configuration(mode: .read)
                 let handle = try Kernel.File.open(path, configuration: config)
 
@@ -111,7 +111,7 @@ struct FileOpenConfigurationTests {
             let pathString = makeTempFile(prefix: "handle-read", content: content)
             defer { removeTempFile(pathString) }
 
-            try Kernel.Path.withCString(pathString) { path in
+            try Kernel.Path.scope(pathString) { path in
                 let handle = try Kernel.File.open(path, configuration: .init(mode: .read))
 
                 var buffer = [UInt8](repeating: 0, count: 4096)
@@ -139,7 +139,7 @@ struct FileOpenConfigurationTests {
             var config = Kernel.File.Open.Configuration(mode: .write)
             config.create = true
 
-            try Kernel.Path.withCString(pathString) { path in
+            try Kernel.Path.scope(pathString) { path in
                 let handle = try Kernel.File.open(path, configuration: config)
 
                 let content = "Written content"
@@ -171,7 +171,7 @@ struct FileOpenConfigurationTests {
             var config = Kernel.File.Open.Configuration(mode: .read)
             config.cache = .auto(policy: .fallbackToBuffered)
 
-            try Kernel.Path.withCString(pathString) { path in
+            try Kernel.Path.scope(pathString) { path in
                 let handle = try Kernel.File.open(path, configuration: config)
 
                 // On macOS: .uncached, on Linux: .buffered (because requirements unknown)

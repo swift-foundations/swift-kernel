@@ -23,7 +23,7 @@ extension Kernel {
     ///
     /// ```swift
     /// // Remove a file
-    /// try Kernel.Path.withCString("/tmp/tempfile.txt") { path in
+    /// try Kernel.Path.scope("/tmp/tempfile.txt") { path in
     ///     try Kernel.Unlink.unlink(path)
     /// }
     ///

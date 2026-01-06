@@ -109,6 +109,6 @@ extension Kernel.Path {
     /// Errors that can occur during path string conversion.
     public enum ConversionError: Swift.Error, Sendable, Equatable {
         /// The string contains an interior NUL byte, which would truncate the path.
-        case interiorNul
+        case interiorNUL
     }
 }
