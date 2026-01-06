@@ -53,12 +53,13 @@ extension Kernel.Signal.Mask {
         var previous = sigset_t()
         sigemptyset(&previous)
 
-        let result = signals.withUnsafePointer { setPtr in
+        // pthread_sigmask returns error number directly, not via errno
+        let error = signals.withUnsafePointer { setPtr in
             pthread_sigmask(how.rawValue, setPtr, &previous)
         }
 
-        guard result == 0 else {
-            throw .mask(.posix(result))
+        guard error == 0 else {
+            throw .mask(.posix(error))
         }
 
         return Kernel.Signal.Set(storage: previous)
