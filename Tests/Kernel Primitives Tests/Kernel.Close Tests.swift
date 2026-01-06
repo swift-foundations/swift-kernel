@@ -11,7 +11,7 @@
 
 import Kernel_Test_Support
 import StandardsTestSupport
-import SystemPackage
+
 import Testing
 
 @testable import Kernel_Primitives
@@ -27,14 +27,13 @@ extension Kernel.Close {
     extension Kernel.Close.Test.Unit {
         @Test("close succeeds on valid descriptor")
         func closeSucceedsOnValidDescriptor() throws {
-            let (path, fd) = try KernelIOTest.createTempFile(prefix: "close-test")
-            defer { try? Kernel.Unlink.unlink(path) }
+            try KernelIOTest.withTempFile(prefix: "close-test") { path, fd in
+                // Close should succeed
+                try Kernel.Close.close(fd)
 
-            // Close should succeed
-            try Kernel.Close.close(fd)
-
-            // Descriptor should now be invalid - further operations should fail
-            // (We can't easily test this without trying to use it, which would be UB on POSIX)
+                // Note: cleanup in defer will try to close again, but fd is already closed
+                // This is fine - the defer will fail silently
+            }
         }
 
         @Test("close is idempotent in practice")

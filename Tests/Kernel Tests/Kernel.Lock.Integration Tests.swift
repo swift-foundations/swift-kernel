@@ -9,9 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
+import Kernel_Primitives
 import Kernel_Test_Support
 import StandardsTestSupport
-import SystemPackage
+
 import Testing
 
 @testable import Kernel
@@ -28,27 +29,31 @@ struct KernelLockIntegration {}
 
 // MARK: - Cross-Platform Test Helpers
 
-/// Creates a temporary file using Kernel APIs and returns its path and descriptor.
-private func createTempFile(prefix: String) throws -> (path: FilePath, fd: Kernel.Descriptor) {
-    let path = Kernel.Temporary.filePath(prefix: prefix)
-    let fd = try Kernel.File.Open.open(
-        path: path,
-        mode: [.read, .write],
-        options: [.create, .truncate],
-        permissions: 0o644
-    )
-    // Write some data so the file isn't empty (needed for byte-range locking)
-    let data = [UInt8](repeating: 0x78, count: 1024)  // 'x' repeated
-    _ = try data.withUnsafeBytes { buffer in
-        try Kernel.IO.Write.write(fd, from: buffer)
+/// Creates a temporary file and executes body with the path and descriptor.
+/// File is automatically cleaned up after body completes.
+private func withTempFile<R>(
+    prefix: String,
+    _ body: (borrowing Kernel.Path, Kernel.Descriptor) throws -> R
+) throws -> R {
+    let pathString = Kernel.Temporary.filePath(prefix: prefix)
+    return try Kernel.Path.withCString(pathString) { path in
+        let fd = try Kernel.File.Open.open(
+            path: path,
+            mode: [.read, .write],
+            options: [.create, .truncate],
+            permissions: .ownerReadWrite
+        )
+        // Write some data so the file isn't empty (needed for byte-range locking)
+        let data = [UInt8](repeating: 0x78, count: 1024)  // 'x' repeated
+        _ = try data.withUnsafeBytes { buffer in
+            try Kernel.IO.Write.write(fd, from: buffer)
+        }
+        defer {
+            try? Kernel.Close.close(fd)
+            try? Kernel.Unlink.unlink(path)
+        }
+        return try body(path, fd)
     }
-    return (path, fd)
-}
-
-/// Cleans up a temporary file.
-private func cleanupTempFile(path: FilePath, fd: Kernel.Descriptor) {
-    try? Kernel.Close.close(fd)
-    try? Kernel.Unlink.unlink(path)
 }
 
 // MARK: - Token Integration Tests
@@ -56,39 +61,37 @@ private func cleanupTempFile(path: FilePath, fd: Kernel.Descriptor) {
 extension KernelLockIntegration {
     @Test("Token acquires and releases lock")
     func tokenAcquiresAndReleasesLock() throws {
-        let (path, fd) = try createTempFile(prefix: "kernel-lock-token")
-        defer { cleanupTempFile(path: path, fd: fd) }
+        try withTempFile(prefix: "kernel-lock-token") { _, fd in
+            #expect(fd.isValid, "Failed to create test file")
 
-        #expect(fd.isValid, "Failed to create test file")
+            // Acquire exclusive lock
+            var token = try Kernel.Lock.Token(
+                descriptor: fd,
+                range: .file,
+                kind: .exclusive,
+                acquire: .wait
+            )
 
-        // Acquire exclusive lock
-        var token = try Kernel.Lock.Token(
-            descriptor: fd,
-            range: .file,
-            kind: .exclusive,
-            acquire: .wait
-        )
-
-        // Release the lock
-        try token.release()
+            // Release the lock
+            try token.release()
+        }
     }
 
     @Test("Try lock returns immediately when uncontested")
     func tryLockUncontested() throws {
-        let (path, fd) = try createTempFile(prefix: "kernel-lock-try")
-        defer { cleanupTempFile(path: path, fd: fd) }
+        try withTempFile(prefix: "kernel-lock-try") { _, fd in
+            #expect(fd.isValid, "Failed to create test file")
 
-        #expect(fd.isValid, "Failed to create test file")
+            // Try to acquire lock without blocking - should succeed
+            var token = try Kernel.Lock.Token(
+                descriptor: fd,
+                range: .file,
+                kind: .exclusive,
+                acquire: .try
+            )
 
-        // Try to acquire lock without blocking - should succeed
-        var token = try Kernel.Lock.Token(
-            descriptor: fd,
-            range: .file,
-            kind: .exclusive,
-            acquire: .try
-        )
-
-        try token.release()
+            try token.release()
+        }
     }
 }
 
@@ -98,22 +101,32 @@ extension KernelLockIntegration {
 
 #if canImport(Foundation) && !os(Windows)
 
-    /// POSIX-only helper that creates a temp file for cross-process lock testing.
-    /// Returns path (as String for Foundation.Process) and typed descriptor.
-    private func createTempFileForProcess(prefix: String) throws -> (path: String, fd: Kernel.Descriptor) {
-        let filePath = Kernel.Temporary.filePath(prefix: prefix)
-        let fd = try Kernel.File.Open.open(
-            path: filePath,
-            mode: [.read, .write],
-            options: [.create, .truncate],
-            permissions: 0o644
-        )
-        // Write some data so the file isn't empty (needed for byte-range locking)
-        let data = [UInt8](repeating: 0x78, count: 1024)
-        _ = try? data.withUnsafeBytes { buffer in
-            try Kernel.IO.Write.write(fd, from: buffer)
+    /// POSIX-only helper for cross-process lock testing.
+    /// Provides both the path String (for subprocess args) and descriptor.
+    /// File is cleaned up after body completes.
+    private func withTempFileForProcess<R>(
+        prefix: String,
+        _ body: (_ pathString: String, _ fd: Kernel.Descriptor) throws -> R
+    ) throws -> R {
+        let pathString = Kernel.Temporary.filePath(prefix: prefix)
+        return try Kernel.Path.withCString(pathString) { path in
+            let fd = try Kernel.File.Open.open(
+                path: path,
+                mode: [.read, .write],
+                options: [.create, .truncate],
+                permissions: .ownerReadWrite
+            )
+            // Write some data so the file isn't empty (needed for byte-range locking)
+            let data = [UInt8](repeating: 0x78, count: 1024)
+            _ = try? data.withUnsafeBytes { buffer in
+                try Kernel.IO.Write.write(fd, from: buffer)
+            }
+            defer {
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(path)
+            }
+            return try body(pathString, fd)
         }
-        return (filePath.string, fd)
     }
 
     extension KernelLockIntegration {
@@ -143,231 +156,207 @@ extension KernelLockIntegration {
 
         @Test("Exclusive lock blocks try-exclusive from another process")
         func exclusiveBlocksTryExclusive() throws {
-            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
-            defer {
-                try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(FilePath(path))
+            try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
+                #expect(fd.isValid, "Failed to create test file")
+
+                // Acquire exclusive lock in this process
+                var token = try Kernel.Lock.Token(
+                    descriptor: fd,
+                    range: .file,
+                    kind: .exclusive,
+                    acquire: .wait
+                )
+
+                // Spawn helper to try acquiring exclusive lock (should fail)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: Self.helperPath)
+                process.arguments = ["try-exclusive", pathString, "--signal-ready"]
+
+                let pipe = Pipe()
+                process.standardOutput = pipe
+
+                try process.run()
+                process.waitUntilExit()
+
+                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: outputData, encoding: .utf8) ?? ""
+
+                #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
+                #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
+
+                try token.release()
             }
-
-            #expect(fd.isValid, "Failed to create test file")
-
-            // Acquire exclusive lock in this process
-            var token = try Kernel.Lock.Token(
-                descriptor: fd,
-                range: .file,
-                kind: .exclusive,
-                acquire: .wait
-            )
-
-            // Spawn helper to try acquiring exclusive lock (should fail)
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: Self.helperPath)
-            process.arguments = ["try-exclusive", path, "--signal-ready"]
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: outputData, encoding: .utf8) ?? ""
-
-            #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
-            #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
-
-            try token.release()
         }
 
         @Test("Exclusive lock blocks try-shared from another process")
         func exclusiveBlocksTryShared() throws {
-            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
-            defer {
-                try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(FilePath(path))
+            try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
+                #expect(fd.isValid, "Failed to create test file")
+
+                // Acquire exclusive lock in this process
+                var token = try Kernel.Lock.Token(
+                    descriptor: fd,
+                    range: .file,
+                    kind: .exclusive,
+                    acquire: .wait
+                )
+
+                // Spawn helper to try acquiring shared lock (should fail)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: Self.helperPath)
+                process.arguments = ["try-shared", pathString]
+
+                let pipe = Pipe()
+                process.standardOutput = pipe
+
+                try process.run()
+                process.waitUntilExit()
+
+                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: outputData, encoding: .utf8) ?? ""
+
+                #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
+                #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
+
+                try token.release()
             }
-
-            #expect(fd.isValid, "Failed to create test file")
-
-            // Acquire exclusive lock in this process
-            var token = try Kernel.Lock.Token(
-                descriptor: fd,
-                range: .file,
-                kind: .exclusive,
-                acquire: .wait
-            )
-
-            // Spawn helper to try acquiring shared lock (should fail)
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: Self.helperPath)
-            process.arguments = ["try-shared", path]
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: outputData, encoding: .utf8) ?? ""
-
-            #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
-            #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
-
-            try token.release()
         }
 
         @Test("Shared lock allows try-shared from another process")
         func sharedAllowsTryShared() throws {
-            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
-            defer {
-                try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(FilePath(path))
+            try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
+                #expect(fd.isValid, "Failed to create test file")
+
+                // Acquire shared lock in this process
+                var token = try Kernel.Lock.Token(
+                    descriptor: fd,
+                    range: .file,
+                    kind: .shared,
+                    acquire: .wait
+                )
+
+                // Spawn helper to try acquiring shared lock (should succeed)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: Self.helperPath)
+                process.arguments = ["try-shared", pathString, "--hold", "0", "--signal-ready"]
+
+                let pipe = Pipe()
+                process.standardOutput = pipe
+
+                try process.run()
+                process.waitUntilExit()
+
+                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: outputData, encoding: .utf8) ?? ""
+
+                #expect(process.terminationStatus == 0, "Helper should exit with 0 (success)")
+                #expect(output.contains("READY"), "Helper should report READY")
+                #expect(output.contains("RELEASED"), "Helper should report RELEASED")
+
+                try token.release()
             }
-
-            #expect(fd.isValid, "Failed to create test file")
-
-            // Acquire shared lock in this process
-            var token = try Kernel.Lock.Token(
-                descriptor: fd,
-                range: .file,
-                kind: .shared,
-                acquire: .wait
-            )
-
-            // Spawn helper to try acquiring shared lock (should succeed)
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: Self.helperPath)
-            process.arguments = ["try-shared", path, "--hold", "0", "--signal-ready"]
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: outputData, encoding: .utf8) ?? ""
-
-            #expect(process.terminationStatus == 0, "Helper should exit with 0 (success)")
-            #expect(output.contains("READY"), "Helper should report READY")
-            #expect(output.contains("RELEASED"), "Helper should report RELEASED")
-
-            try token.release()
         }
 
         @Test("Shared lock blocks try-exclusive from another process")
         func sharedBlocksTryExclusive() throws {
-            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
-            defer {
-                try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(FilePath(path))
+            try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
+                #expect(fd.isValid, "Failed to create test file")
+
+                // Acquire shared lock in this process
+                var token = try Kernel.Lock.Token(
+                    descriptor: fd,
+                    range: .file,
+                    kind: .shared,
+                    acquire: .wait
+                )
+
+                // Spawn helper to try acquiring exclusive lock (should fail)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: Self.helperPath)
+                process.arguments = ["try-exclusive", pathString]
+
+                let pipe = Pipe()
+                process.standardOutput = pipe
+
+                try process.run()
+                process.waitUntilExit()
+
+                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: outputData, encoding: .utf8) ?? ""
+
+                #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
+                #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
+
+                try token.release()
             }
-
-            #expect(fd.isValid, "Failed to create test file")
-
-            // Acquire shared lock in this process
-            var token = try Kernel.Lock.Token(
-                descriptor: fd,
-                range: .file,
-                kind: .shared,
-                acquire: .wait
-            )
-
-            // Spawn helper to try acquiring exclusive lock (should fail)
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: Self.helperPath)
-            process.arguments = ["try-exclusive", path]
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: outputData, encoding: .utf8) ?? ""
-
-            #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
-            #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
-
-            try token.release()
         }
 
         @Test("Non-overlapping byte ranges don't conflict")
         func nonOverlappingRangesDontConflict() throws {
-            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
-            defer {
-                try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(FilePath(path))
+            try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
+                #expect(fd.isValid, "Failed to create test file")
+
+                // Acquire exclusive lock on bytes 0-100 in this process
+                var token = try Kernel.Lock.Token(
+                    descriptor: fd,
+                    range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(100)),
+                    kind: .exclusive,
+                    acquire: .wait
+                )
+
+                // Spawn helper to try acquiring exclusive lock on bytes 200-300 (should succeed)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: Self.helperPath)
+                process.arguments = ["try-exclusive", pathString, "--range", "200-300", "--hold", "0", "--signal-ready"]
+
+                let pipe = Pipe()
+                process.standardOutput = pipe
+
+                try process.run()
+                process.waitUntilExit()
+
+                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: outputData, encoding: .utf8) ?? ""
+
+                #expect(process.terminationStatus == 0, "Helper should exit with 0 (success)")
+                #expect(output.contains("READY"), "Helper should report READY")
+
+                try token.release()
             }
-
-            #expect(fd.isValid, "Failed to create test file")
-
-            // Acquire exclusive lock on bytes 0-100 in this process
-            var token = try Kernel.Lock.Token(
-                descriptor: fd,
-                range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(100)),
-                kind: .exclusive,
-                acquire: .wait
-            )
-
-            // Spawn helper to try acquiring exclusive lock on bytes 200-300 (should succeed)
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: Self.helperPath)
-            process.arguments = ["try-exclusive", path, "--range", "200-300", "--hold", "0", "--signal-ready"]
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: outputData, encoding: .utf8) ?? ""
-
-            #expect(process.terminationStatus == 0, "Helper should exit with 0 (success)")
-            #expect(output.contains("READY"), "Helper should report READY")
-
-            try token.release()
         }
 
         @Test("Overlapping byte ranges do conflict")
         func overlappingRangesConflict() throws {
-            let (path, fd) = try createTempFileForProcess(prefix: "kernel-contention")
-            defer {
-                try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(FilePath(path))
+            try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
+                #expect(fd.isValid, "Failed to create test file")
+
+                // Acquire exclusive lock on bytes 0-200 in this process
+                var token = try Kernel.Lock.Token(
+                    descriptor: fd,
+                    range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(200)),
+                    kind: .exclusive,
+                    acquire: .wait
+                )
+
+                // Spawn helper to try acquiring exclusive lock on bytes 100-300 (overlaps, should fail)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: Self.helperPath)
+                process.arguments = ["try-exclusive", pathString, "--range", "100-300"]
+
+                let pipe = Pipe()
+                process.standardOutput = pipe
+
+                try process.run()
+                process.waitUntilExit()
+
+                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: outputData, encoding: .utf8) ?? ""
+
+                #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
+                #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
+
+                try token.release()
             }
-
-            #expect(fd.isValid, "Failed to create test file")
-
-            // Acquire exclusive lock on bytes 0-200 in this process
-            var token = try Kernel.Lock.Token(
-                descriptor: fd,
-                range: .bytes(start: Kernel.File.Offset(0), end: Kernel.File.Offset(200)),
-                kind: .exclusive,
-                acquire: .wait
-            )
-
-            // Spawn helper to try acquiring exclusive lock on bytes 100-300 (overlaps, should fail)
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: Self.helperPath)
-            process.arguments = ["try-exclusive", path, "--range", "100-300"]
-
-            let pipe = Pipe()
-            process.standardOutput = pipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(data: outputData, encoding: .utf8) ?? ""
-
-            #expect(process.terminationStatus == 1, "Helper should exit with 1 (would block)")
-            #expect(output.contains("WOULD_BLOCK"), "Helper should report WOULD_BLOCK")
-
-            try token.release()
         }
     }
 #endif

@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel
+import Kernel_Primitives
 import Testing
 
 #if canImport(Darwin)
@@ -90,51 +91,55 @@ struct FileOpenConfigurationTests {
         @Test("open and close file with buffered mode")
         func openCloseBuffered() throws {
             let content = "Hello, World!"
-            let path = makeTempFile(prefix: "handle-test", content: content)
-            defer { removeTempFile(path) }
+            let pathString = makeTempFile(prefix: "handle-test", content: content)
+            defer { removeTempFile(pathString) }
 
-            let config = Kernel.File.Open.Configuration(mode: .read)
-            let handle = try Kernel.File.open(path, configuration: config)
+            try Kernel.Path.withCString(pathString) { path in
+                let config = Kernel.File.Open.Configuration(mode: .read)
+                let handle = try Kernel.File.open(path, configuration: config)
 
-            // Verify handle properties
-            #expect(handle.direct == .buffered)
+                // Verify handle properties
+                #expect(handle.direct == .buffered)
 
-            // Close is consuming, just let it go out of scope
+                // Close is consuming, just let it go out of scope
+            }
         }
 
         @Test("read file with buffered mode")
         func readBuffered() throws {
             let content = "Test content for reading"
-            let path = makeTempFile(prefix: "handle-read", content: content)
-            defer { removeTempFile(path) }
+            let pathString = makeTempFile(prefix: "handle-read", content: content)
+            defer { removeTempFile(pathString) }
 
-            let handle = try Kernel.File.open(path, configuration: .init(mode: .read))
+            try Kernel.Path.withCString(pathString) { path in
+                let handle = try Kernel.File.open(path, configuration: .init(mode: .read))
 
-            var buffer = [UInt8](repeating: 0, count: 4096)
-            let bytesRead = try buffer.withUnsafeMutableBytes { ptr in
-                try handle.read(into: ptr, at: 0)
-            }
-
-            #expect(bytesRead == content.count)
-
-            // Verify content matches using C string comparison
-            let matches = buffer.withUnsafeBufferPointer { ptr in
-                content.withCString { cStr in
-                    memcmp(ptr.baseAddress, cStr, bytesRead) == 0
+                var buffer = [UInt8](repeating: 0, count: 4096)
+                let bytesRead = try buffer.withUnsafeMutableBytes { ptr in
+                    try handle.read(into: ptr, at: 0)
                 }
+
+                #expect(bytesRead == content.count)
+
+                // Verify content matches using C string comparison
+                let matches = buffer.withUnsafeBufferPointer { ptr in
+                    content.withCString { cStr in
+                        memcmp(ptr.baseAddress, cStr, bytesRead) == 0
+                    }
+                }
+                #expect(matches)
             }
-            #expect(matches)
         }
 
         @Test("write file with buffered mode")
         func writeBuffered() throws {
-            let path = "/tmp/handle-write-\(getpid())-\(Int.random(in: 0..<Int.max))"
-            defer { removeTempFile(path) }
+            let pathString = "/tmp/handle-write-\(getpid())-\(Int.random(in: 0..<Int.max))"
+            defer { removeTempFile(pathString) }
 
             var config = Kernel.File.Open.Configuration(mode: .write)
             config.create = true
 
-            do {
+            try Kernel.Path.withCString(pathString) { path in
                 let handle = try Kernel.File.open(path, configuration: config)
 
                 let content = "Written content"
@@ -148,7 +153,7 @@ struct FileOpenConfigurationTests {
             }
 
             // Verify by reading back
-            let fd = open(path, O_RDONLY)
+            let fd = open(pathString, O_RDONLY)
             #expect(fd >= 0)
             defer { close(fd) }
 
@@ -160,20 +165,22 @@ struct FileOpenConfigurationTests {
         @Test("open with .auto(.fallbackToBuffered) succeeds")
         func openAutoFallback() throws {
             let content = "Auto fallback test"
-            let path = makeTempFile(prefix: "handle-auto", content: content)
-            defer { removeTempFile(path) }
+            let pathString = makeTempFile(prefix: "handle-auto", content: content)
+            defer { removeTempFile(pathString) }
 
             var config = Kernel.File.Open.Configuration(mode: .read)
             config.cache = .auto(policy: .fallbackToBuffered)
 
-            let handle = try Kernel.File.open(path, configuration: config)
+            try Kernel.Path.withCString(pathString) { path in
+                let handle = try Kernel.File.open(path, configuration: config)
 
-            // On macOS: .uncached, on Linux: .buffered (because requirements unknown)
-            #if os(macOS)
-                #expect(handle.direct == .uncached)
-            #else
-                #expect(handle.direct == .buffered)
-            #endif
+                // On macOS: .uncached, on Linux: .buffered (because requirements unknown)
+                #if os(macOS)
+                    #expect(handle.direct == .uncached)
+                #else
+                    #expect(handle.direct == .buffered)
+                #endif
+            }
         }
     }
 #endif

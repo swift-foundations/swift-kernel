@@ -12,7 +12,7 @@
 import Binary
 import Kernel_Test_Support
 import StandardsTestSupport
-import SystemPackage
+
 import Testing
 
 @testable import Kernel_Primitives
@@ -28,135 +28,129 @@ extension Kernel.File.Handle {
     extension Kernel.File.Handle.Test.Unit {
         @Test("init stores descriptor and mode")
         func initStoresDescriptorAndMode() throws {
-            let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { try? Kernel.Unlink.unlink(path) }
-
-            let handle = Kernel.File.Handle(
-                descriptor: fd,
-                direct: .buffered,
-                requirements: .unknown(reason: .platformUnsupported)
-            )
-
-            #expect(handle.direct == .buffered)
-
-            // Handle will close on deinit
-            _ = consume handle
-        }
-
-        @Test("read returns bytes from file")
-        func readReturnsBytesFromFile() throws {
-            let (path, fd) = try KernelIOTest.createTempFileForHandle("TestData", prefix: "handle-test")
-            defer { try? Kernel.Unlink.unlink(path) }
-
-            let handle = Kernel.File.Handle(
-                descriptor: fd,
-                direct: .buffered,
-                requirements: .unknown(reason: .platformUnsupported)
-            )
-
-            var buffer = [UInt8](repeating: 0, count: 8)
-            let bytesRead = try buffer.withUnsafeMutableBytes { ptr in
-                try handle.read(into: ptr, at: Kernel.File.Offset(0))
-            }
-
-            #expect(bytesRead == 8)
-            #expect(String(decoding: buffer, as: UTF8.self) == "TestData")
-
-            _ = consume handle
-        }
-
-        @Test("write writes bytes to file")
-        func writeWritesBytesToFile() throws {
-            let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { try? Kernel.Unlink.unlink(path) }
-
-            let handle = Kernel.File.Handle(
-                descriptor: fd,
-                direct: .buffered,
-                requirements: .unknown(reason: .platformUnsupported)
-            )
-
-            let content = Array("Written".utf8)
-            let bytesWritten = try content.withUnsafeBytes { ptr in
-                try handle.write(from: ptr, at: Kernel.File.Offset(0))
-            }
-
-            #expect(bytesWritten == 7)
-
-            // Verify by reading back
-            var buffer = [UInt8](repeating: 0, count: 7)
-            _ = try buffer.withUnsafeMutableBytes { ptr in
-                try handle.read(into: ptr, at: Kernel.File.Offset(0))
-            }
-            #expect(String(decoding: buffer, as: UTF8.self) == "Written")
-
-            _ = consume handle
-        }
-
-        @Test("close explicitly closes handle")
-        func closeExplicitlyClosesHandle() throws {
-            let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { try? Kernel.Unlink.unlink(path) }
-
-            var handle = Kernel.File.Handle(
-                descriptor: fd,
-                direct: .buffered,
-                requirements: .unknown(reason: .platformUnsupported)
-            )
-
-            try handle.close()
-
-            // Second close should be no-op (idempotent)
-            try handle.close()
-
-            _ = consume handle
-        }
-
-        @Test("withDescriptor provides access to raw descriptor")
-        func withDescriptorProvidesAccess() throws {
-            let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { try? Kernel.Unlink.unlink(path) }
-
-            let handle = Kernel.File.Handle(
-                descriptor: fd,
-                direct: .buffered,
-                requirements: .unknown(reason: .platformUnsupported)
-            )
-
-            let rawValue = handle.withDescriptor { descriptor in
-                descriptor.rawValue
-            }
-
-            #expect(rawValue == fd.rawValue)
-
-            _ = consume handle
-        }
-
-        @Test("handle closes on deinit")
-        func handleClosesOnDeinit() throws {
-            let (path, fd) = try KernelIOTest.createTempFileForHandle(prefix: "handle-test")
-            defer { try? Kernel.Unlink.unlink(path) }
-
-            // Create and immediately drop handle
-            do {
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
                 let handle = Kernel.File.Handle(
                     descriptor: fd,
                     direct: .buffered,
                     requirements: .unknown(reason: .platformUnsupported)
                 )
+
+                #expect(handle.direct == .buffered)
+
+                // Handle will close on deinit
                 _ = consume handle
             }
+        }
 
-            // After deinit, descriptor should be closed
-            // Attempting to use it should fail
-            var buffer = [UInt8](repeating: 0, count: 1)
-            do {
-                _ = try buffer.withUnsafeMutableBytes { ptr in
-                    try Kernel.IO.Read.read(fd, into: ptr)
+        @Test("read returns bytes from file")
+        func readReturnsBytesFromFile() throws {
+            try KernelIOTest.withTempFileForHandle(content: "TestData", prefix: "handle-test") { path, fd in
+                let handle = Kernel.File.Handle(
+                    descriptor: fd,
+                    direct: .buffered,
+                    requirements: .unknown(reason: .platformUnsupported)
+                )
+
+                var buffer = [UInt8](repeating: 0, count: 8)
+                let bytesRead = try buffer.withUnsafeMutableBytes { ptr in
+                    try handle.read(into: ptr, at: Kernel.File.Offset(0))
                 }
-                Issue.record("Read on closed descriptor should fail")
-            } catch {
-                // Expected - descriptor is closed
+
+                #expect(bytesRead == 8)
+                #expect(String(decoding: buffer, as: UTF8.self) == "TestData")
+
+                _ = consume handle
+            }
+        }
+
+        @Test("write writes bytes to file")
+        func writeWritesBytesToFile() throws {
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+                let handle = Kernel.File.Handle(
+                    descriptor: fd,
+                    direct: .buffered,
+                    requirements: .unknown(reason: .platformUnsupported)
+                )
+
+                let content = Array("Written".utf8)
+                let bytesWritten = try content.withUnsafeBytes { ptr in
+                    try handle.write(from: ptr, at: Kernel.File.Offset(0))
+                }
+
+                #expect(bytesWritten == 7)
+
+                // Verify by reading back
+                var buffer = [UInt8](repeating: 0, count: 7)
+                _ = try buffer.withUnsafeMutableBytes { ptr in
+                    try handle.read(into: ptr, at: Kernel.File.Offset(0))
+                }
+                #expect(String(decoding: buffer, as: UTF8.self) == "Written")
+
+                _ = consume handle
+            }
+        }
+
+        @Test("close explicitly closes handle")
+        func closeExplicitlyClosesHandle() throws {
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+                var handle = Kernel.File.Handle(
+                    descriptor: fd,
+                    direct: .buffered,
+                    requirements: .unknown(reason: .platformUnsupported)
+                )
+
+                try handle.close()
+
+                // Second close should be no-op (idempotent)
+                try handle.close()
+
+                _ = consume handle
+            }
+        }
+
+        @Test("withDescriptor provides access to raw descriptor")
+        func withDescriptorProvidesAccess() throws {
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+                let handle = Kernel.File.Handle(
+                    descriptor: fd,
+                    direct: .buffered,
+                    requirements: .unknown(reason: .platformUnsupported)
+                )
+
+                let rawValue = handle.withDescriptor { descriptor in
+                    descriptor.rawValue
+                }
+
+                #expect(rawValue == fd.rawValue)
+
+                _ = consume handle
+            }
+        }
+
+        @Test("handle closes on deinit")
+        func handleClosesOnDeinit() throws {
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+                // Create and immediately drop handle
+                do {
+                    let handle = Kernel.File.Handle(
+                        descriptor: fd,
+                        direct: .buffered,
+                        requirements: .unknown(reason: .platformUnsupported)
+                    )
+                    _ = consume handle
+                }
+
+                // After deinit, descriptor should be closed
+                // Attempting to use it should fail
+                var buffer = [UInt8](repeating: 0, count: 1)
+                do {
+                    _ = try buffer.withUnsafeMutableBytes { ptr in
+                        try Kernel.IO.Read.read(fd, into: ptr)
+                    }
+                    Issue.record("Read on closed descriptor should fail")
+                } catch {
+                    // Expected - descriptor is closed
+                }
             }
         }
     }

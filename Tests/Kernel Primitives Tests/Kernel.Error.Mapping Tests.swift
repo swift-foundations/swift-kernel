@@ -15,10 +15,17 @@ import Testing
 @testable import Kernel_Primitives
 
 // Kernel.Error.Mapping.swift contains extension initializers for error mapping.
-// These tests verify the error mapping functionality without a type to extend.
+// These tests verify the error mapping functionality using Kernel.Error.Code.
 
 #if !os(Windows)
-    import SystemPackage
+
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#elseif canImport(Musl)
+    import Musl
+#endif
 
     // MARK: - Path.Resolution.Error Mapping Tests
 
@@ -26,31 +33,31 @@ import Testing
     struct PathResolutionErrorMappingTests {
         @Test("notFound from ENOENT")
         func notFoundMapping() {
-            let error = Kernel.Path.Resolution.Error(errno: .noSuchFileOrDirectory)
+            let error = Kernel.Path.Resolution.Error(code: .posix(ENOENT))
             #expect(error == .notFound)
         }
 
         @Test("exists from EEXIST")
         func existsMapping() {
-            let error = Kernel.Path.Resolution.Error(errno: .fileExists)
+            let error = Kernel.Path.Resolution.Error(code: .posix(EEXIST))
             #expect(error == .exists)
         }
 
         @Test("isDirectory from EISDIR")
         func isDirectoryMapping() {
-            let error = Kernel.Path.Resolution.Error(errno: .isDirectory)
+            let error = Kernel.Path.Resolution.Error(code: .posix(EISDIR))
             #expect(error == .isDirectory)
         }
 
         @Test("notDirectory from ENOTDIR")
         func notDirectoryMapping() {
-            let error = Kernel.Path.Resolution.Error(errno: .notDirectory)
+            let error = Kernel.Path.Resolution.Error(code: .posix(ENOTDIR))
             #expect(error == .notDirectory)
         }
 
         @Test("returns nil for unmapped errno")
         func unmappedReturnsNil() {
-            let error = Kernel.Path.Resolution.Error(errno: .interrupted)
+            let error = Kernel.Path.Resolution.Error(code: .posix(EINTR))
             #expect(error == nil)
         }
     }
@@ -61,25 +68,25 @@ import Testing
     struct PermissionErrorMappingTests {
         @Test("denied from EACCES")
         func deniedMapping() {
-            let error = Kernel.Permission.Error(errno: .permissionDenied)
+            let error = Kernel.Permission.Error(code: .posix(EACCES))
             #expect(error == .denied)
         }
 
         @Test("notPermitted from EPERM")
         func notPermittedMapping() {
-            let error = Kernel.Permission.Error(errno: .notPermitted)
+            let error = Kernel.Permission.Error(code: .posix(EPERM))
             #expect(error == .notPermitted)
         }
 
         @Test("readOnlyFilesystem from EROFS")
         func readOnlyFilesystemMapping() {
-            let error = Kernel.Permission.Error(errno: .readOnlyFileSystem)
+            let error = Kernel.Permission.Error(code: .posix(EROFS))
             #expect(error == .readOnlyFilesystem)
         }
 
         @Test("returns nil for unmapped errno")
         func unmappedReturnsNil() {
-            let error = Kernel.Permission.Error(errno: .interrupted)
+            let error = Kernel.Permission.Error(code: .posix(EINTR))
             #expect(error == nil)
         }
     }
@@ -90,25 +97,25 @@ import Testing
     struct DescriptorValidityErrorMappingTests {
         @Test("invalid from EBADF")
         func invalidMapping() {
-            let error = Kernel.Descriptor.Validity.Error(errno: .badFileDescriptor)
+            let error = Kernel.Descriptor.Validity.Error(code: .posix(EBADF))
             #expect(error == .invalid)
         }
 
         @Test("limit process from EMFILE")
         func processLimitMapping() {
-            let error = Kernel.Descriptor.Validity.Error(errno: .tooManyOpenFiles)
+            let error = Kernel.Descriptor.Validity.Error(code: .posix(EMFILE))
             #expect(error == .limit(.process))
         }
 
         @Test("limit system from ENFILE")
         func systemLimitMapping() {
-            let error = Kernel.Descriptor.Validity.Error(errno: .tooManyOpenFilesInSystem)
+            let error = Kernel.Descriptor.Validity.Error(code: .posix(ENFILE))
             #expect(error == .limit(.system))
         }
 
         @Test("returns nil for unmapped errno")
         func unmappedReturnsNil() {
-            let error = Kernel.Descriptor.Validity.Error(errno: .interrupted)
+            let error = Kernel.Descriptor.Validity.Error(code: .posix(EINTR))
             #expect(error == nil)
         }
     }
@@ -119,13 +126,13 @@ import Testing
     struct SignalErrorMappingTests {
         @Test("interrupted from EINTR")
         func interruptedMapping() {
-            let error = Kernel.Signal.Error(errno: .interrupted)
+            let error = Kernel.Signal.Error(code: .posix(EINTR))
             #expect(error == .interrupted)
         }
 
         @Test("returns nil for unmapped errno")
         func unmappedReturnsNil() {
-            let error = Kernel.Signal.Error(errno: .permissionDenied)
+            let error = Kernel.Signal.Error(code: .posix(EACCES))
             #expect(error == nil)
         }
     }
@@ -136,13 +143,13 @@ import Testing
     struct IOBlockingErrorMappingTests {
         @Test("wouldBlock from EAGAIN")
         func wouldBlockMapping() {
-            let error = Kernel.IO.Blocking.Error(errno: .wouldBlock)
+            let error = Kernel.IO.Blocking.Error(code: .posix(EAGAIN))
             #expect(error == .wouldBlock)
         }
 
         @Test("returns nil for unmapped errno")
         func unmappedReturnsNil() {
-            let error = Kernel.IO.Blocking.Error(errno: .permissionDenied)
+            let error = Kernel.IO.Blocking.Error(code: .posix(EACCES))
             #expect(error == nil)
         }
     }
@@ -153,19 +160,19 @@ import Testing
     struct StorageErrorMappingTests {
         @Test("exhausted from ENOSPC")
         func exhaustedMapping() {
-            let error = Kernel.Storage.Error(errno: .noSpace)
+            let error = Kernel.Storage.Error(code: .posix(ENOSPC))
             #expect(error == .exhausted)
         }
 
         @Test("quota from EDQUOT")
         func quotaMapping() {
-            let error = Kernel.Storage.Error(errno: .diskQuotaExceeded)
+            let error = Kernel.Storage.Error(code: .posix(EDQUOT))
             #expect(error == .quota)
         }
 
         @Test("returns nil for unmapped errno")
         func unmappedReturnsNil() {
-            let error = Kernel.Storage.Error(errno: .interrupted)
+            let error = Kernel.Storage.Error(code: .posix(EINTR))
             #expect(error == nil)
         }
     }
@@ -176,19 +183,19 @@ import Testing
     struct MemoryErrorMappingTests {
         @Test("fault from EFAULT")
         func faultMapping() {
-            let error = Kernel.Memory.Error(errno: .badAddress)
+            let error = Kernel.Memory.Error(code: .posix(EFAULT))
             #expect(error == .fault)
         }
 
         @Test("exhausted from ENOMEM")
         func exhaustedMapping() {
-            let error = Kernel.Memory.Error(errno: .noMemory)
+            let error = Kernel.Memory.Error(code: .posix(ENOMEM))
             #expect(error == .exhausted)
         }
 
         @Test("returns nil for unmapped errno")
         func unmappedReturnsNil() {
-            let error = Kernel.Memory.Error(errno: .interrupted)
+            let error = Kernel.Memory.Error(code: .posix(EINTR))
             #expect(error == nil)
         }
     }
@@ -199,39 +206,39 @@ import Testing
     struct IOErrorMappingTests {
         @Test("hardware from EIO")
         func hardwareMapping() {
-            let error = Kernel.IO.Error(errno: .ioError)
+            let error = Kernel.IO.Error(code: .posix(EIO))
             #expect(error == .hardware)
         }
 
         @Test("broken from EPIPE")
         func brokenMapping() {
-            let error = Kernel.IO.Error(errno: .brokenPipe)
+            let error = Kernel.IO.Error(code: .posix(EPIPE))
             #expect(error == .broken)
         }
 
         @Test("reset from ECONNRESET")
         func resetMapping() {
-            let error = Kernel.IO.Error(errno: .connectionReset)
+            let error = Kernel.IO.Error(code: .posix(ECONNRESET))
             #expect(error == .reset)
         }
 
         @Test("returns nil for unmapped errno")
         func unmappedReturnsNil() {
-            let error = Kernel.IO.Error(errno: .interrupted)
+            let error = Kernel.IO.Error(code: .posix(EINTR))
             #expect(error == nil)
         }
     }
 
-    // MARK: - Errno.Unmapped.Error Tests
+    // MARK: - Error.Unmapped Tests
 
-    @Suite("Errno.Unmapped.Error Mapping")
-    struct ErrnoUnmappedErrorMappingTests {
+    @Suite("Error.Unmapped Mapping")
+    struct ErrorUnmappedMappingTests {
         @Test("creates platform error from errno")
         func fromErrno() {
-            let error = Kernel.Error.Unmapped.Error(errno: .interrupted)
+            let error = Kernel.Error.Unmapped.Error(code: .posix(EINTR))
             if case .unmapped(let code, _) = error {
                 if case .posix(let value) = code {
-                    #expect(value == Errno.interrupted.rawValue)
+                    #expect(value == EINTR)
                 } else {
                     Issue.record("Expected .posix code")
                 }

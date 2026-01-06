@@ -11,7 +11,6 @@
 
 import Kernel_Test_Support
 import StandardsTestSupport
-import SystemPackage
 import Testing
 
 @testable import Kernel
@@ -31,101 +30,109 @@ extension Kernel.Test.Unit {
 
     @Test("open and close file")
     func openAndClose() throws {
-        let path = Kernel.Temporary.filePath(prefix: "kernel-test")
+        let pathString = Kernel.Temporary.filePath(prefix: "kernel-test")
 
-        // Create and open
-        let fd = try Kernel.File.Open.open(
-            path: path,
-            mode: [.read, .write],
-            options: [.create, .truncate],
-            permissions: 0o644
-        )
+        try Kernel.Path.withCString(pathString) { path in
+            // Create and open
+            let fd = try Kernel.File.Open.open(
+                path: path,
+                mode: [.read, .write],
+                options: [.create, .truncate],
+                permissions: .standard
+            )
 
-        #expect(fd.isValid)
+            #expect(fd.isValid)
 
-        // Close
-        try Kernel.Close.close(fd)
+            // Close
+            try Kernel.Close.close(fd)
 
-        // Cleanup
-        try? unlinkFile(at: path)
+            // Cleanup
+            try? Kernel.Unlink.unlink(path)
+        }
     }
 
     @Test("open nonexistent file throws path error")
-    func openNonexistent() {
+    func openNonexistent() throws {
         #if os(Windows)
-            let path = FilePath("C:\\nonexistent\\path\\that\\does\\not\\exist\\file.txt")
+            let pathString = "C:\\nonexistent\\path\\that\\does\\not\\exist\\file.txt"
         #else
-            let path = FilePath("/nonexistent/path/that/does/not/exist/file.txt")
+            let pathString = "/nonexistent/path/that/does/not/exist/file.txt"
         #endif
 
-        #expect(throws: (any Error).self) {
-            try Kernel.File.Open.open(
-                path: path,
-                mode: [.read],
-                options: [],
-                permissions: 0
-            )
+        Kernel.Path.withCString(pathString) { path in
+            #expect(throws: (any Error).self) {
+                try Kernel.File.Open.open(
+                    path: path,
+                    mode: [.read],
+                    options: [],
+                    permissions: 0
+                )
+            }
         }
     }
 
     @Test("write and read data")
     func writeAndRead() throws {
-        let path = Kernel.Temporary.filePath(prefix: "kernel-test-rw")
+        let pathString = Kernel.Temporary.filePath(prefix: "kernel-test-rw")
         let testData: [UInt8] = [0x48, 0x65, 0x6C, 0x6C, 0x6F]  // "Hello"
 
-        // Create file
-        let fd = try Kernel.File.Open.open(
-            path: path,
-            mode: [.read, .write],
-            options: [.create, .truncate],
-            permissions: 0o644
-        )
+        try Kernel.Path.withCString(pathString) { path in
+            // Create file
+            let fd = try Kernel.File.Open.open(
+                path: path,
+                mode: [.read, .write],
+                options: [.create, .truncate],
+                permissions: .standard
+            )
 
-        defer {
-            try? Kernel.Close.close(fd)
-            try? unlinkFile(at: path)
+            defer {
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(path)
+            }
+
+            // Write
+            let written = try testData.withUnsafeBytes { buffer in
+                try Kernel.IO.Write.write(fd, from: buffer)
+            }
+            #expect(written == testData.count)
+
+            // Read using pread (positional read from offset 0)
+            var readBuffer = [UInt8](repeating: 0, count: testData.count)
+            let bytesRead = try readBuffer.withUnsafeMutableBytes { buffer in
+                try Kernel.IO.Read.pread(fd, into: buffer, at: 0)
+            }
+
+            #expect(bytesRead == testData.count)
+            #expect(readBuffer == testData)
         }
-
-        // Write
-        let written = try testData.withUnsafeBytes { buffer in
-            try Kernel.IO.Write.write(fd, from: buffer)
-        }
-        #expect(written == testData.count)
-
-        // Read using pread (positional read from offset 0)
-        var readBuffer = [UInt8](repeating: 0, count: testData.count)
-        let bytesRead = try readBuffer.withUnsafeMutableBytes { buffer in
-            try Kernel.IO.Read.pread(fd, into: buffer, at: 0)
-        }
-
-        #expect(bytesRead == testData.count)
-        #expect(readBuffer == testData)
     }
 
     @Test("read returns 0 on EOF")
     func readEOF() throws {
-        let path = Kernel.Temporary.filePath(prefix: "kernel-test-eof")
+        let pathString = Kernel.Temporary.filePath(prefix: "kernel-test-eof")
 
-        // Create empty file
-        let fd = try Kernel.File.Open.open(
-            path: path,
-            mode: [.read, .write],
-            options: [.create, .truncate],
-            permissions: 0o644
-        )
+        try Kernel.Path.withCString(pathString) { path in
+            // Create empty file
+            let fd = try Kernel.File.Open.open(
+                path: path,
+                mode: [.read, .write],
+                options: [.create, .truncate],
+                permissions: .standard
+            )
 
-        defer {
-            try? Kernel.Close.close(fd)
-            try? unlinkFile(at: path)
+            defer {
+                try? Kernel.Close.close(fd)
+                try? Kernel.Unlink.unlink(path)
+            }
+
+            // Read from empty file using pread at offset 0
+            var buffer = [UInt8](repeating: 0, count: 100)
+            let bytesRead = try buffer.withUnsafeMutableBytes { buf in
+                try Kernel.IO.Read.pread(fd, into: buf, at: 0)
+            }
+
+            #expect(bytesRead == 0)  // EOF returns 0, not error
         }
-
-        // Read from empty file using pread at offset 0
-        var buffer = [UInt8](repeating: 0, count: 100)
-        let bytesRead = try buffer.withUnsafeMutableBytes { buf in
-            try Kernel.IO.Read.pread(fd, into: buf, at: 0)
-        }
-
-        #expect(bytesRead == 0)  // EOF returns 0, not error
     }
 }
 
@@ -158,11 +165,4 @@ extension Kernel.Test.EdgeCase {
             }
         }
     }
-}
-
-// MARK: - Helper for cleanup
-
-/// Helper to unlink (delete) a file - used in test cleanup
-private func unlinkFile(at path: FilePath) throws {
-    try Kernel.Unlink.unlink(path)
 }

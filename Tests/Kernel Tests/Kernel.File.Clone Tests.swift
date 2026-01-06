@@ -10,7 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel
-import SystemPackage
+import Kernel_Primitives
+
 import Testing
 
 #if canImport(Darwin)
@@ -157,7 +158,9 @@ struct KernelFileCloneTests {
             @Test("probe capability returns valid result")
             func probeCapability() throws {
                 // Probe /tmp which is on the boot volume (typically APFS)
-                let cap = try Kernel.File.Clone.Capability.probe(at: FilePath("/tmp"))
+                let cap = try Kernel.Path.withCString("/tmp") { path in
+                    try Kernel.File.Clone.Capability.probe(at: path)
+                }
 
                 // On modern macOS with APFS, should be .reflink
                 // On older systems or HFS+, would be .none
@@ -167,7 +170,9 @@ struct KernelFileCloneTests {
             @Test("probe nonexistent path throws")
             func probeNonexistent() throws {
                 #expect(throws: Kernel.File.Clone.Error.Syscall.self) {
-                    try Kernel.File.Clone.Capability.probe(at: FilePath("/nonexistent/path/that/does/not/exist"))
+                    try Kernel.Path.withCString("/nonexistent/path/that/does/not/exist") { path in
+                        try Kernel.File.Clone.Capability.probe(at: path)
+                    }
                 }
             }
         }
@@ -190,11 +195,15 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                let result = try Kernel.File.Clone.clone(
-                    from: FilePath(source),
-                    to: FilePath(dest),
-                    behavior: .copyOnly
-                )
+                let result = try Kernel.Path.withCString(source) { srcPath in
+                    try Kernel.Path.withCString(dest) { dstPath in
+                        try Kernel.File.Clone.clone(
+                            from: srcPath,
+                            to: dstPath,
+                            behavior: .copyOnly
+                        )
+                    }
+                }
 
                 #expect(result == .copied)
 
@@ -214,11 +223,15 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                let result = try Kernel.File.Clone.clone(
-                    from: FilePath(source),
-                    to: FilePath(dest),
-                    behavior: .reflinkOrCopy
-                )
+                let result = try Kernel.Path.withCString(source) { srcPath in
+                    try Kernel.Path.withCString(dest) { dstPath in
+                        try Kernel.File.Clone.clone(
+                            from: srcPath,
+                            to: dstPath,
+                            behavior: .reflinkOrCopy
+                        )
+                    }
+                }
 
                 // Should succeed either way
                 #expect(result == .reflinked || result == .copied)
@@ -239,24 +252,28 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                // First check capability
-                let cap = try Kernel.File.Clone.Capability.probe(at: FilePath(source))
+                try Kernel.Path.withCString(source) { srcPath in
+                    try Kernel.Path.withCString(dest) { dstPath in
+                        // First check capability
+                        let cap = try Kernel.File.Clone.Capability.probe(at: srcPath)
 
-                if cap == .reflink {
-                    let result = try Kernel.File.Clone.clone(
-                        from: FilePath(source),
-                        to: FilePath(dest),
-                        behavior: .reflinkOrFail
-                    )
-                    #expect(result == .reflinked)
-                } else {
-                    // If filesystem doesn't support reflink, should throw
-                    #expect(throws: Kernel.File.Clone.Error.notSupported) {
-                        try Kernel.File.Clone.clone(
-                            from: FilePath(source),
-                            to: FilePath(dest),
-                            behavior: .reflinkOrFail
-                        )
+                        if cap == .reflink {
+                            let result = try Kernel.File.Clone.clone(
+                                from: srcPath,
+                                to: dstPath,
+                                behavior: .reflinkOrFail
+                            )
+                            #expect(result == .reflinked)
+                        } else {
+                            // If filesystem doesn't support reflink, should throw
+                            #expect(throws: Kernel.File.Clone.Error.notSupported) {
+                                try Kernel.File.Clone.clone(
+                                    from: srcPath,
+                                    to: dstPath,
+                                    behavior: .reflinkOrFail
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -273,11 +290,15 @@ struct KernelFileCloneTests {
                 }
 
                 #expect(throws: Kernel.File.Clone.Error.destinationExists) {
-                    try Kernel.File.Clone.clone(
-                        from: FilePath(source),
-                        to: FilePath(dest),
-                        behavior: .copyOnly
-                    )
+                    try Kernel.Path.withCString(source) { srcPath in
+                        try Kernel.Path.withCString(dest) { dstPath in
+                            try Kernel.File.Clone.clone(
+                                from: srcPath,
+                                to: dstPath,
+                                behavior: .copyOnly
+                            )
+                        }
+                    }
                 }
             }
 
@@ -287,11 +308,15 @@ struct KernelFileCloneTests {
                 let dest = "/tmp/clone-dst-\(getpid())"
 
                 #expect(throws: Kernel.File.Clone.Error.sourceNotFound) {
-                    try Kernel.File.Clone.clone(
-                        from: FilePath(source),
-                        to: FilePath(dest),
-                        behavior: .copyOnly
-                    )
+                    try Kernel.Path.withCString(source) { srcPath in
+                        try Kernel.Path.withCString(dest) { dstPath in
+                            try Kernel.File.Clone.clone(
+                                from: srcPath,
+                                to: dstPath,
+                                behavior: .copyOnly
+                            )
+                        }
+                    }
                 }
             }
 
@@ -308,11 +333,15 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                let result = try Kernel.File.Clone.clone(
-                    from: FilePath(source),
-                    to: FilePath(dest),
-                    behavior: .reflinkOrCopy
-                )
+                let result = try Kernel.Path.withCString(source) { srcPath in
+                    try Kernel.Path.withCString(dest) { dstPath in
+                        try Kernel.File.Clone.clone(
+                            from: srcPath,
+                            to: dstPath,
+                            behavior: .reflinkOrCopy
+                        )
+                    }
+                }
 
                 #expect(result == .reflinked || result == .copied)
 
@@ -333,11 +362,15 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                let result = try Kernel.File.Clone.clone(
-                    from: FilePath(source),
-                    to: FilePath(dest),
-                    behavior: .copyOnly
-                )
+                let result = try Kernel.Path.withCString(source) { srcPath in
+                    try Kernel.Path.withCString(dest) { dstPath in
+                        try Kernel.File.Clone.clone(
+                            from: srcPath,
+                            to: dstPath,
+                            behavior: .copyOnly
+                        )
+                    }
+                }
 
                 #expect(result == .copied)
 

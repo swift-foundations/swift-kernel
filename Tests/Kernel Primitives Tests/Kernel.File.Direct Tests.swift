@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 import StandardsTestSupport
-import SystemPackage
+
 import Testing
 
 @testable import Kernel_Primitives
@@ -61,15 +61,17 @@ extension Kernel.File.Direct.Test.Unit {
 
 extension Kernel.File.Direct.Test.Unit {
     @Test("requirements(for:) returns Requirements")
-    func requirementsForPath() {
-        let requirements = Kernel.File.Direct.requirements(for: FilePath("/tmp"))
-        switch requirements {
-        case .known:
-            // Windows may return known
-            break
-        case .unknown:
-            // macOS/Linux return unknown
-            break
+    func requirementsForPath() throws {
+        try Kernel.Path.withCString("/tmp") { path in
+            let requirements = Kernel.File.Direct.requirements(for: path)
+            switch requirements {
+            case .known:
+                // Windows may return known
+                break
+            case .unknown:
+                // macOS/Linux return unknown
+                break
+            }
         }
     }
 }
