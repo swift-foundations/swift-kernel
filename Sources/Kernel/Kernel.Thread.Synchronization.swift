@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Kernel.Thread.Executor {
+extension Kernel.Thread {
     /// Mutex + N condition variable(s) wrapper.
     ///
     /// Parameterized by condition count for compile-time safety:
@@ -24,7 +24,7 @@ extension Kernel.Thread.Executor {
     ///
     /// ## Usage
     /// ```swift
-    /// let sync = Synchronization<2>()
+    /// let sync = Kernel.Thread.Synchronization<2>()
     ///
     /// sync.lock()
     /// defer { sync.unlock() }
@@ -94,6 +94,21 @@ extension Kernel.Thread.Executor {
             precondition(index >= 0 && index < N, "Condition index \(index) out of bounds (0..<\(N))")
             let clampedNanos = Int64(clamping: nanoseconds)
             return conditions[index].wait(mutex: mutex, timeout: .nanoseconds(clampedNanos))
+        }
+
+        /// Wait on the specified condition variable with Duration timeout.
+        ///
+        /// Must be called while holding the lock.
+        /// The lock is released while waiting and reacquired before returning.
+        ///
+        /// - Parameters:
+        ///   - condition: Index of condition variable (0..<N).
+        ///   - timeout: Maximum duration to wait.
+        /// - Returns: `true` if signaled, `false` if timed out.
+        /// - Precondition: Index must be in range 0..<N.
+        public func wait(condition index: Int = 0, timeout: Duration) -> Bool {
+            precondition(index >= 0 && index < N, "Condition index \(index) out of bounds (0..<\(N))")
+            return conditions[index].wait(mutex: mutex, timeout: timeout)
         }
 
         /// Signal one thread waiting on the specified condition variable.
@@ -215,7 +230,7 @@ extension Kernel.Thread.Executor {
 
 // MARK: - Common Typealiases
 
-extension Kernel.Thread.Executor {
+extension Kernel.Thread {
     /// Single condition variable synchronization.
     ///
     /// Use for simple producer-consumer patterns like executor job queues.
@@ -230,7 +245,7 @@ extension Kernel.Thread.Executor {
 
 // MARK: - Convenience for Dual Sync
 
-extension Kernel.Thread.Executor.Synchronization where N == 2 {
+extension Kernel.Thread.Synchronization where N == 2 {
     /// Accessor for worker condition (index 0).
     public var worker: ConditionAccessor {
         ConditionAccessor(sync: self, index: 0)
@@ -243,10 +258,10 @@ extension Kernel.Thread.Executor.Synchronization where N == 2 {
 
     /// Accessor for a specific condition variable.
     public struct ConditionAccessor: Sendable {
-        private let sync: Kernel.Thread.Executor.Synchronization<2>
+        private let sync: Kernel.Thread.Synchronization<2>
         private let index: Int
 
-        init(sync: Kernel.Thread.Executor.Synchronization<2>, index: Int) {
+        init(sync: Kernel.Thread.Synchronization<2>, index: Int) {
             self.sync = sync
             self.index = index
         }
@@ -259,6 +274,11 @@ extension Kernel.Thread.Executor.Synchronization where N == 2 {
         /// Wait on this condition with timeout.
         public func wait(timeout nanoseconds: UInt64) -> Bool {
             sync.wait(condition: index, timeout: nanoseconds)
+        }
+
+        /// Wait on this condition with Duration timeout.
+        public func wait(timeout: Duration) -> Bool {
+            sync.wait(condition: index, timeout: timeout)
         }
 
         /// Signal one waiter on this condition.
@@ -304,12 +324,12 @@ extension Kernel.Thread.Executor.Synchronization where N == 2 {
     }
 }
 
-extension Kernel.Thread.Executor.DualSync {
+extension Kernel.Thread.DualSync {
     /// Accessor for broadcasting all conditions.
     public struct BroadcastAll: Sendable {
-        private let sync: Kernel.Thread.Executor.DualSync
+        private let sync: Kernel.Thread.DualSync
 
-        init(sync: Kernel.Thread.Executor.DualSync) {
+        init(sync: Kernel.Thread.DualSync) {
             self.sync = sync
         }
 
