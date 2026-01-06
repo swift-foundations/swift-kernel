@@ -104,6 +104,21 @@ static inline int swift_WCOREDUMP(int status) {
 }
 #endif
 
+// Dynamic library loading sentinel values.
+// RTLD_DEFAULT and RTLD_NEXT are macros that Swift cannot import directly,
+// so we expose them as functions.
+// Note: RTLD_MAIN_ONLY is Darwin-only and not available on Linux.
+
+#include <dlfcn.h>
+
+static inline void *swift_RTLD_DEFAULT(void) {
+    return RTLD_DEFAULT;
+}
+
+static inline void *swift_RTLD_NEXT(void) {
+    return RTLD_NEXT;
+}
+
 #endif /* __linux__ */
 
 #endif /* CLINUX_SHIM_H */

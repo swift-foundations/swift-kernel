@@ -70,6 +70,24 @@ static inline int swift_execve(
     return execve(path, (char *const *)argv, (char *const *)envp);
 }
 
+// Dynamic library loading sentinel values.
+// RTLD_DEFAULT, RTLD_NEXT, and RTLD_MAIN_ONLY are macros that Swift cannot
+// import directly, so we expose them as functions.
+
+#include <dlfcn.h>
+
+static inline void *swift_RTLD_DEFAULT(void) {
+    return RTLD_DEFAULT;
+}
+
+static inline void *swift_RTLD_NEXT(void) {
+    return RTLD_NEXT;
+}
+
+static inline void *swift_RTLD_MAIN_ONLY(void) {
+    return RTLD_MAIN_ONLY;
+}
+
 #endif /* __APPLE__ */
 
 #endif /* CDARWIN_SHIM_H */
