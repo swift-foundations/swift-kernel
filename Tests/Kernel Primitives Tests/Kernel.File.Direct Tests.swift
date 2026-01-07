@@ -59,6 +59,7 @@ extension Kernel.File.Direct.Test.Unit {
 // MARK: - Static Methods
 
 extension Kernel.File.Direct.Test.Unit {
+    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
     @Test("requirements(for:) returns Requirements")
     func requirementsForPath() {
         "/tmp".withCString { cString in
@@ -74,4 +75,5 @@ extension Kernel.File.Direct.Test.Unit {
             }
         }
     }
+    #endif
 }

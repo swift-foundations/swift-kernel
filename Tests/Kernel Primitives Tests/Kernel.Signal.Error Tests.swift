@@ -9,6 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
+// Signal.Error only exists on POSIX platforms
+#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+
 import StandardsTestSupport
 import Testing
 
@@ -75,3 +78,5 @@ extension Kernel.Signal.Error.Test.Unit {
         #expect(description.contains("interrupt"))
     }
 }
+
+#endif
