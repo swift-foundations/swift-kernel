@@ -67,7 +67,7 @@ func writeStderr(_ message: String) {
 
 func readStdinByte() {
     var buffer: UInt8 = 0
-    _ = withUnsafeMutableBytes(of: &buffer) { ptr in
+    withUnsafeMutableBytes(of: &buffer) { ptr in
         #if os(Windows)
             var read: DWORD = 0
             _ = ReadFile(GetStdHandle(DWORD(STD_INPUT_HANDLE)), ptr.baseAddress, 1, &read, nil)
