@@ -104,6 +104,19 @@ static inline int swift_WCOREDUMP(int status) {
 }
 #endif
 
+// Process management wrappers - execve expects mutable pointers on Linux
+// but the strings are never modified. We provide a const-correct wrapper.
+
+static inline int swift_execve(
+    const char *path,
+    const char *const argv[],
+    const char *const envp[]
+) {
+    // Cast away const-ness for execve's legacy signature.
+    // execve does NOT modify the strings, this is safe.
+    return execve(path, (char *const *)argv, (char *const *)envp);
+}
+
 // Dynamic library loading sentinel values.
 // RTLD_DEFAULT and RTLD_NEXT are macros that Swift cannot import directly,
 // so we expose them as functions.

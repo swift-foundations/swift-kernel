@@ -16,6 +16,7 @@
         internal import CDarwinShim
     #elseif canImport(Glibc)
         internal import Glibc
+        internal import CLinuxShim
     #elseif canImport(Musl)
         internal import Musl
     #endif
@@ -88,7 +89,7 @@
             #if canImport(Darwin)
                 _ = swift_execve(path, argv, envp)
             #elseif canImport(Glibc)
-                _ = Glibc.execve(path, argv, envp)
+                _ = swift_execve(path, argv, envp)
             #elseif canImport(Musl)
                 _ = Musl.execve(path, argv, envp)
             #endif

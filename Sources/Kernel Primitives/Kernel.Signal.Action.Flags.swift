@@ -50,32 +50,32 @@
             /// Don't send `SIGCHLD` when children stop.
             ///
             /// - POSIX: `SA_NOCLDSTOP`
-            public static let noChildStop = Self(rawValue: SA_NOCLDSTOP)
+            public static let noChildStop = Self(rawValue: Int32(truncatingIfNeeded: SA_NOCLDSTOP))
 
             /// Don't create zombie on child death.
             ///
             /// - POSIX: `SA_NOCLDWAIT`
-            public static let noChildWait = Self(rawValue: SA_NOCLDWAIT)
+            public static let noChildWait = Self(rawValue: Int32(truncatingIfNeeded: SA_NOCLDWAIT))
 
             /// Reset handler to default after signal is caught.
             ///
             /// - POSIX: `SA_RESETHAND`
-            public static let resetHandler = Self(rawValue: SA_RESETHAND)
+            public static let resetHandler = Self(rawValue: Int32(truncatingIfNeeded: SA_RESETHAND))
 
             /// Restart interrupted syscalls automatically.
             ///
             /// - POSIX: `SA_RESTART`
-            public static let restart = Self(rawValue: SA_RESTART)
+            public static let restart = Self(rawValue: Int32(truncatingIfNeeded: SA_RESTART))
 
             /// Use alternate signal stack (requires sigaltstack setup).
             ///
             /// - POSIX: `SA_ONSTACK`
-            public static let onStack = Self(rawValue: SA_ONSTACK)
+            public static let onStack = Self(rawValue: Int32(truncatingIfNeeded: SA_ONSTACK))
 
             /// Don't block signal while handler executes.
             ///
             /// - POSIX: `SA_NODEFER`
-            public static let noDefer = Self(rawValue: SA_NODEFER)
+            public static let noDefer = Self(rawValue: Int32(truncatingIfNeeded: SA_NODEFER))
 
             /// Use `sa_sigaction` handler instead of `sa_handler`.
             ///
@@ -83,7 +83,7 @@
             /// initializer enforces this automatically.
             ///
             /// - POSIX: `SA_SIGINFO`
-            public static let sigInfo = Self(rawValue: SA_SIGINFO)
+            public static let sigInfo = Self(rawValue: Int32(truncatingIfNeeded: SA_SIGINFO))
         }
     }
 
