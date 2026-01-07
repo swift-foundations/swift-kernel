@@ -122,6 +122,7 @@ import Testing
 
     // MARK: - Signal.Error Mapping Tests
 
+    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
     @Suite("Signal.Error Mapping")
     struct SignalErrorMappingTests {
         @Test("interrupted from EINTR")
@@ -136,6 +137,7 @@ import Testing
             #expect(error == nil)
         }
     }
+    #endif
 
     // MARK: - IO.Blocking.Error Mapping Tests
 

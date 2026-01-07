@@ -54,6 +54,7 @@ extension Kernel.File.Open.Error.Test.Unit {
         }
     }
 
+    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
     @Test("signal case stores Signal.Error")
     func signalCase() {
         let signalError = Kernel.Signal.Error.interrupted
@@ -64,6 +65,7 @@ extension Kernel.File.Open.Error.Test.Unit {
             Issue.record("Expected .signal case")
         }
     }
+    #endif
 
     @Test("space case stores Storage.Error")
     func spaceCase() {
@@ -121,11 +123,13 @@ extension Kernel.File.Open.Error.Test.Unit {
         #expect(error.description.contains("handle:"))
     }
 
+    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
     @Test("signal description format")
     func signalDescription() {
         let error = Kernel.File.Open.Error.signal(.interrupted)
         #expect(error.description.contains("signal:"))
     }
+    #endif
 
     @Test("space description format")
     func spaceDescription() {
@@ -170,15 +174,17 @@ extension Kernel.File.Open.Error.Test.Unit {
 extension Kernel.File.Open.Error.Test.EdgeCase {
     @Test("all cases are distinct")
     func allCasesDistinct() {
-        let cases: [Kernel.File.Open.Error] = [
+        var cases: [Kernel.File.Open.Error] = [
             .path(.notFound),
             .permission(.denied),
             .handle(.invalid),
-            .signal(.interrupted),
             .space(.exhausted),
             .io(.hardware),
             .platform(.unmapped(code: .posix(1), message: nil)),
         ]
+        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+        cases.append(.signal(.interrupted))
+        #endif
 
         for i in 0..<cases.count {
             for j in (i + 1)..<cases.count {

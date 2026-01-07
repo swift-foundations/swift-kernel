@@ -35,8 +35,10 @@ extension Kernel.Signal.Test.Unit {
 // MARK: - Nested Types
 
 extension Kernel.Signal.Test.Unit {
+    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
     @Test("Signal.Error type exists")
     func errorTypeExists() {
         let _: Kernel.Signal.Error.Type = Kernel.Signal.Error.self
     }
+    #endif
 }
