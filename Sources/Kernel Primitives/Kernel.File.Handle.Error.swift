@@ -157,11 +157,6 @@ extension Kernel.File.Handle.Error {
                 self = .invalidHandle
             }
 
-        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-        case .signal:
-            self = .interrupted
-        #endif
-
         case .blocking:
             self = .platform(code: .posix(-1), operation: operation)
 
@@ -188,11 +183,6 @@ extension Kernel.File.Handle.Error {
             case .invalid, .limit:
                 self = .invalidHandle
             }
-
-        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-        case .signal:
-            self = .interrupted
-        #endif
 
         case .blocking:
             self = .platform(code: .posix(-1), operation: operation)
@@ -239,9 +229,6 @@ extension Kernel.File.Handle.Error: CustomStringConvertible {
         case .alignmentViolation(let operation):
             return "Alignment violation or Direct I/O not supported during \(operation.rawValue)"
         case .platform(let code, let operation):
-            if let message = Kernel.Error.message(for: code) {
-                return "Platform error during \(operation.rawValue): \(message)"
-            }
             return "Platform error \(code) during \(operation.rawValue)"
         }
     }

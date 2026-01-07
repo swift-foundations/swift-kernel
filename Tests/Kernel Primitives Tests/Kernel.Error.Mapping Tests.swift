@@ -13,6 +13,9 @@ import StandardsTestSupport
 import Testing
 
 @testable import Kernel_Primitives
+#if !os(Windows)
+@testable import Kernel_POSIX
+#endif
 
 // Kernel.Error.Mapping.swift contains extension initializers for error mapping.
 // These tests verify the error mapping functionality using Kernel.Error.Code.

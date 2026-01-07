@@ -24,6 +24,11 @@ let package = Package(
         .package(url: "https://github.com/swift-standards/swift-standards.git", from: "0.29.0")
     ],
     targets: [
+        // C shims for platform-specific functionality
+        .target(
+            name: "CPosixShim",
+            dependencies: []
+        ),
         .target(
             name: "CLinuxShim",
             dependencies: []
@@ -32,6 +37,7 @@ let package = Package(
             name: "CDarwinShim",
             dependencies: []
         ),
+        // Cross-platform primitives (works on all platforms)
         .target(
             name: "Kernel Primitives",
             dependencies: [
@@ -40,29 +46,44 @@ let package = Package(
                 .target(name: "CLinuxShim", condition: .when(platforms: [.linux])),
             ]
         ),
+        // POSIX-only functionality (Darwin + Linux, not Windows)
+        .target(
+            name: "Kernel POSIX",
+            dependencies: [
+                "Kernel Primitives",
+                "CPosixShim",
+                .target(name: "CDarwinShim", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
+                .target(name: "CLinuxShim", condition: .when(platforms: [.linux])),
+            ]
+        ),
+        // Darwin-specific (kqueue, etc.)
         .target(
             name: "Kernel Darwin",
             dependencies: [
-                "Kernel Primitives",
+                "Kernel POSIX",
                 .product(name: "Dimension", package: "swift-standards"),
             ]
         ),
+        // Linux-specific (epoll, io_uring, etc.)
         .target(
             name: "Kernel Linux",
             dependencies: [
-                "Kernel Primitives",
+                "Kernel POSIX",
                 .target(name: "CLinuxShim", condition: .when(platforms: [.linux])),
                 .product(name: "Dimension", package: "swift-standards"),
             ]
         ),
+        // Windows-specific (IOCP, etc.)
         .target(
             name: "Kernel Windows",
             dependencies: ["Kernel Primitives"]
         ),
+        // Umbrella module
         .target(
             name: "Kernel",
             dependencies: [
                 "Kernel Primitives",
+                .target(name: "Kernel POSIX", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux])),
                 .target(name: "Kernel Darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
                 .target(name: "Kernel Linux", condition: .when(platforms: [.linux])),
                 .target(name: "Kernel Windows", condition: .when(platforms: [.windows])),
@@ -87,6 +108,17 @@ let package = Package(
                 .product(name: "StandardsTestSupport", package: "swift-standards")
             ],
             path: "Tests/Kernel Primitives Tests"
+        ),
+        // POSIX-specific tests (Darwin + Linux)
+        .testTarget(
+            name: "Kernel POSIX Tests",
+            dependencies: [
+                .target(name: "Kernel POSIX", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux])),
+                "Kernel Primitives",
+                "Kernel Test Support",
+                .product(name: "StandardsTestSupport", package: "swift-standards")
+            ],
+            path: "Tests/Kernel POSIX Tests"
         ),
         // Darwin-specific tests (macOS, iOS, tvOS, watchOS)
         .testTarget(

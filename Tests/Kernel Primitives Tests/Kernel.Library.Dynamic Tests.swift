@@ -13,6 +13,9 @@ import StandardsTestSupport
 import Testing
 
 @testable import Kernel_Primitives
+#if !os(Windows)
+@testable import Kernel_POSIX
+#endif
 
 extension Kernel.Library.Dynamic {
     #TestSuites

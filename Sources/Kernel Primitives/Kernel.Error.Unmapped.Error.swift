@@ -28,7 +28,6 @@ extension Kernel.Error.Unmapped.Error: CustomStringConvertible {
         switch self {
         case .unmapped(let code, let message):
             if let message { return message }
-            if let m = Kernel.Error.message(for: code) { return m }
             return "platform error \(code)"
         }
     }

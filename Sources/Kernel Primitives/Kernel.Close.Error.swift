@@ -12,9 +12,6 @@
 extension Kernel.Close {
     public enum Error: Swift.Error, Sendable {
         case handle(Kernel.Descriptor.Validity.Error)
-        #if !os(Windows)
-        case signal(Kernel.Signal.Error)
-        #endif
         case io(Kernel.IO.Error)
         case platform(Kernel.Error.Unmapped.Error)
     }
@@ -24,9 +21,6 @@ extension Kernel.Close.Error: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case (.handle(let l), .handle(let r)): return l == r
-        #if !os(Windows)
-        case (.signal(let l), .signal(let r)): return l == r
-        #endif
         case (.io(let l), .io(let r)): return l == r
         case (.platform(let l), .platform(let r)): return l == r
         default: return false
@@ -38,9 +32,6 @@ extension Kernel.Close.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .handle(let e): return "handle: \(e)"
-        #if !os(Windows)
-        case .signal(let e): return "signal: \(e)"
-        #endif
         case .io(let e): return "io: \(e)"
         case .platform(let e): return "\(e)"
         }
@@ -56,12 +47,6 @@ extension Kernel.Close.Error {
             self = .handle(e)
             return
         }
-        #if !os(Windows)
-        if let e = Kernel.Signal.Error(code: code) {
-            self = .signal(e)
-            return
-        }
-        #endif
         if let e = Kernel.IO.Error(code: code) {
             self = .io(e)
             return

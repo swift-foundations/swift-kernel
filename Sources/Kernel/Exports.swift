@@ -12,6 +12,10 @@
 @_exported public import Kernel_Primitives
 @_exported public import StandardsCollections
 
+#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+    @_exported public import Kernel_POSIX
+#endif
+
 #if canImport(Darwin)
     @_exported public import Kernel_Darwin
 #elseif canImport(Glibc) || canImport(Musl)

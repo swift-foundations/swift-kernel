@@ -13,9 +13,6 @@ extension Kernel.IO.Write {
     /// Errors that can occur during write operations.
     public enum Error: Swift.Error, Sendable {
         case handle(Kernel.Descriptor.Validity.Error)
-        #if !os(Windows)
-        case signal(Kernel.Signal.Error)
-        #endif
         case blocking(Kernel.IO.Blocking.Error)
         case io(Kernel.IO.Error)
         case space(Kernel.Storage.Error)
@@ -30,9 +27,6 @@ extension Kernel.IO.Write.Error: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case (.handle(let l), .handle(let r)): return l == r
-        #if !os(Windows)
-        case (.signal(let l), .signal(let r)): return l == r
-        #endif
         case (.blocking(let l), .blocking(let r)): return l == r
         case (.io(let l), .io(let r)): return l == r
         case (.space(let l), .space(let r)): return l == r
@@ -49,9 +43,6 @@ extension Kernel.IO.Write.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .handle(let e): return "handle: \(e)"
-        #if !os(Windows)
-        case .signal(let e): return "signal: \(e)"
-        #endif
         case .blocking(let e): return "blocking: \(e)"
         case .io(let e): return "io: \(e)"
         case .space(let e): return "space: \(e)"
@@ -70,12 +61,6 @@ extension Kernel.IO.Write.Error {
             self = .handle(e)
             return
         }
-        #if !os(Windows)
-        if let e = Kernel.Signal.Error(code: code) {
-            self = .signal(e)
-            return
-        }
-        #endif
         if let e = Kernel.IO.Blocking.Error(code: code) {
             self = .blocking(e)
             return

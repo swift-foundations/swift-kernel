@@ -32,19 +32,6 @@ extension Kernel.Close.Error.Test.Unit {
         }
     }
 
-    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-    @Test("signal case stores Signal.Error")
-    func signalCase() {
-        let signalError = Kernel.Signal.Error.interrupted
-        let error = Kernel.Close.Error.signal(signalError)
-        if case .signal(let stored) = error {
-            #expect(stored == signalError)
-        } else {
-            Issue.record("Expected .signal case")
-        }
-    }
-    #endif
-
     @Test("io case stores IO.Error")
     func ioCase() {
         let ioError = Kernel.IO.Error.broken
@@ -77,14 +64,6 @@ extension Kernel.Close.Error.Test.Unit {
         let error = Kernel.Close.Error.handle(.invalid)
         #expect(error.description.contains("handle:"))
     }
-
-    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-    @Test("signal description format")
-    func signalDescription() {
-        let error = Kernel.Close.Error.signal(.interrupted)
-        #expect(error.description.contains("signal:"))
-    }
-    #endif
 
     @Test("io description format")
     func ioDescription() {
@@ -122,14 +101,12 @@ extension Kernel.Close.Error.Test.Unit {
         #expect(a != b)
     }
 
-    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
     @Test("Error is Equatable - different cases")
     func isEquatableDifferentCase() {
         let a = Kernel.Close.Error.handle(.invalid)
-        let b = Kernel.Close.Error.signal(.interrupted)
+        let b = Kernel.Close.Error.io(.broken)
         #expect(a != b)
     }
-    #endif
 }
 
 // MARK: - Edge Cases
@@ -137,14 +114,11 @@ extension Kernel.Close.Error.Test.Unit {
 extension Kernel.Close.Error.Test.EdgeCase {
     @Test("all cases are distinct")
     func allCasesDistinct() {
-        var cases: [Kernel.Close.Error] = [
+        let cases: [Kernel.Close.Error] = [
             .handle(.invalid),
             .io(.broken),
             .platform(.unmapped(code: .posix(1), message: nil)),
         ]
-        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-        cases.append(.signal(.interrupted))
-        #endif
 
         for i in 0..<cases.count {
             for j in (i + 1)..<cases.count {

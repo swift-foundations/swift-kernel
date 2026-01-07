@@ -67,15 +67,6 @@ extension Kernel.Memory {
             }
         }
 
-        /// Locks all current and/or future pages using typed flags.
-        ///
-        /// - Parameter flags: Typed flags for mlockall.
-        /// - Throws: `Error.lockAll` on failure.
-        @inlinable
-        public static func lockAll(_ flags: All.Flags) throws(Error) {
-            try lockAll(flags: flags.rawValue)
-        }
-
         /// Unlocks all pages in the process address space.
         ///
         /// - Throws: `Error.unlockAll` on failure.

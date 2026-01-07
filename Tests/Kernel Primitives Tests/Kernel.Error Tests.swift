@@ -12,36 +12,40 @@
 import StandardsTestSupport
 import Testing
 
+@testable import Kernel
 @testable import Kernel_Primitives
+#if !os(Windows)
+@testable import Kernel_POSIX
+#endif
 
-extension Kernel.Error {
+extension Kernel.Failure {
     #TestSuites
 }
 
 // MARK: - Unit Tests
 
-extension Kernel.Error.Test.Unit {
+extension Kernel.Failure.Test.Unit {
     @Test("error conforms to Swift.Error")
     func conformsToError() {
-        let error: any Swift.Error = Kernel.Error.path(.notFound)
-        #expect(error is Kernel.Error)
+        let error: any Swift.Error = Kernel.Failure.path(.notFound)
+        #expect(error is Kernel.Failure)
     }
 
     @Test("error is Sendable")
     func isSendable() {
-        let error: any Sendable = Kernel.Error.path(.notFound)
-        #expect(error is Kernel.Error)
+        let error: any Sendable = Kernel.Failure.path(.notFound)
+        #expect(error is Kernel.Failure)
     }
 
     @Test("error is Equatable")
     func isEquatable() {
-        #expect(Kernel.Error.path(.notFound) == Kernel.Error.path(.notFound))
-        #expect(Kernel.Error.path(.notFound) != Kernel.Error.permission(.denied))
+        #expect(Kernel.Failure.path(.notFound) == Kernel.Failure.path(.notFound))
+        #expect(Kernel.Failure.path(.notFound) != Kernel.Failure.permission(.denied))
     }
 
     @Test("platform error stores code")
     func platformError() {
-        let error = Kernel.Error.platform(.unmapped(code: .posix(42), message: nil))
+        let error = Kernel.Failure.platform(.unmapped(code: .posix(42), message: nil))
         if case .platform(let platformError) = error {
             if case .unmapped(let code, _) = platformError {
                 #expect(code == .posix(42))
@@ -55,7 +59,7 @@ extension Kernel.Error.Test.Unit {
 
     @Test("all error categories are distinct")
     func errorCategoriesDistinct() {
-        var categories: [Kernel.Error] = [
+        var categories: [Kernel.Failure] = [
             .path(.notFound),
             .handle(.invalid),
             .io(.broken),
@@ -66,7 +70,7 @@ extension Kernel.Error.Test.Unit {
             .blocking(.wouldBlock),
             .platform(.unmapped(code: .posix(0), message: nil)),
         ]
-        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+        #if !os(Windows)
         categories.append(.signal(.interrupted))
         #endif
 
@@ -140,10 +144,10 @@ extension Kernel.Error.Test.Unit {
 
 // MARK: - Edge Cases
 
-extension Kernel.Error.Test.EdgeCase {
+extension Kernel.Failure.Test.EdgeCase {
     @Test("description is non-empty for all error categories")
     func descriptionNonEmpty() {
-        var cases: [Kernel.Error] = [
+        var cases: [Kernel.Failure] = [
             .path(.notFound),
             .path(.exists),
             .path(.isDirectory),
@@ -175,7 +179,7 @@ extension Kernel.Error.Test.EdgeCase {
             .blocking(.wouldBlock),
             .platform(.unmapped(code: .posix(0), message: nil)),
         ]
-        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+        #if !os(Windows)
         cases.append(.signal(.interrupted))
         #endif
 
@@ -186,7 +190,7 @@ extension Kernel.Error.Test.EdgeCase {
 
     @Test("platform error description contains code")
     func platformErrorDescription() {
-        let error = Kernel.Error.platform(.unmapped(code: .posix(-1), message: nil))
+        let error = Kernel.Failure.platform(.unmapped(code: .posix(-1), message: nil))
         #expect(error.description.contains("-1") || error.description.contains("posix"))
     }
 }

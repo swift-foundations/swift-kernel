@@ -75,9 +75,6 @@ extension Kernel.File.Direct.Error: CustomStringConvertible {
         case .invalidHandle:
             return "Invalid file handle"
         case .platform(let code, let operation):
-            if let message = Kernel.Error.message(for: code) {
-                return "Platform error during \(operation): \(message)"
-            }
             return "Platform error \(code) during \(operation)"
         }
     }

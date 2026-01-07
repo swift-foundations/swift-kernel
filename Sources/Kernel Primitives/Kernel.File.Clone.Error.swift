@@ -64,9 +64,6 @@ extension Kernel.File.Clone {
             case .isDirectory:
                 return "Source is a directory"
             case .platform(let code, let operation):
-                if let message = Kernel.Error.message(for: code) {
-                    return "Platform error during \(operation): \(message)"
-                }
                 return "Platform error \(code) during \(operation)"
             }
         }

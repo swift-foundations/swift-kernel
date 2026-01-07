@@ -95,10 +95,7 @@ extension Kernel.Seek.Error: CustomStringConvertible {
         case .overflow:
             return "Resulting offset would overflow"
         case .platform(let code):
-            if let message = Kernel.Error.message(for: code) {
-                return "Seek failed: \(message)"
-            }
-            return "Seek failed with error code \(code)"
+            return "Seek failed: \(code)"
         }
     }
 }

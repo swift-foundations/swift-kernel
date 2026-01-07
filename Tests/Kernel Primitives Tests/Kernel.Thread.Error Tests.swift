@@ -58,22 +58,22 @@ extension Kernel.Thread.Error.Test.Unit {
 // MARK: - Description Tests
 
 extension Kernel.Thread.Error.Test.Unit {
-    @Test("create description contains 'thread creation failed'")
+    @Test("create description contains 'Thread creation failed'")
     func createDescription() {
         let error = Kernel.Thread.Error.create(.posix(1))
-        #expect(error.description.contains("thread creation failed"))
+        #expect(error.description.contains("Thread creation failed"))
     }
 
-    @Test("join description contains 'thread join failed'")
+    @Test("join description contains 'Thread join failed'")
     func joinDescription() {
         let error = Kernel.Thread.Error.join(.posix(1))
-        #expect(error.description.contains("thread join failed"))
+        #expect(error.description.contains("Thread join failed"))
     }
 
-    @Test("detach description contains 'thread detach failed'")
+    @Test("detach description contains 'Thread detach failed'")
     func detachDescription() {
         let error = Kernel.Thread.Error.detach(.posix(1))
-        #expect(error.description.contains("thread detach failed"))
+        #expect(error.description.contains("Thread detach failed"))
     }
 }
 
@@ -115,18 +115,6 @@ extension Kernel.Thread.Error.Test.Unit {
     func isCustomStringConvertible() {
         let error: any CustomStringConvertible = Kernel.Thread.Error.create(.posix(1))
         #expect(!error.description.isEmpty)
-    }
-}
-
-// MARK: - Kernel.Error Conversion Tests
-
-extension Kernel.Thread.Error.Test.Unit {
-    @Test("Kernel.Error can be initialized from Thread.Error")
-    func kernelErrorConversion() {
-        let threadError = Kernel.Thread.Error.create(.posix(1))
-        let kernelError = Kernel.Error(threadError)
-        // The conversion should succeed
-        _ = kernelError
     }
 }
 

@@ -29,7 +29,7 @@
 
     extension Kernel.Path.Resolution.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .posix(let errno) = code else { return nil }
             switch errno {
             case ENOENT: self = .notFound
@@ -49,7 +49,7 @@
 
     extension Kernel.Permission.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .posix(let errno) = code else { return nil }
             switch errno {
             case EACCES: self = .denied
@@ -64,7 +64,7 @@
 
     extension Kernel.Descriptor.Validity.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .posix(let errno) = code else { return nil }
             switch errno {
             case EBADF: self = .invalid
@@ -75,24 +75,11 @@
         }
     }
 
-    // MARK: - Signal
-
-    extension Kernel.Signal.Error {
-        @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
-            guard case .posix(let errno) = code else { return nil }
-            switch errno {
-            case EINTR: self = .interrupted
-            default: return nil
-            }
-        }
-    }
-
     // MARK: - Blocking
 
     extension Kernel.IO.Blocking.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .posix(let errno) = code else { return nil }
             switch errno {
             case EAGAIN, EWOULDBLOCK: self = .wouldBlock
@@ -105,7 +92,7 @@
 
     extension Kernel.Storage.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .posix(let errno) = code else { return nil }
             switch errno {
             case ENOSPC: self = .exhausted
@@ -119,7 +106,7 @@
 
     extension Kernel.Memory.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .posix(let errno) = code else { return nil }
             switch errno {
             case EFAULT: self = .fault
@@ -133,7 +120,7 @@
 
     extension Kernel.IO.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .posix(let errno) = code else { return nil }
             switch errno {
             case EIO: self = .hardware
@@ -150,7 +137,7 @@
 
     extension Kernel.Lock.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .posix(let errno) = code else { return nil }
             switch errno {
             case ENOLCK: self = .unavailable
@@ -165,7 +152,7 @@
     extension Kernel.Error.Unmapped.Error {
         /// Creates a platform error from an error code.
         @usableFromInline
-        internal init(code: Kernel.Error.Code) {
+        package init(code: Kernel.Error.Code) {
             self = .unmapped(code: code, message: nil)
         }
     }
@@ -179,7 +166,7 @@
 
     extension Kernel.Path.Resolution.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_FILE_NOT_FOUND, ERROR_PATH_NOT_FOUND: self = .notFound
@@ -195,7 +182,7 @@
 
     extension Kernel.Permission.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_ACCESS_DENIED: self = .denied
@@ -206,7 +193,7 @@
 
     extension Kernel.Descriptor.Validity.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_INVALID_HANDLE: self = .invalid
@@ -218,7 +205,7 @@
 
     extension Kernel.Storage.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_DISK_FULL: self = .exhausted
@@ -229,7 +216,7 @@
 
     extension Kernel.Memory.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_NOT_ENOUGH_MEMORY, ERROR_OUTOFMEMORY: self = .exhausted
@@ -240,7 +227,7 @@
 
     extension Kernel.IO.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_BROKEN_PIPE: self = .broken
@@ -251,7 +238,7 @@
 
     extension Kernel.IO.Blocking.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             // Windows uses overlapped I/O rather than EAGAIN/EWOULDBLOCK
             // No direct equivalent, so always return nil
             return nil
@@ -260,7 +247,7 @@
 
     extension Kernel.Lock.Error {
         @usableFromInline
-        internal init?(code: Kernel.Error.Code) {
+        package init?(code: Kernel.Error.Code) {
             guard case .win32(let error) = code else { return nil }
             switch Int32(error) {
             case ERROR_LOCK_VIOLATION: self = .contention
@@ -272,7 +259,7 @@
     extension Kernel.Error.Unmapped.Error {
         /// Creates a platform error from an error code.
         @usableFromInline
-        internal init(code: Kernel.Error.Code) {
+        package init(code: Kernel.Error.Code) {
             self = .unmapped(code: code, message: nil)
         }
     }

@@ -45,7 +45,7 @@ extension Kernel.Library.Dynamic {
         public struct Handle: @unchecked Sendable, Equatable {
             /// The underlying dlopen handle.
             @usableFromInline
-            let rawValue: UnsafeMutableRawPointer
+            package let rawValue: UnsafeMutableRawPointer
 
             /// Creates a handle from a dlopen result.
             @inlinable

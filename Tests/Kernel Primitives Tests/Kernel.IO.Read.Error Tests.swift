@@ -32,19 +32,6 @@ extension Kernel.IO.Read.Error.Test.Unit {
         }
     }
 
-    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-    @Test("signal case stores Signal.Error")
-    func signalCase() {
-        let signalError = Kernel.Signal.Error.interrupted
-        let error = Kernel.IO.Read.Error.signal(signalError)
-        if case .signal(let stored) = error {
-            #expect(stored == signalError)
-        } else {
-            Issue.record("Expected .signal case")
-        }
-    }
-    #endif
-
     @Test("blocking case stores IO.Blocking.Error")
     func blockingCase() {
         let blockingError = Kernel.IO.Blocking.Error.wouldBlock
@@ -99,14 +86,6 @@ extension Kernel.IO.Read.Error.Test.Unit {
         let error = Kernel.IO.Read.Error.handle(.invalid)
         #expect(error.description.contains("handle:"))
     }
-
-    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-    @Test("signal description format")
-    func signalDescription() {
-        let error = Kernel.IO.Read.Error.signal(.interrupted)
-        #expect(error.description.contains("signal:"))
-    }
-    #endif
 
     @Test("blocking description format")
     func blockingDescription() {
@@ -169,16 +148,13 @@ extension Kernel.IO.Read.Error.Test.Unit {
 extension Kernel.IO.Read.Error.Test.EdgeCase {
     @Test("all cases are distinct")
     func allCasesDistinct() {
-        var cases: [Kernel.IO.Read.Error] = [
+        let cases: [Kernel.IO.Read.Error] = [
             .handle(.invalid),
             .blocking(.wouldBlock),
             .io(.broken),
             .memory(.fault),
             .platform(.unmapped(code: .posix(1), message: nil)),
         ]
-        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-        cases.append(.signal(.interrupted))
-        #endif
 
         for i in 0..<cases.count {
             for j in (i + 1)..<cases.count {

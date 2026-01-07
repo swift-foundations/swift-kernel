@@ -77,7 +77,7 @@ extension Kernel.Path.String {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
-                body: { () throws(E) in _ = try Kernel.Path.scope("\0/tmp/file") { _ in () } }
+                { () throws(E) in _ = try Kernel.Path.scope("\0/tmp/file") { _ in () } }
             )
         }
 
@@ -86,7 +86,7 @@ extension Kernel.Path.String {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
-                body: { () throws(E) in _ = try Kernel.Path.scope("/tmp/\0file") { _ in () } }
+                { () throws(E) in _ = try Kernel.Path.scope("/tmp/\0file") { _ in () } }
             )
         }
 
@@ -95,7 +95,7 @@ extension Kernel.Path.String {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
-                body: { () throws(E) in _ = try Kernel.Path.scope("/tmp/file\0") { _ in () } }
+                { () throws(E) in _ = try Kernel.Path.scope("/tmp/file\0") { _ in () } }
             )
         }
     }
@@ -115,7 +115,7 @@ extension Kernel.Path.String {
                     #expect(error.conversion == .interiorNUL(index: 0))
                     #expect(error.body == nil)
                 },
-                body: { () throws(E) in
+                { () throws(E) in
                     _ = try Kernel.Path.scope("\0/tmp/file") { (_: borrowing Kernel.Path) throws(Dummy) in
                         ()  // never reached
                     }
@@ -132,7 +132,7 @@ extension Kernel.Path.String {
                     #expect(error.body == .boom)
                     #expect(error.conversion == nil)
                 },
-                body: { () throws(E) in
+                { () throws(E) in
                     _ = try Kernel.Path.scope("/tmp/x") { (_: borrowing Kernel.Path) throws(Body) in
                         throw .boom
                     }
@@ -162,7 +162,7 @@ extension Kernel.Path.String {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
-                body: { () throws(E) in _ = try Kernel.Path.scope("bad\0path", "/valid") { _, _ in () } }
+                { () throws(E) in _ = try Kernel.Path.scope("bad\0path", "/valid") { _, _ in () } }
             )
         }
 
@@ -171,7 +171,7 @@ extension Kernel.Path.String {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 1)) },
-                body: { () throws(E) in _ = try Kernel.Path.scope("/valid", "bad\0path") { _, _ in () } }
+                { () throws(E) in _ = try Kernel.Path.scope("/valid", "bad\0path") { _, _ in () } }
             )
         }
     }
@@ -196,7 +196,7 @@ extension Kernel.Path.String {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
-                body: { () throws(E) in _ = try Kernel.Path.scope("bad\0", "/b", "/c") { _, _, _ in () } }
+                { () throws(E) in _ = try Kernel.Path.scope("bad\0", "/b", "/c") { _, _, _ in () } }
             )
         }
 
@@ -205,7 +205,7 @@ extension Kernel.Path.String {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 1)) },
-                body: { () throws(E) in _ = try Kernel.Path.scope("/a", "bad\0", "/c") { _, _, _ in () } }
+                { () throws(E) in _ = try Kernel.Path.scope("/a", "bad\0", "/c") { _, _, _ in () } }
             )
         }
 
@@ -214,7 +214,7 @@ extension Kernel.Path.String {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 2)) },
-                body: { () throws(E) in _ = try Kernel.Path.scope("/a", "/b", "bad\0") { _, _, _ in () } }
+                { () throws(E) in _ = try Kernel.Path.scope("/a", "/b", "bad\0") { _, _, _ in () } }
             )
         }
     }
