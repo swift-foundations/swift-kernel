@@ -55,7 +55,7 @@ extension Kernel.Error.Test.Unit {
 
     @Test("all error categories are distinct")
     func errorCategoriesDistinct() {
-        let categories: [Kernel.Error] = [
+        var categories: [Kernel.Error] = [
             .path(.notFound),
             .handle(.invalid),
             .io(.broken),
@@ -63,10 +63,12 @@ extension Kernel.Error.Test.Unit {
             .memory(.fault),
             .permission(.denied),
             .space(.exhausted),
-            .signal(.interrupted),
             .blocking(.wouldBlock),
             .platform(.unmapped(code: .posix(0), message: nil)),
         ]
+        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+        categories.append(.signal(.interrupted))
+        #endif
 
         for (i, a) in categories.enumerated() {
             for (j, b) in categories.enumerated() {
@@ -141,7 +143,7 @@ extension Kernel.Error.Test.Unit {
 extension Kernel.Error.Test.EdgeCase {
     @Test("description is non-empty for all error categories")
     func descriptionNonEmpty() {
-        let cases: [Kernel.Error] = [
+        var cases: [Kernel.Error] = [
             .path(.notFound),
             .path(.exists),
             .path(.isDirectory),
@@ -170,10 +172,12 @@ extension Kernel.Error.Test.EdgeCase {
             .permission(.readOnlyFilesystem),
             .space(.exhausted),
             .space(.quota),
-            .signal(.interrupted),
             .blocking(.wouldBlock),
             .platform(.unmapped(code: .posix(0), message: nil)),
         ]
+        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+        cases.append(.signal(.interrupted))
+        #endif
 
         for error in cases {
             #expect(!error.description.isEmpty, "\(error) should have non-empty description")
