@@ -157,8 +157,10 @@ extension Kernel.File.Handle.Error {
                 self = .invalidHandle
             }
 
+        #if !os(Windows)
         case .signal:
             self = .interrupted
+        #endif
 
         case .blocking:
             self = .platform(code: .posix(-1), operation: operation)
@@ -187,8 +189,10 @@ extension Kernel.File.Handle.Error {
                 self = .invalidHandle
             }
 
+        #if !os(Windows)
         case .signal:
             self = .interrupted
+        #endif
 
         case .blocking:
             self = .platform(code: .posix(-1), operation: operation)
