@@ -157,7 +157,7 @@ extension Kernel.File.Handle.Error {
                 self = .invalidHandle
             }
 
-        #if !os(Windows)
+        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
         case .signal:
             self = .interrupted
         #endif
@@ -189,7 +189,7 @@ extension Kernel.File.Handle.Error {
                 self = .invalidHandle
             }
 
-        #if !os(Windows)
+        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
         case .signal:
             self = .interrupted
         #endif
