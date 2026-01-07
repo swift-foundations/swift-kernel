@@ -15,9 +15,9 @@ import Synchronization
 import Testing
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 // MARK: - Test Suites for Synchronization Waiter Tracking
@@ -97,9 +97,9 @@ extension SynchronizationWaiterTrackingTests {
 /// Small sleep helper using nanosleep
 private func smallSleep(milliseconds: UInt32) {
     #if canImport(Darwin)
-    usleep(milliseconds * 1000)
+        usleep(milliseconds * 1000)
     #elseif canImport(Glibc)
-    usleep(milliseconds * 1000)
+        usleep(milliseconds * 1000)
     #endif
 }
 

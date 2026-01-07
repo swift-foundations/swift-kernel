@@ -12,7 +12,6 @@
 import Binary
 import Kernel_Test_Support
 import StandardsTestSupport
-
 import Testing
 
 @testable import Kernel_Primitives
@@ -28,7 +27,7 @@ extension Kernel.File.Handle {
     extension Kernel.File.Handle.Test.Unit {
         @Test("init stores descriptor and mode")
         func initStoresDescriptorAndMode() throws {
-            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { _, fd in
                 let handle = Kernel.File.Handle(
                     descriptor: fd,
                     direct: .buffered,
@@ -44,7 +43,7 @@ extension Kernel.File.Handle {
 
         @Test("read returns bytes from file")
         func readReturnsBytesFromFile() throws {
-            try KernelIOTest.withTempFileForHandle(content: "TestData", prefix: "handle-test") { path, fd in
+            try KernelIOTest.withTempFileForHandle(content: "TestData", prefix: "handle-test") { _, fd in
                 let handle = Kernel.File.Handle(
                     descriptor: fd,
                     direct: .buffered,
@@ -65,7 +64,7 @@ extension Kernel.File.Handle {
 
         @Test("write writes bytes to file")
         func writeWritesBytesToFile() throws {
-            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { _, fd in
                 let handle = Kernel.File.Handle(
                     descriptor: fd,
                     direct: .buffered,
@@ -92,7 +91,7 @@ extension Kernel.File.Handle {
 
         @Test("close explicitly closes handle")
         func closeExplicitlyClosesHandle() throws {
-            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { _, fd in
                 var handle = Kernel.File.Handle(
                     descriptor: fd,
                     direct: .buffered,
@@ -110,7 +109,7 @@ extension Kernel.File.Handle {
 
         @Test("withDescriptor provides access to raw descriptor")
         func withDescriptorProvidesAccess() throws {
-            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { _, fd in
                 let handle = Kernel.File.Handle(
                     descriptor: fd,
                     direct: .buffered,
@@ -129,7 +128,7 @@ extension Kernel.File.Handle {
 
         @Test("handle closes on deinit")
         func handleClosesOnDeinit() throws {
-            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { path, fd in
+            try KernelIOTest.withTempFileForHandle(prefix: "handle-test") { _, fd in
                 // Create and immediately drop handle
                 do {
                     let handle = Kernel.File.Handle(

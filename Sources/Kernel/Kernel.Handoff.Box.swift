@@ -13,20 +13,27 @@ extension Kernel.Handoff {
     /// Type-erased boxing for ownership transfer.
     ///
     /// ## Design
-    /// Each box consists of two allocations:
-    /// - A header struct containing a destroy function and payload pointer
-    /// - A payload containing the actual `Result<T, E>` or raw value `T`
+    /// Each box is a single allocation containing:
+    /// - Header at the start (destroy function + payload offset)
+    /// - Payload at aligned offset after header
     ///
     /// This enables:
+    /// - Single allocation per box (reduced from 2)
     /// - Correct destruction without knowing `T` or `E` (for abandonment paths)
     /// - Type-safe unboxing when the caller knows `T` and `E`
     /// - No leaks in cancel-wait-but-drain paths
     ///
+    /// ## Memory Layout
+    /// ```
+    /// [Header (at offset 0)] [padding] [Payload (at aligned offset)]
+    /// ```
+    /// The payload offset is computed to satisfy the payload type's alignment.
+    ///
     /// ## Ownership Rules
     /// **Invariant:** Exactly one party allocates, exactly one party frees.
     ///
-    /// - **Allocation:** `make()` or `makeValue()` allocates both header and payload
-    /// - **Deallocation:** Either `take()`/`takeValue()` or `destroy()` deallocates both
+    /// - **Allocation:** `make()` or `makeValue()` allocates the unified block
+    /// - **Deallocation:** Either `take()`/`takeValue()` or `destroy()` deallocates
     ///
     /// **Never call both `take*()` and `destroy()` on the same pointer.**
     ///
@@ -36,31 +43,34 @@ extension Kernel.Handoff {
 // MARK: - Header
 
 extension Kernel.Handoff.Box {
-    // ## Memory Layout
-    // The returned pointer points to the Header struct, which contains:
-    // - `destroyPayload`: function to destroy payload (captures type info)
-    // - `payload`: pointer to the `Result<T, E>` or `T` storage
-    //
-    // ## Why Closure (Future: Replace with Thin Function Pointer)
-    // The closure captures `T` and `E` type information needed for proper
-    // deinitialization. Ideally we'd use `@convention(thin)` function pointers
-    // with `unsafeBitCast` to erase the generic signature, eliminating the
-    // closure allocation. However:
-    // - Swift 6.2.3 crashes when `unsafeBitCast`ing generic thin function pointers
-    // - Static witness-per-specialization patterns are blocked by Swift restrictions
-    //
-    // Revisit when the compiler bug is fixed.
-    /// Header for type-erased box.
+    /// Header for type-erased box with inline payload.
     ///
-    /// Struct-based (not class) to avoid ARC on the container.
-    /// The destroy function captures type information for proper deinitialization.
+    /// ## Memory Layout
+    /// The entire box is a single allocation:
+    /// ```
+    /// [Header at offset 0] [padding] [Payload at payloadOffset]
+    /// ```
+    ///
+    /// The `payloadOffset` is computed to satisfy the payload type's alignment
+    /// requirements. The destroy function takes the base pointer and offset
+    /// to locate and deinitialize the payload.
+    ///
+    /// ## Why Closure (Future: Replace with Thin Function Pointer)
+    /// The closure captures `T` and `E` type information needed for proper
+    /// deinitialization. Ideally we'd use `@convention(thin)` function pointers
+    /// with `unsafeBitCast` to erase the generic signature, eliminating the
+    /// closure allocation. However:
+    /// - Swift 6.2.3 crashes when `unsafeBitCast`ing generic thin function pointers
+    /// - Static witness-per-specialization patterns are blocked by Swift restrictions
+    ///
+    /// Revisit when the compiler bug is fixed.
     fileprivate struct Header {
-        /// Function to destroy the payload.
+        /// Function to destroy the payload given base pointer and offset.
         /// Captures type information (T, E) for proper deinitialization.
-        let destroyPayload: (UnsafeMutableRawPointer) -> Void
+        let destroyPayload: (UnsafeMutableRawPointer, Int) -> Void
 
-        /// Pointer to the payload (Result<T, E> or T).
-        let payload: UnsafeMutableRawPointer
+        /// Offset from base pointer to payload (for alignment).
+        let payloadOffset: Int
     }
 }
 
@@ -85,27 +95,45 @@ extension Kernel.Handoff.Box {
     ///
     /// Returns a pointer to the erased header. Use `take<T,E>` to unbox
     /// or `destroy` to free without unboxing.
+    ///
+    /// ## Single Allocation
+    /// The header and payload are stored in a single contiguous allocation.
+    /// The payload is placed at an aligned offset after the header.
     public static func make<T: Sendable, E: Swift.Error & Sendable>(
         _ result: Result<T, E>
     ) -> UnsafeMutableRawPointer {
-        // Allocate payload
-        let payloadPtr = UnsafeMutablePointer<Result<T, E>>.allocate(capacity: 1)
-        payloadPtr.initialize(to: result)
+        let headerSize = MemoryLayout<Header>.size
+        let headerAlignment = MemoryLayout<Header>.alignment
+        let payloadSize = MemoryLayout<Result<T, E>>.size
+        let payloadAlignment = MemoryLayout<Result<T, E>>.alignment
 
-        // Allocate header
-        let headerPtr = UnsafeMutablePointer<Header>.allocate(capacity: 1)
+        // Align payload offset properly
+        let payloadOffset = (headerSize + payloadAlignment - 1) & ~(payloadAlignment - 1)
+        let totalSize = payloadOffset + payloadSize
+        let alignment = max(headerAlignment, payloadAlignment)
+
+        let ptr = UnsafeMutableRawPointer.allocate(
+            byteCount: totalSize,
+            alignment: alignment
+        )
+
+        // Store header at start (includes payloadOffset for destroy)
+        let headerPtr = ptr.assumingMemoryBound(to: Header.self)
         headerPtr.initialize(
             to: Header(
-                destroyPayload: { payloadRaw in
-                    let payload = payloadRaw.assumingMemoryBound(to: Result<T, E>.self)
-                    payload.deinitialize(count: 1)
-                    payload.deallocate()
+                destroyPayload: { base, offset in
+                    (base + offset).assumingMemoryBound(to: Result<T, E>.self)
+                        .deinitialize(count: 1)
                 },
-                payload: UnsafeMutableRawPointer(payloadPtr)
+                payloadOffset: payloadOffset
             )
         )
 
-        return UnsafeMutableRawPointer(headerPtr)
+        // Store payload at aligned offset
+        let payloadPtr = (ptr + payloadOffset).assumingMemoryBound(to: Result<T, E>.self)
+        payloadPtr.initialize(to: result)
+
+        return ptr
     }
 
     /// Unbox and deallocate a Result.
@@ -117,10 +145,10 @@ extension Kernel.Handoff.Box {
     ) -> Result<T, E> {
         let headerPtr = ptr.assumingMemoryBound(to: Header.self)
         let header = headerPtr.move()  // releases closure
-        let payloadPtr = header.payload.assumingMemoryBound(to: Result<T, E>.self)
+        let payloadPtr = (ptr + header.payloadOffset).assumingMemoryBound(to: Result<T, E>.self)
         let result = payloadPtr.move()
-        payloadPtr.deallocate()
-        headerPtr.deallocate()
+        // Single deallocation for entire box
+        ptr.deallocate()
         // destroyPayload not called - we moved the payload out instead
         return result
     }
@@ -133,27 +161,45 @@ extension Kernel.Handoff.Box {
     ///
     /// Returns a pointer to the erased header. Use `takeValue<T>` to unbox
     /// or `destroy` to free without unboxing.
+    ///
+    /// ## Single Allocation
+    /// The header and payload are stored in a single contiguous allocation.
+    /// The payload is placed at an aligned offset after the header.
     public static func makeValue<T: Sendable>(
         _ value: T
     ) -> UnsafeMutableRawPointer {
-        // Allocate payload
-        let payloadPtr = UnsafeMutablePointer<T>.allocate(capacity: 1)
-        payloadPtr.initialize(to: value)
+        let headerSize = MemoryLayout<Header>.size
+        let headerAlignment = MemoryLayout<Header>.alignment
+        let payloadSize = MemoryLayout<T>.size
+        let payloadAlignment = MemoryLayout<T>.alignment
 
-        // Allocate header
-        let headerPtr = UnsafeMutablePointer<Header>.allocate(capacity: 1)
+        // Align payload offset properly
+        let payloadOffset = (headerSize + payloadAlignment - 1) & ~(payloadAlignment - 1)
+        let totalSize = payloadOffset + payloadSize
+        let alignment = max(headerAlignment, payloadAlignment)
+
+        let ptr = UnsafeMutableRawPointer.allocate(
+            byteCount: totalSize,
+            alignment: alignment
+        )
+
+        // Store header at start (includes payloadOffset for destroy)
+        let headerPtr = ptr.assumingMemoryBound(to: Header.self)
         headerPtr.initialize(
             to: Header(
-                destroyPayload: { payloadRaw in
-                    let payload = payloadRaw.assumingMemoryBound(to: T.self)
-                    payload.deinitialize(count: 1)
-                    payload.deallocate()
+                destroyPayload: { base, offset in
+                    (base + offset).assumingMemoryBound(to: T.self)
+                        .deinitialize(count: 1)
                 },
-                payload: UnsafeMutableRawPointer(payloadPtr)
+                payloadOffset: payloadOffset
             )
         )
 
-        return UnsafeMutableRawPointer(headerPtr)
+        // Store payload at aligned offset
+        let payloadPtr = (ptr + payloadOffset).assumingMemoryBound(to: T.self)
+        payloadPtr.initialize(to: value)
+
+        return ptr
     }
 
     /// Unbox and deallocate a value.
@@ -165,10 +211,10 @@ extension Kernel.Handoff.Box {
     ) -> T {
         let headerPtr = ptr.assumingMemoryBound(to: Header.self)
         let header = headerPtr.move()  // releases closure
-        let payloadPtr = header.payload.assumingMemoryBound(to: T.self)
+        let payloadPtr = (ptr + header.payloadOffset).assumingMemoryBound(to: T.self)
         let result = payloadPtr.move()
-        payloadPtr.deallocate()
-        headerPtr.deallocate()
+        // Single deallocation for entire box
+        ptr.deallocate()
         return result
     }
 }
@@ -186,7 +232,8 @@ extension Kernel.Handoff.Box {
     public static func destroy(_ ptr: UnsafeMutableRawPointer) {
         let headerPtr = ptr.assumingMemoryBound(to: Header.self)
         let header = headerPtr.move()  // releases closure
-        header.destroyPayload(header.payload)
-        headerPtr.deallocate()
+        header.destroyPayload(ptr, header.payloadOffset)
+        // Single deallocation for entire box
+        ptr.deallocate()
     }
 }

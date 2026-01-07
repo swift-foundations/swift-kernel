@@ -46,62 +46,62 @@ extension Kernel.Library.Dynamic.Test.Unit {
 
 #if !os(Windows)
 
-extension Kernel.Library.Dynamic.Test.Unit {
-    @Test("Options type exists")
-    func optionsTypeExists() {
-        _ = Kernel.Library.Dynamic.Options.self
-    }
-
-    @Test("Scope type exists")
-    func scopeTypeExists() {
-        _ = Kernel.Library.Dynamic.Scope.self
-    }
-
-    @Test("Options.now is default (fail-early)")
-    func optionsNowIsDefault() {
-        // Verify .now exists and is distinct from .lazy
-        let now = Kernel.Library.Dynamic.Options.now
-        let lazy = Kernel.Library.Dynamic.Options.lazy
-        #expect(now != lazy)
-    }
-
-    @Test("Opening nonexistent library throws with message")
-    func openNonexistentLibraryThrows() {
-        "/nonexistent/library.so".withCString { path in
-            #expect(throws: Kernel.Library.Dynamic.Error.self) {
-                _ = try Kernel.Library.Dynamic.open(path: path, options: .now)
-            }
+    extension Kernel.Library.Dynamic.Test.Unit {
+        @Test("Options type exists")
+        func optionsTypeExists() {
+            _ = Kernel.Library.Dynamic.Options.self
         }
-    }
 
-    @Test("Error message is non-empty on failure")
-    func errorMessageIsNonEmpty() {
-        "/nonexistent/library.so".withCString { path in
-            do {
-                _ = try Kernel.Library.Dynamic.open(path: path, options: .now)
-                Issue.record("Expected open to throw")
-            } catch let error as Kernel.Library.Dynamic.Error {
-                if case .open(let msg) = error {
-                    #expect(!msg.text.isEmpty, "error message should be non-empty")
-                } else {
-                    Issue.record("Expected .open error case")
+        @Test("Scope type exists")
+        func scopeTypeExists() {
+            _ = Kernel.Library.Dynamic.Scope.self
+        }
+
+        @Test("Options.now is default (fail-early)")
+        func optionsNowIsDefault() {
+            // Verify .now exists and is distinct from .lazy
+            let now = Kernel.Library.Dynamic.Options.now
+            let lazy = Kernel.Library.Dynamic.Options.lazy
+            #expect(now != lazy)
+        }
+
+        @Test("Opening nonexistent library throws with message")
+        func openNonexistentLibraryThrows() {
+            "/nonexistent/library.so".withCString { path in
+                #expect(throws: Kernel.Library.Dynamic.Error.self) {
+                    _ = try Kernel.Library.Dynamic.open(path: path, options: .now)
                 }
-            } catch {
-                Issue.record("Unexpected error type: \(error)")
             }
         }
-    }
 
-    @Test("Symbol not found throws with message")
-    func symbolNotFoundThrows() {
-        "____nonexistent_symbol_xyz____".withCString { name in
-            #expect(throws: Kernel.Library.Dynamic.Error.self) {
-                _ = try Kernel.Library.Dynamic.symbol(name: name, in: .default)
+        @Test("Error message is non-empty on failure")
+        func errorMessageIsNonEmpty() {
+            "/nonexistent/library.so".withCString { path in
+                do {
+                    _ = try Kernel.Library.Dynamic.open(path: path, options: .now)
+                    Issue.record("Expected open to throw")
+                } catch let error as Kernel.Library.Dynamic.Error {
+                    if case .open(let msg) = error {
+                        #expect(!msg.text.isEmpty, "error message should be non-empty")
+                    } else {
+                        Issue.record("Expected .open error case")
+                    }
+                } catch {
+                    Issue.record("Unexpected error type: \(error)")
+                }
             }
         }
-    }
 
-}
+        @Test("Symbol not found throws with message")
+        func symbolNotFoundThrows() {
+            "____nonexistent_symbol_xyz____".withCString { name in
+                #expect(throws: Kernel.Library.Dynamic.Error.self) {
+                    _ = try Kernel.Library.Dynamic.symbol(name: name, in: .default)
+                }
+            }
+        }
+
+    }
 
 #endif
 
@@ -109,48 +109,48 @@ extension Kernel.Library.Dynamic.Test.Unit {
 
 #if os(Windows)
 
-extension Kernel.Library.Dynamic.Test.Unit {
-    @Test("Open kernel32.dll and lookup symbol")
-    func openKernel32() throws {
-        let handle = try "kernel32.dll".withCString(encodedAs: UTF16.self) { path in
-            try Kernel.Library.Dynamic.open(path: path)
-        }
-        defer { try? Kernel.Library.Dynamic.close(handle) }
-
-        let proc = try "GetCurrentProcessId".withCString { name in
-            try Kernel.Library.Dynamic.symbol(name: name, in: handle)
-        }
-        // Just verify we got a pointer
-        _ = proc
-    }
-
-    @Test("Opening nonexistent DLL throws with code")
-    func openNonexistentDLLThrows() {
-        #expect(throws: Kernel.Library.Dynamic.Error.self) {
-            _ = try "____nonexistent____.dll".withCString(encodedAs: UTF16.self) { path in
+    extension Kernel.Library.Dynamic.Test.Unit {
+        @Test("Open kernel32.dll and lookup symbol")
+        func openKernel32() throws {
+            let handle = try "kernel32.dll".withCString(encodedAs: UTF16.self) { path in
                 try Kernel.Library.Dynamic.open(path: path)
             }
-        }
-    }
+            defer { try? Kernel.Library.Dynamic.close(handle) }
 
-    @Test("Error includes Windows error code")
-    func errorIncludesWindowsCode() {
-        "____nonexistent____.dll".withCString(encodedAs: UTF16.self) { path in
-            do {
-                _ = try Kernel.Library.Dynamic.open(path: path)
-                Issue.record("Expected open to throw")
-            } catch let error as Kernel.Library.Dynamic.Error {
-                if case .open(let msg) = error {
-                    #expect(msg.code != nil, "Windows error should include code")
-                    #expect(msg.code?.win32 != nil, "Should be a win32 code")
-                } else {
-                    Issue.record("Expected .open error case")
+            let proc = try "GetCurrentProcessId".withCString { name in
+                try Kernel.Library.Dynamic.symbol(name: name, in: handle)
+            }
+            // Just verify we got a pointer
+            _ = proc
+        }
+
+        @Test("Opening nonexistent DLL throws with code")
+        func openNonexistentDLLThrows() {
+            #expect(throws: Kernel.Library.Dynamic.Error.self) {
+                _ = try "____nonexistent____.dll".withCString(encodedAs: UTF16.self) { path in
+                    try Kernel.Library.Dynamic.open(path: path)
                 }
-            } catch {
-                Issue.record("Unexpected error type: \(error)")
+            }
+        }
+
+        @Test("Error includes Windows error code")
+        func errorIncludesWindowsCode() {
+            "____nonexistent____.dll".withCString(encodedAs: UTF16.self) { path in
+                do {
+                    _ = try Kernel.Library.Dynamic.open(path: path)
+                    Issue.record("Expected open to throw")
+                } catch let error as Kernel.Library.Dynamic.Error {
+                    if case .open(let msg) = error {
+                        #expect(msg.code != nil, "Windows error should include code")
+                        #expect(msg.code?.win32 != nil, "Should be a win32 code")
+                    } else {
+                        Issue.record("Expected .open error case")
+                    }
+                } catch {
+                    Issue.record("Unexpected error type: \(error)")
+                }
             }
         }
     }
-}
 
 #endif

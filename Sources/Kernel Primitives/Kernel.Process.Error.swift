@@ -11,113 +11,113 @@
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#elseif canImport(Musl)
-    import Musl
-#endif
+    #if canImport(Darwin)
+        import Darwin
+    #elseif canImport(Glibc)
+        import Glibc
+    #elseif canImport(Musl)
+        import Musl
+    #endif
 
-extension Kernel.Process {
-    /// Process-related errors.
-    ///
-    /// Uses operation carriers with semantic accessors. No dedicated `.interrupted`
-    /// case — EINTR is represented only via `Kernel.Error.Code`.
-    public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-        /// fork() failed.
-        case fork(Kernel.Error.Code)
+    extension Kernel.Process {
+        /// Process-related errors.
+        ///
+        /// Uses operation carriers with semantic accessors. No dedicated `.interrupted`
+        /// case — EINTR is represented only via `Kernel.Error.Code`.
+        public enum Error: Swift.Error, Sendable, Equatable, Hashable {
+            /// fork() failed.
+            case fork(Kernel.Error.Code)
 
-        /// execute*() failed.
-        case execute(Kernel.Error.Code)
+            /// execute*() failed.
+            case execute(Kernel.Error.Code)
 
-        /// wait*() failed.
-        case wait(Kernel.Error.Code)
+            /// wait*() failed.
+            case wait(Kernel.Error.Code)
 
-        /// Session operation failed (setsid, getsid).
-        case session(Kernel.Error.Code)
+            /// Session operation failed (setsid, getsid).
+            case session(Kernel.Error.Code)
 
-        /// Process group operation failed (setpgid, getpgid).
-        case group(Kernel.Error.Code)
-    }
-}
-
-// MARK: - Semantic Accessors
-
-extension Kernel.Process.Error {
-    /// The underlying error code.
-    public var code: Kernel.Error.Code {
-        switch self {
-        case .fork(let c), .execute(let c), .wait(let c),
-             .session(let c), .group(let c):
-            return c
+            /// Process group operation failed (setpgid, getpgid).
+            case group(Kernel.Error.Code)
         }
     }
 
-    /// Whether this is an interrupted operation (EINTR).
-    ///
-    /// Derived from code, not a separate case.
-    public var isInterrupted: Bool {
-        code.posix == EINTR
-    }
+    // MARK: - Semantic Accessors
 
-    /// Semantic classification of process errors.
-    public enum Semantic: Sendable {
-        /// Resource limit reached (EAGAIN, ENOMEM).
-        case resourceLimit
+    extension Kernel.Process.Error {
+        /// The underlying error code.
+        public var code: Kernel.Error.Code {
+            switch self {
+            case .fork(let c), .execute(let c), .wait(let c),
+                .session(let c), .group(let c):
+                return c
+            }
+        }
 
-        /// Operation not permitted (EPERM).
-        case noPermission
+        /// Whether this is an interrupted operation (EINTR).
+        ///
+        /// Derived from code, not a separate case.
+        public var isInterrupted: Bool {
+            code.posix == EINTR
+        }
 
-        /// No such process (ESRCH, ECHILD).
-        case noSuchProcess
+        /// Semantic classification of process errors.
+        public enum Semantic: Sendable {
+            /// Resource limit reached (EAGAIN, ENOMEM).
+            case resourceLimit
 
-        /// Interrupted by signal (EINTR).
-        case interrupted
+            /// Operation not permitted (EPERM).
+            case noPermission
 
-        /// Invalid argument (EINVAL).
-        case invalidArgument
-    }
+            /// No such process (ESRCH, ECHILD).
+            case noSuchProcess
 
-    /// Semantic meaning of the error, if mappable.
-    ///
-    /// Returns `nil` for unrecognized POSIX error codes.
-    public var semantic: Semantic? {
-        guard let posix = code.posix else { return nil }
-        switch posix {
-        case EAGAIN, ENOMEM:
-            return .resourceLimit
-        case EPERM:
-            return .noPermission
-        case ESRCH, ECHILD:
-            return .noSuchProcess
-        case EINTR:
-            return .interrupted
-        case EINVAL:
-            return .invalidArgument
-        default:
-            return nil
+            /// Interrupted by signal (EINTR).
+            case interrupted
+
+            /// Invalid argument (EINVAL).
+            case invalidArgument
+        }
+
+        /// Semantic meaning of the error, if mappable.
+        ///
+        /// Returns `nil` for unrecognized POSIX error codes.
+        public var semantic: Semantic? {
+            guard let posix = code.posix else { return nil }
+            switch posix {
+            case EAGAIN, ENOMEM:
+                return .resourceLimit
+            case EPERM:
+                return .noPermission
+            case ESRCH, ECHILD:
+                return .noSuchProcess
+            case EINTR:
+                return .interrupted
+            case EINVAL:
+                return .invalidArgument
+            default:
+                return nil
+            }
         }
     }
-}
 
-// MARK: - CustomStringConvertible
+    // MARK: - CustomStringConvertible
 
-extension Kernel.Process.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .fork(let code):
-            return "fork failed: \(code)"
-        case .execute(let code):
-            return "execute failed: \(code)"
-        case .wait(let code):
-            return "wait failed: \(code)"
-        case .session(let code):
-            return "session operation failed: \(code)"
-        case .group(let code):
-            return "process group operation failed: \(code)"
+    extension Kernel.Process.Error: CustomStringConvertible {
+        public var description: String {
+            switch self {
+            case .fork(let code):
+                return "fork failed: \(code)"
+            case .execute(let code):
+                return "execute failed: \(code)"
+            case .wait(let code):
+                return "wait failed: \(code)"
+            case .session(let code):
+                return "session operation failed: \(code)"
+            case .group(let code):
+                return "process group operation failed: \(code)"
+            }
         }
     }
-}
 
 #endif

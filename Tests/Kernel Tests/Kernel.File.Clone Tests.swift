@@ -12,7 +12,6 @@
 import Kernel
 import Kernel_Primitives
 import Kernel_Test_Support
-
 import Testing
 
 #if canImport(Darwin)
@@ -172,14 +171,17 @@ struct KernelFileCloneTests {
             func probeNonexistent() {
                 typealias E = Kernel.Path.String.Error<Kernel.File.Clone.Error.Syscall>
 
-                expectThrows({ (error: E) in
-                    #expect(error.body != nil)
-                }, { () throws(E) in
-                    _ = try Kernel.Path.scope("/nonexistent/path/that/does/not/exist") {
-                        (path) throws(Kernel.File.Clone.Error.Syscall) in
-                        try Kernel.File.Clone.Capability.probe(at: path)
+                expectThrows(
+                    { (error: E) in
+                        #expect(error.body != nil)
+                    },
+                    { () throws(E) in
+                        _ = try Kernel.Path.scope("/nonexistent/path/that/does/not/exist") {
+                            (path) throws(Kernel.File.Clone.Error.Syscall) in
+                            try Kernel.File.Clone.Capability.probe(at: path)
+                        }
                     }
-                })
+                )
             }
         }
     #endif
@@ -297,18 +299,21 @@ struct KernelFileCloneTests {
 
                 typealias E = Kernel.Path.String.Error<Kernel.File.Clone.Error>
 
-                expectThrows({ (error: E) in
-                    #expect(error.body == .destinationExists)
-                }, { () throws(E) in
-                    _ = try Kernel.Path.scope(source, dest) {
-                        (srcPath, dstPath) throws(Kernel.File.Clone.Error) in
-                        try Kernel.File.Clone.clone(
-                            from: srcPath,
-                            to: dstPath,
-                            behavior: .copyOnly
-                        )
+                expectThrows(
+                    { (error: E) in
+                        #expect(error.body == .destinationExists)
+                    },
+                    { () throws(E) in
+                        _ = try Kernel.Path.scope(source, dest) {
+                            (srcPath, dstPath) throws(Kernel.File.Clone.Error) in
+                            try Kernel.File.Clone.clone(
+                                from: srcPath,
+                                to: dstPath,
+                                behavior: .copyOnly
+                            )
+                        }
                     }
-                })
+                )
             }
 
             @Test("clone from nonexistent source fails")
@@ -318,18 +323,21 @@ struct KernelFileCloneTests {
 
                 typealias E = Kernel.Path.String.Error<Kernel.File.Clone.Error>
 
-                expectThrows({ (error: E) in
-                    #expect(error.body == .sourceNotFound)
-                }, { () throws(E) in
-                    _ = try Kernel.Path.scope(source, dest) {
-                        (srcPath, dstPath) throws(Kernel.File.Clone.Error) in
-                        try Kernel.File.Clone.clone(
-                            from: srcPath,
-                            to: dstPath,
-                            behavior: .copyOnly
-                        )
+                expectThrows(
+                    { (error: E) in
+                        #expect(error.body == .sourceNotFound)
+                    },
+                    { () throws(E) in
+                        _ = try Kernel.Path.scope(source, dest) {
+                            (srcPath, dstPath) throws(Kernel.File.Clone.Error) in
+                            try Kernel.File.Clone.clone(
+                                from: srcPath,
+                                to: dstPath,
+                                behavior: .copyOnly
+                            )
+                        }
                     }
-                })
+                )
             }
 
             @Test("clone large file")

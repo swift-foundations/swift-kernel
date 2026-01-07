@@ -17,10 +17,12 @@ extension Kernel.Thread.Executors {
         ///
         /// - Parameter count: Number of threads. If nil, defaults to min(4, processorCount).
         public init(count: Kernel.Thread.Count? = nil) {
-            self.count = count ?? min(
-                Kernel.Thread.Count(4),
-                Kernel.Thread.Count(Kernel.System.processorCount)
-            )
+            self.count =
+                count
+                ?? min(
+                    Kernel.Thread.Count(4),
+                    Kernel.Thread.Count(Kernel.System.processorCount)
+                )
         }
     }
 }

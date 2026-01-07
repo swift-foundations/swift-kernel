@@ -11,7 +11,6 @@
 
 import Kernel_Test_Support
 import StandardsTestSupport
-
 import Testing
 
 @testable import Kernel_Primitives
@@ -27,7 +26,7 @@ extension Kernel.Close {
     extension Kernel.Close.Test.Unit {
         @Test("close succeeds on valid descriptor")
         func closeSucceedsOnValidDescriptor() throws {
-            try KernelIOTest.withTempFile(prefix: "close-test") { path, fd in
+            try KernelIOTest.withTempFile(prefix: "close-test") { _, fd in
                 // Close should succeed
                 try Kernel.Close.close(fd)
 

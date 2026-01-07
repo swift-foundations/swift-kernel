@@ -11,7 +11,6 @@
 
 import Kernel_Test_Support
 import StandardsTestSupport
-
 import Testing
 
 @testable import Kernel_Primitives
@@ -122,7 +121,7 @@ extension Kernel.File.Open.Test.EdgeCase {
     extension Kernel.File.Open.Test.Unit {
         @Test("open existing file for read succeeds")
         func openExistingFileForRead() throws {
-            try KernelIOTest.withTempFile(content: "test", prefix: "open-test") { path, fd in
+            try KernelIOTest.withTempFile(content: "test", prefix: "open-test") { path, _ in
                 let readFd = try Kernel.File.Open.open(
                     path: path,
                     mode: .read,

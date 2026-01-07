@@ -17,158 +17,158 @@
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-    internal import Darwin
-#elseif canImport(Glibc)
-    internal import Glibc
-#elseif canImport(Musl)
-    internal import Musl
-#endif
+    #if canImport(Darwin)
+        internal import Darwin
+    #elseif canImport(Glibc)
+        internal import Glibc
+    #elseif canImport(Musl)
+        internal import Musl
+    #endif
 
-// MARK: - Path Resolution
+    // MARK: - Path Resolution
 
-extension Kernel.Path.Resolution.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case ENOENT: self = .notFound
-        case EEXIST: self = .exists
-        case EISDIR: self = .isDirectory
-        case ENOTDIR: self = .notDirectory
-        case ENOTEMPTY: self = .notEmpty
-        case ELOOP: self = .loop
-        case EXDEV: self = .crossDevice
-        case ENAMETOOLONG: self = .nameTooLong
-        default: return nil
+    extension Kernel.Path.Resolution.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case ENOENT: self = .notFound
+            case EEXIST: self = .exists
+            case EISDIR: self = .isDirectory
+            case ENOTDIR: self = .notDirectory
+            case ENOTEMPTY: self = .notEmpty
+            case ELOOP: self = .loop
+            case EXDEV: self = .crossDevice
+            case ENAMETOOLONG: self = .nameTooLong
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - Permission
+    // MARK: - Permission
 
-extension Kernel.Permission.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case EACCES: self = .denied
-        case EPERM: self = .notPermitted
-        case EROFS: self = .readOnlyFilesystem
-        default: return nil
+    extension Kernel.Permission.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case EACCES: self = .denied
+            case EPERM: self = .notPermitted
+            case EROFS: self = .readOnlyFilesystem
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - Handle
+    // MARK: - Handle
 
-extension Kernel.Descriptor.Validity.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case EBADF: self = .invalid
-        case EMFILE: self = .limit(.process)
-        case ENFILE: self = .limit(.system)
-        default: return nil
+    extension Kernel.Descriptor.Validity.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case EBADF: self = .invalid
+            case EMFILE: self = .limit(.process)
+            case ENFILE: self = .limit(.system)
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - Signal
+    // MARK: - Signal
 
-extension Kernel.Signal.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case EINTR: self = .interrupted
-        default: return nil
+    extension Kernel.Signal.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case EINTR: self = .interrupted
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - Blocking
+    // MARK: - Blocking
 
-extension Kernel.IO.Blocking.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case EAGAIN, EWOULDBLOCK: self = .wouldBlock
-        default: return nil
+    extension Kernel.IO.Blocking.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case EAGAIN, EWOULDBLOCK: self = .wouldBlock
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - Space
+    // MARK: - Space
 
-extension Kernel.Storage.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case ENOSPC: self = .exhausted
-        case EDQUOT: self = .quota
-        default: return nil
+    extension Kernel.Storage.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case ENOSPC: self = .exhausted
+            case EDQUOT: self = .quota
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - Memory
+    // MARK: - Memory
 
-extension Kernel.Memory.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case EFAULT: self = .fault
-        case ENOMEM: self = .exhausted
-        default: return nil
+    extension Kernel.Memory.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case EFAULT: self = .fault
+            case ENOMEM: self = .exhausted
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - IO
+    // MARK: - IO
 
-extension Kernel.IO.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case EIO: self = .hardware
-        case EPIPE: self = .broken
-        case ECONNRESET: self = .reset
-        case ESPIPE: self = .illegalSeek
-        case ENOTSUP: self = .unsupported
-        default: return nil
+    extension Kernel.IO.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case EIO: self = .hardware
+            case EPIPE: self = .broken
+            case ECONNRESET: self = .reset
+            case ESPIPE: self = .illegalSeek
+            case ENOTSUP: self = .unsupported
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - Lock
+    // MARK: - Lock
 
-extension Kernel.Lock.Error {
-    @usableFromInline
-    internal init?(code: Kernel.Error.Code) {
-        guard case .posix(let errno) = code else { return nil }
-        switch errno {
-        case ENOLCK: self = .unavailable
-        case EDEADLK: self = .deadlock
-        default: return nil
+    extension Kernel.Lock.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            guard case .posix(let errno) = code else { return nil }
+            switch errno {
+            case ENOLCK: self = .unavailable
+            case EDEADLK: self = .deadlock
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - Platform (catch-all)
+    // MARK: - Platform (catch-all)
 
-extension Kernel.Error.Unmapped.Error {
-    /// Creates a platform error from an error code.
-    @usableFromInline
-    internal init(code: Kernel.Error.Code) {
-        self = .unmapped(code: code, message: nil)
+    extension Kernel.Error.Unmapped.Error {
+        /// Creates a platform error from an error code.
+        @usableFromInline
+        internal init(code: Kernel.Error.Code) {
+            self = .unmapped(code: code, message: nil)
+        }
     }
-}
 
 #endif
 

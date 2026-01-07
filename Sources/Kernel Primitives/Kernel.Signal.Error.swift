@@ -11,110 +11,110 @@
 
 #if !os(Windows)
 
-#if canImport(Darwin)
-    public import Darwin
-#elseif canImport(Glibc)
-    public import Glibc
-#elseif canImport(Musl)
-    public import Musl
-#endif
+    #if canImport(Darwin)
+        internal import Darwin
+    #elseif canImport(Glibc)
+        internal import Glibc
+    #elseif canImport(Musl)
+        internal import Musl
+    #endif
 
-extension Kernel.Signal {
-    /// Signal-related errors.
-    ///
-    /// Uses operation carriers with semantic accessors to keep the enum stable
-    /// while providing rich error introspection.
-    public enum Error: Swift.Error, Sendable, Equatable, Hashable {
-        /// Operation interrupted by signal (EINTR).
+    extension Kernel.Signal {
+        /// Signal-related errors.
         ///
-        /// Retained as a convenience case for cross-cutting EINTR scenarios.
-        case interrupted
+        /// Uses operation carriers with semantic accessors to keep the enum stable
+        /// while providing rich error introspection.
+        public enum Error: Swift.Error, Sendable, Equatable, Hashable {
+            /// Operation interrupted by signal (EINTR).
+            ///
+            /// Retained as a convenience case for cross-cutting EINTR scenarios.
+            case interrupted
 
-        /// Signal set operation failed (sigaddset/sigdelset/sigismember).
-        case set(Kernel.Error.Code)
+            /// Signal set operation failed (sigaddset/sigdelset/sigismember).
+            case set(Kernel.Error.Code)
 
-        /// Signal mask operation failed (pthread_sigmask/sigpending).
-        case mask(Kernel.Error.Code)
+            /// Signal mask operation failed (pthread_sigmask/sigpending).
+            case mask(Kernel.Error.Code)
 
-        /// Signal action operation failed (sigaction).
-        case action(Kernel.Error.Code)
+            /// Signal action operation failed (sigaction).
+            case action(Kernel.Error.Code)
 
-        /// Signal send operation failed (kill/raise).
-        case send(Kernel.Error.Code)
-    }
-}
-
-// MARK: - Semantic Accessors
-
-extension Kernel.Signal.Error {
-    /// The underlying error code, if any.
-    public var code: Kernel.Error.Code? {
-        switch self {
-        case .interrupted:
-            return nil
-        case .set(let c), .mask(let c), .action(let c), .send(let c):
-            return c
+            /// Signal send operation failed (kill/raise).
+            case send(Kernel.Error.Code)
         }
     }
 
-    /// Whether this is an interrupted operation (EINTR).
-    ///
-    /// Returns `true` for the `.interrupted` case or any operation carrier
-    /// with EINTR as the underlying POSIX error code.
-    public var isInterrupted: Bool {
-        if case .interrupted = self { return true }
-        if let code, code.posix == EINTR { return true }
-        return false
-    }
+    // MARK: - Semantic Accessors
 
-    /// Semantic classification of signal errors.
-    public enum Semantic: Sendable {
-        /// Invalid signal number (EINVAL).
-        case invalidSignal
+    extension Kernel.Signal.Error {
+        /// The underlying error code, if any.
+        public var code: Kernel.Error.Code? {
+            switch self {
+            case .interrupted:
+                return nil
+            case .set(let c), .mask(let c), .action(let c), .send(let c):
+                return c
+            }
+        }
 
-        /// Operation not permitted (EPERM).
-        case noPermission
+        /// Whether this is an interrupted operation (EINTR).
+        ///
+        /// Returns `true` for the `.interrupted` case or any operation carrier
+        /// with EINTR as the underlying POSIX error code.
+        public var isInterrupted: Bool {
+            if case .interrupted = self { return true }
+            if let code, code.posix == EINTR { return true }
+            return false
+        }
 
-        /// No such process (ESRCH).
-        case noSuchProcess
+        /// Semantic classification of signal errors.
+        public enum Semantic: Sendable {
+            /// Invalid signal number (EINVAL).
+            case invalidSignal
 
-        /// Interrupted by signal (EINTR).
-        case interrupted
-    }
+            /// Operation not permitted (EPERM).
+            case noPermission
 
-    /// Semantic meaning of the error, if mappable.
-    ///
-    /// Returns `nil` for unrecognized POSIX error codes.
-    public var semantic: Semantic? {
-        if case .interrupted = self { return .interrupted }
-        guard let posix = code?.posix else { return nil }
-        switch posix {
-        case EINVAL: return .invalidSignal
-        case EPERM: return .noPermission
-        case ESRCH: return .noSuchProcess
-        case EINTR: return .interrupted
-        default: return nil
+            /// No such process (ESRCH).
+            case noSuchProcess
+
+            /// Interrupted by signal (EINTR).
+            case interrupted
+        }
+
+        /// Semantic meaning of the error, if mappable.
+        ///
+        /// Returns `nil` for unrecognized POSIX error codes.
+        public var semantic: Semantic? {
+            if case .interrupted = self { return .interrupted }
+            guard let posix = code?.posix else { return nil }
+            switch posix {
+            case EINVAL: return .invalidSignal
+            case EPERM: return .noPermission
+            case ESRCH: return .noSuchProcess
+            case EINTR: return .interrupted
+            default: return nil
+            }
         }
     }
-}
 
-// MARK: - CustomStringConvertible
+    // MARK: - CustomStringConvertible
 
-extension Kernel.Signal.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .interrupted:
-            return "interrupted by signal"
-        case .set(let code):
-            return "signal set operation failed: \(code)"
-        case .mask(let code):
-            return "signal mask operation failed: \(code)"
-        case .action(let code):
-            return "signal action operation failed: \(code)"
-        case .send(let code):
-            return "signal send operation failed: \(code)"
+    extension Kernel.Signal.Error: CustomStringConvertible {
+        public var description: String {
+            switch self {
+            case .interrupted:
+                return "interrupted by signal"
+            case .set(let code):
+                return "signal set operation failed: \(code)"
+            case .mask(let code):
+                return "signal mask operation failed: \(code)"
+            case .action(let code):
+                return "signal action operation failed: \(code)"
+            case .send(let code):
+                return "signal send operation failed: \(code)"
+            }
         }
     }
-}
 
 #endif

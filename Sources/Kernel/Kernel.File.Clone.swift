@@ -215,45 +215,45 @@ extension Kernel.File.Clone {
 // MARK: - Linux Helpers
 
 #if os(Linux)
-extension Kernel.File.Clone {
-    private static func openSource(_ path: borrowing Kernel.Path) throws(Error) -> Kernel.Descriptor {
-        do {
-            return try Kernel.File.Open.open(
-                path: path,
-                mode: .read,
-                options: [],
-                permissions: 0
-            )
-        } catch {
-            if case .path(.notFound) = error {
-                throw Error.sourceNotFound
+    extension Kernel.File.Clone {
+        private static func openSource(_ path: borrowing Kernel.Path) throws(Error) -> Kernel.Descriptor {
+            do {
+                return try Kernel.File.Open.open(
+                    path: path,
+                    mode: .read,
+                    options: [],
+                    permissions: 0
+                )
+            } catch {
+                if case .path(.notFound) = error {
+                    throw Error.sourceNotFound
+                }
+                throw Error.notSupported
             }
-            throw Error.notSupported
         }
-    }
 
-    private static func createDestination(_ path: borrowing Kernel.Path) throws(Error) -> Kernel.Descriptor {
-        do {
-            return try Kernel.File.Open.open(
-                path: path,
-                mode: .write,
-                options: [.create, .exclusive],
-                permissions: .standard
-            )
-        } catch {
-            if case .path(.exists) = error {
-                throw Error.destinationExists
+        private static func createDestination(_ path: borrowing Kernel.Path) throws(Error) -> Kernel.Descriptor {
+            do {
+                return try Kernel.File.Open.open(
+                    path: path,
+                    mode: .write,
+                    options: [.create, .exclusive],
+                    permissions: .standard
+                )
+            } catch {
+                if case .path(.exists) = error {
+                    throw Error.destinationExists
+                }
+                throw Error.notSupported
             }
-            throw Error.notSupported
         }
-    }
 
-    private static func getSize(_ path: borrowing Kernel.Path) throws(Error) -> Int {
-        do {
-            return try Metadata.size(at: path)
-        } catch {
-            throw Error.notSupported
+        private static func getSize(_ path: borrowing Kernel.Path) throws(Error) -> Int {
+            do {
+                return try Metadata.size(at: path)
+            } catch {
+                throw Error.notSupported
+            }
         }
     }
-}
 #endif

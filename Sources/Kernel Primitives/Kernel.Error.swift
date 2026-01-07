@@ -92,15 +92,42 @@ extension Kernel.Error {
         _ code: Kernel.Error.Code
     ) {
         // Try each domain in priority order
-        if let e = Kernel.Path.Resolution.Error(code: code) { self = .path(e); return }
-        if let e = Kernel.Permission.Error(code: code) { self = .permission(e); return }
-        if let e = Kernel.Descriptor.Validity.Error(code: code) { self = .handle(e); return }
-        if let e = Kernel.Signal.Error(code: code) { self = .signal(e); return }
-        if let e = Kernel.IO.Blocking.Error(code: code) { self = .blocking(e); return }
-        if let e = Kernel.Storage.Error(code: code) { self = .space(e); return }
-        if let e = Kernel.Memory.Error(code: code) { self = .memory(e); return }
-        if let e = Kernel.IO.Error(code: code) { self = .io(e); return }
-        if let e = Kernel.Lock.Error(code: code) { self = .lock(e); return }
+        if let e = Kernel.Path.Resolution.Error(code: code) {
+            self = .path(e)
+            return
+        }
+        if let e = Kernel.Permission.Error(code: code) {
+            self = .permission(e)
+            return
+        }
+        if let e = Kernel.Descriptor.Validity.Error(code: code) {
+            self = .handle(e)
+            return
+        }
+        if let e = Kernel.Signal.Error(code: code) {
+            self = .signal(e)
+            return
+        }
+        if let e = Kernel.IO.Blocking.Error(code: code) {
+            self = .blocking(e)
+            return
+        }
+        if let e = Kernel.Storage.Error(code: code) {
+            self = .space(e)
+            return
+        }
+        if let e = Kernel.Memory.Error(code: code) {
+            self = .memory(e)
+            return
+        }
+        if let e = Kernel.IO.Error(code: code) {
+            self = .io(e)
+            return
+        }
+        if let e = Kernel.Lock.Error(code: code) {
+            self = .lock(e)
+            return
+        }
         return nil
     }
 }

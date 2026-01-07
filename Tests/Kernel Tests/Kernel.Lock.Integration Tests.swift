@@ -12,7 +12,6 @@
 import Kernel_Primitives
 import Kernel_Test_Support
 import StandardsTestSupport
-
 import Testing
 
 @testable import Kernel
