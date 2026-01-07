@@ -43,8 +43,10 @@ extension Kernel {
         /// Storage space errors.
         case space(Kernel.Storage.Error)
 
+        #if !os(Windows)
         /// Signal interruption errors.
         case signal(Kernel.Signal.Error)
+        #endif
 
         /// Non-blocking operation errors.
         case blocking(Kernel.IO.Blocking.Error)
@@ -73,8 +75,10 @@ extension Kernel.Error: CustomStringConvertible {
             return "permission: \(error)"
         case .space(let error):
             return "space: \(error)"
+        #if !os(Windows)
         case .signal(let error):
             return "signal: \(error)"
+        #endif
         case .blocking(let error):
             return "blocking: \(error)"
         case .platform(let error):
@@ -104,10 +108,12 @@ extension Kernel.Error {
             self = .handle(e)
             return
         }
+        #if !os(Windows)
         if let e = Kernel.Signal.Error(code: code) {
             self = .signal(e)
             return
         }
+        #endif
         if let e = Kernel.IO.Blocking.Error(code: code) {
             self = .blocking(e)
             return

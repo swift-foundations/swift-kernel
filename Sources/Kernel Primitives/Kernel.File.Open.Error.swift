@@ -14,7 +14,9 @@ extension Kernel.File.Open {
         case path(Kernel.Path.Resolution.Error)
         case permission(Kernel.Permission.Error)
         case handle(Kernel.Descriptor.Validity.Error)
+        #if !os(Windows)
         case signal(Kernel.Signal.Error)
+        #endif
         case space(Kernel.Storage.Error)
         case io(Kernel.IO.Error)
         case platform(Kernel.Error.Unmapped.Error)
@@ -27,7 +29,9 @@ extension Kernel.File.Open.Error: Equatable {
         case (.path(let l), .path(let r)): return l == r
         case (.permission(let l), .permission(let r)): return l == r
         case (.handle(let l), .handle(let r)): return l == r
+        #if !os(Windows)
         case (.signal(let l), .signal(let r)): return l == r
+        #endif
         case (.space(let l), .space(let r)): return l == r
         case (.io(let l), .io(let r)): return l == r
         case (.platform(let l), .platform(let r)): return l == r
@@ -42,7 +46,9 @@ extension Kernel.File.Open.Error: CustomStringConvertible {
         case .path(let e): return "path: \(e)"
         case .permission(let e): return "permission: \(e)"
         case .handle(let e): return "handle: \(e)"
+        #if !os(Windows)
         case .signal(let e): return "signal: \(e)"
+        #endif
         case .space(let e): return "space: \(e)"
         case .io(let e): return "io: \(e)"
         case .platform(let e): return "\(e)"
@@ -67,10 +73,12 @@ extension Kernel.File.Open.Error {
             self = .handle(e)
             return
         }
+        #if !os(Windows)
         if let e = Kernel.Signal.Error(code: code) {
             self = .signal(e)
             return
         }
+        #endif
         if let e = Kernel.Storage.Error(code: code) {
             self = .space(e)
             return
