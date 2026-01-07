@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 #else
     #if canImport(Darwin)
         internal import Darwin

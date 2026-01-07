@@ -96,7 +96,7 @@ extension Kernel {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.Unlink {
         /// Removes a file.

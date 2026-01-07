@@ -16,7 +16,7 @@
 #elseif canImport(Musl)
     internal import Musl
 #elseif os(Windows)
-    internal import WinSDK
+    public import WinSDK
 #endif
 
 extension Kernel.Atomic {

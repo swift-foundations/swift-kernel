@@ -49,7 +49,7 @@ extension Kernel.File {
 #elseif canImport(Glibc)
     internal import Glibc
 #elseif os(Windows)
-    internal import WinSDK
+    public import WinSDK
 #endif
 
 // MARK: - Capability Probing

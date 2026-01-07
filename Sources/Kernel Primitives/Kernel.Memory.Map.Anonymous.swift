@@ -58,7 +58,7 @@ extension Kernel.Memory.Map {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.Memory.Map.Anonymous {
         /// Maps anonymous memory (pagefile-backed) on Windows.

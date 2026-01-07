@@ -16,7 +16,7 @@
 #elseif canImport(Musl)
     internal import Musl
 #elseif os(Windows)
-    @preconcurrency internal import WinSDK
+    @preconcurrency public import WinSDK
 #endif
 
 extension Kernel {

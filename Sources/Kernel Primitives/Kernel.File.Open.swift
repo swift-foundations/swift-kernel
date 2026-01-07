@@ -90,7 +90,7 @@ extension Kernel.File {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.File.Open {
         /// Opens a file at the specified path.

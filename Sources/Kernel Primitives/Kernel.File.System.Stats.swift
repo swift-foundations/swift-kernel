@@ -197,7 +197,7 @@ extension Kernel.File.System {
 // MARK: - Windows Implementation
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.File.System.Stats {
         /// Gets filesystem statistics for a path.

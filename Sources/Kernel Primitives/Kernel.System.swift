@@ -142,7 +142,7 @@ extension Kernel.System {
 #endif
 
 #if os(Windows)
-    @preconcurrency internal import WinSDK
+    @preconcurrency public import WinSDK
 
     // PATTERN EXCEPTION: Global immutable cache (Rule 6.6)
     //

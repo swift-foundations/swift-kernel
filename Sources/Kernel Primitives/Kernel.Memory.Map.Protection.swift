@@ -146,7 +146,7 @@ extension Kernel.Memory.Map {
 // MARK: - Windows Constants
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.Memory.Map.Protection {
         /// Permits reading from mapped pages.

@@ -19,7 +19,7 @@
 #endif
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 #endif
 
 extension Kernel.Error {

@@ -84,7 +84,7 @@ extension Kernel.Error: CustomStringConvertible {
 }
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 #endif
 
 extension Kernel.Error {

@@ -68,7 +68,7 @@ extension Kernel.Process {
 
 #else
 
-    @preconcurrency internal import WinSDK
+    @preconcurrency public import WinSDK
 
     extension Kernel.Process {
         /// Windows process ID.

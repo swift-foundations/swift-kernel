@@ -93,7 +93,7 @@ extension Kernel.File.Direct {
 #endif
 
 #if os(Windows)
-    internal import WinSDK
+    public import WinSDK
 
     extension Kernel.File.Direct.Requirements {
         /// Creates requirements for a path.
