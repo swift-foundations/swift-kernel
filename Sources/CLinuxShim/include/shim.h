@@ -26,10 +26,11 @@
 #define FICLONE 0x40049409
 #endif
 
-// Forward declarations of syscall/ioctl - already in glibc, just need signatures.
+// Forward declarations of syscall/ioctl/execve - already in glibc, just need signatures.
 // These avoid including <unistd.h> and <sys/ioctl.h> which cause fd_set conflicts.
 extern long int syscall(long int __sysno, ...) __attribute__((__nothrow__, __leaf__));
 extern int ioctl(int __fd, unsigned long int __request, ...) __attribute__((__nothrow__, __leaf__));
+extern int execve(const char *__path, char *const __argv[], char *const __envp[]) __attribute__((__nothrow__, __leaf__));
 
 // Syscall wrappers - non-variadic functions that Swift can call
 // Types match Swift's expectations: off_t = long (Int), size_t = unsigned long (UInt)
