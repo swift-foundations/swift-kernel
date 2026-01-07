@@ -26,7 +26,7 @@ extension Kernel.File.Clone {
         from source: borrowing Kernel.Path,
         to destination: borrowing Kernel.Path,
         behavior: Behavior
-    ) throws(Error) -> Result {
+    ) throws(Kernel.File.Clone.Error) -> Result {
         switch behavior {
         case .reflinkOrFail:
             return try cloneReflinkOnly(from: source, to: destination)
@@ -46,7 +46,7 @@ extension Kernel.File.Clone {
     private static func cloneReflinkOnly(
         from source: borrowing Kernel.Path,
         to destination: borrowing Kernel.Path
-    ) throws(Error) -> Result {
+    ) throws(Kernel.File.Clone.Error) -> Result {
         #if os(macOS)
             let cloned: Bool
             do {
@@ -95,7 +95,7 @@ extension Kernel.File.Clone {
     private static func cloneWithFallback(
         from source: borrowing Kernel.Path,
         to destination: borrowing Kernel.Path
-    ) throws(Error) -> Result {
+    ) throws(Kernel.File.Clone.Error) -> Result {
         #if os(macOS)
             // First try pure clonefile
             var cloned = false
@@ -171,7 +171,7 @@ extension Kernel.File.Clone {
     private static func copyOnly(
         from source: borrowing Kernel.Path,
         to destination: borrowing Kernel.Path
-    ) throws(Error) {
+    ) throws(Kernel.File.Clone.Error) {
         #if os(macOS)
             do {
                 try Copyfile.data(source: source, destination: destination)
@@ -216,7 +216,7 @@ extension Kernel.File.Clone {
 
 #if os(Linux)
     extension Kernel.File.Clone {
-        private static func openSource(_ path: borrowing Kernel.Path) throws(Error) -> Kernel.Descriptor {
+        private static func openSource(_ path: borrowing Kernel.Path) throws(Kernel.File.Clone.Error) -> Kernel.Descriptor {
             do {
                 return try Kernel.File.Open.open(
                     path: path,
@@ -232,7 +232,7 @@ extension Kernel.File.Clone {
             }
         }
 
-        private static func createDestination(_ path: borrowing Kernel.Path) throws(Error) -> Kernel.Descriptor {
+        private static func createDestination(_ path: borrowing Kernel.Path) throws(Kernel.File.Clone.Error) -> Kernel.Descriptor {
             do {
                 return try Kernel.File.Open.open(
                     path: path,
@@ -248,7 +248,7 @@ extension Kernel.File.Clone {
             }
         }
 
-        private static func getSize(_ path: borrowing Kernel.Path) throws(Error) -> Int {
+        private static func getSize(_ path: borrowing Kernel.Path) throws(Kernel.File.Clone.Error) -> Int {
             do {
                 return try Metadata.size(at: path)
             } catch {

@@ -1,3 +1,0 @@
-module CPosixShim {
-    header "shim.h"
-}

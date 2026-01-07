@@ -1,3 +1,0 @@
-module CLinuxShim {
-    header "shim.h"
-}

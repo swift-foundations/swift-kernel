@@ -30,6 +30,7 @@
 
 import Binary
 import Kernel
+import Kernel_Primitives
 
 #if canImport(Darwin)
     internal import Darwin
@@ -258,9 +259,9 @@ func printUsage() {
         }
 
         // Acquire lock
-        var token: Kernel.Lock.Token
-        do {
-            token = try Kernel.Lock.Token(
+        var token: Kernel_Primitives.Kernel.Lock.Token
+        do throws(Kernel_Primitives.Kernel.Lock.Error) {
+            token = try Kernel_Primitives.Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: fd),
                 range: args.range,
                 kind: kind,
@@ -276,7 +277,7 @@ func printUsage() {
                     writeStdout("TIMED_OUT\n")
                     return 2
                 }
-            default:
+            case .deadlock, .unavailable:
                 writeStderr("Failed to acquire lock: \(error)\n")
                 return 3
             }
@@ -362,9 +363,9 @@ func printUsage() {
         }
 
         // Acquire lock
-        var token: Kernel.Lock.Token
-        do {
-            token = try Kernel.Lock.Token(
+        var token: Kernel_Primitives.Kernel.Lock.Token
+        do throws(Kernel_Primitives.Kernel.Lock.Error) {
+            token = try Kernel_Primitives.Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: handle),
                 range: args.range,
                 kind: kind,
@@ -380,7 +381,7 @@ func printUsage() {
                     writeStdout("TIMED_OUT\n")
                     return 2
                 }
-            default:
+            case .deadlock, .unavailable:
                 writeStderr("Failed to acquire lock: \(error)\n")
                 return 3
             }
