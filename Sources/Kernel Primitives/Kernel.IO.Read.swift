@@ -189,7 +189,7 @@ extension Kernel.IO.Read {
                 if error == DWORD(ERROR_HANDLE_EOF) {
                     return 0
                 }
-                throw Self.Error(windowsError: error)
+                throw Self.Error(code: .win32(error))
             }
             return Int(bytesRead)
         }
@@ -226,7 +226,7 @@ extension Kernel.IO.Read {
                 if error == DWORD(ERROR_HANDLE_EOF) {
                     return 0
                 }
-                throw Self.Error(windowsError: error)
+                throw Self.Error(code: .win32(error))
             }
             return Int(bytesRead)
         }

@@ -249,6 +249,15 @@
         }
     }
 
+    extension Kernel.IO.Blocking.Error {
+        @usableFromInline
+        internal init?(code: Kernel.Error.Code) {
+            // Windows uses overlapped I/O rather than EAGAIN/EWOULDBLOCK
+            // No direct equivalent, so always return nil
+            return nil
+        }
+    }
+
     extension Kernel.Lock.Error {
         @usableFromInline
         internal init?(code: Kernel.Error.Code) {
