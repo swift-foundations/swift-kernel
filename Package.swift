@@ -21,7 +21,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/coenttb/swift-kernel-primitives.git", from: "0.2.3"),
+        .package(url: "https://github.com/coenttb/swift-kernel-primitives.git", from: "0.1.0"),
         .package(url: "https://github.com/coenttb/swift-posix.git", from: "0.1.0"),
         .package(url: "https://github.com/coenttb/swift-darwin.git", from: "0.1.0"),
         .package(url: "https://github.com/coenttb/swift-linux.git", from: "0.1.0"),
