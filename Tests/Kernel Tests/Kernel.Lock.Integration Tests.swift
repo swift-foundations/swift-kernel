@@ -137,12 +137,17 @@ extension KernelLockIntegration {
                 return "\(builtProductsDir)/_Lock Test Process"
             }
             // Fall back to SPM build directory (use absolute path from package root)
-            #if os(macOS)
-                let buildDir = ".build/arm64-apple-macosx/debug"
-            #elseif os(Linux)
-                let buildDir = ".build/debug"
+            #if DEBUG
+                let config = "debug"
             #else
-                let buildDir = ".build/debug"
+                let config = "release"
+            #endif
+            #if os(macOS)
+                let buildDir = ".build/arm64-apple-macosx/\(config)"
+            #elseif os(Linux)
+                let buildDir = ".build/\(config)"
+            #else
+                let buildDir = ".build/\(config)"
             #endif
             // Get the package root by finding the directory containing Package.swift
             // relative to the test file location
