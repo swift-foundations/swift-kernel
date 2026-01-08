@@ -124,7 +124,8 @@ struct FileOpenConfigurationTests {
                 // Verify content matches using C string comparison
                 let matches = buffer.withUnsafeBufferPointer { ptr in
                     content.withCString { cStr in
-                        memcmp(ptr.baseAddress, cStr, bytesRead) == 0
+                        guard let baseAddress = ptr.baseAddress else { return false }
+                        return memcmp(baseAddress, cStr, bytesRead) == 0
                     }
                 }
                 #expect(matches)
