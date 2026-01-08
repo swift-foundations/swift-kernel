@@ -34,11 +34,8 @@ jobs:
           key: macos-swift62-spm-v5-${{ hashFiles('Package.swift', 'Package@*.swift') }}
           restore-keys: macos-swift62-spm-v5-
 
-      - name: Build
-        run: swift build -c debug
-
       - name: Test
-        run: swift test -c debug --skip-build
+        run: swift test -c debug
 
       - name: Validate Package.swift
         run: swift package dump-package
@@ -73,11 +70,8 @@ jobs:
           key: linux-swift62-spm-v5-${{ hashFiles('Package.swift', 'Package@*.swift') }}
           restore-keys: linux-swift62-spm-v5-
 
-      - name: Build
-        run: swift build -c release
-
       - name: Test (release)
-        run: swift test -c release --skip-build
+        run: swift test -c release
 
   # Compatibility check: Minimum supported Swift version (6.2)
   # Update to swift:6.3 when available
@@ -95,11 +89,8 @@ jobs:
           key: linux-swift62-compat-spm-v5-${{ hashFiles('Package.swift', 'Package@*.swift') }}
           restore-keys: linux-swift62-compat-spm-v5-
 
-      - name: Build
-        run: swift build -c release
-
       - name: Test (Swift 6.2)
-        run: swift test -c release --skip-build
+        run: swift test -c release
 
   # Windows validation
   windows-latest:
