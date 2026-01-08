@@ -1,55 +1,26 @@
 # swift-kernel
 
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
+[![CI](https://github.com/coenttb/swift-kernel/workflows/CI/badge.svg)](https://github.com/coenttb/swift-kernel/actions/workflows/ci.yml)
 
 Policy-free syscall wrappers for Swift. Provides raw descriptors, typed throws, and unified error types across macOS, Linux, and Windows. Swift 6 strict concurrency with Foundation-free design.
 
+---
+
 ## Key Features
 
-- **Raw syscall wrappers** - No policy, no retry logic, no derived semantics
-- **Typed throws** - No `any Error` at the API surface, with a provided `Kernel.Error` for abstraction boundaries
-- **Platform-native surfaces** - `Kernel.Kqueue` (Darwin), `Kernel.IOUring` (Linux), `Kernel.IOCP` (Windows)
-- **Foundation-free** - No Foundation module dependencies; no URL, Data, or Foundation string types
-- **Swift 6 strict concurrency** - Full `Sendable` compliance
+- **Raw syscall wrappers** – No policy, no retry logic, no derived semantics
+- **Typed throws** – No `any Error` at the API surface, with `Kernel.Failure` for abstraction boundaries
+- **Platform-native surfaces** – `Kernel.Kqueue` (Darwin), `Kernel.IOUring` (Linux), `Kernel.IOCP` (Windows)
+- **Foundation-free** – No Foundation module dependencies; no URL, Data, or Foundation string types
+- **Swift 6 strict concurrency** – Full `Sendable` compliance
+- **Thread executor integration** – Serial executors backed by dedicated OS threads
 
-## Design Philosophy
-
-swift-kernel is the lowest layer in the Systems stack. It provides syscall-shaped APIs that higher layers build upon.
-
-### Paths and Strings
-
-Kernel exposes two path representations:
-
-- `SystemPackage.FilePath` is supported by convenience overloads for ergonomics and portability.
-- `Kernel.Path` represents validated, null-terminated platform strings intended for direct syscall use.
-
-Higher layers are expected to prefer `FilePath`. `Kernel.Path` exists for:
-- Zero-allocation syscall paths
-- Embedding Kernel in lower-level runtimes
-- Avoiding `SystemPackage` entirely in constrained environments
-
-### Exports
-
-**Kernel exports:**
-- Raw descriptors (`Kernel.Descriptor`)
-- Raw buffers (`UnsafeRawBufferPointer`, `UnsafeMutableRawBufferPointer`)
-- Primitive enums/option sets (`Kernel.File.Open.Mode`, `Kernel.File.Open.Options`)
-- Unified error type (`Kernel.Error`)
-- Path wrappers (`Kernel.Path` for validated platform strings)
-- `SystemPackage.FilePath`-accepting convenience overloads for ergonomics
-- System queries (`Kernel.System.pageSize`)
-
-**Kernel does NOT export:**
-- Foundation types (URL, Data, Foundation strings)
-- Policy (atomic writes, best-effort modes, retry logic)
-- Discovery (capability probing, alignment requirements interpretation)
-- Derived semantics (Direct I/O requirements, file type inference beyond stat)
-
-Higher layers ([swift-io](https://github.com/coenttb/swift-io), [swift-file-system](https://github.com/coenttb/swift-file-system)) build semantics on top of Kernel.
+---
 
 ## Installation
 
-Add swift-kernel to your Package.swift:
+### Package.swift dependency
 
 ```swift
 dependencies: [
@@ -57,26 +28,29 @@ dependencies: [
 ]
 ```
 
-Add to your target:
+### Target dependency
 
 ```swift
 .target(
     name: "YourTarget",
     dependencies: [
-        .product(name: "Kernel", package: "swift-kernel"),
+        .product(name: "Kernel", package: "swift-kernel")
     ]
 )
 ```
 
-**Requirements:**
+### Requirements
+
 - Swift 6.2+
 - macOS 26.0+ / iOS 26.0+ / tvOS 26.0+ / watchOS 26.0+
 - Linux (Ubuntu 22.04+)
 - Windows (Swift 6.2+)
 
+---
+
 ## Quick Start
 
-### File Descriptors
+### File Operations
 
 ```swift
 import Kernel
@@ -102,109 +76,51 @@ let bytesWritten = try data.withUnsafeBytes { ptr in
     try Kernel.IO.Write.write(fd, from: ptr)
 }
 
-// Positional I/O (no shared file offset)
-let bytesAtOffset = try buffer.withUnsafeMutableBytes { ptr in
-    try Kernel.IO.Read.pread(fd, into: ptr, at: 100)
-}
-
 // Close
 try Kernel.Close.close(fd)
 ```
 
-### Memory Mapping
+### Thread Executor
 
 ```swift
-// Map a file into memory
-let region = try Kernel.Memory.Map.map(
-    length: 4096,
-    protection: [.read, .write],
-    flags: [.shared],
-    fd: fd,
-    offset: 0
-)
+import Kernel
 
-// Sync to disk
-try Kernel.Memory.Map.sync(addr: region, length: 4096)
+// Create a serial executor backed by a dedicated OS thread
+let executor = Kernel.Thread.Executor()
+defer { executor.shutdown() }
 
-// Unmap
-try Kernel.Memory.Map.unmap(addr: region, length: 4096)
-```
+// Pin an actor to this executor
+actor DatabaseWorker {
+    let executor: Kernel.Thread.Executor
 
-### File Locking
+    init(executor: Kernel.Thread.Executor) {
+        self.executor = executor
+    }
 
-```swift
-// Exclusive lock (blocking)
-try Kernel.Lock.lock(fd, range: .file, kind: .exclusive)
-
-// Try lock (non-blocking)
-if try Kernel.Lock.tryLock(fd, range: .bytes(0, 1024), kind: .shared) {
-    // Lock acquired
-}
-
-// Unlock
-try Kernel.Lock.unlock(fd, range: .file)
-```
-
-### Event Notification
-
-```swift
-#if canImport(Darwin)
-// kqueue (macOS/BSD)
-let kq = try Kernel.Kqueue.create()
-try Kernel.Kqueue.register(kq, events: [.init(fd: fd, filter: .read)])
-let count = try Kernel.Kqueue.poll(kq, into: &events, timeout: .seconds(1))
-#endif
-
-#if canImport(Glibc)
-// io_uring (Linux 5.1+)
-if Kernel.IOUring.isSupported {
-    var params = Kernel.IOUring.Params()
-    let ring = try Kernel.IOUring.setup(entries: 32, params: &params)
-    // Submit and wait for completions
-    let submitted = try Kernel.IOUring.enter(ring, toSubmit: 1, minComplete: 1, flags: [])
-}
-#endif
-
-#if os(Windows)
-// IOCP (Windows)
-let port = try Kernel.IOCP.create()
-try Kernel.IOCP.associate(port, fileHandle: handle, completionKey: .init(rawValue: 1))
-#endif
-```
-
-### Threading
-
-```swift
-// Create OS thread
-let handle = try Kernel.Thread.create {
-    // Work runs on dedicated OS thread
-    print("Running on thread")
-}
-
-// Join thread
-try Kernel.Thread.join(handle)
-```
-
-## Error Model
-
-Kernel uses typed throws throughout. Each operation throws its own domain-specific error type. `Kernel.Error` exists only as an aggregation boundary when composing multiple Kernel subsystems or crossing abstraction layers:
-
-```swift
-public enum Error: Swift.Error, Sendable, Equatable {
-    case path(Kernel.Path.Resolution.Error)
-    case handle(Kernel.Descriptor.Validity.Error)
-    case io(Kernel.IO.Error)
-    case lock(Kernel.Lock.Error)
-    case memory(Kernel.Memory.Error)
-    case permission(Kernel.Permission.Error)
-    case space(Kernel.Storage.Error)
-    case signal(Kernel.Signal.Error)
-    case blocking(Kernel.IO.Blocking.Error)
-    case platform(Kernel.Error.Unmapped.Error)
+    nonisolated var unownedExecutor: UnownedSerialExecutor {
+        executor.asUnownedSerialExecutor()
+    }
 }
 ```
 
-Operations use typed throws for precise error handling:
+### Thread Spawning with Ownership Transfer
+
+```swift
+import Kernel
+
+// Spawn a thread with value transfer (for ~Copyable types)
+let handle = try Kernel.Thread.spawn(myResource) { resource in
+    // Ownership of resource transferred to this thread
+    process(resource)
+}
+handle.join()
+```
+
+---
+
+## Error Handling
+
+Kernel uses typed throws throughout. Each operation throws its own domain-specific error type:
 
 ```swift
 // Kernel.File.Open.open throws(Kernel.File.Open.Error)
@@ -216,18 +132,35 @@ do {
         permissions: 0
     )
 } catch {
-    // error is Kernel.File.Open.Error (typed)
     switch error {
     case .notFound:
-        // File doesn't exist
+        print("File doesn't exist")
     case .permission:
-        // Permission denied
+        print("Permission denied")
     case .isDirectory:
-        // Path is a directory
-    // ...
+        print("Path is a directory")
     }
 }
 ```
+
+`Kernel.Failure` aggregates all domain errors for abstraction boundaries:
+
+```swift
+public enum Failure: Swift.Error, Sendable, Equatable {
+    case path(Kernel.Path.Resolution.Error)
+    case handle(Kernel.Descriptor.Validity.Error)
+    case io(Kernel.IO.Error)
+    case lock(Kernel.Lock.Error)
+    case memory(Kernel.Memory.Error)
+    case permission(Kernel.Permission.Error)
+    case space(Kernel.Storage.Error)
+    case signal(Kernel.Signal.Error)      // non-Windows
+    case blocking(Kernel.IO.Blocking.Error)
+    case platform(Kernel.Error)
+}
+```
+
+---
 
 ## Architecture
 
@@ -235,7 +168,7 @@ do {
 ┌─────────────────────────────────────────────────┐
 │               swift-file-system                  │  ← File, File.Directory API
 ├─────────────────────────────────────────────────┤
-│                   swift-io                       │  ← Executors, async I/O, completion backends
+│                   swift-io                       │  ← Executors, async I/O
 ├─────────────────────────────────────────────────┤
 │                 swift-kernel                     │  ← Syscall wrappers (this package)
 ├─────────────────────────────────────────────────┤
@@ -243,41 +176,38 @@ do {
 └─────────────────────────────────────────────────┘
 ```
 
-### Modules
-
-| Module | Contents |
-|--------|----------|
-| `Kernel` | Core types, descriptors, errors, syscall wrappers |
-| `CLinuxShim` | Linux-specific C shims (io_uring) |
-
 ### Key Types
 
-| Type | Purpose |
-|------|---------|
-| `Kernel.Descriptor` | File descriptor (POSIX) or HANDLE (Windows) |
-| `Kernel.Error` | Unified syscall error type |
-| `Kernel.Path` | Validated path wrapper (platform strings) |
-| `Kernel.File.Open` | File open options and modes |
-| `Kernel.IO.Read/Write` | Read/write operations |
-| `Kernel.Memory.Map` | Memory mapping operations |
-| `Kernel.Lock` | File locking (fcntl/LockFileEx) |
-| `Kernel.Kqueue` | Darwin event notification |
-| `Kernel.IOUring` | Linux io_uring interface |
-| `Kernel.IOCP` | Windows I/O completion ports |
-| `Kernel.Thread` | OS thread creation |
+| Type                             | Purpose                                              |
+|----------------------------------|------------------------------------------------------|
+| `Kernel.Descriptor`              | File descriptor (POSIX) or HANDLE (Windows)          |
+| `Kernel.Failure`                 | Unified error aggregation for abstraction boundaries |
+| `Kernel.Path`                    | Validated path wrapper (platform strings)            |
+| `Kernel.File.Open`               | File open operations with mode, options, permissions |
+| `Kernel.File.Handle`             | RAII file handle (~Copyable) with Direct I/O support |
+| `Kernel.File.Clone`              | File cloning with reflink/copy fallback              |
+| `Kernel.IO.Read/Write`           | Positional and sequential I/O operations             |
+| `Kernel.Memory.Map`              | Memory mapping operations                            |
+| `Kernel.Lock`                    | File locking (fcntl/LockFileEx)                      |
+| `Kernel.Kqueue`                  | Darwin event notification                            |
+| `Kernel.IOUring`                 | Linux io_uring interface                             |
+| `Kernel.IOCP`                    | Windows I/O completion ports                         |
+| `Kernel.Thread.Executor`         | Serial executor backed by dedicated OS thread        |
+| `Kernel.Thread.Executors`        | Sharded pool of serial executors                     |
+| `Kernel.Thread.Synchronization`  | Mutex + N condition variables wrapper                |
+| `Kernel.Handoff.Cell`            | Cross-boundary ownership transfer for ~Copyable      |
+| `Kernel.Continuation.Context`    | Exactly-once continuation resumption                 |
+
+---
 
 ## Platform Support
 
-Core syscalls are implemented for macOS, Linux, and Windows. Platform-specific event facilities are available where supported.
-
-| Platform | Core Syscalls | Event System |
-|----------|---------------|--------------|
-| macOS | Implemented | kqueue |
-| iOS/tvOS/watchOS | Implemented | kqueue |
-| Linux | Implemented | io_uring (5.1+), epoll |
-| Windows | Implemented | IOCP |
-
-Kernel exposes platform-native event facilities. Selection, fallback, and policy decisions are the responsibility of higher layers.
+| Platform         | CI  | Status       |
+|------------------|-----|--------------|
+| macOS            | ✅  | Full support |
+| Linux            | ✅  | Full support |
+| Windows          | ✅  | Full support |
+| iOS/tvOS/watchOS | —   | Supported    |
 
 ### io_uring Support
 
@@ -293,28 +223,54 @@ if Kernel.IOUring.isSupported {
 
 Can be disabled via environment: `IO_URING_DISABLED=1`
 
-## Invariants
+---
+
+## Design Philosophy
+
+swift-kernel is the lowest layer in the Systems stack. It provides syscall-shaped APIs that higher layers build upon.
+
+### Paths and Strings
+
+Kernel exposes two path representations:
+
+- `SystemPackage.FilePath` is supported by convenience overloads for ergonomics and portability.
+- `Kernel.Path` represents validated, null-terminated platform strings intended for direct syscall use.
+
+Higher layers are expected to prefer `FilePath`. `Kernel.Path` exists for:
+- Zero-allocation syscall paths
+- Embedding Kernel in lower-level runtimes
+- Avoiding `SystemPackage` entirely in constrained environments
+
+### Invariants
 
 Kernel guarantees:
-- **Typed throws** - All public APIs use typed throws, no `any Error`
-- **No policy** - Raw syscall semantics, no retry logic or best-effort modes
-- **No Foundation** - No URL, Data, or Foundation string types
-- **No hidden allocation** - Any allocation performed by Kernel APIs is explicit and visible at the call site
-- **Raw descriptor model** - `Kernel.Descriptor` wraps `Int32` (POSIX) or `HANDLE` (Windows)
-- **Explicit platform gating** - `#if canImport(Darwin)`, `#if os(Windows)`, etc.
+- **Typed throws** – All public APIs use typed throws, no `any Error`
+- **No policy** – Raw syscall semantics, no retry logic or best-effort modes
+- **No Foundation** – No URL, Data, or Foundation string types
+- **No hidden allocation** – Any allocation performed by Kernel APIs is explicit
+- **Raw descriptor model** – `Kernel.Descriptor` wraps `Int32` (POSIX) or `HANDLE` (Windows)
+- **Explicit platform gating** – `#if canImport(Darwin)`, `#if os(Windows)`, etc.
+
+---
 
 ## Related Packages
 
-### Built on swift-kernel
-
-- [swift-io](https://github.com/coenttb/swift-io) - Async I/O executor with typed throws
-- [swift-file-system](https://github.com/coenttb/swift-file-system) - High-level file operations
-
 ### Dependencies
 
-- [apple/swift-system](https://github.com/apple/swift-system) - `FilePath` for path-accepting APIs
-- [swift-standards](https://github.com/swift-standards/swift-standards) - Test support
+- [swift-kernel-primitives](https://github.com/coenttb/swift-kernel-primitives): Low-level syscall bindings
+- [swift-posix](https://github.com/coenttb/swift-posix): POSIX syscall wrappers
+- [swift-darwin](https://github.com/coenttb/swift-darwin): Darwin-specific syscalls
+- [swift-linux](https://github.com/coenttb/swift-linux): Linux-specific syscalls (epoll, io_uring)
+- [swift-windows](https://github.com/coenttb/swift-windows): Windows-specific syscalls (IOCP)
+- [apple/swift-system](https://github.com/apple/swift-system): `FilePath` for path-accepting APIs
+
+### Used By
+
+- [swift-io](https://github.com/coenttb/swift-io): Async I/O executor with typed throws
+- [swift-file-system](https://github.com/coenttb/swift-file-system): High-level file operations
+
+---
 
 ## License
 
-Apache 2.0 - See [LICENSE](LICENSE.md) for details.
+Apache 2.0 – See [LICENSE](LICENSE.md) for details.

@@ -60,6 +60,20 @@ extension Kernel.File {
     /// This is the primary entry point for opening files with automatic
     /// Direct I/O mode resolution and alignment requirement discovery.
     ///
+    /// ## Direct I/O Resolution
+    /// When `configuration.cache` is `.auto`, this method probes the filesystem
+    /// for Direct I/O support and alignment requirements. If Direct I/O is not
+    /// supported, it falls back to buffered I/O silently.
+    ///
+    /// ## Error Conditions
+    /// Throws `Kernel.File.Open.Error` which includes:
+    /// - `.notFound` – Path does not exist (and `.create` not specified)
+    /// - `.permission` – Insufficient permissions to open with requested mode
+    /// - `.isDirectory` – Path is a directory (for regular file operations)
+    /// - `.exists` – File exists and `.exclusive` was specified
+    /// - `.tooManyOpen` – Process or system file descriptor limit reached
+    /// - `.readOnly` – Filesystem is read-only and write access requested
+    ///
     /// - Parameters:
     ///   - path: The file path.
     ///   - configuration: Open configuration (mode, create, truncate, cache mode).

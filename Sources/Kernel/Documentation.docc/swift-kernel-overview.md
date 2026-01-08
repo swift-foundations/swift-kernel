@@ -91,18 +91,29 @@ catch let error as Kernel.File.Open.Error {
 
 - ``Kernel``
 - ``Kernel/Descriptor``
-- ``Kernel/Error``
+- ``Kernel/Failure``
 
 ### File Operations
 
 - ``Kernel/File``
 - ``Kernel/File/Open``
+- ``Kernel/File/Handle``
+- ``Kernel/File/Clone``
 - ``Kernel/Close``
+
+### I/O Operations
+
+- ``Kernel/IO/Read``
+- ``Kernel/IO/Write``
 
 ### Memory Operations
 
 - ``Kernel/Memory``
 - ``Kernel/Memory/Map``
+
+### Locking
+
+- ``Kernel/Lock``
 
 ### Event APIs
 
@@ -110,6 +121,26 @@ catch let error as Kernel.File.Open.Error {
 - ``Kernel/IOUring``
 - ``Kernel/IOCP``
 - ``Kernel/Event/Poll``
+
+### Threading
+
+- ``Kernel/Thread/Executor``
+- ``Kernel/Thread/Executors``
+- ``Kernel/Thread/Synchronization``
+- ``Kernel/Thread/Handle``
+- ``Kernel/Thread/Spawn``
+
+### Ownership Transfer
+
+- ``Kernel/Handoff``
+- ``Kernel/Handoff/Cell``
+- ``Kernel/Handoff/Storage``
+- ``Kernel/Handoff/Box``
+
+### Continuation Support
+
+- ``Kernel/Continuation``
+- ``Kernel/Continuation/Context``
 
 ### Conceptual Articles
 
