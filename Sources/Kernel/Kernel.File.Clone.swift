@@ -16,6 +16,16 @@ public import Kernel_Primitives
 extension Kernel.File.Clone {
     /// Clones a file from source to destination.
     ///
+    /// ## Threading
+    /// This function is thread-safe. Multiple threads may call `clone()` concurrently
+    /// on different source/destination pairs. Cloning the same source to different
+    /// destinations concurrently is safe.
+    ///
+    /// ## Blocking Behavior
+    /// This function performs blocking syscalls (`clonefile(2)` / `FICLONE` /
+    /// `copy_file_range` / `CopyFileW`) and should not be called from Swift's
+    /// cooperative thread pool. Use a dedicated executor for file operations.
+    ///
     /// - Parameters:
     ///   - source: Path to the source file.
     ///   - destination: Path to the destination (must not exist).

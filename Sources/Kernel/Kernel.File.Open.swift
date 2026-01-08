@@ -60,6 +60,16 @@ extension Kernel.File {
     /// This is the primary entry point for opening files with automatic
     /// Direct I/O mode resolution and alignment requirement discovery.
     ///
+    /// ## Threading
+    /// This function is thread-safe. Multiple threads may call `open()` concurrently
+    /// on different paths. Opening the same path from multiple threads is safe but
+    /// results in independent file descriptors with separate file position state.
+    ///
+    /// ## Blocking Behavior
+    /// This function performs blocking syscalls (`open(2)` / `CreateFileW`) and
+    /// should not be called from Swift's cooperative thread pool. Use a dedicated
+    /// executor or `Kernel.Thread.Executor` for file operations.
+    ///
     /// ## Direct I/O Resolution
     /// When `configuration.cache` is `.auto`, this method probes the filesystem
     /// for Direct I/O support and alignment requirements. If Direct I/O is not
