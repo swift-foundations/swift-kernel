@@ -3,8 +3,8 @@
 //  swift-kernel
 //
 
-import Dimension
-import StandardsTestSupport
+import Dimension_Primitives
+import Test_Support_Primitives
 import Testing
 
 @testable import Kernel

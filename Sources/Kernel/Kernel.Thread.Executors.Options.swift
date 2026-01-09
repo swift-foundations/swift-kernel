@@ -5,7 +5,7 @@
 //  Created by Coen ten Thije Boonkkamp on 28/12/2025.
 //
 
-public import Dimension
+public import Dimension_Primitives
 
 extension Kernel.Thread.Executors {
     /// Configuration options for the executor pool.

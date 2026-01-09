@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Dimension
+public import Dimension_Primitives
 
 extension Kernel.Thread {
     /// Type-safe count of threads.

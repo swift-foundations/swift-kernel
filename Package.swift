@@ -8,7 +8,8 @@ let package = Package(
         .macOS(.v26),
         .iOS(.v26),
         .tvOS(.v26),
-        .watchOS(.v26)
+        .watchOS(.v26),
+        .visionOS(.v26),
     ],
     products: [
         .library(
@@ -21,12 +22,15 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/coenttb/swift-kernel-primitives.git", from: "0.1.0"),
-        .package(url: "https://github.com/coenttb/swift-posix.git", from: "0.1.0"),
-        .package(url: "https://github.com/coenttb/swift-darwin.git", from: "0.1.0"),
-        .package(url: "https://github.com/coenttb/swift-linux.git", from: "0.1.0"),
-        .package(url: "https://github.com/coenttb/swift-windows.git", from: "0.1.0"),
-        .package(url: "https://github.com/swift-standards/swift-standards.git", from: "0.29.0")
+        .package(path: "../../swift-primitives/swift-kernel-primitives"),
+        .package(path: "../../swift-primitives/swift-binary-primitives"),
+        .package(path: "../../swift-primitives/swift-dimension-primitives"),
+        .package(path: "../../swift-primitives/swift-container-primitives"),
+        .package(path: "../../swift-primitives/swift-test-support-primitives"),
+        .package(path: "../swift-posix"),
+        .package(path: "../swift-darwin"),
+        .package(path: "../swift-linux"),
+        .package(path: "../swift-windows"),
     ],
     targets: [
         // Umbrella/policy module
@@ -34,12 +38,12 @@ let package = Package(
             name: "Kernel",
             dependencies: [
                 .product(name: "Kernel Primitives", package: "swift-kernel-primitives"),
-                .product(name: "POSIX Kernel", package: "swift-posix", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux])),
-                .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
+                .product(name: "POSIX Kernel", package: "swift-posix", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
+                .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
                 .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Windows Kernel", package: "swift-windows", condition: .when(platforms: [.windows])),
-                .product(name: "Dimension", package: "swift-standards"),
-                .product(name: "StandardsCollections", package: "swift-standards"),
+                .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
+                .product(name: "Container Primitives", package: "swift-container-primitives"),
             ]
         ),
         // Test support utilities (harnesses, helpers)
@@ -57,7 +61,7 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 "Kernel Test Support",
-                .product(name: "StandardsTestSupport", package: "swift-standards")
+                .product(name: "Test Support Primitives", package: "swift-test-support-primitives"),
             ],
             path: "Tests/Kernel Tests"
         ),
@@ -66,16 +70,18 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 .product(name: "Kernel Primitives", package: "swift-kernel-primitives"),
+                .product(name: "Binary Primitives", package: "swift-binary-primitives"),
             ]
         )
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )
 
 for target in package.targets where ![.system, .binary, .plugin].contains(target.type) {
     let settings: [SwiftSetting] = [
         .enableUpcomingFeature("ExistentialAny"),
         .enableUpcomingFeature("InternalImportsByDefault"),
-        .enableUpcomingFeature("MemberImportVisibility")
+        .enableUpcomingFeature("MemberImportVisibility"),
     ]
     target.swiftSettings = (target.swiftSettings ?? []) + settings
 }

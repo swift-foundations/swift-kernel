@@ -28,7 +28,7 @@
 //    3  Error (invalid arguments, file not found, etc.)
 //
 
-import Binary
+import Binary_Primitives
 import Kernel
 import Kernel_Primitives
 
