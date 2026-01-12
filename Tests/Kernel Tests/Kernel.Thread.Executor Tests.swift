@@ -3,7 +3,7 @@
 //  swift-kernel
 //
 
-import Test_Support_Primitives
+import Test_Primitives
 import Testing
 
 @testable import Kernel
@@ -42,12 +42,6 @@ extension Kernel.Thread.Executor.Test.Unit {
         executor.shutdown()
         // No hang = success
     }
-}
-
-// MARK: - Integration Tests
-
-extension Kernel.Thread.Executor.Test {
-    @Suite struct Integration {}
 }
 
 extension Kernel.Thread.Executor.Test.Integration {

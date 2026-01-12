@@ -23,10 +23,11 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../swift-primitives/swift-kernel-primitives"),
+        .package(path: "../../swift-primitives/swift-system-primitives"),
         .package(path: "../../swift-primitives/swift-binary-primitives"),
         .package(path: "../../swift-primitives/swift-dimension-primitives"),
         .package(path: "../../swift-primitives/swift-container-primitives"),
-        .package(path: "../../swift-primitives/swift-test-support-primitives"),
+        .package(path: "../../swift-primitives/swift-test-primitives"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
         .package(path: "../swift-linux"),
@@ -38,6 +39,7 @@ let package = Package(
             name: "Kernel",
             dependencies: [
                 .product(name: "Kernel Primitives", package: "swift-kernel-primitives"),
+                .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "POSIX Kernel", package: "swift-posix", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
                 .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
@@ -61,7 +63,7 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 "Kernel Test Support",
-                .product(name: "Test Support Primitives", package: "swift-test-support-primitives"),
+                .product(name: "Test Primitives", package: "swift-test-primitives"),
             ],
             path: "Tests/Kernel Tests"
         ),

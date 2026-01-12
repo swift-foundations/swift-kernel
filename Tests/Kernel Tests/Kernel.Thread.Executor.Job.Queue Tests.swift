@@ -3,7 +3,7 @@
 //  swift-kernel
 //
 
-import Test_Support_Primitives
+import Test_Primitives
 import Testing
 
 @testable import Kernel
@@ -46,11 +46,6 @@ extension Kernel.Thread.Executor.Job.Queue.Test.Unit {
     }
 }
 
-// MARK: - Integration Tests
-
-extension Kernel.Thread.Executor.Job.Queue.Test {
-    @Suite struct Integration {}
-}
 
 extension Kernel.Thread.Executor.Job.Queue.Test.Integration {
     @Test("queue grows when full")

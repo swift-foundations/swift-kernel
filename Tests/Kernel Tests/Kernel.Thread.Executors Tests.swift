@@ -4,7 +4,7 @@
 //
 
 import Dimension_Primitives
-import Test_Support_Primitives
+import Test_Primitives
 import Testing
 
 @testable import Kernel
@@ -68,11 +68,6 @@ extension Kernel.Thread.Executors.Test.Unit {
     }
 }
 
-// MARK: - Integration Tests
-
-extension Kernel.Thread.Executors.Test {
-    @Suite struct Integration {}
-}
 
 extension Kernel.Thread.Executors.Test.Integration {
     @Test("round-robin distributes across executors")

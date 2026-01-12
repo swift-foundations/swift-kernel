@@ -6,6 +6,7 @@
 //
 
 public import Dimension_Primitives
+public import System_Primitives
 
 extension Kernel.Thread.Executors {
     /// Configuration options for the executor pool.
@@ -21,7 +22,7 @@ extension Kernel.Thread.Executors {
                 count
                 ?? min(
                     Kernel.Thread.Count(4),
-                    Kernel.Thread.Count(Kernel.System.processorCount)
+                    Kernel.Thread.Count(System.processorCount)
                 )
         }
     }
