@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel
-import Kernel_Primitives
 import Testing
 
 #if canImport(Darwin)
