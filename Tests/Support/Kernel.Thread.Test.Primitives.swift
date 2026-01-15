@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Kernel_Primitives
+import Kernel
 
 // MARK: - LockedBox
 

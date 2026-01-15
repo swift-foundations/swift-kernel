@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
+public import Kernel
 
 extension Kernel.Event {
     /// Test utilities for eventing operations (kqueue, epoll, io_uring).

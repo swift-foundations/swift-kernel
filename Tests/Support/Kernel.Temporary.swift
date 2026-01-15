@@ -11,7 +11,7 @@
 
 /// Test support for cross-platform temporary file paths.
 
-public import Kernel_Primitives
+public import Kernel
 
 // Platform imports only for getpid/GetCurrentProcessId (acceptable in test support)
 #if canImport(Darwin)
