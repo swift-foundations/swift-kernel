@@ -25,7 +25,8 @@ extension Kernel.Event {
         /// - Throws: `PipeError` if pipe creation fails
         public static func makePipe() throws -> (read: Kernel.Descriptor, write: Kernel.Descriptor) {
             do {
-                return try Kernel.Pipe.create()
+                let descriptors = try Kernel.Pipe.pipe()
+                return (read: descriptors.read, write: descriptors.write)
             } catch {
                 throw PipeError()
             }

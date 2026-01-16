@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel
+import Kernel_Test_Support
 import Test_Primitives
 import Synchronization
 import Testing

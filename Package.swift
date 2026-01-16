@@ -22,16 +22,17 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/swift-primitives/swift-kernel-primitives.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-primitives/swift-system-primitives.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-primitives/swift-binary-primitives.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-primitives/swift-dimension-primitives.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-primitives/swift-container-primitives.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-primitives/swift-test-primitives.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-foundations/swift-posix.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-foundations/swift-darwin.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-foundations/swift-linux.git", from: "0.0.1"),
-        .package(url: "https://github.com/swift-foundations/swift-windows.git", from: "0.0.1"),
+        .package(path: "../../swift-primitives/swift-kernel-primitives"),
+        .package(path: "../../swift-primitives/swift-system-primitives"),
+        .package(path: "../../swift-primitives/swift-binary-primitives"),
+        .package(path: "../../swift-primitives/swift-dimension-primitives"),
+        .package(path: "../../swift-primitives/swift-container-primitives"),
+        .package(path: "../../swift-primitives/swift-test-primitives"),
+        .package(path: "../swift-posix"),
+        .package(path: "../swift-darwin"),
+        .package(path: "../swift-linux"),
+        .package(path: "../swift-windows"),
+        .package(path: "../swift-strings"),
     ],
     targets: [
         // Umbrella/policy module
@@ -54,6 +55,7 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 .product(name: "Kernel Primitives Test Support", package: "swift-kernel-primitives"),
+                .product(name: "Strings", package: "swift-strings"),
             ],
             path: "Tests/Support"
         ),

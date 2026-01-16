@@ -47,7 +47,7 @@ extension Kernel.Test.Unit {
             try Kernel.Close.close(fd)
 
             // Cleanup
-            try? Kernel.Unlink.unlink(path)
+            try? Kernel.File.Delete.delete(path)
         }
     }
 
@@ -60,7 +60,7 @@ extension Kernel.Test.Unit {
         #endif
 
         try Kernel.Path.scope(pathString) { path in
-            #expect(throws: (any Error).self) {
+            #expect(throws: (any Swift.Error).self) {
                 try Kernel.File.Open.open(
                     path: path,
                     mode: [.read],
@@ -87,7 +87,7 @@ extension Kernel.Test.Unit {
 
             defer {
                 try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(path)
+                try? Kernel.File.Delete.delete(path)
             }
 
             // Write
@@ -122,7 +122,7 @@ extension Kernel.Test.Unit {
 
             defer {
                 try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(path)
+                try? Kernel.File.Delete.delete(path)
             }
 
             // Read from empty file using pread at offset 0
@@ -141,7 +141,7 @@ extension Kernel.Test.Unit {
 extension Kernel.Test.EdgeCase {
     @Test("close invalid descriptor throws")
     func closeInvalid() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             try Kernel.Close.close(.invalid)
         }
     }
@@ -149,7 +149,7 @@ extension Kernel.Test.EdgeCase {
     @Test("read from invalid descriptor throws")
     func readInvalid() {
         var buffer = [UInt8](repeating: 0, count: 10)
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             try buffer.withUnsafeMutableBytes { buf in
                 try Kernel.IO.Read.read(.invalid, into: buf)
             }
@@ -159,7 +159,7 @@ extension Kernel.Test.EdgeCase {
     @Test("write to invalid descriptor throws")
     func writeInvalid() {
         let data: [UInt8] = [1, 2, 3]
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             try data.withUnsafeBytes { buf in
                 try Kernel.IO.Write.write(.invalid, from: buf)
             }

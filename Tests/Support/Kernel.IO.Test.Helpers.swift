@@ -52,7 +52,7 @@
         public static func cleanupTempFile(path: String, fd: Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
             try? Kernel.Path.scope(path) { p in
-                try Kernel.Unlink.unlink(p)
+                try Kernel.File.Delete.delete(p)
             }
         }
 
@@ -86,7 +86,7 @@
                 }
                 defer {
                     try? Kernel.Close.close(fd)
-                    try? Kernel.Unlink.unlink(path)
+                    try? Kernel.File.Delete.delete(path)
                 }
                 return try body(path, fd)
             }
@@ -154,10 +154,10 @@
 
                 defer {
                     try? Kernel.Close.close(fd)
-                    try? Kernel.Unlink.unlink(path)
+                    try? Kernel.File.Delete.delete(path)
                 }
 
-                return try body(path, Kernel.File.Descriptor(rawValue: fd.rawValue))
+                return try body(path, fd)
             }
         }
     }

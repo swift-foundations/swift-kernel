@@ -26,7 +26,7 @@ extension Kernel.Path.String {
 
         @Test(".body extraction returns body error")
         func bodyExtraction() {
-            enum TestError: Error, Equatable { case test }
+            enum TestError: Swift.Error, Equatable { case test }
             let error: Kernel.Path.String.Error<TestError> = .body(.test)
             #expect(error.body == .test)
             #expect(error.conversion == nil)
@@ -34,7 +34,7 @@ extension Kernel.Path.String {
 
         @Test(".conversion extraction returns conversion error")
         func conversionExtraction() {
-            enum TestError: Error { case test }
+            enum TestError: Swift.Error { case test }
             let error: Kernel.Path.String.Error<TestError> = .conversion(.interiorNUL(index: 0))
             #expect(error.conversion == .interiorNUL(index: 0))
             #expect(error.body == nil)
@@ -42,8 +42,8 @@ extension Kernel.Path.String {
 
         @Test(".mapBody preserves conversion errors")
         func mapBodyPreservesConversion() {
-            enum A: Error { case a }
-            enum B: Error { case b }
+            enum A: Swift.Error { case a }
+            enum B: Swift.Error { case b }
             let original: Kernel.Path.String.Error<A> = .conversion(.interiorNUL(index: 1))
             let mapped = original.mapBody { _ in B.b }
             #expect(mapped.conversion == .interiorNUL(index: 1))
@@ -51,8 +51,8 @@ extension Kernel.Path.String {
 
         @Test(".mapBody transforms body errors")
         func mapBodyTransformsBody() {
-            enum A: Error, Equatable { case a }
-            enum B: Error, Equatable { case b }
+            enum A: Swift.Error, Equatable { case a }
+            enum B: Swift.Error, Equatable { case b }
             let original: Kernel.Path.String.Error<A> = .body(.a)
             let mapped = original.mapBody { _ in B.b }
             #expect(mapped.body == .b)
@@ -104,7 +104,7 @@ extension Kernel.Path.String {
     extension Kernel.Path.String.Test.Unit {
 
         /// Dummy error type to force throwing-body overload selection.
-        private enum Dummy: Error { case sentinel }
+        private enum Dummy: Swift.Error { case sentinel }
 
         @Test("with wraps conversion errors (throwing-body overload)")
         func singlePathNULWrapped() {
@@ -124,7 +124,7 @@ extension Kernel.Path.String {
 
         @Test("with wraps body errors")
         func singlePathBodyErrorWrapped() {
-            enum Body: Error, Equatable { case boom }
+            enum Body: Swift.Error, Equatable { case boom }
             typealias E = Kernel.Path.String.Error<Body>
             expectThrows(
                 { (error: E) in

@@ -30,7 +30,7 @@
 
 import Binary_Primitives
 import Kernel
-import Kernel_Primitives
+@_spi(Syscall) import Kernel_Primitives
 
 #if canImport(Darwin)
     internal import Darwin
@@ -262,7 +262,7 @@ func printUsage() {
         var token: Kernel_Primitives.Kernel.Lock.Token
         do throws(Kernel_Primitives.Kernel.Lock.Error) {
             token = try Kernel_Primitives.Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(rawValue: fd),
+                descriptor: Kernel.Descriptor(_rawValue: fd),
                 range: args.range,
                 kind: kind,
                 acquire: acquire

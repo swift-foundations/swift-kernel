@@ -8,6 +8,7 @@ import Test_Primitives
 import Testing
 
 @testable import Kernel
+import Kernel_Test_Support
 
 extension Kernel.Thread.Executors {
     #TestSuites

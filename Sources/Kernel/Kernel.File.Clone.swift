@@ -84,13 +84,13 @@ extension Kernel.File.Clone {
                     destination: dstDescriptor
                 )
             } catch {
-                try? Kernel.Unlink.unlink(destination)
+                try? Kernel.File.Delete.delete(destination)
                 throw Error(from: error)
             }
             if cloned {
                 return .reflinked
             }
-            try? Kernel.Unlink.unlink(destination)
+            try? Kernel.File.Delete.delete(destination)
             throw Error.notSupported
 
         #elseif os(Windows)
@@ -160,7 +160,7 @@ extension Kernel.File.Clone {
                 )
                 return .copied
             } catch {
-                try? Kernel.Unlink.unlink(destination)
+                try? Kernel.File.Delete.delete(destination)
                 throw Error(from: error)
             }
 
@@ -205,7 +205,7 @@ extension Kernel.File.Clone {
                     length: size
                 )
             } catch {
-                try? Kernel.Unlink.unlink(destination)
+                try? Kernel.File.Delete.delete(destination)
                 throw Error(from: error)
             }
 

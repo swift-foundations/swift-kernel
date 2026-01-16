@@ -48,10 +48,10 @@ extension Kernel.Continuation {
     ///     // Cancellation handler calls context.cancel(error)
     /// }
     /// ```
-    public final class Context<Success: Sendable, Failure: Error & Sendable>: @unchecked Sendable {
+    public final class Context<Success: Sendable, Failure: Swift.Error & Sendable>: @unchecked Sendable {
         /// The continuation to resume with typed result.
         /// Uses non-throwing continuation with Result to eliminate `any Error`.
-        private let continuation: CheckedContinuation<Result<Success, Failure>, Never>
+        private let continuation: CheckedContinuation<Swift.Result<Success, Failure>, Never>
 
         /// Atomic state: 0 = pending, 1 = completed, 2 = cancelled, 3 = failed
         private let state: Atomic<UInt8>
@@ -65,7 +65,7 @@ extension Kernel.Continuation {
         /// Creates a context wrapping the given continuation.
         ///
         /// - Parameter continuation: A non-throwing checked continuation returning Result.
-        public init(continuation: CheckedContinuation<Result<Success, Failure>, Never>) {
+        public init(continuation: CheckedContinuation<Swift.Result<Success, Failure>, Never>) {
             self.continuation = continuation
             self.state = Atomic(Self.pending)
         }
@@ -84,7 +84,7 @@ extension Kernel.Continuation {
                 ordering: .acquiringAndReleasing
             )
             if exchanged {
-                continuation.resume(returning: .success(value))
+                continuation.resume(returning: Swift.Result.success(value))
                 return true
             }
             return false
@@ -104,7 +104,7 @@ extension Kernel.Continuation {
                 ordering: .acquiringAndReleasing
             )
             if exchanged {
-                continuation.resume(returning: .failure(error))
+                continuation.resume(returning: Swift.Result.failure(error))
                 return true
             }
             return false
@@ -124,7 +124,7 @@ extension Kernel.Continuation {
                 ordering: .acquiringAndReleasing
             )
             if exchanged {
-                continuation.resume(returning: .failure(error))
+                continuation.resume(returning: Swift.Result.failure(error))
                 return true
             }
             return false

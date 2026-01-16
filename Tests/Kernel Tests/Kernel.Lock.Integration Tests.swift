@@ -48,7 +48,7 @@ private func withTempFile<R>(
         }
         defer {
             try? Kernel.Close.close(fd)
-            try? Kernel.Unlink.unlink(path)
+            try? Kernel.File.Delete.delete(path)
         }
         return try body(path, fd)
     }
@@ -121,7 +121,7 @@ extension KernelLockIntegration {
             }
             defer {
                 try? Kernel.Close.close(fd)
-                try? Kernel.Unlink.unlink(path)
+                try? Kernel.File.Delete.delete(path)
             }
             return try body(pathString, fd)
         }
