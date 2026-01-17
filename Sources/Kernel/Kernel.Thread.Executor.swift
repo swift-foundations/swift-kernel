@@ -5,6 +5,8 @@
 //  Created by Coen ten Thije Boonkkamp on 28/12/2025.
 //
 
+public import Reference_Primitives
+
 extension Kernel.Thread {
     /// A serial executor backed by a single dedicated OS thread.
     ///
@@ -65,7 +67,7 @@ extension Kernel.Thread {
             self.jobs = Job.Queue()
 
             // Retain self until the OS thread takes ownership.
-            // Uses Kernel.Handoff.Retained for safe Sendable crossing with zero allocation.
+            // Uses Reference.Transfer.Retained for safe Sendable crossing with zero allocation.
             // trap(_:_:) accepts the value explicitly, avoiding closure capture issues.
             //
             // Thread creation failure here is catastrophic - the executor cannot function
@@ -73,7 +75,7 @@ extension Kernel.Thread {
             // 1. Most callers cannot recover from thread exhaustion
             // 2. Making init() throwing would cascade through the entire API
             // 3. Thread creation failure typically indicates system-wide resource exhaustion
-            self.threadHandle = Kernel.Thread.trap(Kernel.Handoff.Retained(self)) { retained in
+            self.threadHandle = Kernel.Thread.trap(Reference.Transfer.Retained(self)) { retained in
                 let executor = retained.take()
                 executor.runLoop()
             }

@@ -9,6 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Reference_Primitives
+
 extension Kernel.Thread {
     /// Thread spawning callable type.
     ///
@@ -49,7 +51,7 @@ extension Kernel.Thread.Spawn {
     ///
     /// The closure is invoked exactly once on the spawned OS thread.
     /// This guarantee is essential for ownership-transfer patterns using
-    /// `Kernel.Handoff.Cell`, where the closure takes ownership of a value
+    /// `Reference.Transfer.Cell`, where the closure takes ownership of a value
     /// that must be consumed exactly once.
     ///
     /// - Parameter body: The work to run on the new thread. Executed exactly once.
@@ -66,7 +68,7 @@ extension Kernel.Thread.Spawn {
     ///
     /// This variant accepts a `~Copyable` value that is passed to the closure,
     /// avoiding closure capture issues with move-only types. The value is
-    /// transferred using `Kernel.Handoff.Cell`, the single audited mechanism for
+    /// transferred using `Reference.Transfer.Cell`, the single audited mechanism for
     /// cross-boundary ownership transfer.
     ///
     /// - Parameters:
@@ -79,8 +81,8 @@ extension Kernel.Thread.Spawn {
         _ value: consuming T,
         _ body: @escaping @Sendable (consuming T) -> Void
     ) throws(Kernel.Thread.Error) -> Kernel.Thread.Handle {
-        // Use Kernel.Handoff for cross-boundary ownership transfer
-        let cell = Kernel.Handoff.Cell(value)
+        // Use Reference.Transfer for cross-boundary ownership transfer
+        let cell = Reference.Transfer.Cell(value)
         let token = cell.token()
 
         return try self {
