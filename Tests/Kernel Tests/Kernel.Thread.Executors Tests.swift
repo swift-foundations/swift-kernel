@@ -11,7 +11,7 @@ import Testing
 import Kernel_Test_Support
 
 extension Kernel.Thread.Executors {
-    #TestSuites
+    #Tests
 }
 
 // MARK: - Unit Tests

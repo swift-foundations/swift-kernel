@@ -57,7 +57,7 @@ extension Kernel.Temporary {
     ///
     /// - Parameter prefix: Prefix for the filename (e.g., "kernel-test").
     /// - Returns: A unique path string in the system temp directory.
-    public static func filePath(prefix: String) -> String {
+    public static func filePath(prefix: Swift.String) -> Swift.String {
         #if os(Windows)
             let pid = Int(GetCurrentProcessId())
         #else

@@ -15,7 +15,7 @@ import Test_Primitives
 import Testing
 
 extension Kernel.Path.String {
-    #TestSuites
+    #Tests
 }
 
 #if !os(Windows)

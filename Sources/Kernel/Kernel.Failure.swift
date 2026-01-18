@@ -59,7 +59,7 @@ extension Kernel {
 // MARK: - CustomStringConvertible
 
 extension Kernel.Failure: CustomStringConvertible {
-    public var description: String {
+    public var description: Swift.String {
         switch self {
         case .path(let error):
             return "path: \(error)"
@@ -154,11 +154,11 @@ extension Kernel.Failure {
     ///
     /// - Parameter code: The unified error code.
     /// - Returns: A human-readable error message, or `nil` if not available.
-    public static func message(for code: Kernel.Error.Code) -> String? {
+    public static func message(for code: Kernel.Error.Code) -> Swift.String? {
         switch code {
         case .posix(let rawValue):
             #if !os(Windows)
-                return String(cString: strerror(rawValue))
+                return Swift.String(cString: strerror(rawValue))
             #else
                 return nil
             #endif

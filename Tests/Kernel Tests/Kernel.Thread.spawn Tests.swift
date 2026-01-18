@@ -16,7 +16,7 @@ import Synchronization
 import Testing
 
 extension Kernel.Thread.Spawn {
-    #TestSuites
+    #Tests
 }
 
 // MARK: - Unit Tests

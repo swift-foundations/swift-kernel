@@ -16,7 +16,7 @@ import Testing
 @testable import Kernel
 
 extension Kernel {
-    #TestSuites
+    #Tests
 }
 
 // MARK: - Integration Tests (require full Kernel module for file I/O)

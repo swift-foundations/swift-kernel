@@ -20,7 +20,7 @@ import Testing
 #endif
 
 // Integration suite for multi-process lock tests
-// Note: Kernel.Lock.Test is defined in Kernel Primitives Tests via #TestSuites
+// Note: Kernel.Lock.Test is defined in Kernel Primitives Tests via #Tests
 // This integration test target defines its own suite
 @Suite("Kernel.Lock Integration")
 struct KernelLockIntegration {}

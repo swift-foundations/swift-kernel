@@ -24,7 +24,7 @@
 
         /// Creates a temporary file and returns its path string and descriptor.
         /// Caller is responsible for cleanup via `cleanupTempFile`.
-        public static func createTempFile(prefix: String = "io-test") throws -> (path: String, fd: Kernel.Descriptor) {
+        public static func createTempFile(prefix: Swift.String = "io-test") throws -> (path: Swift.String, fd: Kernel.Descriptor) {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
             let fd = try Kernel.Path.scope(pathString) { path in
                 try Kernel.File.Open.open(
@@ -39,7 +39,7 @@
 
         /// Creates a temporary file with content and returns its path string and descriptor.
         /// Caller is responsible for cleanup via `cleanupTempFile`.
-        public static func createTempFileWithContent(_ content: String, prefix: String = "io-test") throws -> (path: String, fd: Kernel.Descriptor) {
+        public static func createTempFileWithContent(_ content: Swift.String, prefix: Swift.String = "io-test") throws -> (path: Swift.String, fd: Kernel.Descriptor) {
             let (pathString, fd) = try createTempFile(prefix: prefix)
             var contentBytes = Array(content.utf8)
             _ = try? contentBytes.withUnsafeMutableBytes { ptr in
@@ -49,7 +49,7 @@
         }
 
         /// Cleans up a temporary file created by `createTempFile` or `createTempFileWithContent`.
-        public static func cleanupTempFile(path: String, fd: Kernel.Descriptor) {
+        public static func cleanupTempFile(path: Swift.String, fd: Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
             try? Kernel.Path.scope(path) { p in
                 try Kernel.File.Delete.delete(p)
@@ -68,7 +68,7 @@
         /// - Returns: The value returned by the body
         /// - Throws: `TempFileError` if creation fails, or rethrows from body
         public static func withTempFile<R>(
-            prefix: String = "io-test",
+            prefix: Swift.String = "io-test",
             _ body: (borrowing Kernel.Path, Kernel.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
@@ -103,8 +103,8 @@
         /// - Returns: The value returned by the body
         /// - Throws: `TempFileError` if creation fails, or rethrows from body
         public static func withTempFile<R>(
-            content: String,
-            prefix: String = "io-test",
+            content: Swift.String,
+            prefix: Swift.String = "io-test",
             _ body: (borrowing Kernel.Path, Kernel.Descriptor) throws -> R
         ) throws -> R {
             try withTempFile(prefix: prefix) { path, fd in
@@ -127,8 +127,8 @@
         /// - Returns: The value returned by the body
         /// - Throws: `TempFileError` if creation fails, or rethrows from body
         public static func withTempFileForHandle<R>(
-            content: String? = nil,
-            prefix: String = "handle-test",
+            content: Swift.String? = nil,
+            prefix: Swift.String = "handle-test",
             _ body: (borrowing Kernel.Path, Kernel.File.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)

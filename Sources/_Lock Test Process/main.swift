@@ -42,7 +42,7 @@ import Kernel
 
 // MARK: - IO Helpers
 
-func writeStdout(_ message: String) {
+func writeStdout(_ message: Swift.String) {
     let bytes = Array(message.utf8)
     bytes.withUnsafeBytes { ptr in
         #if os(Windows)
@@ -54,7 +54,7 @@ func writeStdout(_ message: String) {
     }
 }
 
-func writeStderr(_ message: String) {
+func writeStderr(_ message: Swift.String) {
     let bytes = Array(message.utf8)
     bytes.withUnsafeBytes { ptr in
         #if os(Windows)
@@ -91,7 +91,7 @@ struct Arguments {
     }
 
     let command: Command
-    let filePath: String
+    let filePath: Swift.String
     var range: Kernel.Lock.Range = .file
     var holdSeconds: Int? = nil
     var deadlineMs: Int = 1000  // Default 1 second
