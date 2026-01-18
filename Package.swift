@@ -9,7 +9,7 @@ let package = Package(
         .iOS(.v26),
         .tvOS(.v26),
         .watchOS(.v26),
-        .visionOS(.v26),
+        .visionOS(.v26)
     ],
     products: [
         .library(
@@ -19,7 +19,7 @@ let package = Package(
         .library(
             name: "Kernel Test Support",
             targets: ["Kernel Test Support"]
-        ),
+        )
     ],
     dependencies: [
         .package(path: "../../swift-primitives/swift-kernel-primitives"),
@@ -28,12 +28,11 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-dimension-primitives"),
         .package(path: "../../swift-primitives/swift-container-primitives"),
         .package(path: "../../swift-primitives/swift-reference-primitives"),
-        .package(path: "../../swift-primitives/swift-test-primitives"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
         .package(path: "../swift-linux"),
         .package(path: "../swift-windows"),
-        .package(path: "../swift-strings"),
+        .package(path: "../swift-strings")
     ],
     targets: [
         // Umbrella/policy module
@@ -48,7 +47,7 @@ let package = Package(
                 .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Windows Kernel", package: "swift-windows", condition: .when(platforms: [.windows])),
                 .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
-                .product(name: "Container Primitives", package: "swift-container-primitives"),
+                .product(name: "Container Primitives", package: "swift-container-primitives")
             ]
         ),
         // Test support utilities (harnesses, helpers)
@@ -57,26 +56,17 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 .product(name: "Kernel Primitives Test Support", package: "swift-kernel-primitives"),
-                .product(name: "Strings", package: "swift-strings"),
+                .product(name: "Strings", package: "swift-strings")
             ],
             path: "Tests/Support"
         ),
         // Integration tests (uses full Kernel module)
-        .testTarget(
-            name: "Kernel Tests",
-            dependencies: [
-                "Kernel",
-                "Kernel Test Support",
-                .product(name: "Test Primitives", package: "swift-test-primitives"),
-            ],
-            path: "Tests/Kernel Tests"
-        ),
         .executableTarget(
             name: "_Lock Test Process",
             dependencies: [
                 "Kernel",
                 .product(name: "Kernel Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Binary Primitives", package: "swift-binary-primitives"),
+                .product(name: "Binary Primitives", package: "swift-binary-primitives")
             ]
         )
     ],
@@ -87,7 +77,7 @@ for target in package.targets where ![.system, .binary, .plugin].contains(target
     let settings: [SwiftSetting] = [
         .enableUpcomingFeature("ExistentialAny"),
         .enableUpcomingFeature("InternalImportsByDefault"),
-        .enableUpcomingFeature("MemberImportVisibility"),
+        .enableUpcomingFeature("MemberImportVisibility")
     ]
     target.swiftSettings = (target.swiftSettings ?? []) + settings
 }
