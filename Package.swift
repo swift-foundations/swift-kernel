@@ -26,7 +26,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-system-primitives"),
         .package(path: "../../swift-primitives/swift-binary-primitives"),
         .package(path: "../../swift-primitives/swift-dimension-primitives"),
-        .package(path: "../../swift-primitives/swift-container-primitives"),
+        .package(path: "../../swift-primitives/swift-deque-primitives"),
         .package(path: "../../swift-primitives/swift-reference-primitives"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
@@ -47,7 +47,7 @@ let package = Package(
                 .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Windows Kernel", package: "swift-windows", condition: .when(platforms: [.windows])),
                 .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
-                .product(name: "Container Primitives", package: "swift-container-primitives")
+                .product(name: "Deque Primitives", package: "swift-deque-primitives")
             ]
         ),
         // Test support utilities (harnesses, helpers)

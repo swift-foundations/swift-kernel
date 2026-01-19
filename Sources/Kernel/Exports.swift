@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 @_exported public import Kernel_Primitives
-@_exported public import Container_Primitives
+@_exported public import Deque_Primitives
 @_exported public import Dimension_Primitives
 @_exported public import Reference_Primitives
 
