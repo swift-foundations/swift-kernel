@@ -90,7 +90,7 @@ extension Kernel.File {
     /// - Returns: A file handle with Direct I/O state.
     /// - Throws: `Kernel.File.Open.Error` on failure.
     public static func open(
-        _ path: borrowing Kernel.Path,
+        _ path: borrowing Kernel.Path.View,
         configuration: Open.Configuration = .init()
     ) throws(Open.Error) -> Handle {
         // 1. Discover requirements
@@ -109,7 +109,11 @@ extension Kernel.File {
         var kernelOptions: Open.Options = []
         if configuration.create { kernelOptions.insert(.create) }
         if configuration.truncate { kernelOptions.insert(.truncate) }
+        #if os(Linux)
         if resolved == .direct { kernelOptions.insert(.direct) }
+        #elseif canImport(Darwin)
+        if resolved == .direct { kernelOptions.insert(.noCache) }
+        #endif
 
         // 4. Open via Kernel primitives
         let descriptor = try Open.open(
