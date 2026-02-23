@@ -187,6 +187,7 @@ extension Kernel.File.Write.Streaming {
     /// Opens a file for multi-phase streaming write using a path string.
     ///
     /// Internal entry point that works with path strings directly.
+    @usableFromInline
     internal static func open(
         pathString: Swift.String,
         options: Options
@@ -288,7 +289,7 @@ extension Kernel.File.Write.Streaming {
 
         // Remove temp file if atomic mode
         if let tempPath = context.tempPathString {
-            Kernel.Path.scope(tempPath) { kernelPath in
+            try? Kernel.Path.scope(tempPath) { kernelPath in
                 try? Kernel.File.Delete.delete(kernelPath)
             }
         }
@@ -378,9 +379,9 @@ extension Kernel.File.Write.Streaming {
     }
 
     private static func createDirectories(_ path: Swift.String) throws(Error) {
-        Kernel.Path.scope(path) { kernelPath in
+        try? Kernel.Path.scope(path) { kernelPath in
             do {
-                try Kernel.Directory.Create.create(kernelPath, permissions: .standard, recursive: true)
+                try Kernel.Directory.Create.create(kernelPath, permissions: .standard)
             } catch {
                 // Ignore - directory might already exist
             }
@@ -388,14 +389,14 @@ extension Kernel.File.Write.Streaming {
     }
 
     private static func fileExists(_ pathString: Swift.String) -> Bool {
-        Kernel.Path.scope(pathString) { kernelPath -> Bool in
+        (try? Kernel.Path.scope(pathString) { kernelPath -> Bool in
             do {
                 _ = try Kernel.File.Stats.lget(path: kernelPath)
                 return true
             } catch {
                 return false
             }
-        }
+        }) ?? false
     }
 
     private static func createFile(
@@ -409,21 +410,32 @@ extension Kernel.File.Write.Streaming {
             options.insert(.truncate)
         }
 
-        return try Kernel.Path.scope(pathString) { kernelPath throws(Error) -> Kernel.Descriptor in
-            do {
-                return try Kernel.File.Open.open(
-                    path: kernelPath,
-                    mode: .write,
-                    options: options,
-                    permissions: .standard
-                )
-            } catch {
-                throw .fileCreationFailed(
-                    path: pathString,
-                    code: .POSIX.ENOENT,  // Default code
-                    message: "open failed: \(error)"
-                )
+        do {
+            return try Kernel.Path.scope(pathString) { kernelPath throws(Error) -> Kernel.Descriptor in
+                do {
+                    return try Kernel.File.Open.open(
+                        path: kernelPath,
+                        mode: .write,
+                        options: options,
+                        permissions: .standard
+                    )
+                } catch {
+                    throw .fileCreationFailed(
+                        path: pathString,
+                        code: .POSIX.ENOENT,
+                        message: "open failed: \(error)"
+                    )
+                }
             }
+        } catch {
+            if let bodyError = error.body {
+                throw bodyError
+            }
+            throw .fileCreationFailed(
+                path: pathString,
+                code: .POSIX.ENOENT,
+                message: "path conversion failed: \(error)"
+            )
         }
     }
 
@@ -642,13 +654,11 @@ extension Kernel.File.Write.Streaming {
         from source: Swift.String,
         to dest: Swift.String
     ) throws(Error) {
-        Kernel.Path.scope(source) { sourcePath in
-            Kernel.Path.scope(dest) { destPath in
-                do {
-                    try Kernel.File.Move.move(from: sourcePath, to: destPath)
-                } catch {
-                    // Error will be thrown below
-                }
+        try? Kernel.Path.scope(source, dest) { sourcePath, destPath in
+            do {
+                try Kernel.File.Move.move(from: sourcePath, to: destPath)
+            } catch {
+                // Error will be thrown below
             }
         }
         // Check if rename succeeded by verifying dest exists
@@ -671,21 +681,19 @@ extension Kernel.File.Write.Streaming {
             throw .destinationExists(path: dest)
         }
 
-        Kernel.Path.scope(source) { sourcePath in
-            Kernel.Path.scope(dest) { destPath in
-                do {
-                    try Kernel.File.Move.noClobber(from: sourcePath, to: destPath)
-                } catch let error as Kernel.File.Move.Extended.Error {
-                    switch error {
-                    case .exists:
-                        // Will be caught as destinationExists
-                        break
-                    default:
-                        break
-                    }
-                } catch {
-                    // Continue and check result
+        try? Kernel.Path.scope(source, dest) { sourcePath, destPath in
+            do {
+                try Kernel.File.Move.noClobber(from: sourcePath, to: destPath)
+            } catch let error as Kernel.File.Move.Extended.Error {
+                switch error {
+                case .exists:
+                    // Will be caught as destinationExists
+                    break
+                default:
+                    break
                 }
+            } catch {
+                // Continue and check result
             }
         }
 

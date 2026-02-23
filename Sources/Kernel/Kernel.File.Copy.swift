@@ -177,7 +177,8 @@ extension Kernel.File.Copy {
         // Read the symlink target
         let target: Swift.String
         do throws(Kernel.Link.Symbolic.Error) {
-            target = try Kernel.Link.Symbolic.readTarget(at: source)
+            let kernelTarget = try Kernel.Link.Symbolic.readTarget(at: source)
+            target = Swift.String(kernelTarget)
         } catch let error {
             throw .symlink(error)
         }

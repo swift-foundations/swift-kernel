@@ -81,7 +81,7 @@ extension Kernel.File.Write.Atomic {
                 try? Kernel.Close.close(descriptor)
             }
             if phase < .renamedPublished {
-                Kernel.Path.scope(tempPath) { kernelPath in
+                try? Kernel.Path.scope(tempPath) { kernelPath in
                     try? Kernel.File.Delete.delete(kernelPath)
                 }
             }
@@ -227,9 +227,9 @@ extension Kernel.File.Write.Atomic {
     }
 
     private static func createDirectories(_ path: Swift.String) throws(Error) {
-        Kernel.Path.scope(path) { kernelPath in
+        try? Kernel.Path.scope(path) { kernelPath in
             do {
-                try Kernel.Directory.Create.create(kernelPath, permissions: .standard, recursive: true)
+                try Kernel.Directory.Create.create(kernelPath, permissions: .standard)
             } catch {
                 // Ignore - directory might already exist
             }
@@ -237,14 +237,14 @@ extension Kernel.File.Write.Atomic {
     }
 
     private static func fileExists(_ pathString: Swift.String) -> Bool {
-        Kernel.Path.scope(pathString) { kernelPath -> Bool in
+        (try? Kernel.Path.scope(pathString) { kernelPath -> Bool in
             do {
                 _ = try Kernel.File.Stats.lget(path: kernelPath)
                 return true
             } catch {
                 return false
             }
-        }
+        }) ?? false
     }
 }
 
@@ -269,18 +269,27 @@ extension Kernel.File.Write.Atomic {
             let tempPath = "\(parent)/.\(baseName).atomic.\(pid).\(random).tmp"
             #endif
 
-            let result: Result<Kernel.Descriptor, Swift.Error> = Kernel.Path.scope(tempPath) { kernelPath in
-                do {
-                    let fd = try Kernel.File.Open.open(
-                        path: kernelPath,
-                        mode: .readWrite,
-                        options: [.create, .exclusive],
-                        permissions: Kernel.File.Permissions(rawValue: 0o600)
-                    )
-                    return .success(fd)
-                } catch {
-                    return .failure(error)
+            let result: Result<Kernel.Descriptor, Swift.Error>
+            do {
+                result = try Kernel.Path.scope(tempPath) { kernelPath -> Result<Kernel.Descriptor, Swift.Error> in
+                    do {
+                        let fd = try Kernel.File.Open.open(
+                            path: kernelPath,
+                            mode: .readWrite,
+                            options: [.create, .exclusive],
+                            permissions: Kernel.File.Permissions(rawValue: 0o600)
+                        )
+                        return .success(fd)
+                    } catch {
+                        return .failure(error)
+                    }
                 }
+            } catch {
+                throw .tempFileCreationFailed(
+                    directory: parent,
+                    code: .POSIX.ENOENT,
+                    message: "path conversion failed: \(error)"
+                )
             }
 
             switch result {
@@ -288,13 +297,13 @@ extension Kernel.File.Write.Atomic {
                 return (fd, tempPath)
             case .failure(let error):
                 if let openError = error as? Kernel.File.Open.Error {
-                    if case .space(.exists) = openError, attempt < maxTempFileAttempts - 1 {
+                    if case .path(.exists) = openError, attempt < maxTempFileAttempts - 1 {
                         continue
                     }
                     throw .tempFileCreationFailed(
                         directory: parent,
-                        code: openError.code,
-                        message: openError.code.description
+                        code: .POSIX.EIO,
+                        message: "\(openError)"
                     )
                 }
                 throw .tempFileCreationFailed(
@@ -350,19 +359,13 @@ extension Kernel.File.Write.Atomic {
 
 extension Kernel.File.Write.Atomic {
     private static func statIfExists(_ pathString: Swift.String) throws(Error) -> Kernel.File.Stats? {
-        return Kernel.Path.scope(pathString) { kernelPath -> Kernel.File.Stats? in
+        return (try? Kernel.Path.scope(pathString) { kernelPath -> Kernel.File.Stats? in
             do {
                 return try Kernel.File.Stats.lget(path: kernelPath)
-            } catch let error as Kernel.File.Stats.Error {
-                if case .path(.notFound) = error {
-                    return nil
-                }
-                // For other errors, return nil (file might not exist or be inaccessible)
-                return nil
             } catch {
                 return nil
             }
-        }
+        }) ?? nil
     }
 }
 
@@ -461,13 +464,11 @@ extension Kernel.File.Write.Atomic {
         from source: Swift.String,
         to dest: Swift.String
     ) throws(Error) {
-        Kernel.Path.scope(source) { sourcePath in
-            Kernel.Path.scope(dest) { destPath in
-                do {
-                    try Kernel.File.Move.move(from: sourcePath, to: destPath)
-                } catch {
-                    // Error handled below
-                }
+        try? Kernel.Path.scope(source, dest) { sourcePath, destPath in
+            do {
+                try Kernel.File.Move.move(from: sourcePath, to: destPath)
+            } catch {
+                // Error handled below
             }
         }
         // Verify rename succeeded
@@ -490,20 +491,18 @@ extension Kernel.File.Write.Atomic {
             throw .destinationExists(path: dest)
         }
 
-        Kernel.Path.scope(source) { sourcePath in
-            Kernel.Path.scope(dest) { destPath in
-                do {
-                    try Kernel.File.Move.noClobber(from: sourcePath, to: destPath)
-                } catch let error as Kernel.File.Move.Extended.Error {
-                    switch error {
-                    case .exists:
-                        break // Will be caught below
-                    default:
-                        break
-                    }
-                } catch {
-                    // Continue and check result
+        try? Kernel.Path.scope(source, dest) { sourcePath, destPath in
+            do {
+                try Kernel.File.Move.noClobber(from: sourcePath, to: destPath)
+            } catch let error as Kernel.File.Move.Extended.Error {
+                switch error {
+                case .exists:
+                    break // Will be caught below
+                default:
+                    break
                 }
+            } catch {
+                // Continue and check result
             }
         }
 
@@ -573,10 +572,17 @@ extension Kernel.File.Write.Atomic {
             do {
                 try Kernel.File.Attributes.setPermissions(descriptor, permissions: stats.permissions)
             } catch let error as Kernel.File.Attributes.Error {
+                let code: Kernel.Error.Code
+                switch error {
+                case .platform(let e): code = e.code
+                case .permission(_): code = .POSIX.EACCES
+                case .path(_): code = .POSIX.ENOENT
+                case .io(_): code = .POSIX.EIO
+                }
                 throw .metadataPreservationFailed(
                     operation: "fchmod",
-                    code: error.code,
-                    message: error.code.description
+                    code: code,
+                    message: "\(error)"
                 )
             }
         }
@@ -588,10 +594,17 @@ extension Kernel.File.Write.Atomic {
             } catch let error as Kernel.File.Chown.Error {
                 // Ownership changes often fail for non-root users
                 if options.strictOwnership {
+                    let code: Kernel.Error.Code
+                    switch error {
+                    case .platform(let e): code = e.code
+                    case .permission(_): code = .POSIX.EACCES
+                    case .path(_): code = .POSIX.ENOENT
+                    case .io(_): code = .POSIX.EIO
+                    }
                     throw .metadataPreservationFailed(
                         operation: "fchown",
-                        code: error.code,
-                        message: error.code.description
+                        code: code,
+                        message: "\(error)"
                     )
                 }
                 // Otherwise silently ignore - expected for normal users
