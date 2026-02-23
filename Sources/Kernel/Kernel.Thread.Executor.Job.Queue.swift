@@ -15,7 +15,7 @@ extension Kernel.Thread.Executor.Job {
     struct Queue {
         private var storage: Deque<Kernel.Thread.Executor.Job>
 
-        init(initialCapacity: Int = 64) {
+        init(initialCapacity: Index<Kernel.Thread.Executor.Job>.Count = try! .init(64)) {
             self.storage = Deque()
             storage.reserve(initialCapacity)
         }
@@ -23,19 +23,19 @@ extension Kernel.Thread.Executor.Job {
 }
 
 extension Kernel.Thread.Executor.Job.Queue {
-    var count: Int { storage.count }
+    var count: Index<Kernel.Thread.Executor.Job>.Count { storage.count }
     var isEmpty: Bool { storage.isEmpty }
-    var capacity: Int { storage.capacity }
+    var capacity: Index<Kernel.Thread.Executor.Job>.Count { storage.capacity }
 }
 
 extension Kernel.Thread.Executor.Job.Queue {
     /// Enqueue a job. Grows the buffer if needed.
     mutating func enqueue(_ job: Kernel.Thread.Executor.Job) {
-        storage.push.back(job)
+        storage.push(job, to: .back)
     }
 
     /// Dequeue a job, or nil if empty.
     mutating func dequeue() -> Kernel.Thread.Executor.Job? {
-        storage.take.front
+        storage.take(from: .front)
     }
 }

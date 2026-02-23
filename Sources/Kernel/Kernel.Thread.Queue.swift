@@ -38,26 +38,26 @@ extension Kernel.Thread {
         /// Creates a queue with the given initial capacity.
         ///
         /// - Parameter initialCapacity: Initial buffer size. Defaults to 64.
-        public init(initialCapacity: Int = 64) {
+        public init(initialCapacity: Index<Element>.Count = try! .init(64)) {
             self.storage = Deque()
             storage.reserve(initialCapacity)
         }
 
         /// Number of elements in the queue.
-        public var count: Int { storage.count }
+        public var count: Index<Element>.Count { storage.count }
 
         /// Whether the queue is empty.
         public var isEmpty: Bool { storage.isEmpty }
 
         /// Current capacity of the queue.
-        public var capacity: Int { storage.capacity }
+        public var capacity: Index<Element>.Count { storage.capacity }
 
         /// Enqueue an element. Grows the buffer if needed.
         ///
         /// - Parameter element: Element to add.
         /// - Complexity: O(1) amortized.
         public mutating func enqueue(_ element: Element) {
-            storage.push.back(element)
+            storage.push(element, to: .back)
         }
 
         /// Dequeue an element, or nil if empty.
@@ -65,19 +65,19 @@ extension Kernel.Thread {
         /// - Returns: The front element, or nil if the queue is empty.
         /// - Complexity: O(1).
         public mutating func dequeue() -> Element? {
-            storage.take.front
+            storage.take(from: .front)
         }
 
         /// Peek at the front element without removing it.
         ///
         /// - Returns: The front element, or nil if the queue is empty.
         public func peek() -> Element? {
-            storage.peek.front
+            storage.peek(at: .front)
         }
 
         /// Remove all elements from the queue.
         public mutating func removeAll(keepingCapacity: Bool = false) {
-            storage.removeAll(keepingCapacity: keepingCapacity)
+            storage.clear(keepingCapacity: keepingCapacity)
         }
     }
 }

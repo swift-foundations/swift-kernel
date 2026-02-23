@@ -22,7 +22,7 @@ extension Kernel.Thread.Count {
     /// Creates a thread count from a processor count.
     @inlinable
     public init(_ processorCount: Kernel.System.Processor.Count) {
-        self.init(Int(processorCount))
+        self.init(__unchecked: (), Int(bitPattern: processorCount.rawValue))
     }
 }
 
