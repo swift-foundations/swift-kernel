@@ -21,8 +21,8 @@ extension Kernel.Thread.Executors {
             self.count =
                 count
                 ?? min(
-                    Kernel.Thread.Count(4),
-                    Kernel.Thread.Count(System.processorCount)
+                    Kernel.Thread.Count(__unchecked: (), 4),
+                    Kernel.Thread.Count(__unchecked: (), System.processorCount)
                 )
         }
     }

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Reference_Primitives
+public import Ownership_Primitives
 
 extension Kernel.Thread {
     /// Thread spawning callable type.
@@ -68,7 +68,7 @@ extension Kernel.Thread.Spawn {
     ///
     /// This variant accepts a `~Copyable` value that is passed to the closure,
     /// avoiding closure capture issues with move-only types. The value is
-    /// transferred using `Reference.Transfer.Cell`, the single audited mechanism for
+    /// transferred using `Ownership.Transfer.Cell`, the single audited mechanism for
     /// cross-boundary ownership transfer.
     ///
     /// - Parameters:
@@ -81,8 +81,8 @@ extension Kernel.Thread.Spawn {
         _ value: consuming T,
         _ body: @escaping @Sendable (consuming T) -> Void
     ) throws(Kernel.Thread.Error) -> Kernel.Thread.Handle {
-        // Use Reference.Transfer for cross-boundary ownership transfer
-        let cell = Reference.Transfer.Cell(value)
+        // Use Ownership.Transfer for cross-boundary ownership transfer
+        let cell = Ownership.Transfer.Cell(value)
         let token = cell.token()
 
         return try self {

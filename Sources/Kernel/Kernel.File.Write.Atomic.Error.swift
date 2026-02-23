@@ -35,6 +35,9 @@ extension Kernel.File.Write.Atomic {
         /// Metadata preservation failed.
         case metadataPreservationFailed(operation: Swift.String, code: Kernel.Error.Code, message: Swift.String)
 
+        /// Timestamp preservation failed.
+        case timestampPreservationFailed(Kernel.File.Times.Error)
+
         /// Atomic rename failed.
         case renameFailed(from: Swift.String, to: Swift.String, code: Kernel.Error.Code, message: Swift.String)
 
@@ -226,6 +229,8 @@ extension Kernel.File.Write.Atomic.Error: CustomStringConvertible {
             return "Close failed: \(message) (\(code))"
         case .metadataPreservationFailed(let op, let code, let message):
             return "Metadata preservation failed (\(op)): \(message) (\(code))"
+        case .timestampPreservationFailed(let error):
+            return "Timestamp preservation failed (futimens): \(error)"
         case .renameFailed(let from, let to, let code, let message):
             return "Rename failed '\(from)' → '\(to)': \(message) (\(code))"
         case .destinationExists(let path):

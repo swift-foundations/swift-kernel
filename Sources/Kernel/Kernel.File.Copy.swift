@@ -175,19 +175,23 @@ extension Kernel.File.Copy {
         to destination: borrowing Kernel.Path.View
     ) throws(Kernel.File.Copy.Error) {
         // Read the symlink target
-        let target: Kernel.Path
+        let target: Swift.String
         do throws(Kernel.Link.Symbolic.Error) {
             target = try Kernel.Link.Symbolic.readTarget(at: source)
         } catch let error {
             throw .symlink(error)
         }
 
-        // Create symlink at destination
-        do throws(Kernel.Link.Symbolic.Error) {
-            try target.withView { targetView throws(Kernel.Link.Symbolic.Error) in
+        // Create symlink at destination using scoped path conversion
+        var createError: Kernel.Link.Symbolic.Error?
+        try? Kernel.Path.scope(target) { targetView in
+            do {
                 try Kernel.Link.Symbolic.create(target: targetView, at: destination)
-            }
-        } catch let error {
+            } catch let error as Kernel.Link.Symbolic.Error {
+                createError = error
+            } catch {}
+        }
+        if let error = createError {
             throw .symlink(error)
         }
     }

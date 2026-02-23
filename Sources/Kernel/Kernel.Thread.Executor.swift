@@ -5,7 +5,7 @@
 //  Created by Coen ten Thije Boonkkamp on 28/12/2025.
 //
 
-public import Reference_Primitives
+public import Ownership_Primitives
 
 extension Kernel.Thread {
     /// A serial executor backed by a single dedicated OS thread.
@@ -75,7 +75,7 @@ extension Kernel.Thread {
             // 1. Most callers cannot recover from thread exhaustion
             // 2. Making init() throwing would cascade through the entire API
             // 3. Thread creation failure typically indicates system-wide resource exhaustion
-            self.threadHandle = Kernel.Thread.trap(Reference.Transfer.Retained(self)) { retained in
+            self.threadHandle = Kernel.Thread.trap(Ownership.Transfer.Retained(self)) { retained in
                 let executor = retained.take()
                 executor.runLoop()
             }

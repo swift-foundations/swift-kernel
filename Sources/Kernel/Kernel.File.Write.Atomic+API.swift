@@ -81,7 +81,7 @@ extension Kernel.File.Write.Atomic {
                 try? Kernel.Close.close(descriptor)
             }
             if phase < .renamedPublished {
-                Kernel.Path.fromString(tempPath) { kernelPath in
+                Kernel.Path.scope(tempPath) { kernelPath in
                     try? Kernel.File.Delete.delete(kernelPath)
                 }
             }
@@ -227,7 +227,7 @@ extension Kernel.File.Write.Atomic {
     }
 
     private static func createDirectories(_ path: Swift.String) throws(Error) {
-        Kernel.Path.fromString(path) { kernelPath in
+        Kernel.Path.scope(path) { kernelPath in
             do {
                 try Kernel.Directory.Create.create(kernelPath, permissions: .standard, recursive: true)
             } catch {
@@ -237,7 +237,7 @@ extension Kernel.File.Write.Atomic {
     }
 
     private static func fileExists(_ pathString: Swift.String) -> Bool {
-        Kernel.Path.fromString(pathString) { kernelPath -> Bool in
+        Kernel.Path.scope(pathString) { kernelPath -> Bool in
             do {
                 _ = try Kernel.File.Stats.lget(path: kernelPath)
                 return true
@@ -269,7 +269,7 @@ extension Kernel.File.Write.Atomic {
             let tempPath = "\(parent)/.\(baseName).atomic.\(pid).\(random).tmp"
             #endif
 
-            let result: Result<Kernel.Descriptor, Swift.Error> = Kernel.Path.fromString(tempPath) { kernelPath in
+            let result: Result<Kernel.Descriptor, Swift.Error> = Kernel.Path.scope(tempPath) { kernelPath in
                 do {
                     let fd = try Kernel.File.Open.open(
                         path: kernelPath,
@@ -350,7 +350,7 @@ extension Kernel.File.Write.Atomic {
 
 extension Kernel.File.Write.Atomic {
     private static func statIfExists(_ pathString: Swift.String) throws(Error) -> Kernel.File.Stats? {
-        return Kernel.Path.fromString(pathString) { kernelPath -> Kernel.File.Stats? in
+        return Kernel.Path.scope(pathString) { kernelPath -> Kernel.File.Stats? in
             do {
                 return try Kernel.File.Stats.lget(path: kernelPath)
             } catch let error as Kernel.File.Stats.Error {
@@ -461,8 +461,8 @@ extension Kernel.File.Write.Atomic {
         from source: Swift.String,
         to dest: Swift.String
     ) throws(Error) {
-        Kernel.Path.fromString(source) { sourcePath in
-            Kernel.Path.fromString(dest) { destPath in
+        Kernel.Path.scope(source) { sourcePath in
+            Kernel.Path.scope(dest) { destPath in
                 do {
                     try Kernel.File.Move.move(from: sourcePath, to: destPath)
                 } catch {
@@ -490,8 +490,8 @@ extension Kernel.File.Write.Atomic {
             throw .destinationExists(path: dest)
         }
 
-        Kernel.Path.fromString(source) { sourcePath in
-            Kernel.Path.fromString(dest) { destPath in
+        Kernel.Path.scope(source) { sourcePath in
+            Kernel.Path.scope(dest) { destPath in
                 do {
                     try Kernel.File.Move.noClobber(from: sourcePath, to: destPath)
                 } catch let error as Kernel.File.Move.Extended.Error {
@@ -528,7 +528,7 @@ extension Kernel.File.Write.Atomic {
         #else
         let fd: Kernel.Descriptor
         do {
-            fd = try Kernel.Path.fromString(pathString) { kernelPath throws -> Kernel.Descriptor in
+            fd = try Kernel.Path.scope(pathString) { kernelPath throws -> Kernel.Descriptor in
                 try Kernel.File.Open.open(
                     path: kernelPath,
                     mode: .read,
@@ -607,11 +607,7 @@ extension Kernel.File.Write.Atomic {
                     modificationTime: stats.modificationTime
                 )
             } catch let error as Kernel.File.Times.Error {
-                throw .metadataPreservationFailed(
-                    operation: "futimens",
-                    code: error.code,
-                    message: error.code.description
-                )
+                throw .timestampPreservationFailed(error)
             }
         }
 

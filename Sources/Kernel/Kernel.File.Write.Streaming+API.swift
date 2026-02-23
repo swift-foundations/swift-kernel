@@ -33,7 +33,7 @@ extension Kernel.File.Write.Streaming {
     ///   - path: Destination file path
     ///   - options: Write options
     /// - Throws: `Kernel.File.Write.Streaming.Error` on failure
-    public static func write<Chunks: Sequence>(
+    public static func write<Chunks: Swift.Sequence>(
         _ chunks: Chunks,
         to path: borrowing Kernel.Path,
         options: Options = Options()
@@ -288,7 +288,7 @@ extension Kernel.File.Write.Streaming {
 
         // Remove temp file if atomic mode
         if let tempPath = context.tempPathString {
-            Kernel.Path.fromString(tempPath) { kernelPath in
+            Kernel.Path.scope(tempPath) { kernelPath in
                 try? Kernel.File.Delete.delete(kernelPath)
             }
         }
@@ -378,7 +378,7 @@ extension Kernel.File.Write.Streaming {
     }
 
     private static func createDirectories(_ path: Swift.String) throws(Error) {
-        Kernel.Path.fromString(path) { kernelPath in
+        Kernel.Path.scope(path) { kernelPath in
             do {
                 try Kernel.Directory.Create.create(kernelPath, permissions: .standard, recursive: true)
             } catch {
@@ -388,7 +388,7 @@ extension Kernel.File.Write.Streaming {
     }
 
     private static func fileExists(_ pathString: Swift.String) -> Bool {
-        Kernel.Path.fromString(pathString) { kernelPath -> Bool in
+        Kernel.Path.scope(pathString) { kernelPath -> Bool in
             do {
                 _ = try Kernel.File.Stats.lget(path: kernelPath)
                 return true
@@ -409,7 +409,7 @@ extension Kernel.File.Write.Streaming {
             options.insert(.truncate)
         }
 
-        return try Kernel.Path.fromString(pathString) { kernelPath throws(Error) -> Kernel.Descriptor in
+        return try Kernel.Path.scope(pathString) { kernelPath throws(Error) -> Kernel.Descriptor in
             do {
                 return try Kernel.File.Open.open(
                     path: kernelPath,
@@ -642,8 +642,8 @@ extension Kernel.File.Write.Streaming {
         from source: Swift.String,
         to dest: Swift.String
     ) throws(Error) {
-        Kernel.Path.fromString(source) { sourcePath in
-            Kernel.Path.fromString(dest) { destPath in
+        Kernel.Path.scope(source) { sourcePath in
+            Kernel.Path.scope(dest) { destPath in
                 do {
                     try Kernel.File.Move.move(from: sourcePath, to: destPath)
                 } catch {
@@ -671,8 +671,8 @@ extension Kernel.File.Write.Streaming {
             throw .destinationExists(path: dest)
         }
 
-        Kernel.Path.fromString(source) { sourcePath in
-            Kernel.Path.fromString(dest) { destPath in
+        Kernel.Path.scope(source) { sourcePath in
+            Kernel.Path.scope(dest) { destPath in
                 do {
                     try Kernel.File.Move.noClobber(from: sourcePath, to: destPath)
                 } catch let error as Kernel.File.Move.Extended.Error {
@@ -711,7 +711,7 @@ extension Kernel.File.Write.Streaming {
         // Open directory for read-only access to sync it
         let fd: Kernel.Descriptor
         do {
-            fd = try Kernel.Path.fromString(pathString) { kernelPath throws -> Kernel.Descriptor in
+            fd = try Kernel.Path.scope(pathString) { kernelPath throws -> Kernel.Descriptor in
                 try Kernel.File.Open.open(
                     path: kernelPath,
                     mode: .read,
