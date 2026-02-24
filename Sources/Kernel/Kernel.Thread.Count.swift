@@ -9,20 +9,20 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Dimension_Primitives
+public import Cardinal_Primitives
 
 extension Kernel.Thread {
     /// Type-safe count of threads.
     ///
     /// Used for configuration of thread pools and executors.
-    public typealias Count = Tagged<Kernel.Thread, Int>
+    public typealias Count = Tagged<Kernel.Thread, Cardinal>
 }
 
 extension Kernel.Thread.Count {
     /// Creates a thread count from a processor count.
     @inlinable
     public init(_ processorCount: Kernel.System.Processor.Count) {
-        self.init(__unchecked: (), Int(bitPattern: processorCount.rawValue))
+        self = processorCount.retag(Kernel.Thread.self)
     }
 }
 
@@ -30,6 +30,6 @@ extension Int {
     /// Creates an Int from a thread count.
     @inlinable
     public init(_ count: Kernel.Thread.Count) {
-        self = count.rawValue
+        self = Int(bitPattern: count)
     }
 }

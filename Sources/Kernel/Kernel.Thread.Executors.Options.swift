@@ -5,9 +5,6 @@
 //  Created by Coen ten Thije Boonkkamp on 28/12/2025.
 //
 
-public import Dimension_Primitives
-public import System_Primitives
-
 extension Kernel.Thread.Executors {
     /// Configuration options for the executor pool.
     public struct Options: Sendable {
@@ -20,9 +17,9 @@ extension Kernel.Thread.Executors {
         public init(count: Kernel.Thread.Count? = nil) {
             self.count =
                 count
-                ?? min(
-                    Kernel.Thread.Count(__unchecked: (), 4),
-                    Kernel.Thread.Count(__unchecked: (), System.processorCount)
+                ?? Kernel.Thread.Count.min(
+                    try! Kernel.Thread.Count(4),
+                    Kernel.System.Processor.count.retag(Kernel.Thread.self)
                 )
         }
     }
