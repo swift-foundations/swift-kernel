@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel
-import Test_Primitives
 import Synchronization
 import Testing
 

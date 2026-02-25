@@ -10,7 +10,6 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel_Test_Support
-import Test_Primitives
 import Testing
 
 @testable import Kernel

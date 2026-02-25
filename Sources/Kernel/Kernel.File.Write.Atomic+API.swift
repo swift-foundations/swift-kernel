@@ -43,7 +43,7 @@ extension Kernel.File.Write.Atomic {
     /// - Throws: `Kernel.File.Write.Atomic.Error` on failure
     public static func write(
         _ bytes: borrowing Span<UInt8>,
-        to path: borrowing Kernel.Path,
+        to path: borrowing Kernel.Path.View,
         options: borrowing Options = Options()
     ) throws(Error) {
         let pathString = Swift.String(path)

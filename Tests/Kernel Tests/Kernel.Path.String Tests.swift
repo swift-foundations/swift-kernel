@@ -11,11 +11,15 @@
 
 import Kernel
 import Kernel_Test_Support
-import Test_Primitives
 import Testing
 
 extension Kernel.Path.String {
-    #Tests
+    enum Test {
+        @Suite struct Unit {}
+        @Suite struct EdgeCase {}
+        @Suite struct Integration {}
+        @Suite(.serialized) struct Performance {}
+    }
 }
 
 #if !os(Windows)

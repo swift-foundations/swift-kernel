@@ -35,7 +35,7 @@ extension Kernel.File.Write.Streaming {
     /// - Throws: `Kernel.File.Write.Streaming.Error` on failure
     public static func write<Chunks: Swift.Sequence>(
         _ chunks: Chunks,
-        to path: borrowing Kernel.Path,
+        to path: borrowing Kernel.Path.View,
         options: Options = Options()
     ) throws(Error) where Chunks.Element == [UInt8] {
         let pathString = Swift.String(path)
@@ -62,7 +62,7 @@ extension Kernel.File.Write.Streaming {
     @inlinable
     public static func write(
         _ bytes: [UInt8],
-        to path: borrowing Kernel.Path,
+        to path: borrowing Kernel.Path.View,
         options: Options = Options()
     ) throws(Error) {
         let pathString = Swift.String(path)
@@ -86,7 +86,7 @@ extension Kernel.File.Write.Streaming {
     @inlinable
     public static func write(
         _ bytes: borrowing Span<UInt8>,
-        to path: borrowing Kernel.Path,
+        to path: borrowing Kernel.Path.View,
         options: Options = Options()
     ) throws(Error) {
         let pathString = Swift.String(path)
@@ -117,7 +117,7 @@ extension Kernel.File.Write.Streaming {
     ///           Return 0 to signal completion.
     /// - Throws: `Kernel.File.Write.Streaming.Error` on failure
     public static func write(
-        to path: borrowing Kernel.Path,
+        to path: borrowing Kernel.Path.View,
         options: Options = Options(),
         using buffer: inout [UInt8],
         fill: (inout [UInt8]) throws -> Int
@@ -178,7 +178,7 @@ extension Kernel.File.Write.Streaming {
     ///
     /// Returns a context that can be used for subsequent write(chunk:) and commit calls.
     public static func open(
-        path: borrowing Kernel.Path,
+        path: borrowing Kernel.Path.View,
         options: Options
     ) throws(Error) -> Context {
         try open(pathString: Swift.String(path), options: options)

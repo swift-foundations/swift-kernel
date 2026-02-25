@@ -11,12 +11,16 @@
 
 import Kernel
 import Kernel_Test_Support
-import Test_Primitives
 import Synchronization
 import Testing
 
 extension Kernel.Thread.Spawn {
-    #Tests
+    enum Test {
+        @Suite struct Unit {}
+        @Suite struct EdgeCase {}
+        @Suite struct Integration {}
+        @Suite(.serialized) struct Performance {}
+    }
 }
 
 // MARK: - Unit Tests

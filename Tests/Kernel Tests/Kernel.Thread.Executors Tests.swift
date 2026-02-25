@@ -4,14 +4,18 @@
 //
 
 import Dimension_Primitives
-import Test_Primitives
 import Testing
 
 @testable import Kernel
 import Kernel_Test_Support
 
 extension Kernel.Thread.Executors {
-    #Tests
+    enum Test {
+        @Suite struct Unit {}
+        @Suite struct EdgeCase {}
+        @Suite struct Integration {}
+        @Suite(.serialized) struct Performance {}
+    }
 }
 
 // MARK: - Unit Tests

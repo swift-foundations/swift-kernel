@@ -10,13 +10,17 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel_Test_Support
-import Test_Primitives
 import Testing
 
 @testable import Kernel
 
 extension Kernel {
-    #Tests
+    enum Test {
+        @Suite struct Unit {}
+        @Suite struct EdgeCase {}
+        @Suite struct Integration {}
+        @Suite(.serialized) struct Performance {}
+    }
 }
 
 // MARK: - Integration Tests (require full Kernel module for file I/O)
