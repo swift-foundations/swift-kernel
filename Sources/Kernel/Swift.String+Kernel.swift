@@ -60,7 +60,7 @@ extension Swift.String {
     ///
     /// On POSIX, interprets the string bytes as UTF-8.
     /// On Windows, interprets the string code units as UTF-16.
-    internal init(_ string: borrowing Kernel.String) {
+    public init(_ string: borrowing Kernel.String) {
         #if os(Windows)
         self = unsafe string.withUnsafePointer { wideChars in
             unsafe Swift.String(decodingCString: wideChars, as: UTF16.self)
