@@ -21,7 +21,7 @@ extension Kernel.Thread {
 extension Kernel.Thread.Count {
     /// Creates a thread count from a processor count.
     @inlinable
-    public init(_ processorCount: Kernel.System.Processor.Count) {
+    public init(_ processorCount: System.Processor.Count) {
         self = processorCount.retag(Kernel.Thread.self)
     }
 }

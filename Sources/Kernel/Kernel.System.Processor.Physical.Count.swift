@@ -25,7 +25,7 @@ extension Kernel.System.Processor.Physical {
     /// let hasHyperthreading = Int(logical) > Int(physical)
     /// ```
     @inlinable
-    public static var count: Kernel.System.Processor.Count {
+    public static var count: System.Processor.Count {
         #if canImport(Darwin)
         Darwin.System.Processor.Physical.count
         #elseif canImport(Glibc) || canImport(Musl)

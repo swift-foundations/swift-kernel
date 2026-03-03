@@ -21,7 +21,7 @@ extension Kernel.System.Memory {
     /// let gigabytes = UInt64(totalRAM) / (1024 * 1024 * 1024)
     /// ```
     @inlinable
-    public static var total: Kernel.System.Memory.Capacity {
+    public static var total: System.Memory.Capacity {
         #if canImport(Darwin)
         Darwin.System.Memory.total
         #elseif canImport(Glibc) || canImport(Musl)

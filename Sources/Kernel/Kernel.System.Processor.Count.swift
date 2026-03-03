@@ -17,7 +17,7 @@ extension Kernel.System.Processor {
     /// let lanes = IO.Blocking.Lane.Count(Kernel.System.Processor.count)
     /// ```
     @inlinable
-    public static var count: Kernel.System.Processor.Count {
+    public static var count: System.Processor.Count {
         #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
         ISO_9945.Kernel.System.processorCount
         #elseif os(Windows)
