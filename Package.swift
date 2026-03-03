@@ -44,7 +44,9 @@ let package = Package(
                 .product(name: "Reference Primitives", package: "swift-reference-primitives"),
                 .product(name: "POSIX Kernel", package: "swift-posix", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
+                .product(name: "Darwin System", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
                 .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
+                .product(name: "Linux System", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Windows Kernel", package: "swift-windows", condition: .when(platforms: [.windows])),
                 .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
                 .product(name: "Queue Primitives", package: "swift-queue-primitives")
