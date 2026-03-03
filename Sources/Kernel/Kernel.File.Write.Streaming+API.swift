@@ -29,7 +29,7 @@ extension Kernel.File.Write.Streaming {
     /// Memory-efficient for large files - processes one chunk at a time.
     ///
     /// - Parameters:
-    ///   - chunks: Sequence of owned byte arrays to write
+    ///   - chunkS: Swift.Sequence of owned byte arrays to write
     ///   - path: Destination file path
     ///   - options: Write options
     /// - Throws: `Kernel.File.Write.Streaming.Error` on failure
