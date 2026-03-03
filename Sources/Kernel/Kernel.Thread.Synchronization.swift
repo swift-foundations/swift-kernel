@@ -62,7 +62,7 @@ extension Kernel.Thread {
         }
 
         /// Execute a closure while holding the lock.
-        public func withLock<T>(_ body: () throws -> T) rethrows -> T {
+        public func withLock<T, E: Swift.Error>(_ body: () throws(E) -> T) throws(E) -> T {
             try mutex.withLock(body)
         }
 
