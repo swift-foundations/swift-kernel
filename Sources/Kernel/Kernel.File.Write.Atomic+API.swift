@@ -229,7 +229,7 @@ extension Kernel.File.Write.Atomic {
     private static func createDirectories(_ path: Swift.String) throws(Error) {
         try? Kernel.Path.scope(path) { kernelPath in
             do {
-                try Kernel.Directory.Create.create(kernelPath, permissions: .standard)
+                try Kernel.Directory.Create.create(kernelPath, permissions: .standardDirectory)
             } catch {
                 // Ignore - directory might already exist
             }
