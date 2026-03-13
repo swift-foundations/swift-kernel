@@ -64,8 +64,14 @@ extension Kernel.File.Write.Atomic {
         // 1. Resolve and validate paths
         let (resolved, parent) = resolvePaths(pathString)
 
-        // Verify or create parent directory
-        try verifyOrCreateParent(parent, createIntermediates: options.createIntermediates)
+        // Verify parent directory exists
+        if !fileExists(parent) {
+            throw .parentVerificationFailed(
+                path: parent,
+                code: .POSIX.ENOENT,
+                message: "Parent directory does not exist"
+            )
+        }
 
         // 2. Stat destination if it exists (for metadata preservation)
         let destStats = try statIfExists(resolved)
@@ -206,57 +212,6 @@ extension Kernel.File.Write.Atomic {
 // MARK: - Parent Directory Operations
 
 extension Kernel.File.Write.Atomic {
-    private static func verifyOrCreateParent(
-        _ path: Swift.String,
-        createIntermediates: Bool
-    ) throws(Error) {
-        if fileExists(path) {
-            return
-        }
-
-        if !createIntermediates {
-            throw .parentVerificationFailed(
-                path: path,
-                code: .POSIX.ENOENT,
-                message: "Parent directory does not exist"
-            )
-        }
-
-        // Create parent directories recursively
-        try createDirectories(path)
-    }
-
-    private static func createDirectories(_ path: Swift.String) throws(Error) {
-        #if os(Windows)
-        let separator: Character = "\\"
-        #else
-        let separator: Character = "/"
-        #endif
-
-        // Walk path left-to-right, trying mkdir at each separator boundary (mkdir -p).
-        var index = path.startIndex
-
-        // Skip root separator
-        if index < path.endIndex && path[index] == separator {
-            index = path.index(after: index)
-        }
-
-        while let next = path[index...].firstIndex(of: separator) {
-            index = path.index(after: next)
-            let prefix = Swift.String(path[path.startIndex..<next])
-            guard !prefix.isEmpty else { continue }
-
-            try? Kernel.Path.scope(prefix) { kernelPath in
-                try? Kernel.Directory.Create.create(kernelPath, permissions: .standardDirectory)
-            }
-        }
-
-        // Create the full path (final component)
-        try? Kernel.Path.scope(path) { kernelPath in
-            try? Kernel.Directory.Create.create(kernelPath, permissions: .standardDirectory)
-        }
-    }
-
     private static func fileExists(_ pathString: Swift.String) -> Bool {
         (try? Kernel.Path.scope(pathString) { kernelPath -> Bool in
             do {

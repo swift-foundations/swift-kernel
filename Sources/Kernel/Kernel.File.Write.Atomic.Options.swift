@@ -23,13 +23,6 @@ extension Kernel.File.Write.Atomic {
         public var preserveExtendedAttributes: Bool
         public var preserveACLs: Bool
 
-        /// Create intermediate directories if they don't exist.
-        ///
-        /// When enabled, missing parent directories are created before writing.
-        /// Note: Creating intermediates may traverse symlinks in path components.
-        /// This is not hardened against symlink-based attacks.
-        public var createIntermediates: Bool
-
         public init(
             strategy: Strategy = .replaceExisting,
             durability: Durability = .full,
@@ -38,8 +31,7 @@ extension Kernel.File.Write.Atomic {
             strictOwnership: Bool = false,
             preserveTimestamps: Bool = false,
             preserveExtendedAttributes: Bool = false,
-            preserveACLs: Bool = false,
-            createIntermediates: Bool = false
+            preserveACLs: Bool = false
         ) {
             self.strategy = strategy
             self.durability = durability
@@ -49,7 +41,6 @@ extension Kernel.File.Write.Atomic {
             self.preserveTimestamps = preserveTimestamps
             self.preserveExtendedAttributes = preserveExtendedAttributes
             self.preserveACLs = preserveACLs
-            self.createIntermediates = createIntermediates
         }
     }
 }
