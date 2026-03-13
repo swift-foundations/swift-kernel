@@ -379,12 +379,33 @@ extension Kernel.File.Write.Streaming {
     }
 
     private static func createDirectories(_ path: Swift.String) throws(Error) {
-        try? Kernel.Path.scope(path) { kernelPath in
-            do {
-                try Kernel.Directory.Create.create(kernelPath, permissions: .standardDirectory)
-            } catch {
-                // Ignore - directory might already exist
+        #if os(Windows)
+        let separator: Character = "\\"
+        #else
+        let separator: Character = "/"
+        #endif
+
+        // Walk path left-to-right, trying mkdir at each separator boundary (mkdir -p).
+        var index = path.startIndex
+
+        // Skip root separator
+        if index < path.endIndex && path[index] == separator {
+            index = path.index(after: index)
+        }
+
+        while let next = path[index...].firstIndex(of: separator) {
+            index = path.index(after: next)
+            let prefix = Swift.String(path[path.startIndex..<next])
+            guard !prefix.isEmpty else { continue }
+
+            try? Kernel.Path.scope(prefix) { kernelPath in
+                try? Kernel.Directory.Create.create(kernelPath, permissions: .standardDirectory)
             }
+        }
+
+        // Create the full path (final component)
+        try? Kernel.Path.scope(path) { kernelPath in
+            try? Kernel.Directory.Create.create(kernelPath, permissions: .standardDirectory)
         }
     }
 
