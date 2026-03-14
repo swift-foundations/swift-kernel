@@ -60,22 +60,26 @@ let package = Package(
                 .product(name: "Kernel Primitives Test Support", package: "swift-kernel-primitives"),
                 .product(name: "Strings", package: "swift-strings")
             ],
-            path: "Tests/Support"
+            path: "Tests/Support",
+            exclude: ["_Lock Test Process"]
         ),
-        // Integration tests (uses full Kernel module)
+        // Helper executable for multi-process lock contention tests
         .executableTarget(
             name: "_Lock Test Process",
             dependencies: [
                 "Kernel",
                 .product(name: "Kernel Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives")
-            ]
+            ],
+            path: "Tests/Support/_Lock Test Process"
         ),
         .testTarget(
             name: "Kernel Tests",
             dependencies: [
                 "Kernel",
-            ]
+                "Kernel Test Support",
+            ],
+            path: "Tests/Kernel Tests"
         ),
     ],
     swiftLanguageModes: [.v6]

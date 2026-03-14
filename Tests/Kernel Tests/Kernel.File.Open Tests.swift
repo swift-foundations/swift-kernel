@@ -62,11 +62,11 @@ struct FileOpenConfigurationTests {
     func configurationWithMode() {
         let readConfig = Kernel.File.Open.Configuration(mode: .read)
         let writeConfig = Kernel.File.Open.Configuration(mode: .write)
-        let readWriteConfig = Kernel.File.Open.Configuration(mode: [.read, .write])
+        let readWriteConfig = Kernel.File.Open.Configuration(mode: .readWrite)
 
         #expect(readConfig.mode == .read)
         #expect(writeConfig.mode == .write)
-        #expect(readWriteConfig.mode == [.read, .write])
+        #expect(readWriteConfig.mode == .readWrite)
     }
 
     @Test("configuration cache modes")

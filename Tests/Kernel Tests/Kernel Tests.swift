@@ -40,7 +40,7 @@ extension Kernel.Test.Unit {
             // Create and open
             let fd = try Kernel.File.Open.open(
                 path: path,
-                mode: [.read, .write],
+                mode: .readWrite,
                 options: [.create, .truncate],
                 permissions: .standard
             )
@@ -67,7 +67,7 @@ extension Kernel.Test.Unit {
             #expect(throws: (any Swift.Error).self) {
                 try Kernel.File.Open.open(
                     path: path,
-                    mode: [.read],
+                    mode: .read,
                     options: [],
                     permissions: 0
                 )
@@ -84,7 +84,7 @@ extension Kernel.Test.Unit {
             // Create file
             let fd = try Kernel.File.Open.open(
                 path: path,
-                mode: [.read, .write],
+                mode: .readWrite,
                 options: [.create, .truncate],
                 permissions: .standard
             )
@@ -119,7 +119,7 @@ extension Kernel.Test.Unit {
             // Create empty file
             let fd = try Kernel.File.Open.open(
                 path: path,
-                mode: [.read, .write],
+                mode: .readWrite,
                 options: [.create, .truncate],
                 permissions: .standard
             )

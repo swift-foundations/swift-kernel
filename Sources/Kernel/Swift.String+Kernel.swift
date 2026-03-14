@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel_Primitives
+public import Kernel_String_Primitives
+public import String_Primitives
 
 // MARK: - Swift.String from Kernel.Path
 

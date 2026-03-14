@@ -30,13 +30,13 @@ struct KernelLockIntegration {}
 /// File is automatically cleaned up after body completes.
 private func withTempFile<R>(
     prefix: String,
-    _ body: (borrowing Kernel.Path, Kernel.Descriptor) throws -> R
+    _ body: (borrowing Path.View, Kernel.Descriptor) throws -> R
 ) throws -> R {
     let pathString = Kernel.Temporary.filePath(prefix: prefix)
     return try Kernel.Path.scope(pathString) { path in
         let fd = try Kernel.File.Open.open(
             path: path,
-            mode: [.read, .write],
+            mode: .readWrite,
             options: [.create, .truncate],
             permissions: .ownerReadWrite
         )
@@ -109,7 +109,7 @@ extension KernelLockIntegration {
         return try Kernel.Path.scope(pathString) { path in
             let fd = try Kernel.File.Open.open(
                 path: path,
-                mode: [.read, .write],
+                mode: .readWrite,
                 options: [.create, .truncate],
                 permissions: .ownerReadWrite
             )

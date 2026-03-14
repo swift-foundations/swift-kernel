@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-#if KERNEL_AVAILABLE && (os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD) || os(Windows))
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD) || os(Windows)
 
 extension Kernel.Lock.Acquire {
     /// Creates a deadline-based acquisition from a duration.
