@@ -70,7 +70,7 @@ extension Kernel.Path.String {
         @Test("with passes valid string to body")
         func singlePathValid() throws {
             let result = try Kernel.Path.scope("/tmp/test") { path in
-                unsafe path.withUnsafePointer { $0.pointee }
+                unsafe path.pointer.pointee
             }
             #expect(result == UInt8(47))  // ASCII '/'
         }
@@ -153,8 +153,8 @@ extension Kernel.Path.String {
             var saw1 = false
             var saw2 = false
             try Kernel.Path.scope("/path1", "/path2") { p1, p2 in
-                saw1 = unsafe p1.withUnsafePointer { $0.pointee == UInt8(47) }
-                saw2 = unsafe p2.withUnsafePointer { $0.pointee == UInt8(47) }
+                saw1 = unsafe p1.pointer.pointee == UInt8(47)
+                saw2 = unsafe p2.pointer.pointee == UInt8(47)
             }
             #expect(saw1)
             #expect(saw2)
@@ -187,9 +187,9 @@ extension Kernel.Path.String {
         func threePaths() throws {
             var count = 0
             try Kernel.Path.scope("/a", "/b", "/c") { p1, p2, p3 in
-                if unsafe p1.withUnsafePointer({ $0.pointee == UInt8(47) }) { count += 1 }
-                if unsafe p2.withUnsafePointer({ $0.pointee == UInt8(47) }) { count += 1 }
-                if unsafe p3.withUnsafePointer({ $0.pointee == UInt8(47) }) { count += 1 }
+                if unsafe p1.pointer.pointee == UInt8(47) { count += 1 }
+                if unsafe p2.pointer.pointee == UInt8(47) { count += 1 }
+                if unsafe p3.pointer.pointee == UInt8(47) { count += 1 }
             }
             #expect(count == 3)
         }
@@ -229,7 +229,7 @@ extension Kernel.Path.String {
         @Test("empty string is valid (no interior NUL)")
         func emptyString() throws {
             let result = try Kernel.Path.scope("") { path in
-                unsafe path.withUnsafePointer { $0.pointee }
+                unsafe path.pointer.pointee
             }
             #expect(result == 0)  // null terminator
         }
@@ -237,7 +237,7 @@ extension Kernel.Path.String {
         @Test("unicode path is valid")
         func unicodePath() throws {
             try Kernel.Path.scope("/tmp/\u{65E5}\u{672C}\u{8A9E}/\u{6587}\u{4EF6}.txt") { path in
-                let first = unsafe path.withUnsafePointer { $0.pointee }
+                let first = unsafe path.pointer.pointee
                 #expect(first == UInt8(47))
             }
         }
@@ -246,7 +246,7 @@ extension Kernel.Path.String {
         func longPath() throws {
             let longComponent = String(repeating: "a", count: 200)
             try Kernel.Path.scope("/tmp/\(longComponent)") { path in
-                let first = unsafe path.withUnsafePointer { $0.pointee }
+                let first = unsafe path.pointer.pointee
                 #expect(first == UInt8(47))
             }
         }

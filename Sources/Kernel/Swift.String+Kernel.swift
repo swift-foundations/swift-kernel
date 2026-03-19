@@ -23,13 +23,9 @@ extension Swift.String {
     @usableFromInline
     internal init(_ path: borrowing Kernel.Path) {
         #if os(Windows)
-        self = unsafe path.withUnsafeCString { wideChars in
-            unsafe Swift.String(decodingCString: wideChars, as: UTF16.self)
-        }
+        self = unsafe Swift.String(decodingCString: path.view.pointer, as: UTF16.self)
         #else
-        self = unsafe path.withUnsafeCString { cString in
-            unsafe Swift.String(cString: cString)
-        }
+        self = unsafe Swift.String(cString: path.view.pointer)
         #endif
     }
 }
@@ -44,13 +40,9 @@ extension Swift.String {
     @usableFromInline
     internal init(_ view: borrowing Kernel.Path.View) {
         #if os(Windows)
-        self = unsafe view.withUnsafePointer { wideChars in
-            unsafe Swift.String(decodingCString: wideChars, as: UTF16.self)
-        }
+        self = unsafe Swift.String(decodingCString: view.pointer, as: UTF16.self)
         #else
-        self = unsafe view.withUnsafePointer { cString in
-            unsafe Swift.String(cString: cString)
-        }
+        self = unsafe Swift.String(cString: view.pointer)
         #endif
     }
 }
@@ -64,13 +56,9 @@ extension Swift.String {
     /// On Windows, interprets the string code units as UTF-16.
     public init(_ string: borrowing Kernel.String) {
         #if os(Windows)
-        self = unsafe string.withUnsafePointer { wideChars in
-            unsafe Swift.String(decodingCString: wideChars, as: UTF16.self)
-        }
+        self = unsafe Swift.String(decodingCString: string.view.pointer, as: UTF16.self)
         #else
-        self = unsafe string.withUnsafePointer { cString in
-            unsafe Swift.String(cString: cString)
-        }
+        self = unsafe Swift.String(cString: string.view.pointer)
         #endif
     }
 }
