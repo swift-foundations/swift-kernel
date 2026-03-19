@@ -138,6 +138,10 @@ extension Kernel.Failure {
     }
 }
 
+// WORKAROUND: Direct C import for strerror/FormatMessageW
+// WHY: No strerror wrapper exists in the kernel primitives re-export chain
+// WHEN TO REMOVE: When Kernel.Error.Code gains a platform-provided .message property
+// TRACKING: swift-kernel-deep-audit C-2
 #if canImport(Darwin)
     internal import Darwin
 #elseif canImport(Glibc)

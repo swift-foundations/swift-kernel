@@ -5,7 +5,7 @@
 //  Created by Coen ten Thije Boonkkamp on 06/01/2026.
 //
 
-import Synchronization
+public import Synchronization
 
 extension Kernel.Continuation {
     /// Context for exactly-once continuation resumption.
@@ -53,21 +53,24 @@ extension Kernel.Continuation {
         /// Uses non-throwing continuation with Result to eliminate `any Error`.
         private let continuation: CheckedContinuation<Swift.Result<Success, Failure>, Never>
 
-        /// Atomic state: 0 = pending, 1 = completed, 2 = cancelled, 3 = failed
-        private let state: Atomic<UInt8>
+        /// Atomic state tracking the resumption path.
+        private let _state: Atomic<State>
 
-        /// State constants for clarity and debugging.
-        public static var pending: UInt8 { 0 }
-        public static var completed: UInt8 { 1 }
-        public static var cancelled: UInt8 { 2 }
-        public static var failed: UInt8 { 3 }
+        /// Resumption state for exactly-once continuation.
+        @frozen
+        public enum State: UInt8, AtomicRepresentable, Sendable {
+            case pending = 0
+            case completed = 1
+            case cancelled = 2
+            case failed = 3
+        }
 
         /// Creates a context wrapping the given continuation.
         ///
         /// - Parameter continuation: A non-throwing checked continuation returning Result.
         public init(continuation: CheckedContinuation<Swift.Result<Success, Failure>, Never>) {
             self.continuation = continuation
-            self.state = Atomic(Self.pending)
+            self._state = Atomic(.pending)
         }
 
         /// Attempt to complete with success. Returns true if this call resumed.
@@ -78,9 +81,9 @@ extension Kernel.Continuation {
         /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
         @discardableResult
         public func complete(_ value: Success) -> Bool {
-            let (exchanged, _) = state.compareExchange(
-                expected: Self.pending,
-                desired: Self.completed,
+            let (exchanged, _) = _state.compareExchange(
+                expected: .pending,
+                desired: .completed,
                 ordering: .acquiringAndReleasing
             )
             if exchanged {
@@ -98,9 +101,9 @@ extension Kernel.Continuation {
         /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
         @discardableResult
         public func cancel(_ error: Failure) -> Bool {
-            let (exchanged, _) = state.compareExchange(
-                expected: Self.pending,
-                desired: Self.cancelled,
+            let (exchanged, _) = _state.compareExchange(
+                expected: .pending,
+                desired: .cancelled,
                 ordering: .acquiringAndReleasing
             )
             if exchanged {
@@ -118,9 +121,9 @@ extension Kernel.Continuation {
         /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
         @discardableResult
         public func fail(_ error: Failure) -> Bool {
-            let (exchanged, _) = state.compareExchange(
-                expected: Self.pending,
-                desired: Self.failed,
+            let (exchanged, _) = _state.compareExchange(
+                expected: .pending,
+                desired: .failed,
                 ordering: .acquiringAndReleasing
             )
             if exchanged {
@@ -132,14 +135,12 @@ extension Kernel.Continuation {
 
         /// Check if already resumed (for debugging).
         public var isResumed: Bool {
-            state.load(ordering: .acquiring) != Self.pending
+            _state.load(ordering: .acquiring) != .pending
         }
 
         /// Get the current state for debugging.
-        ///
-        /// Values: 0 = pending, 1 = completed, 2 = cancelled, 3 = failed
-        public var currentState: UInt8 {
-            state.load(ordering: .acquiring)
+        public var state: State {
+            _state.load(ordering: .acquiring)
         }
     }
 }

@@ -14,33 +14,28 @@ public import Kernel_Primitives
 extension Kernel.File.Write.Atomic {
     /// Options controlling atomic write behavior.
     public struct Options: Sendable {
+        /// Rename strategy (replace or no-clobber).
         public var strategy: Strategy
+
+        /// Durability guarantee level.
         public var durability: Durability
-        public var preservePermissions: Bool
-        public var preserveOwnership: Bool
-        public var strictOwnership: Bool
-        public var preserveTimestamps: Bool
-        public var preserveExtendedAttributes: Bool
-        public var preserveACLs: Bool
+
+        /// Which metadata to preserve from the original file.
+        public var preservation: Preservation
+
+        /// Ownership preservation behavior.
+        public var ownership: Ownership
 
         public init(
             strategy: Strategy = .replaceExisting,
             durability: Durability = .full,
-            preservePermissions: Bool = true,
-            preserveOwnership: Bool = false,
-            strictOwnership: Bool = false,
-            preserveTimestamps: Bool = false,
-            preserveExtendedAttributes: Bool = false,
-            preserveACLs: Bool = false
+            preservation: Preservation = .permissions,
+            ownership: Ownership = .ignore
         ) {
             self.strategy = strategy
             self.durability = durability
-            self.preservePermissions = preservePermissions
-            self.preserveOwnership = preserveOwnership
-            self.strictOwnership = strictOwnership
-            self.preserveTimestamps = preserveTimestamps
-            self.preserveExtendedAttributes = preserveExtendedAttributes
-            self.preserveACLs = preserveACLs
+            self.preservation = preservation
+            self.ownership = ownership
         }
     }
 }

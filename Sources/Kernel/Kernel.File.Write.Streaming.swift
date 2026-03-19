@@ -11,23 +11,6 @@
 
 public import Kernel_Primitives
 
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#elseif os(Windows)
-internal import WinSDK
-#endif
-
-// MARK: - Namespace
-
-extension Kernel.File {
-    /// Namespace for file write operations.
-    public enum Write {}
-}
-
 extension Kernel.File.Write {
     /// Streaming/chunked file writing with optional atomic guarantees.
     ///

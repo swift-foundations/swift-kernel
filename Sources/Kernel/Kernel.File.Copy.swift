@@ -90,8 +90,7 @@ extension Kernel.File.Copy {
         } catch let error {
             // Check if it's a "not found" error
             if case .platform(let platformError) = error,
-               case .posix(let code) = platformError.code,
-               code == 2 /* ENOENT */ {
+               platformError.code == .POSIX.ENOENT {
                 throw .sourceNotFound
             }
             throw .stats(error)

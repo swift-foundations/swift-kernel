@@ -11,15 +11,38 @@
 
 public import Kernel_Primitives
 
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#elseif os(Windows)
-internal import WinSDK
-#endif
+// MARK: - Error Mapping
+
+extension Kernel.File.Write.Atomic.Error {
+    /// Creates an Atomic error from a shared write error.
+    init(_ error: Kernel.File.Write.Error) {
+        switch error {
+        case .sync(let msg):
+            self = .syncFailed(code: .POSIX.EIO, message: msg)
+        case .close(let msg):
+            self = .closeFailed(code: .POSIX.EIO, message: msg)
+        case .rename(let from, let to, let msg):
+            self = .renameFailed(from: from, to: to, code: .POSIX.EIO, message: msg)
+        case .exists(let path):
+            self = .destinationExists(path: path)
+        case .directory(let path, let msg):
+            self = .directorySyncFailed(path: path, code: .POSIX.EIO, message: msg)
+        case .write(let written, let expected, let msg):
+            self = .writeFailed(
+                bytesWritten: written,
+                bytesExpected: expected,
+                code: .POSIX.EIO,
+                message: msg
+            )
+        case .random(let msg):
+            self = .randomGenerationFailed(
+                code: .POSIX.EIO,
+                operation: "getrandom",
+                message: msg
+            )
+        }
+    }
+}
 
 // MARK: - Core API
 
@@ -46,8 +69,7 @@ extension Kernel.File.Write.Atomic {
         to path: borrowing Kernel.Path.View,
         options: borrowing Options = Options()
     ) throws(Error) {
-        let pathString = Swift.String(path)
-        try write(bytes, toPathString: pathString, options: options)
+        try write(bytes, toPathString: Swift.String(path), options: options)
     }
 
     /// Internal entry point that works with path strings directly.
@@ -58,14 +80,12 @@ extension Kernel.File.Write.Atomic {
     ) throws(Error) {
         typealias Phase = Kernel.File.Write.Atomic.Commit.Phase
 
-        // Track progress for cleanup and error diagnostics
         var phase: Phase = .pending
 
         // 1. Resolve and validate paths
-        let (resolved, parent) = resolvePaths(pathString)
+        let (resolved, parent) = Kernel.File.Write.resolvePaths(pathString)
 
-        // Verify parent directory exists
-        if !fileExists(parent) {
+        if !Kernel.File.Write.fileExists(parent) {
             throw .parentVerificationFailed(
                 path: parent,
                 code: .POSIX.ENOENT,
@@ -77,12 +97,14 @@ extension Kernel.File.Write.Atomic {
         let destStats = try statIfExists(resolved)
 
         // 3. Create temp file with unique name
-        let (descriptor, tempPath) = try createTempFileWithRetry(in: parent, for: resolved)
+        let (descriptor, tempPath) = try createTempFileWithRetry(
+            in: parent,
+            for: resolved
+        )
         phase = .writing
 
         defer {
             // CRITICAL: After renamedPublished, NEVER unlink destination!
-            // Only cleanup temp file if rename hasn't happened yet.
             if phase < .closed {
                 try? Kernel.Close.close(descriptor)
             }
@@ -94,42 +116,69 @@ extension Kernel.File.Write.Atomic {
         }
 
         // 4. Write all data
-        try writeAll(bytes, to: descriptor, pathString: tempPath)
+        do {
+            try Kernel.File.Write.writeAll(bytes, to: descriptor)
+        } catch { throw Error(error) }
 
         // 5. Sync file to disk
-        try syncFile(descriptor, durability: options.durability)
+        do {
+            try Kernel.File.Write.syncFile(
+                descriptor,
+                durability: options.durability.unified
+            )
+        } catch { throw Error(error) }
         phase = .syncedFile
 
         // 6. Apply metadata from destination if requested
         if let stats = destStats {
-            try applyMetadata(from: stats, to: descriptor, options: options, destPath: resolved)
+            try applyMetadata(
+                from: stats,
+                to: descriptor,
+                options: options,
+                destPath: resolved
+            )
         }
 
         // 7. Close file (required before rename on some systems)
-        try closeFile(descriptor)
+        do {
+            try Kernel.File.Write.closeFile(descriptor)
+        } catch { throw Error(error) }
         phase = .closed
 
         // 8. Atomic rename
         switch options.strategy {
         case .replaceExisting:
-            try atomicRename(from: tempPath, to: resolved)
+            do {
+                try Kernel.File.Write.atomicRename(
+                    from: tempPath,
+                    to: resolved
+                )
+            } catch { throw Error(error) }
         case .noClobber:
-            try atomicRenameNoClobber(from: tempPath, to: resolved)
+            do {
+                try Kernel.File.Write.atomicRenameNoClobber(
+                    from: tempPath,
+                    to: resolved
+                )
+            } catch { throw Error(error) }
         }
-        // CRITICAL: Update phase IMMEDIATELY after successful rename
         phase = .renamedPublished
 
-        // 9. Sync directory to persist the rename - only for .full durability
+        // 9. Sync directory to persist the rename
         if options.durability == .full {
             phase = .directorySyncAttempted
             do {
-                try syncDirectory(parent)
+                try Kernel.File.Write.syncDirectory(parent)
                 phase = .syncedDirectory
-            } catch let syncError {
-                if case .directorySyncFailed(let path, let code, let msg) = syncError {
-                    throw .directorySyncFailedAfterCommit(path: path, code: code, message: msg)
+            } catch {
+                if case .directory(let path, let msg) = error {
+                    throw .directorySyncFailedAfterCommit(
+                        path: path,
+                        code: .POSIX.EIO,
+                        message: msg
+                    )
                 }
-                throw syncError
+                throw Error(error)
             }
         } else {
             phase = .syncedDirectory
@@ -137,123 +186,54 @@ extension Kernel.File.Write.Atomic {
     }
 }
 
-// MARK: - Path Resolution
+// MARK: - File Stats
 
 extension Kernel.File.Write.Atomic {
-    /// Resolves paths and extracts parent directory.
-    private static func resolvePaths(_ pathString: Swift.String) -> (resolved: Swift.String, parent: Swift.String) {
-        #if os(Windows)
-        let resolved = normalizeWindowsPath(pathString)
-        let parent = windowsParentDirectory(of: resolved)
-        #else
-        let resolved = pathString
-        let parent = posixParentDirectory(of: resolved)
-        #endif
-        return (resolved, parent)
-    }
-
-    #if os(Windows)
-    private static func normalizeWindowsPath(_ path: Swift.String) -> Swift.String {
-        var result: Swift.String = ""
-        result.reserveCapacity(path.utf8.count)
-        for char in path {
-            if char == "/" {
-                result.append("\\")
-            } else {
-                result.append(char)
-            }
-        }
-        while result.count > 3 && result.hasSuffix("\\") {
-            result.removeLast()
-        }
-        return result
-    }
-
-    private static func windowsParentDirectory(of path: Swift.String) -> Swift.String {
-        if let lastSep = path.lastIndex(of: "\\") {
-            if lastSep == path.startIndex {
-                return Swift.String(path[...lastSep])
-            }
-            let prefix = Swift.String(path[..<lastSep])
-            if prefix.count == 2 && prefix.last == ":" {
-                return prefix + "\\"
-            }
-            return prefix
-        }
-        return "."
-    }
-
-    private static func fileName(of path: Swift.String) -> Swift.String {
-        if let lastSep = path.lastIndex(of: "\\") {
-            return Swift.String(path[path.index(after: lastSep)...])
-        }
-        return path
-    }
-    #else
-    private static func posixParentDirectory(of path: Swift.String) -> Swift.String {
-        if let lastSep = path.lastIndex(of: "/") {
-            if lastSep == path.startIndex {
-                return "/"
-            }
-            return Swift.String(path[..<lastSep])
-        }
-        return "."
-    }
-
-    private static func fileName(of path: Swift.String) -> Swift.String {
-        if let lastSep = path.lastIndex(of: "/") {
-            return Swift.String(path[path.index(after: lastSep)...])
-        }
-        return path
-    }
-    #endif
-}
-
-// MARK: - Parent Directory Operations
-
-extension Kernel.File.Write.Atomic {
-    private static func fileExists(_ pathString: Swift.String) -> Bool {
-        (try? Kernel.Path.scope(pathString) { kernelPath -> Bool in
+    private static func statIfExists(
+        _ pathString: Swift.String
+    ) throws(Error) -> Kernel.File.Stats? {
+        return (try? Kernel.Path.scope(pathString) { kernelPath -> Kernel.File.Stats? in
             do {
-                _ = try Kernel.File.Stats.lget(path: kernelPath)
-                return true
+                return try Kernel.File.Stats.lget(path: kernelPath)
             } catch {
-                return false
+                return nil
             }
-        }) ?? false
+        }) ?? nil
     }
 }
 
 // MARK: - Temp File Creation
 
 extension Kernel.File.Write.Atomic {
-    /// Maximum attempts for temp file creation.
     private static let maxTempFileAttempts = 64
 
     private static func createTempFileWithRetry(
         in parent: Swift.String,
         for dest: Swift.String
     ) throws(Error) -> (descriptor: Kernel.Descriptor, tempPath: Swift.String) {
-        let baseName = fileName(of: dest)
-        let pid = Kernel.Process.ID.current.rawValue
+        let baseName = Kernel.File.Write.fileName(of: dest)
+        let pid = Kernel.Process.ID.current
 
         for attempt in 0..<maxTempFileAttempts {
-            let random = try randomToken(length: 12)
+            let random: Swift.String
+            do {
+                random = try Kernel.File.Write.randomToken(length: 12)
+            } catch { throw Error(error) }
             #if os(Windows)
             let tempPath = "\(parent)\\\(baseName).atomic.\(pid).\(random).tmp"
             #else
             let tempPath = "\(parent)/.\(baseName).atomic.\(pid).\(random).tmp"
             #endif
 
-            let result: Result<Kernel.Descriptor, Swift.Error>
+            let result: Result<Kernel.Descriptor, any Swift.Error>
             do {
-                result = try Kernel.Path.scope(tempPath) { kernelPath -> Result<Kernel.Descriptor, Swift.Error> in
+                result = try Kernel.Path.scope(tempPath) { kernelPath -> Result<Kernel.Descriptor, any Swift.Error> in
                     do {
                         let fd = try Kernel.File.Open.open(
                             path: kernelPath,
                             mode: .readWrite,
                             options: [.create, .exclusive],
-                            permissions: Kernel.File.Permissions(rawValue: 0o600)
+                            permissions: .ownerReadWrite
                         )
                         return .success(fd)
                     } catch {
@@ -273,7 +253,9 @@ extension Kernel.File.Write.Atomic {
                 return (fd, tempPath)
             case .failure(let error):
                 if let openError = error as? Kernel.File.Open.Error {
-                    if case .path(.exists) = openError, attempt < maxTempFileAttempts - 1 {
+                    if case .path(.exists) = openError,
+                       attempt < maxTempFileAttempts - 1
+                    {
                         continue
                     }
                     throw .tempFileCreationFailed(
@@ -296,242 +278,6 @@ extension Kernel.File.Write.Atomic {
             message: "Failed after \(maxTempFileAttempts) attempts"
         )
     }
-
-    private static func randomToken(length: Int) throws(Error) -> Swift.String {
-        let result = withUnsafeTemporaryAllocation(of: UInt8.self, capacity: length) { buffer -> Swift.String in
-            let rawBuffer = UnsafeMutableRawBufferPointer(buffer)
-            #if canImport(Darwin)
-            unsafe Kernel.Random.fill(rawBuffer)
-            #else
-            do {
-                try unsafe Kernel.Random.fill(rawBuffer)
-            } catch {
-                return ""
-            }
-            #endif
-            return hexEncode(Array(buffer))
-        }
-
-        if result.isEmpty {
-            throw .randomGenerationFailed(code: .POSIX.EIO, operation: "getrandom", message: "CSPRNG syscall failed")
-        }
-        return result
-    }
-
-    /// Simple hex encoding for random bytes.
-    private static func hexEncode(_ bytes: [UInt8]) -> Swift.String {
-        let hexChars: [Character] = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"]
-        var result = Swift.String()
-        result.reserveCapacity(bytes.count * 2)
-        for byte in bytes {
-            result.append(hexChars[Int(byte >> 4)])
-            result.append(hexChars[Int(byte & 0x0F)])
-        }
-        return result
-    }
-}
-
-// MARK: - File Stats
-
-extension Kernel.File.Write.Atomic {
-    private static func statIfExists(_ pathString: Swift.String) throws(Error) -> Kernel.File.Stats? {
-        return (try? Kernel.Path.scope(pathString) { kernelPath -> Kernel.File.Stats? in
-            do {
-                return try Kernel.File.Stats.lget(path: kernelPath)
-            } catch {
-                return nil
-            }
-        }) ?? nil
-    }
-}
-
-// MARK: - Write Operations
-
-extension Kernel.File.Write.Atomic {
-    private static func writeAll(
-        _ span: borrowing Span<UInt8>,
-        to fd: Kernel.Descriptor,
-        pathString: Swift.String
-    ) throws(Error) {
-        let total = span.count
-        if total == 0 { return }
-
-        var written = 0
-
-        try span.withUnsafeBufferPointer { buffer throws(Error) in
-            guard let base = buffer.baseAddress else { return }
-
-            while written < total {
-                let remaining = total - written
-                let slice = UnsafeRawBufferPointer(
-                    start: base.advanced(by: written),
-                    count: remaining
-                )
-
-                do {
-                    let rc = try Kernel.IO.Write.write(fd, from: slice)
-                    if rc > 0 {
-                        written += rc
-                        continue
-                    }
-                    if rc == 0 {
-                        throw Error.writeFailed(
-                            bytesWritten: written,
-                            bytesExpected: total,
-                            code: .POSIX.EIO,
-                            message: "write returned 0"
-                        )
-                    }
-                } catch let error as Kernel.IO.Write.Error {
-                    if case .blocking(.wouldBlock) = error {
-                        continue
-                    }
-                    throw Error.writeFailed(
-                        bytesWritten: written,
-                        bytesExpected: total,
-                        code: .POSIX.EIO,
-                        message: "write failed: \(error)"
-                    )
-                } catch {
-                    throw Error.writeFailed(
-                        bytesWritten: written,
-                        bytesExpected: total,
-                        code: .POSIX.EIO,
-                        message: "write failed: \(error)"
-                    )
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Sync and Close
-
-extension Kernel.File.Write.Atomic {
-    private static func syncFile(
-        _ fd: Kernel.Descriptor,
-        durability: Durability
-    ) throws(Error) {
-        switch durability {
-        case .full, .dataOnly:
-            do {
-                try Kernel.File.Flush.flush(fd)
-            } catch {
-                throw .syncFailed(code: .POSIX.EIO, message: "fsync failed: \(error)")
-            }
-        case .none:
-            break
-        }
-    }
-
-    private static func closeFile(_ fd: Kernel.Descriptor) throws(Error) {
-        do {
-            try Kernel.Close.close(fd)
-        } catch {
-            throw .closeFailed(code: .POSIX.EIO, message: "close failed: \(error)")
-        }
-    }
-}
-
-// MARK: - Atomic Rename
-
-extension Kernel.File.Write.Atomic {
-    private static func atomicRename(
-        from source: Swift.String,
-        to dest: Swift.String
-    ) throws(Error) {
-        try? Kernel.Path.scope(source, dest) { sourcePath, destPath in
-            do {
-                try Kernel.File.Move.move(from: sourcePath, to: destPath)
-            } catch {
-                // Error handled below
-            }
-        }
-        // Verify rename succeeded
-        if !fileExists(dest) {
-            throw .renameFailed(
-                from: source,
-                to: dest,
-                code: .POSIX.EIO,
-                message: "rename failed"
-            )
-        }
-    }
-
-    private static func atomicRenameNoClobber(
-        from source: Swift.String,
-        to dest: Swift.String
-    ) throws(Error) {
-        // Check if destination exists first
-        if fileExists(dest) {
-            throw .destinationExists(path: dest)
-        }
-
-        try? Kernel.Path.scope(source, dest) { sourcePath, destPath in
-            do {
-                try Kernel.File.Move.noClobber(from: sourcePath, to: destPath)
-            } catch let error as Kernel.File.Move.Extended.Error {
-                switch error {
-                case .exists:
-                    break // Will be caught below
-                default:
-                    break
-                }
-            } catch {
-                // Continue and check result
-            }
-        }
-
-        // Verify the move succeeded
-        if !fileExists(dest) || fileExists(source) {
-            if fileExists(dest) {
-                throw .destinationExists(path: dest)
-            }
-            throw .renameFailed(
-                from: source,
-                to: dest,
-                code: .POSIX.EIO,
-                message: "noClobber rename failed"
-            )
-        }
-    }
-
-    private static func syncDirectory(_ pathString: Swift.String) throws(Error) {
-        #if os(Windows)
-        // No-op on Windows - NTFS provides reasonable guarantees
-        _ = pathString
-        #else
-        let fd: Kernel.Descriptor
-        do {
-            fd = try Kernel.Path.scope(pathString) { kernelPath throws -> Kernel.Descriptor in
-                try Kernel.File.Open.open(
-                    path: kernelPath,
-                    mode: .read,
-                    options: [.execClose],
-                    permissions: .none
-                )
-            }
-        } catch {
-            throw .directorySyncFailed(
-                path: pathString,
-                code: .POSIX.EIO,
-                message: "open directory failed: \(error)"
-            )
-        }
-
-        defer { try? Kernel.Close.close(fd) }
-
-        do {
-            try Kernel.File.Flush.flush(fd)
-        } catch {
-            throw .directorySyncFailed(
-                path: pathString,
-                code: .POSIX.EIO,
-                message: "fsync directory failed: \(error)"
-            )
-        }
-        #endif
-    }
 }
 
 // MARK: - Metadata Preservation
@@ -543,10 +289,12 @@ extension Kernel.File.Write.Atomic {
         options: borrowing Options,
         destPath: Swift.String
     ) throws(Error) {
-        // Permissions (mode)
-        if options.preservePermissions {
+        if options.preservation.contains(.permissions) {
             do {
-                try Kernel.File.Attributes.setPermissions(descriptor, permissions: stats.permissions)
+                try Kernel.File.Attributes.setPermissions(
+                    descriptor,
+                    permissions: stats.permissions
+                )
             } catch let error as Kernel.File.Attributes.Error {
                 let code: Kernel.Error.Code
                 switch error {
@@ -563,13 +311,15 @@ extension Kernel.File.Write.Atomic {
             }
         }
 
-        // Ownership (uid/gid)
-        if options.preserveOwnership {
+        if case .preserve(let strict) = options.ownership {
             do {
-                try Kernel.File.Chown.fchown(descriptor, uid: stats.uid, gid: stats.gid)
+                try Kernel.File.Chown.fchown(
+                    descriptor,
+                    uid: stats.uid,
+                    gid: stats.gid
+                )
             } catch let error as Kernel.File.Chown.Error {
-                // Ownership changes often fail for non-root users
-                if options.strictOwnership {
+                if strict {
                     let code: Kernel.Error.Code
                     switch error {
                     case .platform(let e): code = e.code
@@ -583,12 +333,10 @@ extension Kernel.File.Write.Atomic {
                         message: "\(error)"
                     )
                 }
-                // Otherwise silently ignore - expected for normal users
             }
         }
 
-        // Timestamps
-        if options.preserveTimestamps {
+        if options.preservation.contains(.timestamps) {
             do {
                 try Kernel.File.Times.setTimes(
                     descriptor,
@@ -600,10 +348,7 @@ extension Kernel.File.Write.Atomic {
             }
         }
 
-        // Extended attributes - skip for now (requires Darwin.Kernel.File.ExtendedAttributes)
-        _ = options.preserveExtendedAttributes
-
-        // ACLs - skip for now (requires separate shim)
-        _ = options.preserveACLs
+        _ = options.preservation.contains(.extendedAttributes)
+        _ = options.preservation.contains(.acls)
     }
 }

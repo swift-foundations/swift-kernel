@@ -32,15 +32,9 @@ extension Kernel.Thread.Executor.Job.Queue.Test.Unit {
         #expect(queue.capacity >= 64)
     }
 
-    @Test("custom initial capacity is respected")
-    func customCapacity() {
-        let queue = Kernel.Thread.Executor.Job.Queue(initialCapacity: 128)
-        #expect(queue.capacity >= 128)
-    }
-
-    @Test("minimum capacity is 1")
+    @Test("default capacity is at least 1")
     func minimumCapacity() {
-        let queue = Kernel.Thread.Executor.Job.Queue(initialCapacity: 0)
+        let queue = Kernel.Thread.Executor.Job.Queue()
         #expect(queue.capacity >= 1)
     }
 
@@ -55,7 +49,7 @@ extension Kernel.Thread.Executor.Job.Queue.Test.Unit {
 extension Kernel.Thread.Executor.Job.Queue.Test.Integration {
     @Test("queue grows when full")
     func growsWhenFull() {
-        let queue = Kernel.Thread.Executor.Job.Queue(initialCapacity: 2)
+        let queue = Kernel.Thread.Executor.Job.Queue()
 
         // Create dummy executor for job creation
         let executor = Kernel.Thread.Executor()

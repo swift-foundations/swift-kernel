@@ -12,7 +12,7 @@
 extension Kernel.Thread {
     /// A barrier for synchronizing multiple threads.
     ///
-    /// All threads wait at `arriveAndWait()` until the target count arrives,
+    /// All threads wait at `arrive()` until the target count arrives,
     /// then all proceed together.
     ///
     /// ## Usage
@@ -20,7 +20,7 @@ extension Kernel.Thread {
     /// let barrier = Kernel.Thread.Barrier(count: 3)
     ///
     /// // Thread 1, 2, 3
-    /// let success = barrier.arriveAndWait(timeout: .seconds(5))
+    /// let success = barrier.arrive(timeout: .seconds(5))
     /// // All threads released simultaneously when 3rd arrives
     /// ```
     ///
@@ -28,11 +28,10 @@ extension Kernel.Thread {
     /// Uses `@unchecked Sendable` because internal state is protected
     /// by mutex synchronization.
     public final class Barrier: @unchecked Sendable {
-        private var arrived: Int = 0
+        private var _arrived: Int = 0
         private let target: Int
         private var released: Bool = false
-        private let mutex = Kernel.Thread.Mutex()
-        private let condition = Kernel.Thread.Condition()
+        private let sync = SingleSync()
 
         /// Creates a barrier with the given target count.
         ///
@@ -51,20 +50,20 @@ extension Kernel.Thread {
         ///
         /// - Parameter timeout: Maximum time to wait. Defaults to 5 seconds.
         /// - Returns: `true` if all threads arrived, `false` on timeout.
-        public func arriveAndWait(timeout: Duration = .seconds(5)) -> Bool {
-            mutex.lock()
-            defer { mutex.unlock() }
+        public func arrive(timeout: Duration = .seconds(5)) -> Bool {
+            sync.lock()
+            defer { sync.unlock() }
 
-            arrived += 1
+            _arrived += 1
 
-            if arrived >= target {
+            if _arrived >= target {
                 released = true
-                condition.broadcast()
+                sync.broadcast(condition: 0)
                 return true
             }
 
             while !released {
-                if !condition.wait(mutex: mutex, timeout: timeout) {
+                if !sync.wait(condition: 0, timeout: timeout) {
                     return false
                 }
             }
@@ -72,8 +71,8 @@ extension Kernel.Thread {
         }
 
         /// Current count of threads that have arrived.
-        public var arrivedCount: Int {
-            mutex.withLock { arrived }
+        public var arrived: Int {
+            sync.withLock { _arrived }
         }
     }
 }

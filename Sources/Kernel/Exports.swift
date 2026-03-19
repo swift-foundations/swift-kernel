@@ -14,14 +14,14 @@
 @_exported public import Dimension_Primitives
 @_exported public import Reference_Primitives
 
-#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD)
     @_exported public import POSIX_Kernel
 #endif
 
-#if canImport(Darwin)
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
     @_exported public import Darwin_Kernel
     @_exported public import Darwin_System
-#elseif canImport(Glibc) || canImport(Musl)
+#elseif os(Linux) || os(Android) || os(OpenBSD)
     @_exported public import Linux_Kernel
     @_exported public import Linux_System
 #elseif os(Windows)

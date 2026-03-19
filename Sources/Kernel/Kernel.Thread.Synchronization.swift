@@ -129,6 +129,10 @@ extension Kernel.Thread {
             conditions[index].broadcast()
         }
 
+        // WORKAROUND: Compound name — needs Property<Tag, Base> accessor pattern
+        // WHY: Property-primitives not yet a dependency of swift-kernel
+        // WHEN TO REMOVE: When property-primitives is adopted; refactor to wait.tracked(), signal.conditional(), broadcast.conditional(), broadcast.all()
+        // TRACKING: swift-kernel-deep-audit [API-NAME-002]
         /// Signal all threads waiting on all condition variables.
         public func broadcastAll() {
             for i in 0..<N {
@@ -148,11 +152,15 @@ extension Kernel.Thread {
         /// - Parameter condition: Index of condition variable (0..<N).
         /// - Returns: Number of threads currently waiting on this condition.
         /// - Precondition: Index must be in range 0..<N.
-        public func waiterCount(for condition: Int = 0) -> Int {
+        public func waiters(condition: Int = 0) -> Int {
             precondition(condition >= 0 && condition < N, "Condition index \(condition) out of bounds (0..<\(N))")
             return waiterCounts[condition]
         }
 
+        // WORKAROUND: Compound name — needs Property<Tag, Base> accessor pattern
+        // WHY: Property-primitives not yet a dependency of swift-kernel
+        // WHEN TO REMOVE: When property-primitives is adopted; refactor to wait.tracked(), signal.conditional(), broadcast.conditional(), broadcast.all()
+        // TRACKING: swift-kernel-deep-audit [API-NAME-002]
         /// Wait on the specified condition variable while tracking waiter count.
         ///
         /// Must be called while holding the lock.
@@ -174,6 +182,10 @@ extension Kernel.Thread {
             conditions[index].wait(mutex: mutex)
         }
 
+        // WORKAROUND: Compound name — needs Property<Tag, Base> accessor pattern
+        // WHY: Property-primitives not yet a dependency of swift-kernel
+        // WHEN TO REMOVE: When property-primitives is adopted; refactor to wait.tracked(), signal.conditional(), broadcast.conditional(), broadcast.all()
+        // TRACKING: swift-kernel-deep-audit [API-NAME-002]
         /// Wait on the specified condition variable with timeout while tracking waiter count.
         ///
         /// Must be called while holding the lock.
@@ -198,6 +210,10 @@ extension Kernel.Thread {
             return conditions[index].wait(mutex: mutex, timeout: timeout)
         }
 
+        // WORKAROUND: Compound name — needs Property<Tag, Base> accessor pattern
+        // WHY: Property-primitives not yet a dependency of swift-kernel
+        // WHEN TO REMOVE: When property-primitives is adopted; refactor to wait.tracked(), signal.conditional(), broadcast.conditional(), broadcast.all()
+        // TRACKING: swift-kernel-deep-audit [API-NAME-002]
         /// Signal one thread if any are waiting on the specified condition.
         ///
         /// Skips the signal syscall if no waiters exist.
@@ -212,6 +228,10 @@ extension Kernel.Thread {
             return true
         }
 
+        // WORKAROUND: Compound name — needs Property<Tag, Base> accessor pattern
+        // WHY: Property-primitives not yet a dependency of swift-kernel
+        // WHEN TO REMOVE: When property-primitives is adopted; refactor to wait.tracked(), signal.conditional(), broadcast.conditional(), broadcast.all()
+        // TRACKING: swift-kernel-deep-audit [API-NAME-002]
         /// Broadcast to all threads if any are waiting on the specified condition.
         ///
         /// Skips the broadcast syscall if no waiters exist.
@@ -225,122 +245,5 @@ extension Kernel.Thread {
             conditions[index].broadcast()
             return true
         }
-    }
-}
-
-// MARK: - Common Typealiases
-
-extension Kernel.Thread {
-    /// Single condition variable synchronization.
-    ///
-    /// Use for simple producer-consumer patterns like executor job queues.
-    public typealias SingleSync = Synchronization<1>
-
-    /// Dual condition variable synchronization.
-    ///
-    /// Use for patterns requiring separate signaling channels,
-    /// e.g., worker/deadline separation in blocking lane implementations.
-    public typealias DualSync = Synchronization<2>
-}
-
-// MARK: - Convenience for Dual Sync
-
-extension Kernel.Thread.Synchronization where N == 2 {
-    /// Accessor for worker condition (index 0).
-    public var worker: ConditionAccessor {
-        ConditionAccessor(sync: self, index: 0)
-    }
-
-    /// Accessor for deadline condition (index 1).
-    public var deadline: ConditionAccessor {
-        ConditionAccessor(sync: self, index: 1)
-    }
-
-    /// Accessor for a specific condition variable.
-    public struct ConditionAccessor: Sendable {
-        private let sync: Kernel.Thread.Synchronization<2>
-        private let index: Int
-
-        init(sync: Kernel.Thread.Synchronization<2>, index: Int) {
-            self.sync = sync
-            self.index = index
-        }
-
-        /// Wait on this condition.
-        public func wait() {
-            sync.wait(condition: index)
-        }
-
-        /// Wait on this condition with timeout.
-        public func wait(timeout nanoseconds: UInt64) -> Bool {
-            sync.wait(condition: index, timeout: nanoseconds)
-        }
-
-        /// Wait on this condition with Duration timeout.
-        public func wait(timeout: Duration) -> Bool {
-            sync.wait(condition: index, timeout: timeout)
-        }
-
-        /// Signal one waiter on this condition.
-        public func signal() {
-            sync.signal(condition: index)
-        }
-
-        /// Broadcast to all waiters on this condition.
-        public func broadcast() {
-            sync.broadcast(condition: index)
-        }
-
-        // MARK: - Waiter Tracking
-
-        /// Current waiter count for this condition.
-        ///
-        /// Only valid if all waits use `waitTracked`.
-        public var waiterCount: Int {
-            sync.waiterCount(for: index)
-        }
-
-        /// Wait on this condition while tracking waiter count.
-        public func waitTracked() {
-            sync.waitTracked(condition: index)
-        }
-
-        /// Wait on this condition with timeout while tracking waiter count.
-        public func waitTracked(timeout: Duration) -> Bool {
-            sync.waitTracked(condition: index, timeout: timeout)
-        }
-
-        /// Signal one waiter if any exist on this condition.
-        @discardableResult
-        public func signalIfWaiters() -> Bool {
-            sync.signalIfWaiters(condition: index)
-        }
-
-        /// Broadcast if any waiters exist on this condition.
-        @discardableResult
-        public func broadcastIfWaiters() -> Bool {
-            sync.broadcastIfWaiters(condition: index)
-        }
-    }
-}
-
-extension Kernel.Thread.DualSync {
-    /// Accessor for broadcasting all conditions.
-    public struct BroadcastAll: Sendable {
-        private let sync: Kernel.Thread.DualSync
-
-        init(sync: Kernel.Thread.DualSync) {
-            self.sync = sync
-        }
-
-        /// Broadcast all conditions.
-        public func all() {
-            sync.broadcastAll()
-        }
-    }
-
-    /// Broadcast all conditions accessor.
-    public var broadcast: BroadcastAll {
-        BroadcastAll(sync: self)
     }
 }
