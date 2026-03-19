@@ -40,12 +40,14 @@ extension Kernel.Thread {
     /// ```
     public final class Executors: Sendable {
         private let executors: [Executor]
+        private let count: Kernel.Thread.Count
         private let counter: Atomic<UInt64>
 
         /// Creates a new executor pool with the given options.
         ///
         /// Threads start immediately upon pool creation.
         public init(_ options: Options = .init()) {
+            self.count = options.count
             self.executors = (0..<Int(options.count)).map { _ in Executor() }
             self.counter = Atomic(0)
         }
@@ -53,9 +55,6 @@ extension Kernel.Thread {
 }
 
 extension Kernel.Thread.Executors {
-    /// The number of executor threads in the pool.
-    public var count: Int { executors.count }
-
     /// Get the next executor using round-robin assignment.
     ///
     /// Each call advances an internal counter, distributing pools evenly

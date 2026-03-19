@@ -15,9 +15,11 @@ extension Kernel.Thread.Executor.Job {
     struct Queue {
         private var storage: Deque<Kernel.Thread.Executor.Job>
 
+        private static let initialCapacity: Index<Kernel.Thread.Executor.Job>.Count = try! .init(64)
+
         init() {
             self.storage = Deque()
-            storage.reserve(try! .init(64))
+            storage.reserve(Self.initialCapacity)
         }
     }
 }

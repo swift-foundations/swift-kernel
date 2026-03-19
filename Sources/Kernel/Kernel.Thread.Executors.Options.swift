@@ -14,11 +14,13 @@ extension Kernel.Thread.Executors {
         /// Creates options with the specified thread count.
         ///
         /// - Parameter count: Number of threads. If nil, defaults to min(4, processorCount).
+        private static let defaultCount: Kernel.Thread.Count = try! .init(4)
+
         public init(count: Kernel.Thread.Count? = nil) {
             self.count =
                 count
                 ?? Kernel.Thread.Count.min(
-                    try! Kernel.Thread.Count(4),
+                    Self.defaultCount,
                     Kernel.System.Processor.count.retag(Kernel.Thread.self)
                 )
         }

@@ -61,12 +61,12 @@ extension Kernel.File.Write.Atomic.Commit.Phase {
     ///
     /// When this is true, the file exists with complete contents at the destination path.
     /// However, durability may not be guaranteed if `durabilityAttempted` is false.
-    public var published: Bool { self.rawValue >= Self.renamedPublished.rawValue }
+    public var published: Bool { self >= .renamedPublished }
 
     /// Returns true if directory sync was attempted (for postmortem diagnostics).
     ///
     /// Distinguishes "sync started but failed/cancelled" from "sync never attempted".
-    public var durabilityAttempted: Bool { self.rawValue >= Self.directorySyncAttempted.rawValue }
+    public var durabilityAttempted: Bool { self >= .directorySyncAttempted }
 }
 
 // MARK: - Comparable
