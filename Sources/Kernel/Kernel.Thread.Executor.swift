@@ -5,7 +5,7 @@
 //  Created by Coen ten Thije Boonkkamp on 28/12/2025.
 //
 
-public import Ownership_Primitives
+internal import Ownership_Primitives
 
 extension Kernel.Thread {
     /// A serial executor backed by a single dedicated OS thread.
@@ -75,7 +75,7 @@ extension Kernel.Thread {
             // 1. Most callers cannot recover from thread exhaustion
             // 2. Making init() throwing would cascade through the entire API
             // 3. Thread creation failure typically indicates system-wide resource exhaustion
-            self.threadHandle = Kernel.Thread.trap(Ownership.Transfer.Retained(self)) { retained in
+            self.threadHandle = unsafe Kernel.Thread.trap(Ownership.Transfer.Retained(self)) { retained in
                 let executor = retained.take()
                 executor.runLoop()
             }
@@ -106,7 +106,7 @@ extension Kernel.Thread.Executor {
     ///
     /// Used by actors to specify their custom executor via `unownedExecutor`.
     public func asUnownedSerialExecutor() -> UnownedSerialExecutor {
-        UnownedSerialExecutor(ordinary: self)
+        unsafe UnownedSerialExecutor(ordinary: self)
     }
 }
 
@@ -134,7 +134,7 @@ extension Kernel.Thread.Executor {
                 return jobs.dequeue()
             }
             guard let job else { return }
-            job.runSynchronously(on: asUnownedSerialExecutor())
+            unsafe job.runSynchronously(on: asUnownedSerialExecutor())
         }
     }
 }

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
+internal import Kernel_Primitives
 
 // MARK: - Path Resolution
 
@@ -109,7 +109,7 @@ extension Kernel.File.Write {
     internal static func randomToken(
         length: Int
     ) throws(Kernel.File.Write.Error) -> Swift.String {
-        let result = withUnsafeTemporaryAllocation(
+        let result = unsafe withUnsafeTemporaryAllocation(
             of: UInt8.self,
             capacity: length
         ) { buffer -> Swift.String in
@@ -123,7 +123,7 @@ extension Kernel.File.Write {
                 return ""
             }
             #endif
-            return hexEncode(Array(buffer))
+            return unsafe hexEncode(Array(buffer))
         }
 
         if result.isEmpty {
@@ -160,17 +160,17 @@ extension Kernel.File.Write {
 
         var written = 0
 
-        try span.withUnsafeBufferPointer { buffer throws(Kernel.File.Write.Error) in
+        unsafe try span.withUnsafeBufferPointer { buffer throws(Kernel.File.Write.Error) in
             guard let base = buffer.baseAddress else { return }
 
             while written < total {
-                let slice = UnsafeRawBufferPointer(
+                let slice = unsafe UnsafeRawBufferPointer(
                     start: base.advanced(by: written),
                     count: total - written
                 )
 
                 do {
-                    let rc = try Kernel.IO.Write.write(fd, from: slice)
+                    let rc = unsafe try Kernel.IO.Write.write(fd, from: slice)
                     if rc > 0 {
                         written += rc
                         continue
@@ -215,13 +215,13 @@ extension Kernel.File.Write {
         var written = 0
 
         while written < total {
-            let slice = UnsafeRawBufferPointer(
+            let slice = unsafe UnsafeRawBufferPointer(
                 start: base.advanced(by: written),
                 count: total - written
             )
 
             do {
-                let rc = try Kernel.IO.Write.write(fd, from: slice)
+                let rc = unsafe try Kernel.IO.Write.write(fd, from: slice)
                 if rc > 0 {
                     written += rc
                     continue

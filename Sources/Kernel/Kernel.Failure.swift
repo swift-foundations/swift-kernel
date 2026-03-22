@@ -162,7 +162,7 @@ extension Kernel.Failure {
         switch code {
         case .posix(let rawValue):
             #if !os(Windows)
-                return Swift.String(cString: strerror(rawValue))
+                return unsafe Swift.String(cString: strerror(rawValue))
             #else
                 return nil
             #endif
