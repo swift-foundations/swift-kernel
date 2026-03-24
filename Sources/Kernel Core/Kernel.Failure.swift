@@ -138,75 +138,20 @@ extension Kernel.Failure {
     }
 }
 
-// WORKAROUND: Direct C import for strerror/FormatMessageW
-// WHY: No strerror wrapper exists in the kernel primitives re-export chain
-// WHEN TO REMOVE: When Kernel.Error.Code gains a platform-provided .message property
-// TRACKING: swift-kernel-deep-audit C-2
-#if canImport(Darwin)
-    internal import Darwin
-#elseif canImport(Glibc)
-    internal import Glibc
-#elseif canImport(Musl)
-    internal import Musl
-#endif
-
 extension Kernel.Failure {
     /// Returns the platform error message for a given error code.
     ///
-    /// On POSIX, calls `strerror` for `.posix` codes.
-    /// On Windows, calls `FormatMessageW` for `.win32` codes.
+    /// Delegates to platform-provided message properties:
+    /// - POSIX: `Kernel.Error.Code.posixMessage` (via swift-posix, strerror)
+    /// - Windows: `Kernel.Error.Code.win32Message` (via swift-windows, FormatMessageW)
     ///
     /// - Parameter code: The unified error code.
     /// - Returns: A human-readable error message, or `nil` if not available.
     public static func message(for code: Kernel.Error.Code) -> Swift.String? {
-        switch code {
-        case .posix(let rawValue):
-            #if !os(Windows)
-                return unsafe Swift.String(cString: strerror(rawValue))
-            #else
-                return nil
-            #endif
-
-        case .win32(let rawValue):
-            #if os(Windows)
-                let flags: DWORD =
-                    DWORD(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS)
-
-                var buffer: LPWSTR? = nil
-
-                // MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT): (1 << 10) | 0
-                let langNeutralSublangDefault: DWORD = 0x0400
-
-                let length: DWORD = withUnsafeMutablePointer(to: &buffer) { bufferPtr in
-                    bufferPtr.withMemoryRebound(to: WCHAR.self, capacity: 1) { widePtr in
-                        FormatMessageW(
-                            flags,
-                            nil,
-                            rawValue,
-                            langNeutralSublangDefault,
-                            widePtr,
-                            0,
-                            nil
-                        )
-                    }
-                }
-
-                guard length > 0, let buffer else { return nil }
-                defer { _ = LocalFree(buffer) }
-
-                let u16 = UnsafeBufferPointer(start: buffer, count: Int(length))
-                var message = String(decoding: u16, as: UTF16.self)
-
-                // Trim trailing whitespace/newlines without Foundation
-                while let last = message.unicodeScalars.last,
-                    last == "\r" || last == "\n" || last == " " || last == "\t"
-                {
-                    message.unicodeScalars.removeLast()
-                }
-                return message
-            #else
-                return nil
-            #endif
-        }
+        #if os(Windows)
+        code.win32Message
+        #else
+        code.posixMessage
+        #endif
     }
 }
