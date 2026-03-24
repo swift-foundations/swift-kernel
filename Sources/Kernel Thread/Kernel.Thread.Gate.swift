@@ -46,57 +46,59 @@ extension Kernel.Thread {
 
         /// Creates a new closed gate.
         public init() {}
+    }
+}
 
-        /// Opens the gate, releasing all waiting threads.
-        ///
-        /// After this call:
-        /// - All currently waiting threads resume
-        /// - All future `wait()` calls return immediately
-        ///
-        /// Opening an already-open gate is a no-op.
-        public func open() {
-            sync.lock()
-            if _isOpen {
-                sync.unlock()
-                return
-            }
-            _isOpen = true
-            sync.broadcast(condition: 0)
+extension Kernel.Thread.Gate {
+    /// Opens the gate, releasing all waiting threads.
+    ///
+    /// After this call:
+    /// - All currently waiting threads resume
+    /// - All future `wait()` calls return immediately
+    ///
+    /// Opening an already-open gate is a no-op.
+    public func open() {
+        sync.lock()
+        if _isOpen {
             sync.unlock()
+            return
         }
+        _isOpen = true
+        sync.broadcast(condition: 0)
+        sync.unlock()
+    }
 
-        /// Blocks until the gate is opened.
-        ///
-        /// If the gate is already open, returns immediately.
-        /// Otherwise, blocks until another thread calls `open()`.
-        public func wait() {
-            sync.lock()
-            defer { sync.unlock() }
-            while !_isOpen {
-                sync.wait(condition: 0)
+    /// Blocks until the gate is opened.
+    ///
+    /// If the gate is already open, returns immediately.
+    /// Otherwise, blocks until another thread calls `open()`.
+    public func wait() {
+        sync.lock()
+        defer { sync.unlock() }
+        while !_isOpen {
+            sync.wait(condition: 0)
+        }
+    }
+
+    /// Blocks until the gate is opened or timeout expires.
+    ///
+    /// - Parameter timeout: Maximum duration to wait.
+    /// - Returns: `true` if gate was opened, `false` if timed out.
+    public func wait(timeout: Duration) -> Bool {
+        sync.lock()
+        defer { sync.unlock() }
+        while !_isOpen {
+            if !sync.wait(condition: 0, timeout: timeout) {
+                return _isOpen
             }
         }
+        return true
+    }
 
-        /// Blocks until the gate is opened or timeout expires.
-        ///
-        /// - Parameter timeout: Maximum duration to wait.
-        /// - Returns: `true` if gate was opened, `false` if timed out.
-        public func wait(timeout: Duration) -> Bool {
-            sync.lock()
-            defer { sync.unlock() }
-            while !_isOpen {
-                if !sync.wait(condition: 0, timeout: timeout) {
-                    return _isOpen
-                }
-            }
-            return true
-        }
-
-        /// Whether the gate is currently open.
-        ///
-        /// This is a non-blocking check.
-        public var isOpen: Bool {
-            sync.withLock { _isOpen }
-        }
+    /// Whether the gate is currently open.
+    ///
+    /// This is a non-blocking check.
+    public var isOpen: Bool {
+        sync.withLock { _isOpen }
     }
 }

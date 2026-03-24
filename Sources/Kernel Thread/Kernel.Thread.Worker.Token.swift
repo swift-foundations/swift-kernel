@@ -31,17 +31,19 @@ extension Kernel.Thread.Worker {
         init() {
             self.stopped = Atomic(false)
         }
+    }
+}
 
-        /// Check if stop has been requested.
-        ///
-        /// The worker body should poll this regularly to exit gracefully.
-        public var shouldStop: Bool {
-            stopped.load(ordering: .acquiring)
-        }
+extension Kernel.Thread.Worker.Token {
+    /// Check if stop has been requested.
+    ///
+    /// The worker body should poll this regularly to exit gracefully.
+    public var shouldStop: Bool {
+        stopped.load(ordering: .acquiring)
+    }
 
-        /// Request the worker to stop (internal - use Worker.stop()).
-        func requestStop() {
-            stopped.store(true, ordering: .releasing)
-        }
+    /// Request the worker to stop (internal - use Worker.stop()).
+    func requestStop() {
+        stopped.store(true, ordering: .releasing)
     }
 }

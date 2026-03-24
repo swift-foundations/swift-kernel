@@ -31,61 +31,63 @@ extension Kernel.Thread.Synchronization where N == 2 {
             self.sync = sync
             self.index = index
         }
+    }
+}
 
-        /// Wait on this condition.
-        public func wait() {
-            sync.wait(condition: index)
-        }
+extension Kernel.Thread.Synchronization.Channel {
+    /// Wait on this condition.
+    public func wait() {
+        sync.wait(condition: index)
+    }
 
-        /// Wait on this condition with timeout.
-        public func wait(timeout nanoseconds: UInt64) -> Bool {
-            sync.wait(condition: index, timeout: nanoseconds)
-        }
+    /// Wait on this condition with timeout.
+    public func wait(timeout nanoseconds: UInt64) -> Bool {
+        sync.wait(condition: index, timeout: nanoseconds)
+    }
 
-        /// Wait on this condition with Duration timeout.
-        public func wait(timeout: Duration) -> Bool {
-            sync.wait(condition: index, timeout: timeout)
-        }
+    /// Wait on this condition with Duration timeout.
+    public func wait(timeout: Duration) -> Bool {
+        sync.wait(condition: index, timeout: timeout)
+    }
 
-        /// Signal one waiter on this condition.
-        public func signal() {
-            sync.signal(condition: index)
-        }
+    /// Signal one waiter on this condition.
+    public func signal() {
+        sync.signal(condition: index)
+    }
 
-        /// Broadcast to all waiters on this condition.
-        public func broadcast() {
-            sync.broadcast(condition: index)
-        }
+    /// Broadcast to all waiters on this condition.
+    public func broadcast() {
+        sync.broadcast(condition: index)
+    }
 
-        // MARK: - Waiter Tracking
+    // MARK: - Waiter Tracking
 
-        /// Current waiter count for this condition.
-        ///
-        /// Only valid if all waits use `waitTracked`.
-        public var waiters: Int {
-            sync.waiters(condition: index)
-        }
+    /// Current waiter count for this condition.
+    ///
+    /// Only valid if all waits use `waitTracked`.
+    public var waiters: Int {
+        sync.waiters(condition: index)
+    }
 
-        /// Wait on this condition while tracking waiter count.
-        public func waitTracked() {
-            sync.waitTracked(condition: index)
-        }
+    /// Wait on this condition while tracking waiter count.
+    public func waitTracked() {
+        sync.waitTracked(condition: index)
+    }
 
-        /// Wait on this condition with timeout while tracking waiter count.
-        public func waitTracked(timeout: Duration) -> Bool {
-            sync.waitTracked(condition: index, timeout: timeout)
-        }
+    /// Wait on this condition with timeout while tracking waiter count.
+    public func waitTracked(timeout: Duration) -> Bool {
+        sync.waitTracked(condition: index, timeout: timeout)
+    }
 
-        /// Signal one waiter if any exist on this condition.
-        @discardableResult
-        public func signalIfWaiters() -> Bool {
-            sync.signalIfWaiters(condition: index)
-        }
+    /// Signal one waiter if any exist on this condition.
+    @discardableResult
+    public func signalIfWaiters() -> Bool {
+        sync.signalIfWaiters(condition: index)
+    }
 
-        /// Broadcast if any waiters exist on this condition.
-        @discardableResult
-        public func broadcastIfWaiters() -> Bool {
-            sync.broadcastIfWaiters(condition: index)
-        }
+    /// Broadcast if any waiters exist on this condition.
+    @discardableResult
+    public func broadcastIfWaiters() -> Bool {
+        sync.broadcastIfWaiters(condition: index)
     }
 }

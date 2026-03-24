@@ -72,75 +72,77 @@ extension Kernel.Continuation {
             self.continuation = continuation
             self._state = Atomic(.pending)
         }
+    }
+}
 
-        /// Attempt to complete with success. Returns true if this call resumed.
-        ///
-        /// Called by the worker after successful operation execution.
-        ///
-        /// - Parameter value: The success value to resume with.
-        /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
-        @discardableResult
-        public func complete(_ value: Success) -> Bool {
-            let (exchanged, _) = _state.compareExchange(
-                expected: .pending,
-                desired: .completed,
-                ordering: .acquiringAndReleasing
-            )
-            if exchanged {
-                continuation.resume(returning: Swift.Result.success(value))
-                return true
-            }
-            return false
+extension Kernel.Continuation.Context {
+    /// Attempt to complete with success. Returns true if this call resumed.
+    ///
+    /// Called by the worker after successful operation execution.
+    ///
+    /// - Parameter value: The success value to resume with.
+    /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
+    @discardableResult
+    public func complete(_ value: Success) -> Bool {
+        let (exchanged, _) = _state.compareExchange(
+            expected: .pending,
+            desired: .completed,
+            ordering: .acquiringAndReleasing
+        )
+        if exchanged {
+            continuation.resume(returning: Swift.Result.success(value))
+            return true
         }
+        return false
+    }
 
-        /// Attempt to cancel with an error. Returns true if this call resumed.
-        ///
-        /// Semantically indicates Swift task cancellation. Called by cancellation handlers.
-        ///
-        /// - Parameter error: The cancellation error to resume with.
-        /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
-        @discardableResult
-        public func cancel(_ error: Failure) -> Bool {
-            let (exchanged, _) = _state.compareExchange(
-                expected: .pending,
-                desired: .cancelled,
-                ordering: .acquiringAndReleasing
-            )
-            if exchanged {
-                continuation.resume(returning: Swift.Result.failure(error))
-                return true
-            }
-            return false
+    /// Attempt to cancel with an error. Returns true if this call resumed.
+    ///
+    /// Semantically indicates Swift task cancellation. Called by cancellation handlers.
+    ///
+    /// - Parameter error: The cancellation error to resume with.
+    /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
+    @discardableResult
+    public func cancel(_ error: Failure) -> Bool {
+        let (exchanged, _) = _state.compareExchange(
+            expected: .pending,
+            desired: .cancelled,
+            ordering: .acquiringAndReleasing
+        )
+        if exchanged {
+            continuation.resume(returning: Swift.Result.failure(error))
+            return true
         }
+        return false
+    }
 
-        /// Attempt to fail with an error. Returns true if this call resumed.
-        ///
-        /// Semantically indicates infrastructure failure (shutdown, queue full, timeout, etc.).
-        ///
-        /// - Parameter error: The failure error to resume with.
-        /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
-        @discardableResult
-        public func fail(_ error: Failure) -> Bool {
-            let (exchanged, _) = _state.compareExchange(
-                expected: .pending,
-                desired: .failed,
-                ordering: .acquiringAndReleasing
-            )
-            if exchanged {
-                continuation.resume(returning: Swift.Result.failure(error))
-                return true
-            }
-            return false
+    /// Attempt to fail with an error. Returns true if this call resumed.
+    ///
+    /// Semantically indicates infrastructure failure (shutdown, queue full, timeout, etc.).
+    ///
+    /// - Parameter error: The failure error to resume with.
+    /// - Returns: `true` if this call performed the resumption, `false` if already resumed.
+    @discardableResult
+    public func fail(_ error: Failure) -> Bool {
+        let (exchanged, _) = _state.compareExchange(
+            expected: .pending,
+            desired: .failed,
+            ordering: .acquiringAndReleasing
+        )
+        if exchanged {
+            continuation.resume(returning: Swift.Result.failure(error))
+            return true
         }
+        return false
+    }
 
-        /// Check if already resumed (for debugging).
-        public var isResumed: Bool {
-            _state.load(ordering: .acquiring) != .pending
-        }
+    /// Check if already resumed (for debugging).
+    public var isResumed: Bool {
+        _state.load(ordering: .acquiring) != .pending
+    }
 
-        /// Get the current state for debugging.
-        public var state: State {
-            _state.load(ordering: .acquiring)
-        }
+    /// Get the current state for debugging.
+    public var state: State {
+        _state.load(ordering: .acquiring)
     }
 }

@@ -45,18 +45,6 @@ extension Kernel.Thread.Handle {
             self.inner = consume handle
         }
 
-        /// Joins the thread, consuming the handle.
-        ///
-        /// - Precondition: Must be called exactly once.
-        public func join() {
-            guard let handle = inner._take() else {
-                preconditionFailure(
-                    "Kernel.Thread.Handle.Reference.join() called twice"
-                )
-            }
-            handle.join()
-        }
-
         deinit {
             // Verify handle was joined - if not, we're leaking a thread
             precondition(
@@ -64,5 +52,19 @@ extension Kernel.Thread.Handle {
                 "Kernel.Thread.Handle.Reference deallocated without join()"
             )
         }
+    }
+}
+
+extension Kernel.Thread.Handle.Reference {
+    /// Joins the thread, consuming the handle.
+    ///
+    /// - Precondition: Must be called exactly once.
+    public func join() {
+        guard let handle = inner._take() else {
+            preconditionFailure(
+                "Kernel.Thread.Handle.Reference.join() called twice"
+            )
+        }
+        handle.join()
     }
 }
