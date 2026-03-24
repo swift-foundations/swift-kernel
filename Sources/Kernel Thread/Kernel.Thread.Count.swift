@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Cardinal_Primitives
-
 extension Kernel.Thread {
     /// Type-safe count of threads.
     ///

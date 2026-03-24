@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Ownership_Primitives
-
 extension Kernel.Thread {
     /// Thread spawning callable type.
     ///

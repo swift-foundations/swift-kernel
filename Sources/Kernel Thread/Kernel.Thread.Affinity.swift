@@ -9,16 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
-
-#if canImport(Darwin_Kernel)
-import Darwin_Kernel
-#elseif canImport(Linux_Kernel)
-import Linux_Kernel
-#elseif canImport(Windows_Kernel)
-import Windows_Kernel
-#endif
-
 extension Kernel.Thread.Affinity {
     /// Platform support level for thread affinity.
     ///

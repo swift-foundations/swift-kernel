@@ -28,6 +28,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-dimension-primitives"),
         .package(path: "../../swift-primitives/swift-queue-primitives"),
         .package(path: "../../swift-primitives/swift-reference-primitives"),
+        .package(path: "../../swift-primitives/swift-ownership-primitives"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
         .package(path: "../swift-linux"),
@@ -35,24 +36,65 @@ let package = Package(
         .package(path: "../swift-strings")
     ],
     targets: [
-        // Umbrella/policy module
+        // MARK: - Core
         .target(
-            name: "Kernel",
+            name: "Kernel Core",
             dependencies: [
                 .product(name: "Kernel Primitives", package: "swift-kernel-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Reference Primitives", package: "swift-reference-primitives"),
+                .product(name: "Ownership Primitives", package: "swift-ownership-primitives"),
+                .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
+                .product(name: "Queue Primitives", package: "swift-queue-primitives"),
                 .product(name: "POSIX Kernel", package: "swift-posix", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
                 .product(name: "Darwin System", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
                 .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Linux System", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Windows Kernel", package: "swift-windows", condition: .when(platforms: [.windows])),
-                .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
-                .product(name: "Queue Primitives", package: "swift-queue-primitives")
             ]
         ),
-        // Test support utilities (harnesses, helpers)
+
+        // MARK: - System
+        .target(
+            name: "Kernel System",
+            dependencies: ["Kernel Core"]
+        ),
+
+        // MARK: - Thread
+        .target(
+            name: "Kernel Thread",
+            dependencies: ["Kernel Core", "Kernel System"]
+        ),
+
+        // MARK: - File
+        .target(
+            name: "Kernel File",
+            dependencies: [
+                "Kernel Core",
+                .product(name: "Kernel String Primitives", package: "swift-kernel-primitives"),
+            ]
+        ),
+
+        // MARK: - Continuation
+        .target(
+            name: "Kernel Continuation",
+            dependencies: ["Kernel Core"]
+        ),
+
+        // MARK: - Umbrella
+        .target(
+            name: "Kernel",
+            dependencies: [
+                "Kernel Core",
+                "Kernel System",
+                "Kernel Thread",
+                "Kernel File",
+                "Kernel Continuation",
+            ]
+        ),
+
+        // MARK: - Test Support
         .target(
             name: "Kernel Test Support",
             dependencies: [

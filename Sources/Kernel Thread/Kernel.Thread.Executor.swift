@@ -5,8 +5,6 @@
 //  Created by Coen ten Thije Boonkkamp on 28/12/2025.
 //
 
-internal import Ownership_Primitives
-
 extension Kernel.Thread {
     /// A serial executor backed by a single dedicated OS thread.
     ///
