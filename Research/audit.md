@@ -20,14 +20,14 @@
 | 6 | MEDIUM | [API-IMPL-008] | Kernel.Thread.Handle.Reference.swift | Method in class body | RESOLVED 2026-03-24 |
 | 7 | MEDIUM | [API-NAME-002] | Kernel.Thread.Synchronization.swift | Public compound names: `broadcastAll()`, `waitTracked()`, `signalIfWaiters()`, `broadcastIfWaiters()` | DEFERRED — Property-primitives not yet a dependency; documented as WORKAROUND with removal criteria |
 | 8 | MEDIUM | [API-NAME-002] | Kernel.Thread.Handle+joinChecked.swift:29 | Public compound name `joinChecked()` | DEFERRED — consuming ~Copyable prevents Property.View accessor; documented as WORKAROUND |
-| 9 | LOW | [API-IMPL-006] | Kernel.File.Open.swift | File declares `Kernel.File.Open.Configuration` but is named after namespace. Should be `Kernel.File.Open.Configuration.swift`. | OPEN |
+| 9 | LOW | [API-IMPL-006] | Kernel.File.Open.swift | File declares `Kernel.File.Open.Configuration` but is named after namespace | RESOLVED 2026-03-24 — split into Kernel.File.Open.Configuration.swift + Kernel.File.Open.swift |
 | 10 | LOW | [API-IMPL-008] | Kernel.Thread.Synchronization.Channel.swift | All methods in struct body | RESOLVED 2026-03-24 |
 
 ### Summary
 
-10 findings: 0 critical, 0 high, 8 medium, 2 low. **7 resolved**, 2 deferred, 1 open.
+10 findings: 0 critical, 0 high, 8 medium, 2 low. **8 resolved**, 2 deferred, 0 open.
 
-All [API-IMPL-008] violations resolved — methods moved to extensions across 7 types. Two compound-name [API-NAME-002] findings remain deferred with documented workarounds.
+All [API-IMPL-008] violations resolved — methods moved to extensions across 7 types. File naming split completed. Two compound-name [API-NAME-002] findings remain deferred with documented workarounds.
 
 ---
 
@@ -106,16 +106,29 @@ Published products unchanged. 91 tests passing. `swift-ownership-primitives` add
 
 ---
 
-## Legacy — Consolidated 2026-03-24
+## Platform — 2026-03-24
 
-### From: swift-kernel-deep-audit.md (2026-03-19)
+### Scope
 
-All findings superseded by fresh sections above or resolved during this session.
+- **Target**: swift-kernel (Layer 3 — Foundations, unified cross-platform module)
+- **Skill**: platform — [PLAT-ARCH-001]–[PLAT-ARCH-011], [PATTERN-001]–[PATTERN-008]
+- **Files**: 67 source files across 6 targets
 
-| # | Severity | Skill | Location | Finding | Status |
-|---|----------|-------|----------|---------|--------|
-| 1 | MEDIUM | platform | Kernel.Failure.swift | Direct `import Darwin`/`Glibc`/`Musl`/`WinSDK` for `strerror()`/`FormatMessageW` — L3 should route through platform packages [PLAT-ARCH-008] | RESOLVED 2026-03-24 — delegated to `.posixMessage` (swift-posix) and `.win32Message` (swift-windows) |
+### Findings
 
-Previously tracked finding "6 boolean flags for preservation behavior — OptionSet would be more expressive" was also RESOLVED: `Kernel.File.Write.Atomic.Preservation` converted to `OptionSet`.
+| # | Severity | Rule | Location | Finding | Status |
+|---|----------|------|----------|---------|--------|
+| 1 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Count.swift:21 | `#if canImport(Darwin) \|\| canImport(Glibc) \|\| canImport(Musl)` uses `canImport` for platform identity | RESOLVED 2026-03-24 |
+| 2 | HIGH | [PATTERN-004a] | Kernel.System.Memory.Total.swift:25,27 | `#if canImport(Darwin)` and `canImport(Glibc) \|\| canImport(Musl)` used for platform identity | RESOLVED 2026-03-24 |
+| 3 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Physical.Count.swift:29,31 | `#if canImport(Darwin)` and `canImport(Glibc) \|\| canImport(Musl)` used for platform identity | RESOLVED 2026-03-24 |
+| 4 | HIGH | [PATTERN-004a] | Kernel.File.Open.swift:114 | `#elseif canImport(Darwin)` mixed with `#if os(Linux)` in same conditional block | RESOLVED 2026-03-24 |
+| 5 | MEDIUM | [PLAT-ARCH-008] | Kernel.Failure.swift:90–92 | `public import WinSDK` leaks raw Windows SDK into consumer namespace; orphaned after platform delegation | RESOLVED 2026-03-24 — removed |
+| 6 | MEDIUM | [PLAT-ARCH-008] | Kernel.Failure.swift:46–49 | `#if !os(Windows)` on public enum case `.signal` forces consumers matching `Kernel.Failure` to write platform conditionals, undermining the L3 guarantee that consumer code is unconditional | DEFERRED — Conditional case is architecturally correct for an irreducible POSIX concept (signals have no Windows analogue). Zero consumer impact: no exhaustive switches on `Kernel.Failure` exist, no consumer references `.signal`. Prior art (swift-system) validates honest platform conditionals when underlying concept is genuinely absent. See [conditional-compilation-public-enum-cases.md](conditional-compilation-public-enum-cases.md). Revisit if Swift gains `@nonExhaustive` for non-resilient libraries. |
 
-**All legacy findings resolved. Legacy section can be removed on next audit.**
+### Summary
+
+6 findings: 0 critical, 4 high, 2 medium. **5 resolved**, 1 deferred.
+
+All `canImport()` platform identity violations fixed to `#if os()`, matching the canonical pattern from `Kernel Core/exports.swift`. Orphaned `public import WinSDK` removed. Conditional `.signal` enum case (#6) deferred — validated as correct by [prior art research](conditional-compilation-public-enum-cases.md).
+
+**Clean areas**: Re-export chain [PLAT-ARCH-006], Package.swift conditions [PATTERN-004], Swift 6 mode [PATTERN-005], feature flags [PATTERN-006]/[PATTERN-007], module naming [PATTERN-004b], L3 responsibilities [PLAT-ARCH-009] all correct.
