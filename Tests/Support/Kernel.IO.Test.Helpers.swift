@@ -42,8 +42,8 @@
         public static func createTempFileWithContent(_ content: Swift.String, prefix: Swift.String = "io-test") throws -> (path: Swift.String, fd: Kernel.Descriptor) {
             let (pathString, fd) = try createTempFile(prefix: prefix)
             var contentBytes = Array(content.utf8)
-            _ = try? contentBytes.withUnsafeMutableBytes { ptr in
-                try Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
+            _ = try? unsafe contentBytes.withUnsafeMutableBytes { ptr in
+                try unsafe Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
             }
             return (pathString, fd)
         }
@@ -109,8 +109,8 @@
         ) throws -> R {
             try withTempFile(prefix: prefix) { path, fd in
                 var contentBytes = Array(content.utf8)
-                _ = try? contentBytes.withUnsafeMutableBytes { ptr in
-                    try Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
+                _ = try? unsafe contentBytes.withUnsafeMutableBytes { ptr in
+                    try unsafe Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
                 }
                 return try body(path, fd)
             }
@@ -147,8 +147,8 @@
 
                 if let content = content {
                     var contentBytes = Array(content.utf8)
-                    _ = try? contentBytes.withUnsafeMutableBytes { ptr in
-                        try Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
+                    _ = try? unsafe contentBytes.withUnsafeMutableBytes { ptr in
+                        try unsafe Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
                     }
                 }
 
