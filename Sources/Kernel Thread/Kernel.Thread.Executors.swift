@@ -40,7 +40,7 @@ extension Kernel.Thread {
     /// ```
     public final class Executors: Sendable {
         private let executors: [Executor]
-        private let count: Kernel.Thread.Count
+        let count: Kernel.Thread.Count
         private let counter: Atomic<UInt64>
 
         /// Creates a new executor pool with the given options.

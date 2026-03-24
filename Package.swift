@@ -119,6 +119,9 @@ let package = Package(
             name: "Kernel Tests",
             dependencies: [
                 "Kernel",
+                "Kernel Core",
+                "Kernel Thread",
+                "Kernel File",
                 "Kernel Test Support",
             ],
             path: "Tests/Kernel Tests"

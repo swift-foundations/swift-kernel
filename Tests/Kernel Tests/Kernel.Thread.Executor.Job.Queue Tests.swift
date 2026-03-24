@@ -6,6 +6,7 @@
 import Testing
 
 @testable import Kernel
+@testable import Kernel_Thread
 import Kernel_Test_Support
 
 extension Kernel.Thread.Executor.Job.Queue {
