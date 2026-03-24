@@ -18,11 +18,11 @@ extension Kernel.File.Write.Streaming.Atomic {
         public var strategy: Strategy
 
         /// Controls durability guarantees.
-        public var durability: Kernel.File.Write.Streaming.Durability
+        public var durability: Kernel.File.Write.Durability
 
         public init(
             strategy: Strategy = .replaceExisting,
-            durability: Kernel.File.Write.Streaming.Durability = .full
+            durability: Kernel.File.Write.Durability = .full
         ) {
             self.strategy = strategy
             self.durability = durability

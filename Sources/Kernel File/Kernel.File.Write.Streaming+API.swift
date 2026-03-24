@@ -292,7 +292,7 @@ extension Kernel.File.Write.Streaming {
         do {
             try Kernel.File.Write.syncFile(
                 context.descriptor,
-                durability: context.durability.unified
+                durability: context.durability
             )
         } catch { throw Error(error) }
 

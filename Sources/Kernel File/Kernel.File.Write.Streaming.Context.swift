@@ -51,7 +51,7 @@ extension Kernel.File.Write.Streaming {
         public let parentPathString: Swift.String
 
         /// The durability setting for this write.
-        public let durability: Durability
+        public let durability: Kernel.File.Write.Durability
 
         /// Whether this is an atomic write (temp file + rename).
         public let isAtomic: Bool
@@ -64,7 +64,7 @@ extension Kernel.File.Write.Streaming {
             tempPathString: Swift.String?,
             resolvedPathString: Swift.String,
             parentPathString: Swift.String,
-            durability: Durability,
+            durability: Kernel.File.Write.Durability,
             isAtomic: Bool,
             strategy: Atomic.Strategy?
         ) {

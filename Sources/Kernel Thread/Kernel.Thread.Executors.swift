@@ -68,7 +68,8 @@ extension Kernel.Thread.Executors {
     /// - Returns: The next executor in the round-robin sequence.
     public func next() -> Kernel.Thread.Executor {
         let index = counter.wrappingAdd(1, ordering: .relaxed).oldValue
-        return executors[Int(index) % executors.count]
+        let executorCount = UInt64(Int(self.count))
+        return executors[Int(index % executorCount)]
     }
 
     /// Get a specific executor by index.

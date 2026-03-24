@@ -18,7 +18,7 @@ extension Kernel.File.Write.Streaming.Direct {
         public var strategy: Strategy
 
         /// Controls durability guarantees.
-        public var durability: Kernel.File.Write.Streaming.Durability
+        public var durability: Kernel.File.Write.Durability
 
         /// Expected total size in bytes. When provided on macOS/iOS, enables
         /// preallocation via `fcntl(F_PREALLOCATE)` which can significantly
@@ -35,7 +35,7 @@ extension Kernel.File.Write.Streaming.Direct {
 
         public init(
             strategy: Strategy = .truncate,
-            durability: Kernel.File.Write.Streaming.Durability = .full,
+            durability: Kernel.File.Write.Durability = .full,
             expectedSize: Int64? = nil
         ) {
             self.strategy = strategy

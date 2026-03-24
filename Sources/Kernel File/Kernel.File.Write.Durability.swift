@@ -10,30 +10,27 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel.File.Write {
-    /// Internal durability mode shared between `Atomic` and `Streaming`.
-    internal enum Durability: Sendable {
-        case full
-        case dataOnly
-        case none
-    }
-}
+    /// Controls the durability guarantees for file synchronization.
+    ///
+    /// Higher durability modes provide stronger crash-safety but slower performance.
+    public enum Durability: UInt8, Sendable, Equatable {
+        /// Full synchronization with F_FULLFSYNC on macOS (default).
+        ///
+        /// Guarantees data is written to physical storage and survives power loss.
+        /// Slowest but safest option.
+        case full = 0
 
-extension Kernel.File.Write.Atomic.Durability {
-    internal var unified: Kernel.File.Write.Durability {
-        switch self {
-        case .full: .full
-        case .dataOnly: .dataOnly
-        case .none: .none
-        }
-    }
-}
+        /// Data-only synchronization without metadata sync where available.
+        ///
+        /// Uses fdatasync() on Linux or F_BARRIERFSYNC on macOS if available.
+        /// Faster than `.full` but still durable for most use cases.
+        /// Falls back to fsync if platform-specific optimizations unavailable.
+        case dataOnly = 1
 
-extension Kernel.File.Write.Streaming.Durability {
-    internal var unified: Kernel.File.Write.Durability {
-        switch self {
-        case .full: .full
-        case .dataOnly: .dataOnly
-        case .none: .none
-        }
+        /// No synchronization - data may be buffered in OS caches.
+        ///
+        /// Fastest option but provides no crash-safety guarantees.
+        /// Suitable for caches, temporary files, or build artifacts.
+        case none = 2
     }
 }

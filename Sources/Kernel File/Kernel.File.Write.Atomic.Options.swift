@@ -18,7 +18,7 @@ extension Kernel.File.Write.Atomic {
         public var strategy: Strategy
 
         /// Durability guarantee level.
-        public var durability: Durability
+        public var durability: Kernel.File.Write.Durability
 
         /// Which metadata to preserve from the original file.
         public var preservation: Preservation
@@ -28,7 +28,7 @@ extension Kernel.File.Write.Atomic {
 
         public init(
             strategy: Strategy = .replaceExisting,
-            durability: Durability = .full,
+            durability: Kernel.File.Write.Durability = .full,
             preservation: Preservation = .permissions,
             ownership: Ownership = .ignore
         ) {

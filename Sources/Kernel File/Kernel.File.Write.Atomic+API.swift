@@ -124,7 +124,7 @@ extension Kernel.File.Write.Atomic {
         do {
             try Kernel.File.Write.syncFile(
                 descriptor,
-                durability: options.durability.unified
+                durability: options.durability
             )
         } catch { throw Error(error) }
         phase = .syncedFile
