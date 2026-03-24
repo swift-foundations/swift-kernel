@@ -22,9 +22,9 @@ extension Kernel.System.Memory {
     /// ```
     @inlinable
     public static var total: System.Memory.Capacity {
-        #if canImport(Darwin)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
         Darwin.System.Memory.total
-        #elseif canImport(Glibc) || canImport(Musl)
+        #elseif os(Linux) || os(Android) || os(OpenBSD)
         Linux.System.Memory.total
         #elseif os(Windows)
         Windows.System.Memory.total

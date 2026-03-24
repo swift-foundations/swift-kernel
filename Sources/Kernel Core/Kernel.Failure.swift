@@ -87,10 +87,6 @@ extension Kernel.Failure: CustomStringConvertible {
     }
 }
 
-#if os(Windows)
-    public import WinSDK
-#endif
-
 extension Kernel.Failure {
     public init?(
         _ code: Kernel.Error.Code

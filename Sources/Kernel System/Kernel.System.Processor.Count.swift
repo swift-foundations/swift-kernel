@@ -18,7 +18,7 @@ extension Kernel.System.Processor {
     /// ```
     @inlinable
     public static var count: System.Processor.Count {
-        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD)
         ISO_9945.Kernel.System.processorCount
         #elseif os(Windows)
         Windows.Kernel.System.processorCount
