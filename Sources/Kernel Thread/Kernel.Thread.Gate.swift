@@ -58,14 +58,14 @@ extension Kernel.Thread.Gate {
     ///
     /// Opening an already-open gate is a no-op.
     public func open() {
-        sync.lock()
-        if _isOpen {
-            sync.unlock()
-            return
+        let didOpen = sync.withLock {
+            guard !_isOpen else { return false }
+            _isOpen = true
+            return true
         }
-        _isOpen = true
-        sync.broadcast(condition: 0)
-        sync.unlock()
+        if didOpen {
+            sync.broadcast(condition: 0)
+        }
     }
 
     /// Blocks until the gate is opened.

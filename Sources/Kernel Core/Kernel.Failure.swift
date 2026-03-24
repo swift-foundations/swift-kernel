@@ -174,8 +174,8 @@ extension Kernel.Failure {
 
                 var buffer: LPWSTR? = nil
 
-                // MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT) = (1 << 10) | 0 = 0x0400
-                let langId: DWORD = 0x0400
+                // MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT): (1 << 10) | 0
+                let langNeutralSublangDefault: DWORD = 0x0400
 
                 let length: DWORD = withUnsafeMutablePointer(to: &buffer) { bufferPtr in
                     bufferPtr.withMemoryRebound(to: WCHAR.self, capacity: 1) { widePtr in
@@ -183,7 +183,7 @@ extension Kernel.Failure {
                             flags,
                             nil,
                             rawValue,
-                            langId,
+                            langNeutralSublangDefault,
                             widePtr,
                             0,
                             nil
