@@ -152,7 +152,7 @@ extension Kernel.Thread.Executor {
     public func shutdown() {
         // Take ownership of the handle from storage.
         // Using explicit _take pattern for ~Copyable Optional.
-        guard let handle = threadHandle._take() else {
+        guard let handle = threadHandle.take() else {
             preconditionFailure(
                 "Kernel.Thread.Executor.shutdown() called on already-shutdown or never-started executor"
             )

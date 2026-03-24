@@ -60,7 +60,7 @@ extension Kernel.Thread.Handle.Reference {
     ///
     /// - Precondition: Must be called exactly once.
     public func join() {
-        guard let handle = inner._take() else {
+        guard let handle = inner.take() else {
             preconditionFailure(
                 "Kernel.Thread.Handle.Reference.join() called twice"
             )
