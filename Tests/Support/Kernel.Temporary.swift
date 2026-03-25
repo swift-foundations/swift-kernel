@@ -12,7 +12,7 @@
 /// Test support for cross-platform temporary file paths.
 
 public import Kernel
-public import Strings
+import Strings
 
 // Platform imports only for getpid/GetCurrentProcessId (acceptable in test support)
 #if canImport(Darwin)
@@ -46,7 +46,7 @@ extension Kernel.Temporary {
             }
             return "C:\\Temp"
         #else
-            if let tmpdir = Kernel.Environment.get("TMPDIR") {
+            if let tmpdir = unsafe Kernel.Environment.get("TMPDIR") {
                 return Swift.String(tmpdir.rawValue)
             }
             return "/tmp"

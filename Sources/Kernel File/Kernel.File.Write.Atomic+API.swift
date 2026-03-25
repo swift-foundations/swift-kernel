@@ -295,7 +295,7 @@ extension Kernel.File.Write.Atomic {
                     descriptor,
                     permissions: stats.permissions
                 )
-            } catch let error as Kernel.File.Attributes.Error {
+            } catch let error {
                 let code: Kernel.Error.Code
                 switch error {
                 case .platform(let e): code = e.code
@@ -318,7 +318,7 @@ extension Kernel.File.Write.Atomic {
                     uid: stats.uid,
                     gid: stats.gid
                 )
-            } catch let error as Kernel.File.Chown.Error {
+            } catch let error {
                 if strict {
                     let code: Kernel.Error.Code
                     switch error {
@@ -343,7 +343,7 @@ extension Kernel.File.Write.Atomic {
                     accessTime: stats.accessTime,
                     modificationTime: stats.modificationTime
                 )
-            } catch let error as Kernel.File.Times.Error {
+            } catch let error {
                 throw .timestampPreservationFailed(error)
             }
         }
