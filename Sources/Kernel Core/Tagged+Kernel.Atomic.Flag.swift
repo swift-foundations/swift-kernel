@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Tagged where RawValue == Kernel.Atomic.Flag, Tag: ~Copyable {
+extension Tagged where RawValue == CPU.Atomic.Flag, Tag: ~Copyable {
     /// Whether the flag has been set.
     ///
     /// Uses acquiring memory ordering.
