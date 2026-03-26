@@ -9,11 +9,23 @@ extension Kernel.Thread {
     /// A serial executor backed by a single dedicated OS thread.
     ///
     /// Conforms to both `SerialExecutor` (for actor pinning via `unownedExecutor`)
-    /// and `TaskExecutor` (for `Task(executorPreference:)`).
+    /// and `TaskExecutor` (for `withTaskExecutorPreference`).
     ///
     /// ## Thread Safety
     /// This type is `@unchecked Sendable` because it provides internal synchronization.
     /// Jobs are enqueued under lock and executed serially on the dedicated thread.
+    ///
+    /// ## Run Identity
+    ///
+    /// The executor must report the correct identity when running jobs, otherwise
+    /// the Swift Concurrency runtime will re-enqueue them indefinitely.
+    ///
+    /// - **Serial mode** (default): Jobs run with `runSynchronously(on: serialExecutor)`.
+    ///   Use for actor pinning via `unownedExecutor`.
+    /// - **Task mode**: Jobs run with `runSynchronously(on: taskExecutor)`.
+    ///   Use with `withTaskExecutorPreference`.
+    ///
+    /// See: swift-platform-executors `PThreadExecutor` for the upstream pattern.
     ///
     /// ## Lifecycle Requirements
     ///
@@ -32,14 +44,22 @@ extension Kernel.Thread {
     ///
     /// ## Example Usage
     /// ```swift
+    /// // Actor pinning (serial mode — default)
     /// let executor = Kernel.Thread.Executor()
     /// defer { executor.shutdown() }
     ///
-    /// // Pin an actor to this executor
     /// actor MyActor {
     ///     nonisolated var unownedExecutor: UnownedSerialExecutor {
     ///         executor.asUnownedSerialExecutor()
     ///     }
+    /// }
+    ///
+    /// // Task executor preference (task mode)
+    /// let executor = Kernel.Thread.Executor(mode: .task)
+    /// defer { executor.shutdown() }
+    ///
+    /// await withTaskExecutorPreference(executor) {
+    ///     // work runs on dedicated thread, off cooperative pool
     /// }
     /// ```
     ///
@@ -52,6 +72,17 @@ extension Kernel.Thread {
     /// If you need a more forgiving API, consider wrapping this in a helper that
     /// tracks shutdown state and handles edge cases for your use case.
     public final class Executor: SerialExecutor, TaskExecutor, @unchecked Sendable {
+
+        /// Controls which executor identity is reported to the runtime when
+        /// running jobs.
+        public enum Mode {
+            /// Report as serial executor. Use for actor pinning.
+            case serial
+            /// Report as task executor. Use with `withTaskExecutorPreference`.
+            case task
+        }
+
+        private let mode: Mode
         private let sync: Synchronization<1>
         private var jobs: Job.Queue
         private var isRunning: Bool = true
@@ -60,7 +91,12 @@ extension Kernel.Thread {
         /// Creates a new executor thread.
         ///
         /// The thread starts immediately and begins waiting for jobs.
-        public init() {
+        ///
+        /// - Parameter mode: Controls which identity is reported to the runtime.
+        ///   Use `.serial` (default) for actor pinning, `.task` for
+        ///   `withTaskExecutorPreference`.
+        public init(mode: Mode = .serial) {
+            self.mode = mode
             self.sync = Synchronization()
             self.jobs = Job.Queue()
 
@@ -132,7 +168,12 @@ extension Kernel.Thread.Executor {
                 return jobs.dequeue()
             }
             guard let job else { return }
-            unsafe job.runSynchronously(on: asUnownedSerialExecutor())
+            switch mode {
+            case .serial:
+                unsafe job.runSynchronously(on: asUnownedSerialExecutor())
+            case .task:
+                unsafe job.runSynchronously(on: asUnownedTaskExecutor())
+            }
         }
     }
 }
