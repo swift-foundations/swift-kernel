@@ -49,9 +49,13 @@ extension Kernel.Continuation {
     /// }
     /// ```
     public final class Context<Success: Sendable, Failure: Swift.Error & Sendable>: @unchecked Sendable {
-        /// The continuation to resume with typed result.
-        /// Uses non-throwing continuation with Result to eliminate `any Error`.
-        private let continuation: CheckedContinuation<Swift.Result<Success, Failure>, Never>
+        /// The callback invoked exactly once on completion, cancellation, or failure.
+        ///
+        /// Replaces the formerly stored `CheckedContinuation`. Continuation-based
+        /// callers wrap the continuation in a callback at init time (zero-cost at
+        /// the call site). Callback-based callers (sync submission path) provide
+        /// a callback directly, avoiding any cooperative pool involvement.
+        private let callback: @Sendable (Swift.Result<Success, Failure>) -> Void
 
         /// Atomic state tracking the resumption path.
         private let _state: Atomic<State>
@@ -67,9 +71,23 @@ extension Kernel.Continuation {
 
         /// Creates a context wrapping the given continuation.
         ///
+        /// The continuation is wrapped in a callback. Existing callers are unchanged.
+        ///
         /// - Parameter continuation: A non-throwing checked continuation returning Result.
         public init(continuation: CheckedContinuation<Swift.Result<Success, Failure>, Never>) {
-            self.continuation = continuation
+            self.callback = { continuation.resume(returning: $0) }
+            self._state = Atomic(.pending)
+        }
+
+        /// Creates a context with a callback for exactly-once delivery.
+        ///
+        /// Used by the synchronous submission path where no continuation exists.
+        /// The callback is invoked at most once, on whichever thread triggers
+        /// the state transition.
+        ///
+        /// - Parameter callback: A sendable callback invoked with the result.
+        public init(callback: @escaping @Sendable (Swift.Result<Success, Failure>) -> Void) {
+            self.callback = callback
             self._state = Atomic(.pending)
         }
     }
@@ -90,7 +108,7 @@ extension Kernel.Continuation.Context {
             ordering: .acquiringAndReleasing
         )
         if exchanged {
-            continuation.resume(returning: Swift.Result.success(value))
+            callback(.success(value))
             return true
         }
         return false
@@ -110,7 +128,7 @@ extension Kernel.Continuation.Context {
             ordering: .acquiringAndReleasing
         )
         if exchanged {
-            continuation.resume(returning: Swift.Result.failure(error))
+            callback(.failure(error))
             return true
         }
         return false
@@ -130,7 +148,7 @@ extension Kernel.Continuation.Context {
             ordering: .acquiringAndReleasing
         )
         if exchanged {
-            continuation.resume(returning: Swift.Result.failure(error))
+            callback(.failure(error))
             return true
         }
         return false
