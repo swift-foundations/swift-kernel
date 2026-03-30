@@ -34,7 +34,7 @@ extension Kernel.File.Write.Streaming {
     ///
     /// Context is `Sendable` but operations on it should be sequential.
     /// The descriptor and paths are stable after creation.
-    public struct Context: Sendable {
+    public struct Context: ~Copyable, Sendable {
         /// The file descriptor for the open file.
         public let descriptor: Kernel.Descriptor
 
@@ -60,7 +60,7 @@ extension Kernel.File.Write.Streaming {
         public let strategy: Atomic.Strategy?
 
         public init(
-            descriptor: Kernel.Descriptor,
+            descriptor: consuming Kernel.Descriptor,
             tempPathString: Swift.String?,
             resolvedPathString: Swift.String,
             parentPathString: Swift.String,

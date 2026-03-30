@@ -19,14 +19,13 @@ extension Kernel.Event {
             public init() {}
         }
 
-        /// Creates a pipe, returning (read, write) descriptors.
+        /// Creates a pipe, returning ~Copyable `Pipe.Descriptors`.
         ///
-        /// - Returns: Tuple of (read descriptor, write descriptor)
+        /// - Returns: The pipe descriptors (read + write).
         /// - Throws: `PipeError` if pipe creation fails
-        public static func makePipe() throws -> (read: Kernel.Descriptor, write: Kernel.Descriptor) {
+        public static func makePipe() throws -> Kernel.Pipe.Descriptors {
             do {
-                let descriptors = try Kernel.Pipe.pipe()
-                return (read: descriptors.read, write: descriptors.write)
+                return try Kernel.Pipe.pipe()
             } catch {
                 throw PipeError()
             }
@@ -35,7 +34,7 @@ extension Kernel.Event {
         /// Closes a descriptor without throwing (safe for defer blocks).
         ///
         /// - Parameter fd: The descriptor to close
-        public static func closeNoThrow(_ fd: Kernel.Descriptor) {
+        public static func closeNoThrow(_ fd: borrowing Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
         }
 
@@ -44,7 +43,7 @@ extension Kernel.Event {
         /// - Parameters:
         ///   - fd: The descriptor to write to
         ///   - value: The byte value to write (default: 1)
-        public static func writeByte(_ fd: Kernel.Descriptor, value: UInt8 = 1) {
+        public static func writeByte(_ fd: borrowing Kernel.Descriptor, value: UInt8 = 1) {
             var byte = value
             _ = unsafe withUnsafeBytes(of: &byte) { buffer in
                 try? unsafe Kernel.IO.Write.write(fd, from: buffer)
@@ -54,7 +53,7 @@ extension Kernel.Event {
         /// Drains one byte from a descriptor.
         ///
         /// - Parameter fd: The descriptor to read from
-        public static func readDrain(_ fd: Kernel.Descriptor) {
+        public static func readDrain(_ fd: borrowing Kernel.Descriptor) {
             var byte: UInt8 = 0
             _ = unsafe withUnsafeMutableBytes(of: &byte) { buffer in
                 try? unsafe Kernel.IO.Read.read(fd, into: buffer)

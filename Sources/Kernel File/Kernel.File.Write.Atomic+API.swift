@@ -97,7 +97,7 @@ extension Kernel.File.Write.Atomic {
         let destStats = try statIfExists(resolved)
 
         // 3. Create temp file with unique name
-        let (descriptor, tempPath) = try createTempFileWithRetry(
+        let tempFile = try createTempFileWithRetry(
             in: parent,
             for: resolved
         )
@@ -106,10 +106,10 @@ extension Kernel.File.Write.Atomic {
         defer {
             // CRITICAL: After renamedPublished, NEVER unlink destination!
             if phase < .closed {
-                try? Kernel.Close.close(descriptor)
+                try? Kernel.Close.close(tempFile.descriptor)
             }
             if phase < .renamedPublished {
-                try? Kernel.Path.scope(tempPath) { kernelPath in
+                try? Kernel.Path.scope(tempFile.path) { kernelPath in
                     try? Kernel.File.Delete.delete(kernelPath)
                 }
             }
@@ -117,13 +117,13 @@ extension Kernel.File.Write.Atomic {
 
         // 4. Write all data
         do {
-            try Kernel.File.Write.writeAll(bytes, to: descriptor)
+            try Kernel.File.Write.writeAll(bytes, to: tempFile.descriptor)
         } catch { throw Error(error) }
 
         // 5. Sync file to disk
         do {
             try Kernel.File.Write.syncFile(
-                descriptor,
+                tempFile.descriptor,
                 durability: options.durability
             )
         } catch { throw Error(error) }
@@ -133,15 +133,15 @@ extension Kernel.File.Write.Atomic {
         if let stats = destStats {
             try applyMetadata(
                 from: stats,
-                to: descriptor,
+                to: tempFile.descriptor,
                 options: options,
                 destPath: resolved
             )
         }
 
         // 7. Close file (required before rename on some systems)
-        do {
-            try Kernel.File.Write.closeFile(descriptor)
+        do throws(Kernel.File.Write.Error) {
+            try Kernel.File.Write.closeFile(tempFile.descriptor)
         } catch { throw Error(error) }
         phase = .closed
 
@@ -150,14 +150,14 @@ extension Kernel.File.Write.Atomic {
         case .replaceExisting:
             do {
                 try Kernel.File.Write.atomicRename(
-                    from: tempPath,
+                    from: tempFile.path,
                     to: resolved
                 )
             } catch { throw Error(error) }
         case .noClobber:
             do {
                 try Kernel.File.Write.atomicRenameNoClobber(
-                    from: tempPath,
+                    from: tempFile.path,
                     to: resolved
                 )
             } catch { throw Error(error) }
@@ -205,12 +205,19 @@ extension Kernel.File.Write.Atomic {
 // MARK: - Temp File Creation
 
 extension Kernel.File.Write.Atomic {
+    /// Temp file descriptor + path, returned from `createTempFileWithRetry`.
+    /// `~Copyable` because it owns the `Kernel.Descriptor`.
+    private struct TempFile: ~Copyable, Sendable {
+        let descriptor: Kernel.Descriptor
+        let path: Swift.String
+    }
+
     private static let maxTempFileAttempts = 64
 
     private static func createTempFileWithRetry(
         in parent: Swift.String,
         for dest: Swift.String
-    ) throws(Error) -> (descriptor: Kernel.Descriptor, tempPath: Swift.String) {
+    ) throws(Error) -> TempFile {
         let baseName = Kernel.File.Write.fileName(of: dest)
         let pid = Kernel.Process.ID.current
 
@@ -225,34 +232,23 @@ extension Kernel.File.Write.Atomic {
             let tempPath = "\(parent)/.\(baseName).atomic.\(pid).\(random).tmp"
             #endif
 
-            let result: Result<Kernel.Descriptor, any Swift.Error>
+            // Open inside scope — return TempFile directly (scope supports R: ~Copyable).
+            // No Result needed; errors are caught and classified directly.
             do {
-                result = try Kernel.Path.scope(tempPath) { kernelPath -> Result<Kernel.Descriptor, any Swift.Error> in
-                    do {
-                        let fd = try Kernel.File.Open.open(
-                            path: kernelPath,
-                            mode: .readWrite,
-                            options: [.create, .exclusive],
-                            permissions: .ownerReadWrite
-                        )
-                        return .success(fd)
-                    } catch {
-                        return .failure(error)
-                    }
+                let tempFile = try Kernel.Path.scope(tempPath) { kernelPath -> TempFile in
+                    let fd = try Kernel.File.Open.open(
+                        path: kernelPath,
+                        mode: .readWrite,
+                        options: [.create, .exclusive],
+                        permissions: .ownerReadWrite
+                    )
+                    return TempFile(descriptor: fd, path: tempPath)
                 }
+                return tempFile
             } catch {
-                throw .tempFileCreationFailed(
-                    directory: parent,
-                    code: .POSIX.ENOENT,
-                    message: "path conversion failed: \(error)"
-                )
-            }
-
-            switch result {
-            case .success(let fd):
-                return (fd, tempPath)
-            case .failure(let error):
-                if let openError = error as? Kernel.File.Open.Error {
+                // Path.scope wraps body errors in .body(); open errors are inside that.
+                // Classify: EEXIST → retry, path conversion → fatal, other → fatal.
+                if let openError = error.body as? Kernel.File.Open.Error {
                     if case .path(.exists) = openError,
                        attempt < maxTempFileAttempts - 1
                     {
@@ -266,7 +262,7 @@ extension Kernel.File.Write.Atomic {
                 }
                 throw .tempFileCreationFailed(
                     directory: parent,
-                    code: .POSIX.EIO,
+                    code: .POSIX.ENOENT,
                     message: "open failed: \(error)"
                 )
             }
@@ -285,7 +281,7 @@ extension Kernel.File.Write.Atomic {
 extension Kernel.File.Write.Atomic {
     private static func applyMetadata(
         from stats: Kernel.File.Stats,
-        to descriptor: Kernel.Descriptor,
+        to descriptor: borrowing Kernel.Descriptor,
         options: borrowing Options,
         destPath: Swift.String
     ) throws(Error) {

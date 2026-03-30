@@ -153,7 +153,7 @@ extension Kernel.File.Write {
     /// Writes all bytes from a span to a file descriptor, handling partial writes.
     internal static func writeAll(
         _ span: borrowing Span<UInt8>,
-        to fd: Kernel.Descriptor
+        to fd: borrowing Kernel.Descriptor
     ) throws(Kernel.File.Write.Error) {
         let total = span.count
         if total == 0 { return }
@@ -205,7 +205,7 @@ extension Kernel.File.Write {
     /// Writes all bytes from a raw buffer to a file descriptor, handling partial writes.
     internal static func writeAllRaw(
         _ buffer: UnsafeRawBufferPointer,
-        to fd: Kernel.Descriptor
+        to fd: borrowing Kernel.Descriptor
     ) throws(Kernel.File.Write.Error) {
         let total = buffer.count
         if total == 0 { return }
@@ -262,7 +262,7 @@ extension Kernel.File.Write {
     /// - `.dataOnly`: fdatasync on Linux, F_BARRIERFSYNC on Darwin, fsync elsewhere
     /// - `.none`: no-op
     internal static func syncFile(
-        _ fd: Kernel.Descriptor,
+        _ fd: borrowing Kernel.Descriptor,
         durability: Kernel.File.Write.Durability
     ) throws(Kernel.File.Write.Error) {
         switch durability {
@@ -290,7 +290,7 @@ extension Kernel.File.Write {
     }
 
     internal static func closeFile(
-        _ fd: Kernel.Descriptor
+        _ fd: borrowing Kernel.Descriptor
     ) throws(Kernel.File.Write.Error) {
         do {
             try Kernel.Close.close(fd)
@@ -374,27 +374,19 @@ extension Kernel.File.Write {
         #if os(Windows)
         _ = pathString
         #else
-        let fd: Kernel.Descriptor
+        // Open, flush, and close within the scope closure to avoid returning
+        // ~Copyable Kernel.Descriptor through do-catch (compiler bug workaround).
         do {
-            fd = try Kernel.Path.scope(pathString) { kernelPath throws -> Kernel.Descriptor in
-                try Kernel.File.Open.open(
+            try Kernel.Path.scope(pathString) { kernelPath in
+                let fd = try Kernel.File.Open.open(
                     path: kernelPath,
                     mode: .read,
                     options: [.execClose],
                     permissions: .none
                 )
+                defer { try? Kernel.Close.close(fd) }
+                try Kernel.File.Flush.flush(fd)
             }
-        } catch {
-            throw .directory(
-                path: pathString,
-                "open directory failed: \(error)"
-            )
-        }
-
-        defer { try? Kernel.Close.close(fd) }
-
-        do {
-            try Kernel.File.Flush.flush(fd)
         } catch {
             throw .directory(
                 path: pathString,

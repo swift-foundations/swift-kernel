@@ -296,7 +296,7 @@ extension Kernel.File.Write.Streaming {
             )
         } catch { throw Error(error) }
 
-        do {
+        do throws(Kernel.File.Write.Error) {
             try Kernel.File.Write.closeFile(context.descriptor)
         } catch { throw Error(error) }
 
