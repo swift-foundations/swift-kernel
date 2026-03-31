@@ -36,7 +36,9 @@ extension Kernel.File.Write.Streaming {
     /// The descriptor and paths are stable after creation.
     public struct Context: ~Copyable, Sendable {
         /// The file descriptor for the open file.
-        public let descriptor: Kernel.Descriptor
+        /// Optional to support extraction at commit time (close before rename).
+        /// Closes via deinit if not explicitly taken.
+        public var descriptor: Kernel.Descriptor?
 
         /// Path string for the temp file (nil for direct mode).
         ///
@@ -68,7 +70,7 @@ extension Kernel.File.Write.Streaming {
             isAtomic: Bool,
             strategy: Atomic.Strategy?
         ) {
-            self.descriptor = descriptor
+            self.descriptor = consume descriptor
             self.tempPathString = tempPathString
             self.resolvedPathString = resolvedPathString
             self.parentPathString = parentPathString

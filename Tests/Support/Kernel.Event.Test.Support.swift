@@ -31,10 +31,10 @@ extension Kernel.Event {
             }
         }
 
-        /// Closes a descriptor without throwing (safe for defer blocks).
-        ///
-        /// - Parameter fd: The descriptor to close
-        public static func closeNoThrow(_ fd: borrowing Kernel.Descriptor) {
+        /// Closes a descriptor without throwing.
+        /// With deinit on Kernel.Descriptor, this is rarely needed —
+        /// just let the descriptor go out of scope.
+        public static func closeNoThrow(_ fd: consuming Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
         }
 

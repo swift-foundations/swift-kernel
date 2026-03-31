@@ -290,7 +290,7 @@ extension Kernel.File.Write {
     }
 
     internal static func closeFile(
-        _ fd: borrowing Kernel.Descriptor
+        _ fd: consuming Kernel.Descriptor
     ) throws(Kernel.File.Write.Error) {
         do {
             try Kernel.Close.close(fd)
@@ -384,8 +384,8 @@ extension Kernel.File.Write {
                     options: [.execClose],
                     permissions: .none
                 )
-                defer { try? Kernel.Close.close(fd) }
                 try Kernel.File.Flush.flush(fd)
+                // fd closes via deinit at end of scope
             }
         } catch {
             throw .directory(

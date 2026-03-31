@@ -45,7 +45,7 @@ extension Kernel.Test.Unit {
                 permissions: .standard
             )
 
-            #expect(fd.isValid)
+            do { let v = fd.isValid; #expect(v) }
 
             // Close
             try Kernel.Close.close(fd)
@@ -90,7 +90,6 @@ extension Kernel.Test.Unit {
             )
 
             defer {
-                try? Kernel.Close.close(fd)
                 try? Kernel.File.Delete.delete(path)
             }
 
@@ -125,7 +124,6 @@ extension Kernel.Test.Unit {
             )
 
             defer {
-                try? Kernel.Close.close(fd)
                 try? Kernel.File.Delete.delete(path)
             }
 

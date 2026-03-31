@@ -72,10 +72,7 @@ extension Kernel.File.Clone {
         #elseif os(Linux)
             // On Linux, we need to open files to use FICLONE
             let srcDescriptor = try openSource(source)
-            defer { try? Kernel.Close.close(srcDescriptor) }
-
             let dstDescriptor = try createDestination(destination)
-            defer { try? Kernel.Close.close(dstDescriptor) }
 
             let cloned: Bool
             do {
@@ -129,12 +126,9 @@ extension Kernel.File.Clone {
 
         #elseif os(Linux)
             let srcDescriptor = try openSource(source)
-            defer { try? Kernel.Close.close(srcDescriptor) }
-
             let size = try getSize(source)
 
             let dstDescriptor = try createDestination(destination)
-            defer { try? Kernel.Close.close(dstDescriptor) }
 
             // Try FICLONE
             var reflinked = false
@@ -191,12 +185,9 @@ extension Kernel.File.Clone {
 
         #elseif os(Linux)
             let srcDescriptor = try openSource(source)
-            defer { try? Kernel.Close.close(srcDescriptor) }
-
             let size = try getSize(source)
 
             let dstDescriptor = try createDestination(destination)
-            defer { try? Kernel.Close.close(dstDescriptor) }
 
             do {
                 try CopyRange.copy(

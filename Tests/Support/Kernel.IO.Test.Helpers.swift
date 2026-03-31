@@ -14,6 +14,9 @@
     public import Kernel
 
     /// Test utilities for I/O operations.
+    ///
+    /// `Kernel.Descriptor` has a `deinit` that closes the fd automatically.
+    /// Tests just let descriptors go out of scope — no explicit close needed.
     public enum KernelIOTest {
         /// Error thrown when temp file creation fails.
         public struct TempFileError: Swift.Error, Sendable {
@@ -21,7 +24,7 @@
         }
 
         /// ~Copyable temp file handle returned from `createTempFile`.
-        /// Owns the `Kernel.Descriptor`.
+        /// Owns the `Kernel.Descriptor`. Descriptor closes via deinit when dropped.
         public struct TempFile: ~Copyable, Sendable {
             public let path: Swift.String
             public let descriptor: Kernel.Descriptor
@@ -35,7 +38,7 @@
         // MARK: - Direct helpers (open + defer close pattern)
 
         /// Creates a temporary file and returns a ~Copyable TempFile.
-        /// Caller is responsible for cleanup via `cleanupTempFile`.
+        /// Caller is responsible for path cleanup via `cleanupTempFile`.
         public static func createTempFile(prefix: Swift.String = "io-test") throws -> TempFile {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
             let fd = try Kernel.Path.scope(pathString) { path in
@@ -50,7 +53,7 @@
         }
 
         /// Creates a temporary file with content and returns a ~Copyable TempFile.
-        /// Caller is responsible for cleanup via `cleanupTempFile`.
+        /// Caller is responsible for path cleanup via `cleanupTempFile`.
         public static func createTempFileWithContent(_ content: Swift.String, prefix: Swift.String = "io-test") throws -> TempFile {
             let tempFile = try createTempFile(prefix: prefix)
             var contentBytes = Array(content.utf8)
@@ -60,9 +63,9 @@
             return tempFile
         }
 
-        /// Cleans up a temporary file.
+        /// Cleans up a temporary file (deletes path).
+        /// Descriptor closes via deinit when tempFile drops.
         public static func cleanupTempFile(_ tempFile: borrowing TempFile) {
-            try? Kernel.Close.close(tempFile.descriptor)
             try? Kernel.Path.scope(tempFile.path) { p in
                 try Kernel.File.Delete.delete(p)
             }
@@ -73,13 +76,13 @@
         /// Creates a temporary file and executes the body with path and descriptor.
         ///
         /// The file is automatically cleaned up after the body completes.
+        /// Descriptor closes via deinit at end of scope.
         public static func withTempFile<R>(
             prefix: Swift.String = "io-test",
             _ body: (borrowing Kernel.Path.View, borrowing Kernel.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
             return try Kernel.Path.scope(pathString) { path in
-                // Open directly — avoid do-catch assignment of ~Copyable (compiler bug).
                 let fd = try Kernel.File.Open.open(
                     path: path,
                     mode: .readWrite,
@@ -87,7 +90,7 @@
                     permissions: .ownerReadWrite
                 )
                 defer {
-                    try? Kernel.Close.close(fd)
+                    // fd closes via deinit at end of scope
                     try? Kernel.File.Delete.delete(path)
                 }
                 return try body(path, fd)
@@ -117,7 +120,6 @@
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
             return try Kernel.Path.scope(pathString) { path in
-                // Open directly — avoid do-catch assignment of ~Copyable (compiler bug).
                 let fd = try Kernel.File.Open.open(
                     path: path,
                     mode: .readWrite,
@@ -133,7 +135,7 @@
                 }
 
                 defer {
-                    try? Kernel.Close.close(fd)
+                    // fd closes via deinit at end of scope
                     try? Kernel.File.Delete.delete(path)
                 }
 

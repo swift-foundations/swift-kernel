@@ -30,7 +30,7 @@ struct KernelLockIntegration {}
 /// File is automatically cleaned up after body completes.
 private func withTempFile<R>(
     prefix: String,
-    _ body: (borrowing Path.View, Kernel.Descriptor) throws -> R
+    _ body: (borrowing Path.View, borrowing Kernel.Descriptor) throws -> R
 ) throws -> R {
     let pathString = Kernel.Temporary.filePath(prefix: prefix)
     return try Kernel.Path.scope(pathString) { path in
@@ -46,7 +46,6 @@ private func withTempFile<R>(
             try Kernel.IO.Write.write(fd, from: buffer)
         }
         defer {
-            try? Kernel.Close.close(fd)
             try? Kernel.File.Delete.delete(path)
         }
         return try body(path, fd)
@@ -59,7 +58,7 @@ extension KernelLockIntegration {
     @Test("Token acquires and releases lock")
     func tokenAcquiresAndReleasesLock() throws {
         try withTempFile(prefix: "kernel-lock-token") { _, fd in
-            #expect(fd.isValid, "Failed to create test file")
+            do { let v = fd.isValid; #expect(v, "Failed to create test file") }
 
             // Acquire exclusive lock
             var token = try Kernel.Lock.Token(
@@ -77,7 +76,7 @@ extension KernelLockIntegration {
     @Test("Try lock returns immediately when uncontested")
     func tryLockUncontested() throws {
         try withTempFile(prefix: "kernel-lock-try") { _, fd in
-            #expect(fd.isValid, "Failed to create test file")
+            do { let v = fd.isValid; #expect(v, "Failed to create test file") }
 
             // Try to acquire lock without blocking - should succeed
             var token = try Kernel.Lock.Token(
@@ -103,7 +102,7 @@ extension KernelLockIntegration {
     /// File is cleaned up after body completes.
     private func withTempFileForProcess<R>(
         prefix: String,
-        _ body: (_ pathString: String, _ fd: Kernel.Descriptor) throws -> R
+        _ body: (_ pathString: String, _ fd: borrowing Kernel.Descriptor) throws -> R
     ) throws -> R {
         let pathString = Kernel.Temporary.filePath(prefix: prefix)
         return try Kernel.Path.scope(pathString) { path in
@@ -119,7 +118,6 @@ extension KernelLockIntegration {
                 try Kernel.IO.Write.write(fd, from: buffer)
             }
             defer {
-                try? Kernel.Close.close(fd)
                 try? Kernel.File.Delete.delete(path)
             }
             return try body(pathString, fd)
@@ -159,7 +157,7 @@ extension KernelLockIntegration {
         @Test("Exclusive lock blocks try-exclusive from another process")
         func exclusiveBlocksTryExclusive() throws {
             try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
-                #expect(fd.isValid, "Failed to create test file")
+                do { let v = fd.isValid; #expect(v, "Failed to create test file") }
 
                 // Acquire exclusive lock in this process
                 var token = try Kernel.Lock.Token(
@@ -193,7 +191,7 @@ extension KernelLockIntegration {
         @Test("Exclusive lock blocks try-shared from another process")
         func exclusiveBlocksTryShared() throws {
             try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
-                #expect(fd.isValid, "Failed to create test file")
+                do { let v = fd.isValid; #expect(v, "Failed to create test file") }
 
                 // Acquire exclusive lock in this process
                 var token = try Kernel.Lock.Token(
@@ -227,7 +225,7 @@ extension KernelLockIntegration {
         @Test("Shared lock allows try-shared from another process")
         func sharedAllowsTryShared() throws {
             try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
-                #expect(fd.isValid, "Failed to create test file")
+                do { let v = fd.isValid; #expect(v, "Failed to create test file") }
 
                 // Acquire shared lock in this process
                 var token = try Kernel.Lock.Token(
@@ -262,7 +260,7 @@ extension KernelLockIntegration {
         @Test("Shared lock blocks try-exclusive from another process")
         func sharedBlocksTryExclusive() throws {
             try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
-                #expect(fd.isValid, "Failed to create test file")
+                do { let v = fd.isValid; #expect(v, "Failed to create test file") }
 
                 // Acquire shared lock in this process
                 var token = try Kernel.Lock.Token(
@@ -296,7 +294,7 @@ extension KernelLockIntegration {
         @Test("Non-overlapping byte ranges don't conflict")
         func nonOverlappingRangesDontConflict() throws {
             try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
-                #expect(fd.isValid, "Failed to create test file")
+                do { let v = fd.isValid; #expect(v, "Failed to create test file") }
 
                 // Acquire exclusive lock on bytes 0-100 in this process
                 var token = try Kernel.Lock.Token(
@@ -330,7 +328,7 @@ extension KernelLockIntegration {
         @Test("Overlapping byte ranges do conflict")
         func overlappingRangesConflict() throws {
             try withTempFileForProcess(prefix: "kernel-contention") { pathString, fd in
-                #expect(fd.isValid, "Failed to create test file")
+                do { let v = fd.isValid; #expect(v, "Failed to create test file") }
 
                 // Acquire exclusive lock on bytes 0-200 in this process
                 var token = try Kernel.Lock.Token(

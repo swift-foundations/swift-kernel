@@ -97,7 +97,7 @@ extension Kernel.File.Write.Atomic {
         let destStats = try statIfExists(resolved)
 
         // 3. Create temp file with unique name
-        let tempFile = try createTempFileWithRetry(
+        var tempFile = try createTempFileWithRetry(
             in: parent,
             for: resolved
         )
@@ -105,9 +105,7 @@ extension Kernel.File.Write.Atomic {
 
         defer {
             // CRITICAL: After renamedPublished, NEVER unlink destination!
-            if phase < .closed {
-                try? Kernel.Close.close(tempFile.descriptor)
-            }
+            // Descriptor closes via deinit when tempFile drops (if not already taken).
             if phase < .renamedPublished {
                 try? Kernel.Path.scope(tempFile.path) { kernelPath in
                     try? Kernel.File.Delete.delete(kernelPath)
@@ -117,13 +115,13 @@ extension Kernel.File.Write.Atomic {
 
         // 4. Write all data
         do {
-            try Kernel.File.Write.writeAll(bytes, to: tempFile.descriptor)
+            try Kernel.File.Write.writeAll(bytes, to: tempFile.descriptor!)
         } catch { throw Error(error) }
 
         // 5. Sync file to disk
         do {
             try Kernel.File.Write.syncFile(
-                tempFile.descriptor,
+                tempFile.descriptor!,
                 durability: options.durability
             )
         } catch { throw Error(error) }
@@ -133,7 +131,7 @@ extension Kernel.File.Write.Atomic {
         if let stats = destStats {
             try applyMetadata(
                 from: stats,
-                to: tempFile.descriptor,
+                to: tempFile.descriptor!,
                 options: options,
                 destPath: resolved
             )
@@ -141,7 +139,7 @@ extension Kernel.File.Write.Atomic {
 
         // 7. Close file (required before rename on some systems)
         do throws(Kernel.File.Write.Error) {
-            try Kernel.File.Write.closeFile(tempFile.descriptor)
+            try Kernel.File.Write.closeFile(tempFile.descriptor.take()!)
         } catch { throw Error(error) }
         phase = .closed
 
@@ -208,7 +206,7 @@ extension Kernel.File.Write.Atomic {
     /// Temp file descriptor + path, returned from `createTempFileWithRetry`.
     /// `~Copyable` because it owns the `Kernel.Descriptor`.
     private struct TempFile: ~Copyable, Sendable {
-        let descriptor: Kernel.Descriptor
+        var descriptor: Kernel.Descriptor?
         let path: Swift.String
     }
 
