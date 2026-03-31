@@ -64,13 +64,13 @@ extension Kernel.File.Write.Streaming {
         options: Options = Options()
     ) throws(Error) where Chunks.Element == [UInt8] {
         let pathString = Swift.String(path)
-        var context = try open(pathString: pathString, options: options)
+        let context = try open(pathString: pathString, options: options)
 
         do {
             for chunk in chunks {
                 try write(chunk: chunk.span, to: context)
             }
-            try commit(&context)
+            try commit(context)
         } catch {
             cleanup(context)
             throw error
@@ -85,10 +85,10 @@ extension Kernel.File.Write.Streaming {
         options: Options = Options()
     ) throws(Error) {
         let pathString = Swift.String(path)
-        var context = try open(pathString: pathString, options: options)
+        let context = try open(pathString: pathString, options: options)
         do {
             try write(chunk: bytes.span, to: context)
-            try commit(&context)
+            try commit(context)
         } catch {
             cleanup(context)
             throw error
@@ -103,10 +103,10 @@ extension Kernel.File.Write.Streaming {
         options: Options = Options()
     ) throws(Error) {
         let pathString = Swift.String(path)
-        var context = try open(pathString: pathString, options: options)
+        let context = try open(pathString: pathString, options: options)
         do {
             try write(chunk: bytes, to: context)
-            try commit(&context)
+            try commit(context)
         } catch {
             cleanup(context)
             throw error
@@ -136,7 +136,7 @@ extension Kernel.File.Write.Streaming {
         fill: (inout [UInt8]) throws(E) -> Int
     ) throws(Error) {
         let pathString = Swift.String(path)
-        var context = try open(pathString: pathString, options: options)
+        let context = try open(pathString: pathString, options: options)
         var writeError: Error? = nil
 
         defer {
@@ -186,7 +186,7 @@ extension Kernel.File.Write.Streaming {
         }
 
         do {
-            try commit(&context)
+            try commit(context)
         } catch {
             writeError = error
             throw error
@@ -284,20 +284,16 @@ extension Kernel.File.Write.Streaming {
         } catch { throw Error(error) }
     }
 
-    /// Commits a streaming write, closing the file and performing the atomic
-    /// rename if needed.
+    /// Commits a streaming write, syncing and performing the atomic
+    /// rename if needed. Descriptor closes via deinit when context drops.
     public static func commit(
-        _ context: inout Context
+        _ context: borrowing Context
     ) throws(Error) {
         do {
             try Kernel.File.Write.syncFile(
                 context.descriptor!,
                 durability: context.durability
             )
-        } catch { throw Error(error) }
-
-        do throws(Kernel.File.Write.Error) {
-            try Kernel.File.Write.closeFile(context.descriptor.take()!)
         } catch { throw Error(error) }
 
         if context.isAtomic, let tempPath = context.tempPathString {
