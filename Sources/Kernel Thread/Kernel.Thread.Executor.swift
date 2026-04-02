@@ -134,12 +134,28 @@ extension Kernel.Thread {
 
 extension Kernel.Thread.Executor {
     /// Enqueue a job for execution on this executor.
+    ///
+    /// If the executor has been shut down, the job is executed inline on the
+    /// calling thread rather than silently dropped. This honors the
+    /// `SerialExecutor` contract (every enqueued job is eventually run) and
+    /// prevents deadlocks: the job typically hits the actor's lifecycle gate,
+    /// throws a shutdown error, and the suspended continuation resumes.
     public func enqueue(_ job: UnownedJob) {
-        sync.withLock {
-            guard isRunning else { return }
+        let runInline: Bool = sync.withLock {
+            guard isRunning else { return true }
             jobs.enqueue(job)
+            return false
         }
-        sync.signal()
+        if runInline {
+            switch mode {
+            case .serial:
+                unsafe job.runSynchronously(on: asUnownedSerialExecutor())
+            case .task:
+                unsafe job.runSynchronously(on: asUnownedTaskExecutor())
+            }
+        } else {
+            sync.signal()
+        }
     }
 
     /// Returns an unowned reference to this executor.
