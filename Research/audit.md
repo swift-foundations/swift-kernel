@@ -18,8 +18,8 @@
 | 4 | MEDIUM | [API-IMPL-008] | Kernel.Thread.Barrier.swift | Methods in class body | RESOLVED 2026-03-24 |
 | 5 | MEDIUM | [API-IMPL-008] | Kernel.Thread.Worker.Token.swift | Methods in class body | RESOLVED 2026-03-24 |
 | 6 | MEDIUM | [API-IMPL-008] | Kernel.Thread.Handle.Reference.swift | Method in class body | RESOLVED 2026-03-24 |
-| 7 | MEDIUM | [API-NAME-002] | Kernel.Thread.Synchronization.swift | Public compound names: `broadcastAll()`, `waitTracked()`, `signalIfWaiters()`, `broadcastIfWaiters()` | DEFERRED — Property-primitives not yet a dependency; documented as WORKAROUND with removal criteria |
-| 8 | MEDIUM | [API-NAME-002] | Kernel.Thread.Handle+joinChecked.swift:29 | Public compound name `joinChecked()` | DEFERRED — consuming ~Copyable prevents Property.View accessor; documented as WORKAROUND |
+| 7 | MEDIUM | [API-NAME-002] | Kernel.Thread.Synchronization.swift | Public compound names: `broadcastAll()`, `waitTracked()`, `signalIfWaiters()`, `broadcastIfWaiters()` | DEFERRED — Property-primitives not yet a dependency; documented as WORKAROUND with removal criteria | Verified: 2026-04-01 |
+| 8 | MEDIUM | [API-NAME-002] | Kernel.Thread.Handle+joinChecked.swift:29 | Public compound name `joinChecked()` | DEFERRED — consuming ~Copyable prevents Property.View accessor; documented as WORKAROUND | Verified: 2026-04-01 |
 | 9 | LOW | [API-IMPL-006] | Kernel.File.Open.swift | File declares `Kernel.File.Open.Configuration` but is named after namespace | RESOLVED 2026-03-24 — split into Kernel.File.Open.Configuration.swift + Kernel.File.Open.swift |
 | 10 | LOW | [API-IMPL-008] | Kernel.Thread.Synchronization.Channel.swift | All methods in struct body | RESOLVED 2026-03-24 |
 
@@ -43,16 +43,16 @@ All [API-IMPL-008] violations resolved — methods moved to extensions across 7 
 
 | # | Severity | Rule | Location | Finding | Status |
 |---|----------|------|----------|---------|--------|
-| 1 | HIGH | [IMPL-060] | Optional+take.swift | `Optional._take()` general-purpose utility belongs in ownership-primitives | RESOLVED 2026-03-24 — moved to swift-ownership-primitives as `Optional.take()`, removed from Kernel Core |
-| 2 | MEDIUM | [IMPL-INTENT] | Kernel.File.Write+Shared.swift:17–88 | String-based path manipulation reimplements path parsing on `Swift.String` instead of using `Kernel.Path` APIs from L1 | OPEN |
-| 3 | MEDIUM | [IMPL-041] | Kernel.File.Write.Error.swift:17–25 | Internal error type uses string messages — error context is lossy | OPEN |
+| 1 | HIGH | [IMPL-060] | Optional+take.swift | `Optional._take()` general-purpose utility belongs in ownership-primitives | RESOLVED 2026-03-24 — moved to swift-ownership-primitives as `Optional.take()`, removed from Kernel Core | Verified: 2026-04-01 |
+| 2 | MEDIUM | [IMPL-INTENT] | Kernel.File.Write+Shared.swift:17–88 | String-based path manipulation reimplements path parsing on `Swift.String` instead of using `Kernel.Path` APIs from L1 | OPEN | Verified: 2026-04-01 |
+| 3 | MEDIUM | [IMPL-041] | Kernel.File.Write.Error.swift:17–25 | Internal error type uses string messages — error context is lossy | OPEN | Verified: 2026-04-01 |
 | 4 | MEDIUM | [IMPL-002] | Kernel.Thread.Executors.swift:51 | `Int(options.count)` raw conversion from typed `Kernel.Thread.Count` | FALSE_POSITIVE — legitimate stdlib boundary per [IMPL-010]; uses purpose-built `Int(_ count:)` overload |
-| 5 | MEDIUM | [IMPL-002] | Kernel.Thread.Executors.swift:70–71 | Mixed `UInt64`/`Int` arithmetic in round-robin index | RESOLVED 2026-03-24 — modulo computed in UInt64 domain, eliminating overflow trap |
-| 6 | MEDIUM | [IMPL-INTENT] | Kernel.Failure.swift | Hardcoded `DWORD`/`FormatMessageW`/`strerror` — raw platform code in L3 | RESOLVED 2026-03-24 — delegated to platform packages (.posixMessage via swift-posix, .win32Message via swift-windows) per [PLAT-ARCH-008] |
-| 7 | MEDIUM | [IMPL-EXPR-001] | Kernel.Thread.Gate.swift:57–66 | Manual lock/unlock with early return in `open()` | RESOLVED 2026-03-24 — refactored to `withLock`, broadcast moved outside lock |
-| 8 | MEDIUM | [IMPL-060] | Kernel.File.Write.{Atomic,Streaming}.Error | `isNotFound`, `isPermissionDenied`, etc. semantic accessors duplicated verbatim across both error types | OPEN |
-| 9 | LOW | [IMPL-002] | Kernel.Thread.Synchronization.swift:95 | `Int64(clamping: nanoseconds)` silently truncates `UInt64` timeout values exceeding `Int64.max` | OPEN |
-| 10 | LOW | [IMPL-060] | Kernel.File.Write.Durability.swift | Three identical Durability enums with bridge methods | RESOLVED 2026-03-24 — unified into single `Kernel.File.Write.Durability`, deleted 2 duplicate files |
+| 5 | MEDIUM | [IMPL-002] | Kernel.Thread.Executors.swift:70–71 | Mixed `UInt64`/`Int` arithmetic in round-robin index | RESOLVED 2026-03-24 — modulo computed in UInt64 domain, eliminating overflow trap | Verified: 2026-04-01 |
+| 6 | MEDIUM | [IMPL-INTENT] | Kernel.Failure.swift | Hardcoded `DWORD`/`FormatMessageW`/`strerror` — raw platform code in L3 | RESOLVED 2026-03-24 — delegated to platform packages (.posixMessage via swift-posix, .win32Message via swift-windows) per [PLAT-ARCH-008] | Verified: 2026-04-01 |
+| 7 | MEDIUM | [IMPL-EXPR-001] | Kernel.Thread.Gate.swift:57–66 | Manual lock/unlock with early return in `open()` | RESOLVED 2026-03-24 — refactored to `withLock`, broadcast moved outside lock | Verified: 2026-04-01 |
+| 8 | MEDIUM | [IMPL-060] | Kernel.File.Write.{Atomic,Streaming}.Error | `isNotFound`, `isPermissionDenied`, etc. semantic accessors duplicated verbatim across both error types | OPEN | Verified: 2026-04-01 |
+| 9 | LOW | [IMPL-002] | Kernel.Thread.Synchronization.swift:100 | `Int64(clamping: nanoseconds)` silently truncates `UInt64` timeout values exceeding `Int64.max` | OPEN | Verified: 2026-04-01 |
+| 10 | LOW | [IMPL-060] | Kernel.File.Write.Durability.swift | Three identical Durability enums with bridge methods | RESOLVED 2026-03-24 — unified into single `Kernel.File.Write.Durability`, deleted 2 duplicate files | Verified: 2026-04-01 |
 
 ### Summary
 
@@ -74,10 +74,10 @@ Resolved: `Optional.take()` moved to ecosystem, Durability unified, Executors ov
 
 | # | Severity | Rule | Location | Finding | Status |
 |---|----------|------|----------|---------|--------|
-| 1 | HIGH | [MOD-DOMAIN] | Package.swift | Single target bundled 4 semantic domains | RESOLVED 2026-03-24 — decomposed into 5 sub-targets + umbrella |
-| 2 | HIGH | [MOD-001] | Package.swift | No Core target | RESOLVED 2026-03-24 — Kernel Core centralizes all external dependencies |
-| 3 | HIGH | [MOD-003] | Package.swift | No variant decomposition | RESOLVED 2026-03-24 — File, Thread, System, Continuation are independent targets |
-| 4 | HIGH | [MOD-005] | Sources/Kernel/ | Kernel target had implementation files | RESOLVED 2026-03-24 — umbrella now contains only exports.swift + Documentation.docc |
+| 1 | HIGH | [MOD-DOMAIN] | Package.swift | Single target bundled 4 semantic domains | RESOLVED 2026-03-24 — decomposed into 5 sub-targets + umbrella | Verified: 2026-04-01 |
+| 2 | HIGH | [MOD-001] | Package.swift | No Core target | RESOLVED 2026-03-24 — Kernel Core centralizes all external dependencies | Verified: 2026-04-01 |
+| 3 | HIGH | [MOD-003] | Package.swift | No variant decomposition | RESOLVED 2026-03-24 — File, Thread, System, Continuation are independent targets | Verified: 2026-04-01 |
+| 4 | HIGH | [MOD-005] | Sources/Kernel/ | Kernel target had implementation files | RESOLVED 2026-03-24 — umbrella now contains only exports.swift + Documentation.docc | Verified: 2026-04-01 |
 | 5 | MEDIUM | [MOD-002] | Exports.swift | Per-file imports bypassed centralized path | RESOLVED 2026-03-24 — imports cleaned up, all resolve via Core re-exports |
 | 6 | MEDIUM | [MOD-006] | Package.swift | Single target forced all consumers to resolve all deps | RESOLVED 2026-03-24 — each sub-target declares only its own dependencies |
 | 7 | MEDIUM | [MOD-006] | Package.swift | `Ownership_Primitives` transitive-only | RESOLVED 2026-03-24 — declared as explicit package dependency, re-exported via Core |
@@ -118,10 +118,10 @@ Published products unchanged. 91 tests passing. `swift-ownership-primitives` add
 
 | # | Severity | Rule | Location | Finding | Status |
 |---|----------|------|----------|---------|--------|
-| 1 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Count.swift:21 | `#if canImport(Darwin) \|\| canImport(Glibc) \|\| canImport(Musl)` uses `canImport` for platform identity | RESOLVED 2026-03-24 |
-| 2 | HIGH | [PATTERN-004a] | Kernel.System.Memory.Total.swift:25,27 | `#if canImport(Darwin)` and `canImport(Glibc) \|\| canImport(Musl)` used for platform identity | RESOLVED 2026-03-24 |
-| 3 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Physical.Count.swift:29,31 | `#if canImport(Darwin)` and `canImport(Glibc) \|\| canImport(Musl)` used for platform identity | RESOLVED 2026-03-24 |
-| 4 | HIGH | [PATTERN-004a] | Kernel.File.Open.swift:114 | `#elseif canImport(Darwin)` mixed with `#if os(Linux)` in same conditional block | RESOLVED 2026-03-24 |
+| 1 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Count.swift:21 | `#if canImport(Darwin) \|\| canImport(Glibc) \|\| canImport(Musl)` uses `canImport` for platform identity | RESOLVED 2026-03-24 | Verified: 2026-04-01 |
+| 2 | HIGH | [PATTERN-004a] | Kernel.System.Memory.Total.swift:25,27 | `#if canImport(Darwin)` and `canImport(Glibc) \|\| canImport(Musl)` used for platform identity | RESOLVED 2026-03-24 | Verified: 2026-04-01 |
+| 3 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Physical.Count.swift:29,31 | `#if canImport(Darwin)` and `canImport(Glibc) \|\| canImport(Musl)` used for platform identity | RESOLVED 2026-03-24 | Verified: 2026-04-01 |
+| 4 | HIGH | [PATTERN-004a] | Kernel.File.Open.swift:114 | `#elseif canImport(Darwin)` mixed with `#if os(Linux)` in same conditional block | RESOLVED 2026-03-24 | Verified: 2026-04-01 |
 | 5 | MEDIUM | [PLAT-ARCH-008] | Kernel.Failure.swift:90–92 | `public import WinSDK` leaks raw Windows SDK into consumer namespace; orphaned after platform delegation | RESOLVED 2026-03-24 — removed |
 | 6 | MEDIUM | [PLAT-ARCH-008] | Kernel.Failure.swift:46–49 | `#if !os(Windows)` on public enum case `.signal` forces consumers matching `Kernel.Failure` to write platform conditionals, undermining the L3 guarantee that consumer code is unconditional | DEFERRED — Conditional case is architecturally correct for an irreducible POSIX concept (signals have no Windows analogue). Zero consumer impact: no exhaustive switches on `Kernel.Failure` exist, no consumer references `.signal`. Prior art (swift-system) validates honest platform conditionals when underlying concept is genuinely absent. See [conditional-compilation-public-enum-cases.md](conditional-compilation-public-enum-cases.md). Revisit if Swift gains `@nonExhaustive` for non-resilient libraries. |
 
