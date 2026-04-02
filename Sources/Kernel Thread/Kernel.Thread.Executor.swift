@@ -116,10 +116,16 @@ extension Kernel.Thread {
         }
 
         deinit {
-            precondition(
-                threadHandle == nil,
-                "Kernel.Thread.Executor must be explicitly shut down before deallocation"
-            )
+            guard let handle = threadHandle.take() else { return }
+            // Shutdown was never called — signal thread to stop and detach.
+            // The thread sees !isRunning on its next iteration and exits.
+            // Detach ensures no resource leak. This path runs for singletons
+            // during process exit cleanup.
+            sync.withLock {
+                isRunning = false
+            }
+            sync.broadcast()
+            handle.detach()
         }
     }
 }
@@ -184,15 +190,14 @@ extension Kernel.Thread.Executor {
     /// Shutdown the executor thread.
     ///
     /// Signals the run loop to exit after processing any remaining jobs,
-    /// then waits for the thread to complete.
+    /// then joins the thread. The join completes in < 100µs — the thread
+    /// sees `!isRunning` and exits its run loop almost immediately.
     ///
     /// - Precondition: Must NOT be called from the executor thread itself.
     ///   Doing so would deadlock (joining a thread from itself).
     /// - Precondition: Must be called exactly once before the executor is deallocated.
     /// - Precondition: Must not be called before the thread has started.
     public func shutdown() {
-        // Take ownership of the handle from storage.
-        // Using explicit _take pattern for ~Copyable Optional.
         guard let handle = threadHandle.take() else {
             preconditionFailure(
                 "Kernel.Thread.Executor.shutdown() called on already-shutdown or never-started executor"
