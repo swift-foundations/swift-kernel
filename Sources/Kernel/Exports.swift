@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 @_exported public import Kernel_Primitives
-@_exported public import StandardsCollections
+@_exported public import Collection_Primitives
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
     @_exported public import POSIX_Kernel

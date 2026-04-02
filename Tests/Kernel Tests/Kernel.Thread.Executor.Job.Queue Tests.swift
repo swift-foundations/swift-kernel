@@ -3,7 +3,7 @@
 //  swift-kernel
 //
 
-import StandardsTestSupport
+import Test_Primitives
 import Testing
 
 @testable import Kernel

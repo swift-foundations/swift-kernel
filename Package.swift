@@ -18,7 +18,7 @@ let package = Package(
         .library(
             name: "Kernel Test Support",
             targets: ["Kernel Test Support"]
-        ),
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/coenttb/swift-kernel-primitives.git", from: "0.1.0"),
@@ -26,7 +26,9 @@ let package = Package(
         .package(url: "https://github.com/coenttb/swift-darwin.git", from: "0.1.0"),
         .package(url: "https://github.com/coenttb/swift-linux.git", from: "0.1.0"),
         .package(url: "https://github.com/coenttb/swift-windows.git", from: "0.1.0"),
-        .package(url: "https://github.com/swift-standards/swift-standards.git", from: "0.29.0")
+        .package(path: "../../swift-primitives/swift-dimension-primitives"),
+        .package(path: "../../swift-primitives/swift-collection-primitives"),
+        .package(path: "../../swift-primitives/swift-test-primitives")
     ],
     targets: [
         // Umbrella/policy module
@@ -38,8 +40,8 @@ let package = Package(
                 .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS])),
                 .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Windows Kernel", package: "swift-windows", condition: .when(platforms: [.windows])),
-                .product(name: "Dimension", package: "swift-standards"),
-                .product(name: "StandardsCollections", package: "swift-standards"),
+                .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
+                .product(name: "Collection Primitives", package: "swift-collection-primitives")
             ]
         ),
         // Test support utilities (harnesses, helpers)
@@ -47,7 +49,7 @@ let package = Package(
             name: "Kernel Test Support",
             dependencies: [
                 "Kernel",
-                .product(name: "Kernel Primitives Test Support", package: "swift-kernel-primitives"),
+                .product(name: "Kernel Primitives Test Support", package: "swift-kernel-primitives")
             ],
             path: "Tests/Support"
         ),
@@ -57,7 +59,7 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 "Kernel Test Support",
-                .product(name: "StandardsTestSupport", package: "swift-standards")
+                .product(name: "Test Primitives", package: "swift-test-primitives")
             ],
             path: "Tests/Kernel Tests"
         ),
@@ -65,7 +67,7 @@ let package = Package(
             name: "_Lock Test Process",
             dependencies: [
                 "Kernel",
-                .product(name: "Kernel Primitives", package: "swift-kernel-primitives"),
+                .product(name: "Kernel Primitives", package: "swift-kernel-primitives")
             ]
         )
     ]
