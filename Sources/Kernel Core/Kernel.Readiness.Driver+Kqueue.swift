@@ -1,0 +1,428 @@
+//
+//  Kernel.Readiness.Driver+Kqueue.swift
+//  swift-kernel
+//
+//  Kqueue-backed readiness driver for Darwin platforms.
+//
+//  Implements all 7 policy invariants:
+//  INV-1: Registration Identity (atomic counter, non-zero)
+//  INV-2: Ownership Lifecycle (consuming dup, close on deregister)
+//  INV-3: Delta Correctness (set-difference on modify)
+//  INV-4: One-Shot Re-Arm (EV_DISPATCH auto-disable)
+//  INV-5: Normalization (kqueue filter/flags → Kernel.Event)
+//  INV-6: Staleness Suppression (registry lookup in poll)
+//  INV-7: Wake Responsiveness (EVFILT_USER trigger)
+//
+
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+
+@_spi(Syscall) import Kernel_Primitives
+@_spi(Syscall) import Darwin_Kernel_Primitives
+import Synchronization
+import Dictionary_Primitives
+
+// MARK: - Per-Driver State
+
+extension Kernel.Readiness {
+    /// Shared mutable state for a kqueue driver instance.
+    ///
+    /// Captured by the witness closures. Thread-safe via Mutex.
+    /// Per-driver-instance (not global) — each `.kqueue()` call creates
+    /// a fresh state object.
+    final class KqueueState: @unchecked Sendable {
+        /// Monotonic counter for unique registration IDs.
+        /// Starts at 0; first produced ID is 1 (wrappingAdd(1).newValue).
+        /// Non-zero by construction — zero is the wakeup sentinel.
+        let nextID = Atomic<UInt64>(0)
+
+        /// Per-handle registrations. Outer key: kqueue fd. Inner key: registration ID.
+        let registry = Synchronization.Mutex<
+            Dictionary_Primitives.Dictionary<Int32,
+                Dictionary_Primitives.Dictionary<Kernel.Event.ID, Kernel.Readiness.Registration.Entry>
+            >
+        >(.init())
+    }
+}
+
+// MARK: - Error Conversion
+
+extension Kernel.Readiness.Error {
+    init(_ kqueueError: Kernel.Kqueue.Error) {
+        switch kqueueError {
+        case .create(let code):
+            self = .platform(code)
+        case .kevent(let code):
+            self = .platform(code)
+        case .interrupted:
+            self = .platform(.POSIX.EINTR)
+        }
+    }
+}
+
+// MARK: - Factory
+
+extension Kernel.Readiness.Driver {
+    /// Creates a kqueue-backed readiness driver.
+    public static func kqueue() -> Kernel.Readiness.Driver {
+        let state = Kernel.Readiness.KqueueState()
+
+        return Kernel.Readiness.Driver(
+            capabilities: Capabilities(maximum: 256, triggering: .edge),
+            create: {
+                () throws(Kernel.Readiness.Error) -> Handle in
+                let descriptor: Kernel.Descriptor
+                do throws(Kernel.Kqueue.Error) {
+                    descriptor = try Kernel.Kqueue.create()
+                } catch {
+                    throw Kernel.Readiness.Error(error)
+                }
+
+                let kq = descriptor._rawValue
+                state.registry.withLock { outer in
+                    outer.set(kq, .init())
+                }
+
+                let maximum = 256
+                let size = maximum * MemoryLayout<Kernel.Kqueue.Event>.stride
+                let alignment = MemoryLayout<Kernel.Kqueue.Event>.alignment
+                let ptr = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: alignment)
+                let buffer = UnsafeMutableRawBufferPointer(start: ptr, count: size)
+
+                return Handle(descriptor: descriptor, buffer: buffer)
+            },
+            register: {
+                (handle: borrowing Handle, descriptor: consuming Kernel.Descriptor, interest: Kernel.Event.Interest) throws(Kernel.Readiness.Error) -> Kernel.Event.ID in
+                let kq = handle.rawValue
+                let id = Kernel.Event.ID(__unchecked: (), UInt(truncatingIfNeeded: state.nextID.wrappingAdd(1, ordering: .relaxed).newValue))
+                let rawDescriptor = descriptor._rawValue
+
+                var descriptor: Kernel.Descriptor? = consume descriptor
+
+                let addFlags: Kernel.Kqueue.Flags = .add | .clear | .dispatch
+                var events: [Kernel.Kqueue.Event] = []
+
+                if interest.contains(.read) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(rawDescriptor)),
+                        filter: .read,
+                        flags: addFlags,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+                if interest.contains(.write) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(rawDescriptor)),
+                        filter: .write,
+                        flags: addFlags,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+
+                if !events.isEmpty {
+                    do throws(Kernel.Kqueue.Error) {
+                        try Kernel.Kqueue.register(handle.descriptor, events: events)
+                    } catch {
+                        try? Kernel.Close.close(descriptor.take()!)
+                        throw Kernel.Readiness.Error(error)
+                    }
+                }
+
+                try state.registry.withLock { outer throws(Kernel.Readiness.Error) in
+                    guard var inner = outer.remove(kq) else {
+                        try? Kernel.Close.close(descriptor.take()!)
+                        throw .invalidDescriptor
+                    }
+                    inner.set(id, Kernel.Readiness.Registration.Entry(descriptor: descriptor.take()!, interest: interest))
+                    outer.set(kq, consume inner)
+                }
+
+                return id
+            },
+            modify: {
+                (handle: borrowing Handle, id: Kernel.Event.ID, newInterest: Kernel.Event.Interest) throws(Kernel.Readiness.Error) in
+                let kq = handle.rawValue
+
+                let lookup: (rawDescriptor: Int32, oldInterest: Kernel.Event.Interest)? = state.registry.withLock { outer in
+                    outer.withValue(forKey: kq) { inner in
+                        inner.withValue(forKey: id) { entry in
+                            (entry.descriptor._rawValue, entry.interest)
+                        }
+                    } ?? nil
+                }
+
+                guard let lookup else { throw .notRegistered }
+
+                let toAdd = newInterest.subtracting(lookup.oldInterest)
+                let toRemove = lookup.oldInterest.subtracting(newInterest)
+                var events: [Kernel.Kqueue.Event] = []
+
+                if toRemove.contains(.read) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(lookup.rawDescriptor)),
+                        filter: .read, flags: .delete,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+                if toRemove.contains(.write) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(lookup.rawDescriptor)),
+                        filter: .write, flags: .delete,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+
+                let addFlags: Kernel.Kqueue.Flags = .add | .clear | .dispatch
+                if toAdd.contains(.read) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(lookup.rawDescriptor)),
+                        filter: .read, flags: addFlags,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+                if toAdd.contains(.write) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(lookup.rawDescriptor)),
+                        filter: .write, flags: addFlags,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+
+                if !events.isEmpty {
+                    do throws(Kernel.Kqueue.Error) {
+                        try Kernel.Kqueue.register(handle.descriptor, events: events)
+                    } catch {
+                        throw Kernel.Readiness.Error(error)
+                    }
+                }
+
+                state.registry.withLock { outer in
+                    if var inner = outer.remove(kq) {
+                        if var entry = inner.remove(id) {
+                            entry.interest = newInterest
+                            inner.set(id, consume entry)
+                        }
+                        outer.set(kq, consume inner)
+                    }
+                }
+            },
+            deregister: {
+                (handle: borrowing Handle, id: Kernel.Event.ID) throws(Kernel.Readiness.Error) in
+                let kq = handle.rawValue
+
+                let removedEntry: Kernel.Readiness.Registration.Entry? = state.registry.withLock { outer in
+                    if var inner = outer.remove(kq) {
+                        let entry = inner.remove(id)
+                        outer.set(kq, consume inner)
+                        return entry
+                    }
+                    return nil
+                }
+
+                guard var removedEntry else { return }
+
+                let rawDescriptor = removedEntry.descriptor._rawValue
+                let interest = removedEntry.interest
+                var events: [Kernel.Kqueue.Event] = []
+
+                if interest.contains(.read) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(rawDescriptor)),
+                        filter: .read, flags: .delete,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+                if interest.contains(.write) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(rawDescriptor)),
+                        filter: .write, flags: .delete,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+
+                if !events.isEmpty {
+                    do throws(Kernel.Kqueue.Error) {
+                        try Kernel.Kqueue.register(handle.descriptor, events: events)
+                    } catch {
+                        if case .kevent(let code) = error,
+                           code == .POSIX.ENOENT || code == .POSIX.EBADF
+                        {
+                            // Benign: event was auto-removed or fd recycled
+                        } else {
+                            try? Kernel.Close.close(removedEntry.descriptor)
+                            throw Kernel.Readiness.Error(error)
+                        }
+                    }
+                }
+
+                try? Kernel.Close.close(removedEntry.descriptor)
+            },
+            arm: {
+                (handle: borrowing Handle, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Readiness.Error) in
+                let kq = handle.rawValue
+
+                let rawDescriptor: Int32? = state.registry.withLock { outer in
+                    outer.withValue(forKey: kq) { inner in
+                        inner.withValue(forKey: id) { entry in
+                            entry.descriptor._rawValue
+                        }
+                    } ?? nil
+                }
+
+                guard let rawDescriptor else { throw .notRegistered }
+
+                let armFlags: Kernel.Kqueue.Flags = .add | .enable | .clear | .dispatch
+                var events: [Kernel.Kqueue.Event] = []
+
+                if interest.contains(.read) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(rawDescriptor)),
+                        filter: .read, flags: armFlags,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+                if interest.contains(.write) {
+                    events.append(Kernel.Kqueue.Event(
+                        id: Kernel.Event.ID(__unchecked: (), UInt(rawDescriptor)),
+                        filter: .write, flags: armFlags,
+                        data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
+                    ))
+                }
+
+                guard !events.isEmpty else { return }
+
+                do throws(Kernel.Kqueue.Error) {
+                    try Kernel.Kqueue.register(handle.descriptor, events: events)
+                } catch {
+                    throw Kernel.Readiness.Error(error)
+                }
+            },
+            poll: {
+                (handle: borrowing Handle, deadline: Kernel.Time.Deadline?, buffer: inout [Kernel.Event]) throws(Kernel.Readiness.Error) -> Int in
+
+                var duration: Duration? = nil
+                if let deadline = deadline {
+                    let now = Kernel.Clock.Continuous.now()
+                    if now >= deadline.nanoseconds {
+                        duration = .zero
+                    } else {
+                        let remaining = deadline.nanoseconds - now
+                        duration = .nanoseconds(Int64(remaining))
+                    }
+                }
+
+                let kq = handle.rawValue
+
+                // Step 1: Poll into scratch buffer
+                let count = try unsafe handle.buffer.withMemoryRebound(
+                    to: Kernel.Kqueue.Event.self
+                ) { (rawEvents: UnsafeMutableBufferPointer<Kernel.Kqueue.Event>) throws(Kernel.Readiness.Error) -> Int in
+                    do throws(Kernel.Kqueue.Error) {
+                        return try Kernel.Kqueue.poll(
+                            handle.descriptor,
+                            into: rawEvents,
+                            timeout: duration
+                        )
+                    } catch {
+                        if case .interrupted = error { return 0 }
+                        throw Kernel.Readiness.Error(error)
+                    }
+                }
+
+                guard count > 0 else { return 0 }
+
+                // Step 2: Normalize and filter under registry lock
+                let collected: [Kernel.Event] = state.registry.withLock { outer in
+                    unsafe handle.buffer.withMemoryRebound(
+                        to: Kernel.Kqueue.Event.self
+                    ) { rawEvents in
+                        var events: [Kernel.Event] = []
+
+                        guard let _ = outer.withValue(forKey: kq, { inner in
+                            for i in 0..<count {
+                                let raw = unsafe rawEvents[i]
+                                if raw.filter == .user { continue }
+
+                                let id = raw.data.map { UInt(truncatingIfNeeded: $0) }.retag(Kernel.Event.self)
+                                guard inner.contains(id) else { continue }
+
+                                var interest: Kernel.Event.Interest = []
+                                if raw.filter == .read { interest.insert(.read) }
+                                if raw.filter == .write { interest.insert(.write) }
+
+                                var flags: Kernel.Event.Flags = []
+                                if raw.flags.contains(.eof) {
+                                    flags.insert(.hangup)
+                                    if raw.filter == .read { flags.insert(.readHangup) }
+                                    else if raw.filter == .write { flags.insert(.writeHangup) }
+                                }
+                                if raw.flags.contains(.error) { flags.insert(.error) }
+
+                                events.append(Kernel.Event(id: id, interest: interest, flags: flags))
+                            }
+                        }) else {
+                            return []
+                        }
+
+                        return events
+                    }
+                }
+
+                for (i, event) in collected.enumerated() {
+                    buffer[i] = event
+                }
+                return collected.count
+            },
+            close: {
+                (handle: consuming Handle) in
+                let kq = handle.rawValue
+
+                state.registry.withLock { outer in
+                    if var inner = outer.remove(kq) {
+                        inner.drain { _ in }
+                    }
+                }
+
+                handle.buffer.deallocate()
+                // kqueue fd closes via handle.descriptor deinit
+            },
+            wakeup: {
+                (handle: borrowing Handle) throws(Kernel.Readiness.Error) -> Kernel.Readiness.Wakeup in
+                let ev = Kernel.Kqueue.Event(
+                    id: .zero,
+                    filter: .user,
+                    flags: .add | .clear
+                )
+
+                do throws(Kernel.Kqueue.Error) {
+                    try Kernel.Kqueue.register(handle.descriptor, events: [ev])
+                } catch {
+                    throw Kernel.Readiness.Error(error)
+                }
+
+                let kq = handle.rawValue
+
+                return Kernel.Readiness.Wakeup {
+                    let triggerEv = Kernel.Kqueue.Event(
+                        id: .zero,
+                        filter: .user,
+                        flags: .none,
+                        fflags: .trigger
+                    )
+                    do {
+                        try Kernel.Kqueue.register(rawDescriptor: kq, events: [triggerEv])
+                    } catch {
+                        if case .kevent(let code) = error as? Kernel.Kqueue.Error,
+                           code == .POSIX.EBADF || code == .POSIX.ENOENT
+                        {
+                            // Benign: kqueue fd closed or recycled during shutdown
+                        } else {
+                            assertionFailure("Kernel.Readiness.Wakeup: kqueue trigger failed: \(error)")
+                        }
+                    }
+                }
+            }
+        )
+    }
+}
+
+#endif

@@ -20,10 +20,14 @@ extension Kernel.Readiness {
         ///
         /// - **Darwin**: kqueue
         /// - **Linux**: epoll
-        ///
-        /// Implemented in Phase 2b when platform backends are added.
         public static func platformDefault() -> Kernel.Readiness.Driver {
-            fatalError("Platform backends not yet implemented — see Phase 2b")
+            #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+                Kernel.Readiness.Driver.kqueue()
+            #elseif os(Linux)
+                fatalError("epoll backend not yet implemented")
+            #else
+                fatalError("No readiness backend available for this platform")
+            #endif
         }
     }
 }
