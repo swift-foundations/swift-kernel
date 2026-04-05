@@ -12,7 +12,7 @@ extension Kernel.Readiness.Registration {
     /// when the entry is removed during deregister or shutdown.
     public struct Entry: ~Copyable, Sendable {
         /// The dup'd descriptor owned by the driver.
-        public var descriptor: Kernel.Descriptor
+        public let descriptor: Kernel.Descriptor
         /// The currently registered interest set.
         public var interest: Kernel.Event.Interest
 

@@ -6,6 +6,7 @@
 //
 
 @_spi(Syscall) import Kernel_Primitives
+public import Memory_Buffer_Primitives
 
 extension Kernel.Readiness.Driver {
     /// Opaque handle for a readiness driver instance.
@@ -13,22 +14,22 @@ extension Kernel.Readiness.Driver {
     /// `~Copyable`: single ownership, consumed on close.
     /// Owned by the poll thread for its entire lifetime.
     ///
-    /// `@unchecked Sendable`: the buffer pointer is only accessed
-    /// from the poll thread. Single ownership via `~Copyable` prevents
-    /// aliasing.
-    public struct Handle: ~Copyable, @unchecked Sendable {
+    /// ## Platform Storage
+    /// - **Darwin**: kqueue fd + raw event scratch buffer
+    /// - **Linux**: epoll fd + raw event scratch buffer
+    public struct Handle: ~Copyable, Sendable {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)
             /// The kernel descriptor owning the kqueue/epoll fd.
             @usableFromInline
             package let descriptor: Kernel.Descriptor
 
             /// Pre-allocated scratch buffer for raw kernel events.
-            /// Allocated as raw bytes, rebound to platform event type during poll.
+            /// Content is typed via `withRebound` in platform poll implementations.
             @usableFromInline
-            package let buffer: UnsafeMutableRawBufferPointer
+            package let buffer: Memory.Buffer.Mutable
 
             @usableFromInline
-            package init(descriptor: consuming Kernel.Descriptor, buffer: UnsafeMutableRawBufferPointer) {
+            package init(descriptor: consuming Kernel.Descriptor, buffer: Memory.Buffer.Mutable) {
                 self.descriptor = descriptor
                 self.buffer = buffer
             }

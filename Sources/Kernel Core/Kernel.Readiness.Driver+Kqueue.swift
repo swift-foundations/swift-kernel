@@ -18,6 +18,7 @@
 
 @_spi(Syscall) import Kernel_Primitives
 @_spi(Syscall) import Darwin_Kernel_Primitives
+import Memory_Buffer_Primitives
 import Synchronization
 import Dictionary_Primitives
 
@@ -83,10 +84,10 @@ extension Kernel.Readiness.Driver {
                 }
 
                 let maximum = 256
-                let size = maximum * MemoryLayout<Kernel.Kqueue.Event>.stride
-                let alignment = MemoryLayout<Kernel.Kqueue.Event>.alignment
-                let ptr = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: alignment)
-                let buffer = UnsafeMutableRawBufferPointer(start: ptr, count: size)
+                let buffer = Memory.Buffer.Mutable.allocate(
+                    count: Memory.Address.Count(UInt(maximum * MemoryLayout<Kernel.Kqueue.Event>.stride)),
+                    alignment: try! Memory.Alignment(MemoryLayout<Kernel.Kqueue.Event>.alignment)
+                )
 
                 return Handle(descriptor: descriptor, buffer: buffer)
             },
@@ -313,7 +314,7 @@ extension Kernel.Readiness.Driver {
                 let kq = handle.rawValue
 
                 // Step 1: Poll into scratch buffer
-                let count = try unsafe handle.buffer.withMemoryRebound(
+                let count = try unsafe handle.buffer.withRebound(
                     to: Kernel.Kqueue.Event.self
                 ) { (rawEvents: UnsafeMutableBufferPointer<Kernel.Kqueue.Event>) throws(Kernel.Readiness.Error) -> Int in
                     do throws(Kernel.Kqueue.Error) {
@@ -332,7 +333,7 @@ extension Kernel.Readiness.Driver {
 
                 // Step 2: Normalize and filter under registry lock
                 let collected: [Kernel.Event] = state.registry.withLock { outer in
-                    unsafe handle.buffer.withMemoryRebound(
+                    unsafe handle.buffer.withRebound(
                         to: Kernel.Kqueue.Event.self
                     ) { rawEvents in
                         var events: [Kernel.Event] = []
@@ -386,7 +387,7 @@ extension Kernel.Readiness.Driver {
                 // kqueue fd closes via handle.descriptor deinit
             },
             wakeup: {
-                (handle: borrowing Handle) throws(Kernel.Readiness.Error) -> Kernel.Readiness.Wakeup in
+                (handle: borrowing Handle) throws(Kernel.Readiness.Error) -> Kernel.Readiness.Wakeup.Channel in
                 let ev = Kernel.Kqueue.Event(
                     id: .zero,
                     filter: .user,
@@ -401,7 +402,7 @@ extension Kernel.Readiness.Driver {
 
                 let kq = handle.rawValue
 
-                return Kernel.Readiness.Wakeup {
+                return Kernel.Readiness.Wakeup.Channel {
                     let triggerEv = Kernel.Kqueue.Event(
                         id: .zero,
                         filter: .user,
@@ -416,7 +417,7 @@ extension Kernel.Readiness.Driver {
                         {
                             // Benign: kqueue fd closed or recycled during shutdown
                         } else {
-                            assertionFailure("Kernel.Readiness.Wakeup: kqueue trigger failed: \(error)")
+                            assertionFailure("Kernel.Readiness.Wakeup.Channel: kqueue trigger failed: \(error)")
                         }
                     }
                 }

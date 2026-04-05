@@ -78,7 +78,7 @@ extension Kernel.Readiness {
 
         let _close: @Sendable (consuming Handle) -> Void
 
-        let _wakeup: @Sendable (borrowing Handle) throws(Error) -> Kernel.Readiness.Wakeup
+        let _wakeup: @Sendable (borrowing Handle) throws(Error) -> Kernel.Readiness.Wakeup.Channel
 
         // MARK: - Initializer
 
@@ -91,7 +91,7 @@ extension Kernel.Readiness {
             arm: @escaping @Sendable (borrowing Handle, Kernel.Event.ID, Kernel.Event.Interest) throws(Error) -> Void,
             poll: @escaping @Sendable (borrowing Handle, Kernel.Time.Deadline?, inout [Kernel.Event]) throws(Error) -> Int,
             close: @escaping @Sendable (consuming Handle) -> Void,
-            wakeup: @escaping @Sendable (borrowing Handle) throws(Error) -> Kernel.Readiness.Wakeup
+            wakeup: @escaping @Sendable (borrowing Handle) throws(Error) -> Kernel.Readiness.Wakeup.Channel
         ) {
             self.capabilities = capabilities
             self._create = create
@@ -175,7 +175,7 @@ extension Kernel.Readiness.Driver {
     /// Create a wakeup channel for this handle.
     ///
     /// The returned channel is `Sendable` and can interrupt blocking `poll()`.
-    public func wakeup(_ handle: borrowing Handle) throws(Kernel.Readiness.Error) -> Kernel.Readiness.Wakeup {
+    public func wakeup(_ handle: borrowing Handle) throws(Kernel.Readiness.Error) -> Kernel.Readiness.Wakeup.Channel {
         try _wakeup(handle)
     }
 }
