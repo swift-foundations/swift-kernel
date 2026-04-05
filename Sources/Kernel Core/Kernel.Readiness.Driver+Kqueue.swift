@@ -27,14 +27,11 @@ import Dictionary_Primitives
 extension Kernel.Readiness {
     /// Shared mutable state for a kqueue driver instance.
     ///
-    /// Captured by the witness closures. Thread-safe via Mutex.
-    /// Per-driver-instance — each `.kqueue()` call creates fresh state.
+    /// Captured by the Driver closures. Thread-safe via Mutex.
+    /// Per-instance — each `.kqueue()` call creates fresh state.
     final class KqueueState: @unchecked Sendable {
-        /// Monotonic counter for unique registration IDs.
-        /// Starts at 0; first produced ID is 1 (wrappingAdd(1).newValue).
         let nextID = Atomic<UInt64>(0)
 
-        /// Per-handle registrations keyed by kqueue fd.
         let registry = Synchronization.Mutex<
             Dictionary_Primitives.Dictionary<Int32,
                 Dictionary_Primitives.Dictionary<Kernel.Event.ID, Kernel.Readiness.Registration.Entry>
@@ -57,14 +54,14 @@ extension Kernel.Readiness.Error {
 
 // MARK: - Factory
 
-extension Kernel.Readiness.Driver {
-    /// Creates a kqueue-backed readiness driver.
+extension Kernel.Readiness {
+    /// Creates a kqueue-backed readiness resource.
     ///
-    /// The returned `Driver` owns the kqueue fd, scratch buffer, and
-    /// wakeup channel. Per-instance state (registry, ID counter) is
-    /// captured by the operational closures.
-    public static func kqueue() throws(Kernel.Readiness.Error) -> Kernel.Readiness.Driver {
-        let state = Kernel.Readiness.KqueueState()
+    /// Allocates the kqueue fd, scratch buffer, and wakeup channel.
+    /// The returned `Readiness` owns all resources; the `Driver` inside
+    /// is a pure Copyable witness capturing only the per-instance state.
+    public static func kqueue() throws(Error) -> Kernel.Readiness {
+        let state = KqueueState()
 
         // -- Create kqueue fd --
 
@@ -72,7 +69,7 @@ extension Kernel.Readiness.Driver {
         do throws(Kernel.Kqueue.Error) {
             descriptor = try Kernel.Kqueue.create()
         } catch {
-            throw Kernel.Readiness.Error(error)
+            throw Error(error)
         }
 
         let kq = descriptor._rawValue
@@ -91,25 +88,20 @@ extension Kernel.Readiness.Driver {
         // -- Register EVFILT_USER for wakeup --
 
         let wakeupEvent = Kernel.Kqueue.Event(
-            id: .zero,
-            filter: .user,
-            flags: .add | .clear
+            id: .zero, filter: .user, flags: .add | .clear
         )
 
         do throws(Kernel.Kqueue.Error) {
             try Kernel.Kqueue.register(descriptor, events: [wakeupEvent])
         } catch {
-            throw Kernel.Readiness.Error(error)
+            throw Error(error)
         }
 
         let wakeupKq = descriptor._rawValue
 
-        let wakeup = Kernel.Readiness.Wakeup.Channel {
+        let wakeup = Wakeup.Channel {
             let triggerEv = Kernel.Kqueue.Event(
-                id: .zero,
-                filter: .user,
-                flags: .none,
-                fflags: .trigger
+                id: .zero, filter: .user, flags: .none, fflags: .trigger
             )
             do {
                 try Kernel.Kqueue.register(rawDescriptor: wakeupKq, events: [triggerEv])
@@ -124,15 +116,12 @@ extension Kernel.Readiness.Driver {
             }
         }
 
-        // -- Build driver --
+        // -- Build Driver witness --
 
-        return Kernel.Readiness.Driver(
-            descriptor: descriptor,
-            buffer: buffer,
-            capabilities: Capabilities(maximum: maximum, triggering: .edge),
-            wakeup: wakeup,
+        let driver = Driver(
+            capabilities: Driver.Capabilities(maximum: maximum, triggering: .edge),
             register: {
-                (kq: borrowing Kernel.Descriptor, descriptor: consuming Kernel.Descriptor, interest: Kernel.Event.Interest) throws(Kernel.Readiness.Error) -> Kernel.Event.ID in
+                (kq: borrowing Kernel.Descriptor, descriptor: consuming Kernel.Descriptor, interest: Kernel.Event.Interest) throws(Error) -> Kernel.Event.ID in
                 let kqFd = kq._rawValue
                 let id = Kernel.Event.ID(__unchecked: (), UInt(truncatingIfNeeded: state.nextID.wrappingAdd(1, ordering: .relaxed).newValue))
                 let rawDescriptor = descriptor._rawValue
@@ -145,16 +134,14 @@ extension Kernel.Readiness.Driver {
                 if interest.contains(.read) {
                     events.append(Kernel.Kqueue.Event(
                         id: Kernel.Event.ID(__unchecked: (), UInt(rawDescriptor)),
-                        filter: .read,
-                        flags: addFlags,
+                        filter: .read, flags: addFlags,
                         data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
                     ))
                 }
                 if interest.contains(.write) {
                     events.append(Kernel.Kqueue.Event(
                         id: Kernel.Event.ID(__unchecked: (), UInt(rawDescriptor)),
-                        filter: .write,
-                        flags: addFlags,
+                        filter: .write, flags: addFlags,
                         data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
                     ))
                 }
@@ -164,23 +151,23 @@ extension Kernel.Readiness.Driver {
                         try Kernel.Kqueue.register(kq, events: events)
                     } catch {
                         try? Kernel.Close.close(descriptor.take()!)
-                        throw Kernel.Readiness.Error(error)
+                        throw Error(error)
                     }
                 }
 
-                try state.registry.withLock { outer throws(Kernel.Readiness.Error) in
+                try state.registry.withLock { outer throws(Error) in
                     guard var inner = outer.remove(kqFd) else {
                         try? Kernel.Close.close(descriptor.take()!)
                         throw .invalidDescriptor
                     }
-                    inner.set(id, Kernel.Readiness.Registration.Entry(descriptor: descriptor.take()!, interest: interest))
+                    inner.set(id, Registration.Entry(descriptor: descriptor.take()!, interest: interest))
                     outer.set(kqFd, consume inner)
                 }
 
                 return id
             },
             modify: {
-                (kq: borrowing Kernel.Descriptor, id: Kernel.Event.ID, newInterest: Kernel.Event.Interest) throws(Kernel.Readiness.Error) in
+                (kq: borrowing Kernel.Descriptor, id: Kernel.Event.ID, newInterest: Kernel.Event.Interest) throws(Error) in
                 let kqFd = kq._rawValue
 
                 let lookup: (rawDescriptor: Int32, oldInterest: Kernel.Event.Interest)? = state.registry.withLock { outer in
@@ -232,7 +219,7 @@ extension Kernel.Readiness.Driver {
                     do throws(Kernel.Kqueue.Error) {
                         try Kernel.Kqueue.register(kq, events: events)
                     } catch {
-                        throw Kernel.Readiness.Error(error)
+                        throw Error(error)
                     }
                 }
 
@@ -247,10 +234,10 @@ extension Kernel.Readiness.Driver {
                 }
             },
             deregister: {
-                (kq: borrowing Kernel.Descriptor, id: Kernel.Event.ID) throws(Kernel.Readiness.Error) in
+                (kq: borrowing Kernel.Descriptor, id: Kernel.Event.ID) throws(Error) in
                 let kqFd = kq._rawValue
 
-                let removedEntry: Kernel.Readiness.Registration.Entry? = state.registry.withLock { outer in
+                let removedEntry: Registration.Entry? = state.registry.withLock { outer in
                     if var inner = outer.remove(kqFd) {
                         let entry = inner.remove(id)
                         outer.set(kqFd, consume inner)
@@ -290,7 +277,7 @@ extension Kernel.Readiness.Driver {
                             // Benign: event was auto-removed or fd recycled
                         } else {
                             try? Kernel.Close.close(removedEntry.descriptor)
-                            throw Kernel.Readiness.Error(error)
+                            throw Error(error)
                         }
                     }
                 }
@@ -298,7 +285,7 @@ extension Kernel.Readiness.Driver {
                 try? Kernel.Close.close(removedEntry.descriptor)
             },
             arm: {
-                (kq: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Readiness.Error) in
+                (kq: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Error) in
                 let kqFd = kq._rawValue
 
                 let rawDescriptor: Int32? = state.registry.withLock { outer in
@@ -334,11 +321,11 @@ extension Kernel.Readiness.Driver {
                 do throws(Kernel.Kqueue.Error) {
                     try Kernel.Kqueue.register(kq, events: events)
                 } catch {
-                    throw Kernel.Readiness.Error(error)
+                    throw Error(error)
                 }
             },
             poll: {
-                (kq: borrowing Kernel.Descriptor, scratchBuffer: Memory.Buffer.Mutable, deadline: Kernel.Time.Deadline?, buffer: inout [Kernel.Event]) throws(Kernel.Readiness.Error) -> Int in
+                (kq: borrowing Kernel.Descriptor, scratchBuffer: Memory.Buffer.Mutable, deadline: Kernel.Time.Deadline?, buffer: inout [Kernel.Event]) throws(Error) -> Int in
 
                 var duration: Duration? = nil
                 if let deadline = deadline {
@@ -355,12 +342,12 @@ extension Kernel.Readiness.Driver {
 
                 let count = try unsafe scratchBuffer.withRebound(
                     to: Kernel.Kqueue.Event.self
-                ) { (rawEvents: UnsafeMutableBufferPointer<Kernel.Kqueue.Event>) throws(Kernel.Readiness.Error) -> Int in
+                ) { (rawEvents: UnsafeMutableBufferPointer<Kernel.Kqueue.Event>) throws(Error) -> Int in
                     do throws(Kernel.Kqueue.Error) {
                         return try Kernel.Kqueue.poll(kq, into: rawEvents, timeout: duration)
                     } catch {
                         if case .interrupted = error { return 0 }
-                        throw Kernel.Readiness.Error(error)
+                        throw Error(error)
                     }
                 }
 
@@ -407,19 +394,22 @@ extension Kernel.Readiness.Driver {
                 }
                 return collected.count
             },
-            close: {
-                (descriptor: consuming Kernel.Descriptor, scratchBuffer: Memory.Buffer.Mutable) in
-                let kqFd = descriptor._rawValue
-
+            drain: {
+                (kq: borrowing Kernel.Descriptor) in
+                let kqFd = kq._rawValue
                 state.registry.withLock { outer in
                     if var inner = outer.remove(kqFd) {
                         inner.drain { _ in }
                     }
                 }
-
-                scratchBuffer.deallocate()
-                // kqueue fd closes via descriptor deinit
             }
+        )
+
+        return Kernel.Readiness(
+            driver: driver,
+            descriptor: descriptor,
+            buffer: buffer,
+            wakeup: wakeup
         )
     }
 }
