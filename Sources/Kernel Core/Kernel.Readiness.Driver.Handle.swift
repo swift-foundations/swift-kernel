@@ -20,16 +20,14 @@ extension Kernel.Readiness.Driver {
     public struct Handle: ~Copyable, Sendable {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)
             /// The kernel descriptor owning the kqueue/epoll fd.
-            @usableFromInline
-            package let descriptor: Kernel.Descriptor
+            public let descriptor: Kernel.Descriptor
 
             /// Pre-allocated scratch buffer for raw kernel events.
             /// Content is typed via `withRebound` in platform poll implementations.
-            @usableFromInline
-            package let buffer: Memory.Buffer.Mutable
+            public let buffer: Memory.Buffer.Mutable
 
-            @usableFromInline
-            package init(descriptor: consuming Kernel.Descriptor, buffer: Memory.Buffer.Mutable) {
+            @inlinable
+            public init(descriptor: consuming Kernel.Descriptor, buffer: Memory.Buffer.Mutable) {
                 self.descriptor = descriptor
                 self.buffer = buffer
             }
