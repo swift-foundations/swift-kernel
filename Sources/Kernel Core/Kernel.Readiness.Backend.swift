@@ -16,13 +16,9 @@ extension Kernel.Readiness {
         ///
         /// - **Darwin**: kqueue
         /// - **Linux**: epoll
-        /// Returns the platform-default readiness driver.
-        ///
-        /// - **Darwin**: kqueue
-        /// - **Linux**: epoll
-        public static func platformDefault() -> Kernel.Readiness.Driver {
+        public static func platformDefault() throws(Kernel.Readiness.Error) -> Kernel.Readiness.Driver {
             #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-                Kernel.Readiness.Driver.kqueue()
+                try Kernel.Readiness.Driver.kqueue()
             #elseif os(Linux)
                 fatalError("epoll backend not yet implemented")
             #else

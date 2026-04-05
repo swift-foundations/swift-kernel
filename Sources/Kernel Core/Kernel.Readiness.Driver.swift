@@ -2,106 +2,120 @@
 //  Kernel.Readiness.Driver.swift
 //  swift-kernel
 //
-//  Witness struct for platform-specific readiness backends.
+//  Single ~Copyable type for readiness-based event notification.
 //
-//  The driver is an "inert facility": stateful (registry, IDs, staleness)
-//  but threadless. The caller supplies the thread that blocks in poll().
+//  Owns the platform resource (kqueue/epoll fd + scratch buffer),
+//  the Sendable wakeup channel, and six operational closures.
+//  The "inert driver" model: stateful but threadless. The caller
+//  supplies the thread that blocks in poll().
 //
 
+@_spi(Syscall) import Kernel_Primitives
+public import Memory_Buffer_Primitives
+
 extension Kernel.Readiness {
-    /// Protocol witness struct for readiness-based event notification.
+    /// Readiness driver owning a platform selector resource.
     ///
-    /// ## Inert Driver Model
-    ///
-    /// The driver maintains state (registration table, ID generation,
-    /// staleness tracking) but does not own threads. The caller supplies
-    /// the thread that blocks in `poll()`.
+    /// `~Copyable`: single ownership, consumed on `close()`.
+    /// `Sendable`: safe to transfer to the poll thread.
     ///
     /// ## Four-Part Contract
     ///
     /// 1. **Registration**: register/modify/deregister returning opaque tokens
     /// 2. **Waiting**: blocking poll invoked by caller-owned thread
-    /// 3. **Wake**: interrupt blocking wait for control-plane changes
+    /// 3. **Wake**: wakeup channel for cross-thread interruption
     /// 4. **Normalization**: emit cross-platform `Kernel.Event` results
     ///
-    /// ## Seven Policy Invariants
-    ///
-    /// All implementations must preserve:
-    /// - INV-1: Registration Identity (unique non-zero IDs)
-    /// - INV-2: Ownership Lifecycle (consuming dup, close on deregister)
-    /// - INV-3: Delta Correctness (set-difference on modify)
-    /// - INV-4: One-Shot Re-Arm (auto-disable after delivery)
-    /// - INV-5: Normalization (cross-platform event format)
-    /// - INV-6: Staleness Suppression (drop events for deregistered IDs)
-    /// - INV-7: Wake Responsiveness (interrupt blocking poll)
-    public struct Driver: Sendable {
+    /// ## Usage
+    /// ```swift
+    /// var driver = try Kernel.Readiness.Driver.kqueue()
+    /// let wakeup = driver.wakeup  // Sendable copy
+    /// let id = try driver.register(descriptor: dup, interest: .read)
+    /// let count = try driver.poll(deadline: nil, into: &buffer)
+    /// driver.close()
+    /// ```
+    public struct Driver: ~Copyable, Sendable {
+
+        // MARK: - Owned Resources
+
+        /// The kernel descriptor (kqueue/epoll fd).
+        @_spi(Internal)
+        public let descriptor: Kernel.Descriptor
+
+        /// Pre-allocated scratch buffer for raw kernel events.
+        @_spi(Internal)
+        public let buffer: Memory.Buffer.Mutable
+
         /// Backend capabilities.
         public let capabilities: Capabilities
 
-        // MARK: - Witness Closures
+        /// Thread-safe channel for interrupting blocking `poll()`.
+        public let wakeup: Kernel.Readiness.Wakeup.Channel
 
-        let _create: @Sendable () throws(Error) -> Handle
+        // MARK: - Operational Closures
 
         let _register:
             @Sendable (
-                borrowing Handle,
+                borrowing Kernel.Descriptor,
                 consuming Kernel.Descriptor,
                 Kernel.Event.Interest
             ) throws(Error) -> Kernel.Event.ID
 
         let _modify:
             @Sendable (
-                borrowing Handle,
+                borrowing Kernel.Descriptor,
                 Kernel.Event.ID,
                 Kernel.Event.Interest
             ) throws(Error) -> Void
 
         let _deregister:
             @Sendable (
-                borrowing Handle,
+                borrowing Kernel.Descriptor,
                 Kernel.Event.ID
             ) throws(Error) -> Void
 
         let _arm:
             @Sendable (
-                borrowing Handle,
+                borrowing Kernel.Descriptor,
                 Kernel.Event.ID,
                 Kernel.Event.Interest
             ) throws(Error) -> Void
 
         let _poll:
             @Sendable (
-                borrowing Handle,
+                borrowing Kernel.Descriptor,
+                Memory.Buffer.Mutable,
                 Kernel.Time.Deadline?,
                 inout [Kernel.Event]
             ) throws(Error) -> Int
 
-        let _close: @Sendable (consuming Handle) -> Void
-
-        let _wakeup: @Sendable (borrowing Handle) throws(Error) -> Kernel.Readiness.Wakeup.Channel
+        let _close: @Sendable (consuming Kernel.Descriptor, Memory.Buffer.Mutable) -> Void
 
         // MARK: - Initializer
 
+        @_spi(Internal)
         public init(
+            descriptor: consuming Kernel.Descriptor,
+            buffer: Memory.Buffer.Mutable,
             capabilities: Capabilities,
-            create: @escaping @Sendable () throws(Error) -> Handle,
-            register: @escaping @Sendable (borrowing Handle, consuming Kernel.Descriptor, Kernel.Event.Interest) throws(Error) -> Kernel.Event.ID,
-            modify: @escaping @Sendable (borrowing Handle, Kernel.Event.ID, Kernel.Event.Interest) throws(Error) -> Void,
-            deregister: @escaping @Sendable (borrowing Handle, Kernel.Event.ID) throws(Error) -> Void,
-            arm: @escaping @Sendable (borrowing Handle, Kernel.Event.ID, Kernel.Event.Interest) throws(Error) -> Void,
-            poll: @escaping @Sendable (borrowing Handle, Kernel.Time.Deadline?, inout [Kernel.Event]) throws(Error) -> Int,
-            close: @escaping @Sendable (consuming Handle) -> Void,
-            wakeup: @escaping @Sendable (borrowing Handle) throws(Error) -> Kernel.Readiness.Wakeup.Channel
+            wakeup: Kernel.Readiness.Wakeup.Channel,
+            register: @escaping @Sendable (borrowing Kernel.Descriptor, consuming Kernel.Descriptor, Kernel.Event.Interest) throws(Error) -> Kernel.Event.ID,
+            modify: @escaping @Sendable (borrowing Kernel.Descriptor, Kernel.Event.ID, Kernel.Event.Interest) throws(Error) -> Void,
+            deregister: @escaping @Sendable (borrowing Kernel.Descriptor, Kernel.Event.ID) throws(Error) -> Void,
+            arm: @escaping @Sendable (borrowing Kernel.Descriptor, Kernel.Event.ID, Kernel.Event.Interest) throws(Error) -> Void,
+            poll: @escaping @Sendable (borrowing Kernel.Descriptor, Memory.Buffer.Mutable, Kernel.Time.Deadline?, inout [Kernel.Event]) throws(Error) -> Int,
+            close: @escaping @Sendable (consuming Kernel.Descriptor, Memory.Buffer.Mutable) -> Void
         ) {
+            self.descriptor = descriptor
+            self.buffer = buffer
             self.capabilities = capabilities
-            self._create = create
+            self.wakeup = wakeup
             self._register = register
             self._modify = modify
             self._deregister = deregister
             self._arm = arm
             self._poll = poll
             self._close = close
-            self._wakeup = wakeup
         }
     }
 }
@@ -109,73 +123,53 @@ extension Kernel.Readiness {
 // MARK: - Public API
 
 extension Kernel.Readiness.Driver {
-    /// Create a new driver handle.
-    public func create() throws(Kernel.Readiness.Error) -> Handle {
-        try _create()
-    }
-
     /// Register a descriptor for the given interests.
     ///
     /// Takes `consuming` ownership of the dup'd descriptor.
     public func register(
-        _ handle: borrowing Handle,
         descriptor: consuming Kernel.Descriptor,
         interest: Kernel.Event.Interest
     ) throws(Kernel.Readiness.Error) -> Kernel.Event.ID {
-        try _register(handle, descriptor, interest)
+        try _register(self.descriptor, descriptor, interest)
     }
 
     /// Modify the interests for a registered descriptor.
     public func modify(
-        _ handle: borrowing Handle,
         id: Kernel.Event.ID,
         interest: Kernel.Event.Interest
     ) throws(Kernel.Readiness.Error) {
-        try _modify(handle, id, interest)
+        try _modify(descriptor, id, interest)
     }
 
     /// Remove a descriptor from the driver.
     public func deregister(
-        _ handle: borrowing Handle,
         id: Kernel.Event.ID
     ) throws(Kernel.Readiness.Error) {
-        try _deregister(handle, id)
+        try _deregister(descriptor, id)
     }
 
     /// Re-arm a registration for readiness notification.
-    ///
-    /// After one-shot delivery, the filter is disabled.
-    /// Call arm() to re-enable.
     public func arm(
-        _ handle: borrowing Handle,
         id: Kernel.Event.ID,
         interest: Kernel.Event.Interest
     ) throws(Kernel.Readiness.Error) {
-        try _arm(handle, id, interest)
+        try _arm(descriptor, id, interest)
     }
 
     /// Wait for events with optional timeout.
     ///
     /// Blocks the calling thread.
     public func poll(
-        _ handle: borrowing Handle,
         deadline: Kernel.Time.Deadline?,
         into buffer: inout [Kernel.Event]
     ) throws(Kernel.Readiness.Error) -> Int {
-        try _poll(handle, deadline, &buffer)
+        try _poll(descriptor, self.buffer, deadline, &buffer)
     }
 
-    /// Close the driver handle.
+    /// Close the driver.
     ///
     /// Drains all registrations and releases resources.
-    public func close(_ handle: consuming Handle) {
-        _close(handle)
-    }
-
-    /// Create a wakeup channel for this handle.
-    ///
-    /// The returned channel is `Sendable` and can interrupt blocking `poll()`.
-    public func wakeup(_ handle: borrowing Handle) throws(Kernel.Readiness.Error) -> Kernel.Readiness.Wakeup.Channel {
-        try _wakeup(handle)
+    public consuming func close() {
+        _close(descriptor, buffer)
     }
 }

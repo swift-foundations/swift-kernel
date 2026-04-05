@@ -21,11 +21,11 @@ extension Kernel {
     ///
     /// ## Usage
     /// ```swift
-    /// let driver = Kernel.Readiness.Backend.platformDefault()
-    /// let handle = try driver.create()
-    /// let wakeup = try driver.wakeup(handle)
-    /// let id = try driver.register(handle, descriptor: dup, interest: .read)
-    /// let count = try driver.poll(handle, deadline: nil, into: &buffer)
+    /// var driver = try Kernel.Readiness.Backend.platformDefault()
+    /// let wakeup = driver.wakeup  // Sendable copy
+    /// let id = try driver.register(descriptor: dup, interest: .read)
+    /// let count = try driver.poll(deadline: nil, into: &buffer)
+    /// driver.close()
     /// ```
     public enum Readiness {}
 }
