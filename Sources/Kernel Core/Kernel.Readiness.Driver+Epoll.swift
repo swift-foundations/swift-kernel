@@ -38,12 +38,13 @@ extension Kernel.Readiness {
             >
         >(.init())
 
-        /// Raw fd for the eventfd wakeup channel.
-        /// Closed in `_drain`. -1 = not initialized.
-        let eventfdRawValue: Int32
+        /// Eventfd wakeup channel descriptor.
+        /// Owned by the class — closed deterministically in `_drain`
+        /// via nil-assignment (deinit closes the underlying fd).
+        nonisolated(unsafe) var eventfd: Kernel.Event.Descriptor?
 
-        init(eventfdRawValue: Int32) {
-            self.eventfdRawValue = eventfdRawValue
+        init(eventfd: consuming Kernel.Event.Descriptor) {
+            self.eventfd = consume eventfd
         }
     }
 }
@@ -104,6 +105,9 @@ extension Kernel.Readiness {
         if interest.contains(.write) {
             events = events | .out
         }
+        if interest.contains(.priority) {
+            events = events | .pri
+        }
 
         return events
     }
@@ -117,6 +121,7 @@ extension Kernel.Readiness {
 
         if events.contains(.in) { interest.insert(.read) }
         if events.contains(.out) { interest.insert(.write) }
+        if events.contains(.pri) { interest.insert(.priority) }
 
         if events.contains(.err) { flags.insert(.error) }
         if events.contains(.hup) { flags.insert(.hangup) }
@@ -167,14 +172,15 @@ extension Kernel.Readiness {
             throw Error(error)
         }
 
-        // Transfer eventfd ownership to EpollState.
-        // take() extracts the raw fd and invalidates the event descriptor
-        // so its deinit won't close the fd. Drain closes it.
-        let efd = eventfd.take()
+        // Raw fd for the wakeup closure — the ONE place raw Int32 is acceptable.
+        // signal(rawDescriptor:) SPI exists for exactly the ~Copyable-in-Sendable-closure constraint.
+        let efd = eventfd.descriptor._rawValue
 
         // -- Per-instance state --
+        // Transfer ~Copyable eventfd ownership to EpollState. The class owns it;
+        // _drain sets it to nil for deterministic close via deinit.
 
-        let state = EpollState(eventfdRawValue: efd)
+        let state = EpollState(eventfd: consume eventfd)
         state.registry.withLock { outer in
             outer.set(epfd, .init())
         }
@@ -400,10 +406,8 @@ extension Kernel.Readiness {
 
                 // Close the eventfd — separate fd that must be explicitly closed.
                 // (Kqueue's EVFILT_USER dies with the kqueue fd; eventfd does not.)
-                if state.eventfdRawValue >= 0 {
-                    _ = Kernel.Descriptor(_rawValue: state.eventfdRawValue)
-                    // Descriptor deinit closes the fd
-                }
+                // nil-assignment triggers deinit → typed, deterministic close.
+                state.eventfd = nil
             }
         )
 
