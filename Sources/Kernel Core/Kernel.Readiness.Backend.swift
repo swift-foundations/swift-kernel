@@ -20,7 +20,7 @@ extension Kernel.Readiness {
             #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
                 try Kernel.Readiness.kqueue()
             #elseif os(Linux)
-                fatalError("epoll backend not yet implemented")
+                try Kernel.Readiness.epoll()
             #else
                 fatalError("No readiness backend available for this platform")
             #endif
