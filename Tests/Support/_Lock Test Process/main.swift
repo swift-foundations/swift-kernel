@@ -227,12 +227,17 @@ func printUsage() {
         }
 
         // Open the file
-        let fd = open(args.filePath, O_RDWR)
-        guard fd >= 0 else {
+        let rawFd = open(args.filePath, O_RDWR)
+        guard rawFd >= 0 else {
             writeStderr("Failed to open file: \(args.filePath)\n")
             return 3
         }
-        defer { close(fd) }
+
+        // Bind to Kernel.Descriptor so it stays alive during Token usage.
+        // Token.init borrows this descriptor — the temporary must not die
+        // before release(). No defer { close(rawFd) } — Token's internal
+        // copy closes the fd, and this descriptor closes it on scope exit.
+        let descriptor = Kernel.Descriptor(_rawValue: rawFd)
 
         let kind: Kernel.Lock.Kind
         let acquire: Kernel.Lock.Acquire
@@ -262,7 +267,7 @@ func printUsage() {
         var token: Kernel_Primitives.Kernel.Lock.Token
         do throws(Kernel_Primitives.Kernel.Lock.Error) {
             token = try Kernel_Primitives.Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(_rawValue: fd),
+                descriptor: descriptor,
                 range: args.range,
                 kind: kind,
                 acquire: acquire
