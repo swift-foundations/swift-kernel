@@ -25,11 +25,16 @@ import Dictionary_Primitives
 // MARK: - Per-Driver State
 
 extension Kernel.Readiness {
+    /// Epoll driver namespace.
+    enum Epoll {}
+}
+
+extension Kernel.Readiness.Epoll {
     /// Shared mutable state for an epoll driver instance.
     ///
     /// Captured by the Driver closures. Thread-safe via Mutex.
     /// Per-instance — each `.epoll()` call creates fresh state.
-    final class EpollState: @unchecked Sendable {
+    final class State: @unchecked Sendable {
         let nextID = Atomic<UInt64>(0)
 
         let registry = Synchronization.Mutex<
@@ -180,7 +185,7 @@ extension Kernel.Readiness {
         // Transfer ~Copyable eventfd ownership to EpollState. The class owns it;
         // _drain sets it to nil for deterministic close via deinit.
 
-        let state = EpollState(eventfd: consume eventfd)
+        let state = Epoll.State(eventfd: consume eventfd)
         state.registry.withLock { outer in
             outer.set(epfd, .init())
         }
