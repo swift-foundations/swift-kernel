@@ -102,16 +102,16 @@ extension Kernel.Event.Poll.Data {
 extension Kernel.Readiness {
     /// Converts Interest to epoll events with EPOLLONESHOT for one-shot arming.
     private static func epollEvents(oneShot interest: Kernel.Event.Interest) -> Kernel.Event.Poll.Events {
-        var events: Kernel.Event.Poll.Events = .et | .oneshot
+        var events: Kernel.Event.Poll.Events = [.et, .oneshot]
 
         if interest.contains(.read) {
-            events = events | .in
+            events.insert(.in)
         }
         if interest.contains(.write) {
-            events = events | .out
+            events.insert(.out)
         }
         if interest.contains(.priority) {
-            events = events | .pri
+            events.insert(.pri)
         }
 
         return events
@@ -167,7 +167,7 @@ extension Kernel.Readiness {
 
         // Register eventfd with epoll for read events.
         // data = .zero → wakeup sentinel (no registration ID).
-        let wakeupEvent = Kernel.Event.Poll.Event(events: .in | .et)
+        let wakeupEvent = Kernel.Event.Poll.Event(events: [.in, .et])
 
         do throws(Kernel.Event.Poll.Error) {
             try Kernel.Event.Poll.ctl(
@@ -360,7 +360,7 @@ extension Kernel.Readiness {
                 let epfd = epollFd._rawValue
 
                 // Allocate event buffer for epoll_wait
-                var rawEvents = [Kernel.Event.Poll.Event](
+                var rawEvents = Swift.Array<Kernel.Event.Poll.Event>(
                     repeating: Kernel.Event.Poll.Event(events: Kernel.Event.Poll.Events(rawValue: 0)),
                     count: buffer.count
                 )

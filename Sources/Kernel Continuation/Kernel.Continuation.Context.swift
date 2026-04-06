@@ -48,7 +48,7 @@ extension Kernel.Continuation {
     ///     // Cancellation handler calls context.cancel(error)
     /// }
     /// ```
-    public final class Context<Success: Sendable, Failure: Swift.Error & Sendable>: @unchecked Sendable {
+    public final class Context<Success: Sendable, Failure: Swift.Error>: @unchecked Sendable {
         /// The callback invoked exactly once on completion, cancellation, or failure.
         ///
         /// Replaces the formerly stored `CheckedContinuation`. Continuation-based
