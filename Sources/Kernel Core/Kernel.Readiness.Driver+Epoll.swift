@@ -202,7 +202,7 @@ extension Kernel.Readiness {
         // Captures raw Int32 — can't capture ~Copyable Kernel.Event.Descriptor.
         // Mirrors kqueue's capture of wakeupKq: Int32.
 
-        let wakeup = Wakeup.Channel {
+        let wakeup = Kernel.Wakeup.Channel {
             Kernel.Event.Descriptor.signal(rawDescriptor: efd)
         }
 

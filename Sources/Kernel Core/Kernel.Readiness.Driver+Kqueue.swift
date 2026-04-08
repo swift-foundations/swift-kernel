@@ -99,7 +99,7 @@ extension Kernel.Readiness {
 
         let wakeupKq = descriptor._rawValue
 
-        let wakeup = Wakeup.Channel {
+        let wakeup = Kernel.Wakeup.Channel {
             let triggerEv = Kernel.Kqueue.Event(
                 id: .zero, filter: .user, flags: .none, fflags: .trigger
             )

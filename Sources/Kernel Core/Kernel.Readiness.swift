@@ -46,7 +46,7 @@ extension Kernel {
         public let buffer: Memory_Buffer_Primitives.Memory.Buffer.Mutable
 
         /// Thread-safe channel for interrupting blocking `poll()`.
-        public let wakeup: Wakeup.Channel
+        public let wakeup: Kernel.Wakeup.Channel
 
         /// Backend capabilities.
         public var capabilities: Driver.Capabilities { driver.capabilities }
@@ -56,7 +56,7 @@ extension Kernel {
             driver: Driver,
             descriptor: consuming Kernel.Descriptor,
             buffer: Memory_Buffer_Primitives.Memory.Buffer.Mutable,
-            wakeup: Wakeup.Channel
+            wakeup: Kernel.Wakeup.Channel
         ) {
             self.driver = driver
             self.descriptor = descriptor
