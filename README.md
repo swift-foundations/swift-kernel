@@ -192,11 +192,7 @@ public enum Failure: Swift.Error, Sendable, Equatable {
 | `Kernel.Kqueue`                  | Darwin event notification                            |
 | `Kernel.IOUring`                 | Linux io_uring interface                             |
 | `Kernel.IOCP`                    | Windows I/O completion ports                         |
-| `Kernel.Thread.Executor`         | Serial executor backed by dedicated OS thread        |
-| `Kernel.Thread.Executors`        | Sharded pool of serial executors                     |
 | `Kernel.Thread.Synchronization`  | Mutex + N condition variables wrapper                |
-| `Kernel.Handoff.Cell`            | Cross-boundary ownership transfer for ~Copyable      |
-| `Kernel.Continuation.Context`    | Exactly-once continuation resumption                 |
 
 ---
 
