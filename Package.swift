@@ -80,12 +80,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Continuation
-        .target(
-            name: "Kernel Continuation",
-            dependencies: ["Kernel Core"]
-        ),
-
         // MARK: - Umbrella
         .target(
             name: "Kernel",
@@ -94,7 +88,6 @@ let package = Package(
                 "Kernel System",
                 "Kernel Thread",
                 "Kernel File",
-                "Kernel Continuation",
             ]
         ),
 

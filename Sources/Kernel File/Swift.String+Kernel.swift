@@ -20,8 +20,8 @@ extension Swift.String {
     ///
     /// On POSIX, interprets the path bytes as UTF-8.
     /// On Windows, interprets the path code units as UTF-16.
-    @usableFromInline
-    internal init(_ path: borrowing Kernel.Path) {
+    @inlinable
+    public init(_ path: borrowing Kernel.Path) {
         #if os(Windows)
         self = unsafe Swift.String(decodingCString: path.view.pointer, as: UTF16.self)
         #else
@@ -37,8 +37,8 @@ extension Swift.String {
     ///
     /// On POSIX, interprets the path bytes as UTF-8.
     /// On Windows, interprets the path code units as UTF-16.
-    @usableFromInline
-    internal init(_ view: borrowing Kernel.Path.View) {
+    @inlinable
+    public init(_ view: borrowing Kernel.Path.View) {
         #if os(Windows)
         self = unsafe Swift.String(decodingCString: view.pointer, as: UTF16.self)
         #else
