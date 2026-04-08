@@ -132,3 +132,49 @@ Published products unchanged. 91 tests passing. `swift-ownership-primitives` add
 All `canImport()` platform identity violations fixed to `#if os()`, matching the canonical pattern from `Kernel Core/exports.swift`. Orphaned `public import WinSDK` removed. Conditional `.signal` enum case (#6) deferred — validated as correct by [prior art research](conditional-compilation-public-enum-cases.md).
 
 **Clean areas**: Re-export chain [PLAT-ARCH-006], Package.swift conditions [PATTERN-004], Swift 6 mode [PATTERN-005], feature flags [PATTERN-006]/[PATTERN-007], module naming [PATTERN-004b], L3 responsibilities [PLAT-ARCH-009] all correct.
+
+---
+
+## Legacy — Consolidated 2026-04-08
+
+### From: swift-institute/Research/audit-foundations.md (2026-04-03)
+
+**Pre-publication audit — P0/P1/P2 checks**
+
+#### P2: Methods in Type Bodies [API-IMPL-008]
+
+| File:Line | Type | Members |
+|-----------|------|---------|
+| `Kernel.File.Write.Streaming.Context.swift:37` | `Context` | 8 |
+| `Kernel.File.Write.Atomic.Options.swift:16` | `Options` | 5 |
+
+Note: The 2026-03-24 code-surface audit (above) already addressed [API-IMPL-008] violations in class types. These two remaining findings from the cross-package audit are in struct types holding stored properties.
+
+---
+
+### From: swift-institute/Research/modularization-audit-foundations-batch-B.md (2026-03-20)
+
+**Modularization audit (batch B) — MOD-001 through MOD-014**
+
+2 products: Kernel, Kernel Test Support. Also has `_Lock Test Process` executable target.
+
+| Rule | Status | Notes |
+|------|--------|-------|
+| MOD-001 | N/A | Main + Test Support pattern |
+| MOD-002 | N/A | Single main target |
+| MOD-003 | N/A | No variant targets |
+| MOD-004 | N/A | No ~Copyable concerns at this layer |
+| MOD-005 | N/A | Single main product |
+| MOD-006 | PASS | 10 deps on main target — large but all platform-conditional, justified by cross-platform unification role |
+| MOD-007 | PASS | Depth 1 |
+| MOD-008 | REVIEW | 63 files in Kernel target — substantial but may be inherent to cross-platform unification |
+| MOD-009 | N/A | No inline variants |
+| MOD-010 | N/A | No stdlib extensions observed |
+| MOD-011 | PASS | Kernel Test Support published as library product |
+| MOD-012 | PASS | `Kernel`, `Kernel Test Support` — correct L3 naming |
+| MOD-013 | N/A | 4 source targets, threshold is 5 (note: Package.swift has good internal comments even below threshold) |
+| MOD-014 | N/A | Platform deps use `condition: .when(platforms:)` not traits — correct for always-needed platform abstraction |
+
+**Findings**: 0 FAIL. 1 REVIEW (MOD-008): 63 files in Kernel is large but this is the cross-platform unification layer (Darwin + Linux + Windows + POSIX). Each platform variant is already in a separate package. Splitting Kernel further would require identifying sub-domains within the unified API (e.g., file descriptors, threads, signals). Worth investigating but not a clear violation.
+
+**Note**: This batch-B audit assessed Kernel as a single-product package post-decomposition. The 2026-03-24 modularization section above documents the pre-decomposition state and the completed restructuring into Core + 4 sub-targets + umbrella.
