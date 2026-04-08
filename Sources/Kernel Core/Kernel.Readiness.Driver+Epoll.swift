@@ -214,9 +214,6 @@ extension Kernel.Readiness {
                 (epollFd: borrowing Kernel.Descriptor, descriptor: consuming Kernel.Descriptor, interest: Kernel.Event.Interest) throws(Error) -> Kernel.Event.ID in
                 let epfd = epollFd._rawValue
                 let id = Kernel.Event.ID(__unchecked: (), UInt(truncatingIfNeeded: state.nextID.wrappingAdd(1, ordering: .relaxed).newValue))
-                let rawDescriptor = descriptor._rawValue
-
-                var descriptor: Kernel.Descriptor? = consume descriptor
 
                 // Build epoll_event with EPOLLONESHOT for one-shot semantics
                 let event = Kernel.Event.Poll.Event(
@@ -224,21 +221,27 @@ extension Kernel.Readiness {
                     data: .init(registrationID: id)
                 )
 
+                // Borrow the consuming parameter directly into ctl. No raw value
+                // extraction, no temporary owning Descriptor that would close the fd.
                 do throws(Kernel.Event.Poll.Error) {
                     try Kernel.Event.Poll.ctl(
-                        epollFd, op: .add, fd: Kernel.Descriptor(_rawValue: rawDescriptor), event: event
+                        epollFd, op: .add, fd: descriptor, event: event
                     )
                 } catch {
-                    try? Kernel.Close.close(descriptor.take()!)
+                    try? Kernel.Close.close(descriptor)
                     throw Error(error)
                 }
 
+                // ctl succeeded — box into Optional so we can move into the
+                // throwing withLock closure via .take()!.
+                var descriptorBox: Kernel.Descriptor? = consume descriptor
+
                 try state.registry.withLock { outer throws(Error) in
                     guard var inner = outer.remove(epfd) else {
-                        try? Kernel.Close.close(descriptor.take()!)
+                        try? Kernel.Close.close(descriptorBox.take()!)
                         throw .invalidDescriptor
                     }
-                    inner.set(id, Registration.Entry(descriptor: descriptor.take()!, interest: interest))
+                    inner.set(id, Registration.Entry(descriptor: descriptorBox.take()!, interest: interest))
                     outer.set(epfd, consume inner)
                 }
 
@@ -248,38 +251,36 @@ extension Kernel.Readiness {
                 (epollFd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, newInterest: Kernel.Event.Interest) throws(Error) in
                 let epfd = epollFd._rawValue
 
-                let rawDescriptor: Int32? = state.registry.withLock { outer in
-                    outer.withValue(forKey: epfd) { inner in
-                        inner.withValue(forKey: id) { entry in
-                            entry.descriptor._rawValue
-                        }
-                    } ?? nil
-                }
-
-                guard let rawDescriptor else { throw .notRegistered }
-
                 // Build new epoll_event — EPOLLONESHOT replaces the full interest set
                 let event = Kernel.Event.Poll.Event(
                     events: epollEvents(oneShot: newInterest),
                     data: .init(registrationID: id)
                 )
 
-                do throws(Kernel.Event.Poll.Error) {
-                    try Kernel.Event.Poll.ctl(
-                        epollFd, op: .modify, fd: Kernel.Descriptor(_rawValue: rawDescriptor), event: event
-                    )
-                } catch {
-                    throw Error(error)
-                }
-
-                state.registry.withLock { outer in
-                    if var inner = outer.remove(epfd) {
-                        if var entry = inner.remove(id) {
-                            entry.interest = newInterest
-                            inner.set(id, consume entry)
-                        }
-                        outer.set(epfd, consume inner)
+                // Extract → syscall (borrow) → reinsert. The entry's owned
+                // Descriptor is borrowed in place by ctl — no temporary, no
+                // raw value extraction.
+                try state.registry.withLock { outer throws(Error) in
+                    guard var inner = outer.remove(epfd) else {
+                        throw .notRegistered
                     }
+                    guard var entry = inner.remove(id) else {
+                        outer.set(epfd, consume inner)
+                        throw .notRegistered
+                    }
+                    do throws(Kernel.Event.Poll.Error) {
+                        try Kernel.Event.Poll.ctl(
+                            epollFd, op: .modify, fd: entry.descriptor, event: event
+                        )
+                    } catch {
+                        // Reinsert before propagating
+                        inner.set(id, consume entry)
+                        outer.set(epfd, consume inner)
+                        throw Error(error)
+                    }
+                    entry.interest = newInterest
+                    inner.set(id, consume entry)
+                    outer.set(epfd, consume inner)
                 }
             },
             deregister: {
@@ -297,11 +298,12 @@ extension Kernel.Readiness {
 
                 guard var removedEntry else { return }
 
-                let rawDescriptor = removedEntry.descriptor._rawValue
-
+                // Borrow the entry's owned Descriptor directly into ctl. The
+                // borrow ends when ctl returns; the descriptor is then consumed
+                // by Kernel.Close.close exactly once.
                 do throws(Kernel.Event.Poll.Error) {
                     try Kernel.Event.Poll.ctl(
-                        epollFd, op: .delete, fd: Kernel.Descriptor(_rawValue: rawDescriptor)
+                        epollFd, op: .delete, fd: removedEntry.descriptor
                     )
                 } catch {
                     // Ignore ENOENT — the fd may have been closed already
@@ -319,28 +321,33 @@ extension Kernel.Readiness {
                 (epollFd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Error) in
                 let epfd = epollFd._rawValue
 
-                let rawDescriptor: Int32? = state.registry.withLock { outer in
-                    outer.withValue(forKey: epfd) { inner in
-                        inner.withValue(forKey: id) { entry in
-                            entry.descriptor._rawValue
-                        }
-                    } ?? nil
-                }
-
-                guard let rawDescriptor else { throw .notRegistered }
-
                 // Re-arm via EPOLL_CTL_MOD with EPOLLONESHOT
                 let event = Kernel.Event.Poll.Event(
                     events: epollEvents(oneShot: interest),
                     data: .init(registrationID: id)
                 )
 
-                do throws(Kernel.Event.Poll.Error) {
-                    try Kernel.Event.Poll.ctl(
-                        epollFd, op: .modify, fd: Kernel.Descriptor(_rawValue: rawDescriptor), event: event
-                    )
-                } catch {
-                    throw Error(error)
+                // Extract → syscall (borrow) → reinsert. No state change to
+                // the entry; we just need to borrow its owned Descriptor for ctl.
+                try state.registry.withLock { outer throws(Error) in
+                    guard var inner = outer.remove(epfd) else {
+                        throw .notRegistered
+                    }
+                    guard var entry = inner.remove(id) else {
+                        outer.set(epfd, consume inner)
+                        throw .notRegistered
+                    }
+                    do throws(Kernel.Event.Poll.Error) {
+                        try Kernel.Event.Poll.ctl(
+                            epollFd, op: .modify, fd: entry.descriptor, event: event
+                        )
+                    } catch {
+                        inner.set(id, consume entry)
+                        outer.set(epfd, consume inner)
+                        throw Error(error)
+                    }
+                    inner.set(id, consume entry)
+                    outer.set(epfd, consume inner)
                 }
             },
             poll: {
