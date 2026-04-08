@@ -19,7 +19,8 @@ extension Kernel {
     /// Completion-based I/O notification resource.
     ///
     /// `~Copyable`: single ownership, consumed on `close()`.
-    /// `Sendable`: safe to transfer to the poll thread.
+    /// Non-`Sendable`: thread-confined to the Loop's OS thread.
+    /// Transfer to the Loop via `consuming sending`.
     ///
     /// The `Driver` inside is a pure Copyable witness (the recipe).
     /// `Completion` is the concrete resource (the thing).
@@ -33,16 +34,18 @@ extension Kernel {
     /// Ring state (mmap'd pointers, SQ/CQ indices) is platform-specific
     /// and owned by the driver closures — not stored here.
     /// This struct owns only the kernel descriptor and the wakeup channel.
+    /// Extract `wakeup` before transferring ownership to the Loop.
     ///
     /// ## Usage
     /// ```swift
     /// var completion = try Kernel.Completion.iouring(entries: 256)
+    /// let wakeup = completion.wakeup  // extract before transfer
     /// try completion.submit(.nop, userData: 1)
     /// let flushed = try completion.flush()
     /// let count = try completion.harvest(into: &events)
     /// completion.close()
     /// ```
-    public struct Completion: ~Copyable, Sendable {
+    public struct Completion: ~Copyable {
         /// The operational witness (submit/flush/harvest/drain + capabilities).
         public let driver: Driver
 

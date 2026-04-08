@@ -18,10 +18,13 @@ extension Kernel.Completion {
     /// Does NOT own any resources — `Kernel.Completion` owns the fd.
     /// Ring state (mmap'd memory) is captured by the closures.
     ///
+    /// Non-`Sendable`: thread-confined with the owning `Kernel.Completion`.
+    /// The closures capture mmap'd ring state that is not thread-safe.
+    ///
     /// The closures receive `borrowing Kernel.Descriptor` (the ring/port fd)
     /// as their first parameter. `Kernel.Completion` methods borrow
     /// `self.descriptor` and pass it to the Driver closures.
-    public struct Driver: Sendable {
+    public struct Driver {
         /// Backend capabilities.
         public let capabilities: Capabilities
 
@@ -30,19 +33,17 @@ extension Kernel.Completion {
         /// Enqueue a submission in the ring.
         ///
         /// Does NOT call the kernel — batches until `flush()`.
-        public let _submit:
-            @Sendable (
-                borrowing Kernel.Descriptor,
-                Submission
-            ) throws(Kernel.Completion.Error) -> Void
+        public let _submit: (
+            borrowing Kernel.Descriptor,
+            Submission
+        ) throws(Kernel.Completion.Error) -> Void
 
         /// Flush accumulated submissions to the kernel.
         ///
         /// Returns the number of submissions accepted.
-        public let _flush:
-            @Sendable (
-                borrowing Kernel.Descriptor
-            ) throws(Kernel.Completion.Error) -> Int
+        public let _flush: (
+            borrowing Kernel.Descriptor
+        ) throws(Kernel.Completion.Error) -> Int
 
         /// Harvest completed operations from the ring.
         ///
@@ -50,26 +51,25 @@ extension Kernel.Completion {
         /// The deadline parameter is ignored — epoll_wait handles blocking.
         /// On Windows (IOCP): `GetQueuedCompletionStatusEx` with timeout.
         /// Returns the number of events harvested.
-        public let _harvest:
-            @Sendable (
-                borrowing Kernel.Descriptor,
-                Kernel.Time.Deadline?,
-                inout [Kernel.Completion.Event]
-            ) throws(Kernel.Completion.Error) -> Int
+        public let _harvest: (
+            borrowing Kernel.Descriptor,
+            Kernel.Time.Deadline?,
+            inout [Kernel.Completion.Event]
+        ) throws(Kernel.Completion.Error) -> Int
 
         /// Driver-specific cleanup (unmap rings, drain pending).
         /// Does NOT close the fd — that's a resource-level concern
         /// handled by `Completion.close()`.
-        public let _drain: @Sendable (borrowing Kernel.Descriptor) -> Void
+        public let _drain: (borrowing Kernel.Descriptor) -> Void
 
         // MARK: - Initializer
 
         public init(
             capabilities: Capabilities,
-            submit: @escaping @Sendable (borrowing Kernel.Descriptor, Submission) throws(Kernel.Completion.Error) -> Void,
-            flush: @escaping @Sendable (borrowing Kernel.Descriptor) throws(Kernel.Completion.Error) -> Int,
-            harvest: @escaping @Sendable (borrowing Kernel.Descriptor, Kernel.Time.Deadline?, inout [Kernel.Completion.Event]) throws(Kernel.Completion.Error) -> Int,
-            drain: @escaping @Sendable (borrowing Kernel.Descriptor) -> Void
+            submit: @escaping (borrowing Kernel.Descriptor, Submission) throws(Kernel.Completion.Error) -> Void,
+            flush: @escaping (borrowing Kernel.Descriptor) throws(Kernel.Completion.Error) -> Int,
+            harvest: @escaping (borrowing Kernel.Descriptor, Kernel.Time.Deadline?, inout [Kernel.Completion.Event]) throws(Kernel.Completion.Error) -> Int,
+            drain: @escaping (borrowing Kernel.Descriptor) -> Void
         ) {
             self.capabilities = capabilities
             self._submit = submit
