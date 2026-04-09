@@ -132,7 +132,6 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
-                .product(name: "Memory Buffer Primitives", package: "swift-memory-primitives"),
             ]
         ),
 

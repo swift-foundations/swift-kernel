@@ -1,3 +1,2 @@
 @_exported public import Kernel_Core
-public import Dictionary_Primitives
-public import Memory_Buffer_Primitives
+internal import Dictionary_Primitives
