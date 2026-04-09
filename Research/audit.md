@@ -31,34 +31,50 @@ All [API-IMPL-008] violations resolved — methods moved to extensions across 7 
 
 ---
 
-## Implementation — 2026-03-24
+## Implementation — 2026-04-09
 
 ### Scope
 
 - **Target**: swift-kernel (Layer 3 — Foundations)
-- **Skill**: implementation — [IMPL-INTENT], [IMPL-EXPR-001], [IMPL-000]–[IMPL-062], [PATTERN-009]–[PATTERN-053], [API-LAYER-001], [SEM-DEP-*]
-- **Files**: 67 source files across 6 targets
+- **Skill**: implementation — [IMPL-INTENT], [IMPL-000]–[IMPL-075], [PATTERN-009]–[PATTERN-053], [API-LAYER-001], [SEM-DEP-*]
+- **Files**: 68 source files across 6 targets (includes new Kernel.Completion+IOUring.swift)
+
+### Systemic Pattern — io_uring Ring Protocol
+
+The epoll driver achieves zero raw C types because L1 provides typed wrappers (`Kernel.Event.Poll.create/ctl/wait`). The io_uring driver lacks equivalent L1 ring abstractions, so Ring hand-rolls the shared-memory protocol with raw pointers and UInt32 arithmetic. **Findings 11–20 are all consequences of this L1 infrastructure gap.** The fix is a typed `Kernel.IO.Uring.Ring` at L1 in swift-linux-primitives — the individual findings resolve as corollaries.
 
 ### Findings
 
 | # | Severity | Rule | Location | Finding | Status |
 |---|----------|------|----------|---------|--------|
-| 1 | HIGH | [IMPL-060] | Optional+take.swift | `Optional._take()` general-purpose utility belongs in ownership-primitives | RESOLVED 2026-03-24 — moved to swift-ownership-primitives as `Optional.take()`, removed from Kernel Core | Verified: 2026-04-01 |
-| 2 | MEDIUM | [IMPL-INTENT] | Kernel.File.Write+Shared.swift:17–88 | String-based path manipulation reimplements path parsing on `Swift.String` instead of using `Kernel.Path` APIs from L1 | OPEN | Verified: 2026-04-01 |
-| 3 | MEDIUM | [IMPL-041] | Kernel.File.Write.Error.swift:17–25 | Internal error type uses string messages — error context is lossy | OPEN | Verified: 2026-04-01 |
-| 4 | MEDIUM | [IMPL-002] | Kernel.Thread.Executors.swift:51 | `Int(options.count)` raw conversion from typed `Kernel.Thread.Count` | FALSE_POSITIVE — legitimate stdlib boundary per [IMPL-010]; uses purpose-built `Int(_ count:)` overload |
-| 5 | MEDIUM | [IMPL-002] | Kernel.Thread.Executors.swift:70–71 | Mixed `UInt64`/`Int` arithmetic in round-robin index | RESOLVED 2026-03-24 — modulo computed in UInt64 domain, eliminating overflow trap | Verified: 2026-04-01 |
-| 6 | MEDIUM | [IMPL-INTENT] | Kernel.Failure.swift | Hardcoded `DWORD`/`FormatMessageW`/`strerror` — raw platform code in L3 | RESOLVED 2026-03-24 — delegated to platform packages (.posixMessage via swift-posix, .win32Message via swift-windows) per [PLAT-ARCH-008] | Verified: 2026-04-01 |
-| 7 | MEDIUM | [IMPL-EXPR-001] | Kernel.Thread.Gate.swift:57–66 | Manual lock/unlock with early return in `open()` | RESOLVED 2026-03-24 — refactored to `withLock`, broadcast moved outside lock | Verified: 2026-04-01 |
-| 8 | MEDIUM | [IMPL-060] | Kernel.File.Write.{Atomic,Streaming}.Error | `isNotFound`, `isPermissionDenied`, etc. semantic accessors duplicated verbatim across both error types | OPEN | Verified: 2026-04-01 |
-| 9 | LOW | [IMPL-002] | Kernel.Thread.Synchronization.swift:100 | `Int64(clamping: nanoseconds)` silently truncates `UInt64` timeout values exceeding `Int64.max` | OPEN | Verified: 2026-04-01 |
-| 10 | LOW | [IMPL-060] | Kernel.File.Write.Durability.swift | Three identical Durability enums with bridge methods | RESOLVED 2026-03-24 — unified into single `Kernel.File.Write.Durability`, deleted 2 duplicate files | Verified: 2026-04-01 |
+| 1 | HIGH | [IMPL-060] | Optional+take.swift | `Optional._take()` general-purpose utility belongs in ownership-primitives | RESOLVED 2026-03-24 |
+| 2 | MEDIUM | [IMPL-INTENT] | Kernel.File.Write+Shared.swift:17–88 | String-based path manipulation reimplements path parsing on `Swift.String` instead of using `Kernel.Path` APIs from L1 | OPEN |
+| 3 | MEDIUM | [IMPL-041] | Kernel.File.Write.Error.swift:17–25 | Internal error type uses string messages — error context is lossy | OPEN |
+| 4 | MEDIUM | [IMPL-002] | Kernel.Thread.Executors.swift:51 | `Int(options.count)` raw conversion from typed `Kernel.Thread.Count` | FALSE_POSITIVE — legitimate stdlib boundary per [IMPL-010] |
+| 5 | MEDIUM | [IMPL-002] | Kernel.Thread.Executors.swift:70–71 | Mixed `UInt64`/`Int` arithmetic in round-robin index | RESOLVED 2026-03-24 |
+| 6 | MEDIUM | [IMPL-INTENT] | Kernel.Failure.swift | Hardcoded `DWORD`/`FormatMessageW`/`strerror` — raw platform code in L3 | RESOLVED 2026-03-24 |
+| 7 | MEDIUM | [IMPL-EXPR-001] | Kernel.Thread.Gate.swift:57–66 | Manual lock/unlock with early return in `open()` | RESOLVED 2026-03-24 |
+| 8 | MEDIUM | [IMPL-060] | Kernel.File.Write.{Atomic,Streaming}.Error | `isNotFound`, `isPermissionDenied`, etc. semantic accessors duplicated verbatim across both error types | OPEN |
+| 9 | LOW | [IMPL-002] | Kernel.Thread.Synchronization.swift:100 | `Int64(clamping: nanoseconds)` silently truncates `UInt64` timeout values exceeding `Int64.max` | OPEN |
+| 10 | LOW | [IMPL-060] | Kernel.File.Write.Durability.swift | Three identical Durability enums with bridge methods | RESOLVED 2026-03-24 |
+| 11 | **HIGH** | [IMPL-060] | Kernel.Completion+IOUring.swift (Ring class) | Ring reimplements standard io_uring SQ/CQ shared-memory ring protocol (head/tail indexing, masking, SQE slot allocation, CQE iteration) — identical protocol every io_uring user implements. Should be typed L1 ring accessors in swift-linux-primitives | OPEN |
+| 12 | **HIGH** | [IMPL-006] | Kernel.Completion+IOUring.swift:70–80 | Seven raw `UnsafeMutablePointer<UInt32>` / `UnsafePointer` stored properties for SQ/CQ ring head, tail, array, sqes, cqes. Should be typed L1 ring accessor | OPEN |
+| 13 | **HIGH** | [IMPL-002] | Kernel.Completion+IOUring.swift:233–245 | enqueue() uses raw UInt32 wrapping arithmetic: `sqEntries &- (tail &- sqHead.pointee)`, `Int(tail & sqMask)`, `sqArray[idx] = UInt32(idx)`. Should be typed L1 ring operation | OPEN |
+| 14 | **HIGH** | [IMPL-002] | Kernel.Completion+IOUring.swift:276–294 | drain() uses raw UInt32 masking: `cqes[Int(head & cqMask)]`, `head &+= 1`. Should be typed L1 CQ ring drain | OPEN |
+| 15 | MEDIUM | [IMPL-002] | Kernel.Completion+IOUring.swift:289,299,332,338,370,376 | `.rawValue` extraction for Length/Offset conversions: `Kernel.IO.Uring.Length(submission.length.rawValue)`. Should use `.map()` or `.retag()` per [INFRA-103] | OPEN |
+| 16 | MEDIUM | [IMPL-002] | Kernel.Completion+IOUring.swift:277–279 | `__unchecked` construction of `Operation.Data` from `token.rawValue`. Should use functor path | OPEN |
+| 17 | MEDIUM | [IMPL-002] | Kernel.Completion+IOUring.swift:283 | `Kernel.Completion.Token(cqe.data.rawValue)` — rawValue extraction for CQE→Event token. Should use `.map()` or `.retag()` | OPEN |
+| 18 | MEDIUM | [IMPL-002] | Kernel.Completion+IOUring.swift:400 | `sqe.pointee.flags = sqeFlags.rawValue` — L1 SQE should accept `Flags` type directly | OPEN |
+| 19 | MEDIUM | [IMPL-002] | Kernel.Completion+IOUring.swift:404–406 | `Buffer.Group(rawValue: submission.bufferGroup.rawValue)` — should have typed conversion | OPEN |
+| 20 | MEDIUM | [IMPL-010] | Kernel.Completion+IOUring.swift:147–149,206–216 | Ring size computation and pointer setup with 12× raw `Int()` conversions at call site. Should be encapsulated in L1 ring factory | OPEN |
 
 ### Summary
 
-10 findings: 0 critical, 1 high, 7 medium, 2 low. **5 resolved**, 1 false positive, 4 open.
+20 findings: 0 critical, 5 high, 11 medium, 4 low. **5 resolved**, 1 false positive, 14 open.
 
-Resolved: `Optional.take()` moved to ecosystem, Durability unified, Executors overflow fixed, Gate refactored to `withLock`, platform code delegated to platform packages. Remaining: string-based error bridge (#2, #3), error accessor duplication (#8), timeout clamping (#9).
+Prior findings: string-based error bridge (#2, #3), error accessor duplication (#8), timeout clamping (#9) remain open.
+
+**io_uring findings (#11–20)**: 4 high, 6 medium — all caused by missing L1 typed ring abstractions. Resolution path: create `Kernel.IO.Uring.Ring` in swift-linux-primitives that encapsulates the shared-memory SQ/CQ protocol, then refactor Ring class to delegate (matching the epoll driver pattern).
 
 ---
 
@@ -106,32 +122,35 @@ Published products unchanged. 91 tests passing. `swift-ownership-primitives` add
 
 ---
 
-## Platform — 2026-03-24
+## Platform — 2026-04-09
 
 ### Scope
 
 - **Target**: swift-kernel (Layer 3 — Foundations, unified cross-platform module)
 - **Skill**: platform — [PLAT-ARCH-001]–[PLAT-ARCH-011], [PATTERN-001]–[PATTERN-008]
-- **Files**: 67 source files across 6 targets
+- **Files**: 68 source files across 6 targets (includes new Kernel.Completion+IOUring.swift)
 
 ### Findings
 
 | # | Severity | Rule | Location | Finding | Status |
 |---|----------|------|----------|---------|--------|
-| 1 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Count.swift:21 | `#if canImport(Darwin) \|\| canImport(Glibc) \|\| canImport(Musl)` uses `canImport` for platform identity | RESOLVED 2026-03-24 | Verified: 2026-04-01 |
-| 2 | HIGH | [PATTERN-004a] | Kernel.System.Memory.Total.swift:25,27 | `#if canImport(Darwin)` and `canImport(Glibc) \|\| canImport(Musl)` used for platform identity | RESOLVED 2026-03-24 | Verified: 2026-04-01 |
-| 3 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Physical.Count.swift:29,31 | `#if canImport(Darwin)` and `canImport(Glibc) \|\| canImport(Musl)` used for platform identity | RESOLVED 2026-03-24 | Verified: 2026-04-01 |
-| 4 | HIGH | [PATTERN-004a] | Kernel.File.Open.swift:114 | `#elseif canImport(Darwin)` mixed with `#if os(Linux)` in same conditional block | RESOLVED 2026-03-24 | Verified: 2026-04-01 |
-| 5 | MEDIUM | [PLAT-ARCH-008] | Kernel.Failure.swift:90–92 | `public import WinSDK` leaks raw Windows SDK into consumer namespace; orphaned after platform delegation | RESOLVED 2026-03-24 — removed |
-| 6 | MEDIUM | [PLAT-ARCH-008] | Kernel.Failure.swift:46–49 | `#if !os(Windows)` on public enum case `.signal` forces consumers matching `Kernel.Failure` to write platform conditionals, undermining the L3 guarantee that consumer code is unconditional | DEFERRED — Conditional case is architecturally correct for an irreducible POSIX concept (signals have no Windows analogue). Zero consumer impact: no exhaustive switches on `Kernel.Failure` exist, no consumer references `.signal`. Prior art (swift-system) validates honest platform conditionals when underlying concept is genuinely absent. See [conditional-compilation-public-enum-cases.md](conditional-compilation-public-enum-cases.md). Revisit if Swift gains `@nonExhaustive` for non-resilient libraries. |
+| 1 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Count.swift:21 | `#if canImport(Darwin)` uses `canImport` for platform identity | RESOLVED 2026-03-24 |
+| 2 | HIGH | [PATTERN-004a] | Kernel.System.Memory.Total.swift:25,27 | `canImport` used for platform identity | RESOLVED 2026-03-24 |
+| 3 | HIGH | [PATTERN-004a] | Kernel.System.Processor.Physical.Count.swift:29,31 | `canImport` used for platform identity | RESOLVED 2026-03-24 |
+| 4 | HIGH | [PATTERN-004a] | Kernel.File.Open.swift:114 | `canImport(Darwin)` mixed with `#if os(Linux)` | RESOLVED 2026-03-24 |
+| 5 | MEDIUM | [PLAT-ARCH-008] | Kernel.Failure.swift:90–92 | `public import WinSDK` leaks raw Windows SDK | RESOLVED 2026-03-24 |
+| 6 | MEDIUM | [PLAT-ARCH-008] | Kernel.Failure.swift:46–49 | `#if !os(Windows)` on `.signal` enum case | DEFERRED — Irreducible POSIX concept; zero consumer impact. See [conditional-compilation-public-enum-cases.md](conditional-compilation-public-enum-cases.md) |
+| 7 | **HIGH** | [PLAT-ARCH-008] | Kernel.Completion+IOUring.swift:147–221 | Ring.create() computes mmap sizes from io_uring kernel params, extracts raw mutable pointers, and performs 10× `.advanced(by:).assumingMemoryBound(to:)` pointer arithmetic to set up ring head/tail/array pointers. This is io_uring Linux platform mechanism living in L3. Belongs in L1 (swift-linux-primitives) as a typed ring factory | OPEN |
+| 8 | **HIGH** | [PLAT-ARCH-005a] | Kernel.Completion+IOUring.swift:70–80 | Seven raw C pointer stored properties (`UnsafeMutablePointer<UInt32>` × 5, `UnsafeMutablePointer<SQE>`, `UnsafePointer<CQE>`). While private, these are io_uring platform types that should be abstracted behind L1 typed ring accessors. The epoll driver has zero raw C pointer stored properties | OPEN |
+| 9 | MEDIUM | [PLAT-ARCH-005a] | Kernel.Completion+IOUring.swift:72,73,80,84 | Raw `UInt32` stored properties for `sqMask`, `sqEntries`, `cqMask`, `pendingCount` — io_uring ring quantities expressed as platform C integer type | OPEN |
 
 ### Summary
 
-6 findings: 0 critical, 4 high, 2 medium. **5 resolved**, 1 deferred.
+9 findings: 0 critical, 6 high, 3 medium. **5 resolved**, 1 deferred, 3 open.
 
-All `canImport()` platform identity violations fixed to `#if os()`, matching the canonical pattern from `Kernel Core/exports.swift`. Orphaned `public import WinSDK` removed. Conditional `.signal` enum case (#6) deferred — validated as correct by [prior art research](conditional-compilation-public-enum-cases.md).
+Prior resolutions intact. **io_uring findings (#7–9)**: the Ring class contains Linux io_uring platform mechanism (pointer arithmetic, raw C types, shared-memory protocol) in L3. Resolution path: typed `Kernel.IO.Uring.Ring` at L1 absorbs the mechanism, Ring class delegates (matching epoll driver pattern).
 
-**Clean areas**: Re-export chain [PLAT-ARCH-006], Package.swift conditions [PATTERN-004], Swift 6 mode [PATTERN-005], feature flags [PATTERN-006]/[PATTERN-007], module naming [PATTERN-004b], L3 responsibilities [PLAT-ARCH-009] all correct.
+**Clean areas**: `import Glibc`/`import Musl` eliminated (2026-04-09), mmap/munmap replaced with ecosystem `Kernel.Memory.Map` API, `#if os(Linux)` correct for L3 platform boundary. Re-export chain, Package.swift conditions, Swift 6 mode, feature flags, module naming all correct.
 
 ---
 
