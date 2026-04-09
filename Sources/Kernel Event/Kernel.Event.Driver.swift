@@ -9,7 +9,6 @@
 //  registry management, staleness suppression, and descriptor lifecycle.
 //
 
-import Synchronization
 import Dictionary_Primitives
 
 extension Kernel.Event {
@@ -32,11 +31,14 @@ extension Kernel.Event {
 extension Kernel.Event.Driver {
     /// Creates a Driver from backend-specific kernel operations.
     ///
-    /// The init provides: atomic ID generation, a flat registry
+    /// The init provides: ID generation, a flat registry
     /// (`Dictionary<ID, Registration>`), staleness suppression in poll,
     /// and deterministic descriptor close on deregister and drain.
     ///
     /// The caller provides: how to talk to the kernel.
+    ///
+    /// No synchronization: the Driver is NOT Sendable — all access is
+    /// single-threaded on the poll thread after `sending` transfer.
     ///
     /// - Parameters:
     ///   - add: Register a descriptor+interest with the kernel. Receives the
@@ -60,12 +62,12 @@ extension Kernel.Event.Driver {
         poll: @escaping (_ timeout: Duration?, _ maxEvents: Int) throws(Error) -> [Kernel.Event],
         close: @escaping () -> Void
     ) {
-        // Shared state captured by all witness closures.
+        // Shared mutable state captured by all witness closures.
+        // No synchronization — the Driver is thread-confined after
+        // `sending` transfer. All access is from the poll thread.
         final class Shared {
-            let nextID = Atomic<UInt64>(0)
-            let registry = Synchronization.Mutex<
-                Dictionary_Primitives.Dictionary<Kernel.Event.ID, Registration>
-            >(.init())
+            var nextID = Kernel.Event.ID.zero
+            var registry = Dictionary_Primitives.Dictionary<Kernel.Event.ID, Registration>()
         }
 
         let shared = Shared()
@@ -73,12 +75,10 @@ extension Kernel.Event.Driver {
         self._register = {
             (descriptor: consuming Kernel.Descriptor, interest: Kernel.Event.Interest) throws(Error) -> Kernel.Event.ID in
 
-            let id = Kernel.Event.ID(
-                __unchecked: (),
-                UInt(truncatingIfNeeded: shared.nextID.wrappingAdd(1, ordering: .relaxed).newValue)
-            )
+            shared.nextID = shared.nextID.map { $0 &+ 1 }
+            let id = shared.nextID
 
-            do {
+            do throws(Error) {
                 try add(descriptor, id, interest)
             } catch {
                 try? Kernel.Close.close(descriptor)
@@ -86,9 +86,7 @@ extension Kernel.Event.Driver {
             }
 
             var box: Kernel.Descriptor? = consume descriptor
-            shared.registry.withLock { entries in
-                entries.set(id, Registration(descriptor: box.take()!, interest: interest))
-            }
+            shared.registry.set(id, Registration(descriptor: box.take()!, interest: interest))
 
             return id
         }
@@ -96,31 +94,25 @@ extension Kernel.Event.Driver {
         self._modify = {
             (id: Kernel.Event.ID, newInterest: Kernel.Event.Interest) throws(Error) in
 
-            try shared.registry.withLock { entries throws(Error) in
-                guard var entry = entries.remove(id) else {
-                    throw Error.notRegistered
-                }
-                do {
-                    try modify(entry.descriptor, id, entry.interest, newInterest)
-                } catch {
-                    entries.set(id, consume entry)
-                    throw error
-                }
-                entry.interest = newInterest
-                entries.set(id, consume entry)
+            guard var entry = shared.registry.remove(id) else {
+                throw Error.notRegistered
             }
+            do throws(Error) {
+                try modify(entry.descriptor, id, entry.interest, newInterest)
+            } catch {
+                shared.registry.set(id, consume entry)
+                throw error
+            }
+            entry.interest = newInterest
+            shared.registry.set(id, consume entry)
         }
 
         self._deregister = {
             (id: Kernel.Event.ID) throws(Error) in
 
-            let removed: Registration? = shared.registry.withLock { entries in
-                entries.remove(id)
-            }
+            guard var removed = shared.registry.remove(id) else { return }
 
-            guard var removed else { return }
-
-            do {
+            do throws(Error) {
                 try remove(removed.descriptor, id, removed.interest)
             } catch {
                 try? Kernel.Close.close(removed.descriptor)
@@ -133,18 +125,16 @@ extension Kernel.Event.Driver {
         self._arm = {
             (id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Error) in
 
-            try shared.registry.withLock { entries throws(Error) in
-                guard var entry = entries.remove(id) else {
-                    throw Error.notRegistered
-                }
-                do {
-                    try arm(entry.descriptor, id, interest)
-                } catch {
-                    entries.set(id, consume entry)
-                    throw error
-                }
-                entries.set(id, consume entry)
+            guard var entry = shared.registry.remove(id) else {
+                throw Error.notRegistered
             }
+            do throws(Error) {
+                try arm(entry.descriptor, id, interest)
+            } catch {
+                shared.registry.set(id, consume entry)
+                throw error
+            }
+            shared.registry.set(id, consume entry)
         }
 
         self._poll = {
@@ -166,21 +156,17 @@ extension Kernel.Event.Driver {
             guard !rawEvents.isEmpty else { return 0 }
 
             // Staleness suppression: filter by registry membership
-            return shared.registry.withLock { entries in
-                var count = 0
-                for event in rawEvents {
-                    guard entries.contains(event.id) else { continue }
-                    buffer[count] = event
-                    count += 1
-                }
-                return count
+            var count = 0
+            for event in rawEvents {
+                guard shared.registry.contains(event.id) else { continue }
+                buffer[count] = event
+                count += 1
             }
+            return count
         }
 
         self._close = {
-            shared.registry.withLock { entries in
-                entries.drain { _ in }
-            }
+            shared.registry.drain { _ in }
             close()
         }
     }

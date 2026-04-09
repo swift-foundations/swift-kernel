@@ -7,7 +7,7 @@
 //  Policy invariants implemented by the Driver init (common) and
 //  the backend closures below (epoll-specific):
 //
-//  INV-1: Registration Identity      — Driver init (atomic counter)
+//  INV-1: Registration Identity      — Driver init (counter)
 //  INV-2: Ownership Lifecycle         — Driver init (registry owns dup'd fd)
 //  INV-3: Delta Correctness           — modify below (EPOLL_CTL_MOD replaces full set)
 //  INV-4: One-Shot Re-Arm             — add/arm below (EPOLLONESHOT)
