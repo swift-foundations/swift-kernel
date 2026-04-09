@@ -26,7 +26,7 @@ extension Kernel.Event {
         /// Thread-safe channel for interrupting blocking `poll()`.
         public let wakeup: Kernel.Wakeup.Channel
 
-        package init(driver: Kernel.Event.Driver, wakeup: Kernel.Wakeup.Channel) {
+        package init(driver: consuming Kernel.Event.Driver, wakeup: Kernel.Wakeup.Channel) {
             self.driver = driver
             self.wakeup = wakeup
         }
@@ -78,11 +78,11 @@ extension Kernel.Event.Source {
 // MARK: - Platform Default
 
 extension Kernel.Event.Source {
-    /// Returns the platform-default event source.
+    /// Returns the platform event source.
     ///
     /// - **Darwin**: kqueue
     /// - **Linux**: epoll
-    public static func platformDefault() throws(Kernel.Event.Driver.Error) -> Kernel.Event.Source {
+    public static func platform() throws(Kernel.Event.Driver.Error) -> Kernel.Event.Source {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
             try .kqueue()
         #elseif os(Linux)

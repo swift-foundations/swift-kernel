@@ -69,7 +69,7 @@ extension Kernel.Event.Poll.Data {
 // MARK: - Helpers
 
 extension Kernel.Event.Source {
-    fileprivate static func epollEvents(oneShot interest: Kernel.Event.Interest) -> Kernel.Event.Poll.Events {
+    fileprivate static func events(oneShot interest: Kernel.Event.Interest) -> Kernel.Event.Poll.Events {
         var events: Kernel.Event.Poll.Events = [.et, .oneshot]
         if interest.contains(.read) { events.insert(.in) }
         if interest.contains(.write) { events.insert(.out) }
@@ -162,7 +162,7 @@ extension Kernel.Event.Source {
                 (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
                 let event = Kernel.Event.Poll.Event(
-                    events: epollEvents(oneShot: interest),
+                    events: events(oneShot: interest),
                     data: .init(registrationID: id)
                 )
                 do throws(Kernel.Event.Poll.Error) {
@@ -175,7 +175,7 @@ extension Kernel.Event.Source {
                 (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, _: Kernel.Event.Interest, new: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
                 let event = Kernel.Event.Poll.Event(
-                    events: epollEvents(oneShot: new),
+                    events: events(oneShot: new),
                     data: .init(registrationID: id)
                 )
                 do throws(Kernel.Event.Poll.Error) {
@@ -202,7 +202,7 @@ extension Kernel.Event.Source {
                 (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
                 let event = Kernel.Event.Poll.Event(
-                    events: epollEvents(oneShot: interest),
+                    events: events(oneShot: interest),
                     data: .init(registrationID: id)
                 )
                 do throws(Kernel.Event.Poll.Error) {
