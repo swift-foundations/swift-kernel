@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Kernel_Primitives
+import Kernel_Path_Primitives
 public import Kernel_String_Primitives
 internal import String_Primitives
 

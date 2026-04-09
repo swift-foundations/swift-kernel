@@ -9,7 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
+public import Kernel_File_Primitives
+public import Kernel_Path_Primitives
+public import Kernel_Descriptor_Primitives
 
 // MARK: - Clone API
 

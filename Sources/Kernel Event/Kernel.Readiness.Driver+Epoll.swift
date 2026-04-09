@@ -16,7 +16,11 @@
 
 #if os(Linux)
 
-@_spi(Syscall) import Kernel_Primitives
+@_spi(Syscall) import Kernel_Descriptor_Primitives
+@_spi(Syscall) import Kernel_Event_Primitives
+@_spi(Syscall) import Kernel_Error_Primitives
+@_spi(Syscall) import Kernel_Time_Primitives
+@_spi(Syscall) import Kernel_Clock_Primitives
 @_spi(Syscall) import Linux_Kernel_Primitives
 import Memory_Buffer_Primitives
 import Synchronization

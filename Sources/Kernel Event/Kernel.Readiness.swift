@@ -9,7 +9,9 @@
 //  and pass to Driver closures.
 //
 
-@_spi(Syscall) import Kernel_Primitives
+@_spi(Syscall) import Kernel_Descriptor_Primitives
+@_spi(Syscall) import Kernel_Event_Primitives
+@_spi(Syscall) import Kernel_Time_Primitives
 public import Memory_Buffer_Primitives
 
 extension Kernel {

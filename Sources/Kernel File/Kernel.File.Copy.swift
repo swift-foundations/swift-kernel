@@ -9,7 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
+public import Kernel_File_Primitives
+public import Kernel_Path_Primitives
+public import Kernel_Time_Primitives
+public import Kernel_Error_Primitives
 
 // MARK: - Copy API
 

@@ -9,7 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
+public import Kernel_File_Primitives
+public import Kernel_Path_Primitives
 
 extension Kernel.File {
     /// Opens a file and returns a handle.

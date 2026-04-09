@@ -30,7 +30,8 @@
 
 import Binary_Primitives
 import Kernel
-@_spi(Syscall) import Kernel_Primitives
+@_spi(Syscall) import Kernel_File_Primitives
+@_spi(Syscall) import Kernel_Descriptor_Primitives
 
 #if canImport(Darwin)
     internal import Darwin
@@ -264,9 +265,9 @@ func printUsage() {
         }
 
         // Acquire lock
-        var token: Kernel_Primitives.Kernel.Lock.Token
-        do throws(Kernel_Primitives.Kernel.Lock.Error) {
-            token = try Kernel_Primitives.Kernel.Lock.Token(
+        var token: Kernel.Lock.Token
+        do throws(Kernel.Lock.Error) {
+            token = try Kernel.Lock.Token(
                 descriptor: descriptor,
                 range: args.range,
                 kind: kind,
@@ -368,9 +369,9 @@ func printUsage() {
         }
 
         // Acquire lock
-        var token: Kernel_Primitives.Kernel.Lock.Token
-        do throws(Kernel_Primitives.Kernel.Lock.Error) {
-            token = try Kernel_Primitives.Kernel.Lock.Token(
+        var token: Kernel.Lock.Token
+        do throws(Kernel.Lock.Error) {
+            token = try Kernel.Lock.Token(
                 descriptor: Kernel.Descriptor(rawValue: handle),
                 range: args.range,
                 kind: kind,

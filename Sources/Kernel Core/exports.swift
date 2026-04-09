@@ -9,7 +9,28 @@
 //
 // ===----------------------------------------------------------------------===//
 
-@_exported public import Kernel_Primitives
+@_exported public import Kernel_Primitives_Core
+@_exported public import Kernel_Clock_Primitives
+@_exported public import Kernel_Descriptor_Primitives
+@_exported public import Kernel_Environment_Primitives
+@_exported public import Kernel_Error_Primitives
+@_exported public import Kernel_IO_Primitives
+@_exported public import Kernel_Memory_Primitives
+@_exported public import Kernel_Permission_Primitives
+@_exported public import Kernel_Process_Primitives
+@_exported public import Kernel_Random_Primitives
+@_exported public import Kernel_Syscall_Primitives
+@_exported public import Kernel_Time_Primitives
+@_exported public import Kernel_Outcome_Primitives
+@_exported public import Kernel_System_Primitives
+@_exported public import Kernel_Path_Primitives
+@_exported public import Kernel_File_Primitives
+@_exported public import Kernel_Socket_Primitives
+@_exported public import Kernel_Thread_Primitives
+@_exported public import Kernel_Event_Primitives
+@_exported public import Kernel_Terminal_Primitives
+@_exported public import Kernel_Glob_Primitives
+@_exported public import Kernel_Completion_Primitives
 @_exported public import System_Primitives
 @_exported public import Queue_Primitives
 @_exported public import Dimension_Primitives
