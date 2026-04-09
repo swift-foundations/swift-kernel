@@ -18,6 +18,7 @@
 
 @_spi(Syscall) import Kernel_Primitives
 @_spi(Syscall) import Darwin_Kernel_Primitives
+@_spi(Syscall) import Darwin_Kernel_Event_Primitives
 import Memory_Buffer_Primitives
 import Synchronization
 import Dictionary_Primitives

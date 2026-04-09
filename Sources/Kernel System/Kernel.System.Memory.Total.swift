@@ -23,11 +23,11 @@ extension Kernel.System.Memory {
     @inlinable
     public static var total: System.Memory.Capacity {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-        Darwin.System.Memory.total
+        System.Memory.total
         #elseif os(Linux) || os(Android) || os(OpenBSD)
-        Linux.System.Memory.total
+        System.Memory.total
         #elseif os(Windows)
-        Windows.System.Memory.total
+        System.Memory.total
         #else
         fatalError("Kernel.System.Memory.total: unsupported platform")
         #endif

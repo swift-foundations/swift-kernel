@@ -27,7 +27,7 @@ extension Kernel.System.Processor.Physical {
     @inlinable
     public static var count: System.Processor.Count {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-        Darwin.System.Processor.Physical.count
+        System.Processor.Physical.count
         #elseif os(Linux) || os(Android) || os(OpenBSD)
         ISO_9945.Kernel.System.processorCount
         #elseif os(Windows)
