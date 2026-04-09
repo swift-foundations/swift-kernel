@@ -10,7 +10,7 @@
 
 #if os(Linux)
 
-@_spi(Syscall) @_spi(Internal) import Kernel_Primitives
+@_spi(Syscall) @_spi(Internal) import Kernel_Core
 @_spi(Syscall) import Linux_Kernel_Primitives
 
 // MARK: - Namespace

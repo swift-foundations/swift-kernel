@@ -13,3 +13,5 @@
 @_exported public import Kernel_System
 @_exported public import Kernel_Thread
 @_exported public import Kernel_File
+@_exported public import Kernel_Event
+@_exported public import Kernel_Completion

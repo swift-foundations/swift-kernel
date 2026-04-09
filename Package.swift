@@ -12,14 +12,42 @@ let package = Package(
         .visionOS(.v26)
     ],
     products: [
+        // MARK: - Core
+        .library(
+            name: "Kernel Core",
+            targets: ["Kernel Core"]
+        ),
+        // MARK: - Domains
+        .library(
+            name: "Kernel System",
+            targets: ["Kernel System"]
+        ),
+        .library(
+            name: "Kernel Thread",
+            targets: ["Kernel Thread"]
+        ),
+        .library(
+            name: "Kernel File",
+            targets: ["Kernel File"]
+        ),
+        .library(
+            name: "Kernel Event",
+            targets: ["Kernel Event"]
+        ),
+        .library(
+            name: "Kernel Completion",
+            targets: ["Kernel Completion"]
+        ),
+        // MARK: - Umbrella
         .library(
             name: "Kernel",
             targets: ["Kernel"]
         ),
+        // MARK: - Test Support
         .library(
             name: "Kernel Test Support",
             targets: ["Kernel Test Support"]
-        )
+        ),
     ],
     dependencies: [
         .package(path: "../../swift-primitives/swift-kernel-primitives"),
@@ -63,14 +91,11 @@ let package = Package(
                 .product(name: "Kernel Event Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Terminal Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Glob Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Kernel Completion Primitives", package: "swift-kernel-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Reference Primitives", package: "swift-reference-primitives"),
                 .product(name: "Ownership Primitives", package: "swift-ownership-primitives"),
                 .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
                 .product(name: "Queue Primitives", package: "swift-queue-primitives"),
-                .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
-                .product(name: "Memory Buffer Primitives", package: "swift-memory-primitives"),
                 .product(name: "POSIX Kernel", package: "swift-posix", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
                 .product(name: "Darwin System", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
@@ -101,6 +126,24 @@ let package = Package(
             ]
         ),
 
+        // MARK: - Event
+        .target(
+            name: "Kernel Event",
+            dependencies: [
+                "Kernel Core",
+                .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
+                .product(name: "Memory Buffer Primitives", package: "swift-memory-primitives"),
+            ]
+        ),
+
+        // MARK: - Completion
+        .target(
+            name: "Kernel Completion",
+            dependencies: [
+                "Kernel Core",
+            ]
+        ),
+
         // MARK: - Umbrella
         .target(
             name: "Kernel",
@@ -109,6 +152,8 @@ let package = Package(
                 "Kernel System",
                 "Kernel Thread",
                 "Kernel File",
+                "Kernel Event",
+                "Kernel Completion",
             ]
         ),
 
@@ -141,6 +186,8 @@ let package = Package(
                 "Kernel Core",
                 "Kernel Thread",
                 "Kernel File",
+                "Kernel Event",
+                "Kernel Completion",
                 "Kernel Test Support",
             ],
             path: "Tests/Kernel Tests"

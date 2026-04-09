@@ -1,12 +1,12 @@
 //
-//  Kernel.Readiness.Error.swift
+//  Kernel.Event.Driver.Error.swift
 //  swift-kernel
 //
 //  Errors from readiness driver operations.
 //
 
-extension Kernel.Readiness {
-    /// Errors from readiness driver operations.
+extension Kernel.Event.Driver {
+    /// Errors from event driver operations.
     ///
     /// These are operational failures at the kernel boundary.
     /// Higher-level concerns (lifecycle, cancellation, half-close)
