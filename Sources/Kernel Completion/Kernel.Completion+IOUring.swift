@@ -131,6 +131,10 @@ private final class UringState {
                 Kernel.Completion.Event(
                     token: cqe.data.retag(Kernel.Completion.self),
                     result: Kernel.Completion.Event.Result(rawValue: cqe.res),
+                    // WHY: Bit positions are identical — .more (bit 0) = IORING_CQE_F_MORE (bit 1 in
+                    // kernel headers, bit 0 after our normalization). If L1 ever renumbers flags,
+                    // this pass-through breaks silently. A mapping table would be safer but is
+                    // premature with only one flag.
                     flags: Kernel.Completion.Event.Flags(rawValue: cqe.flags.rawValue)
                 )
             )
@@ -296,8 +300,8 @@ extension Kernel.Completion {
         let eventfd = try createEventfd()
 
         // -- Register eventfd with io_uring --
-        // SPI boundary: extract raw fd for io_uring_register syscall.
-        // The raw value stays factory-local — never stored in a type.
+        // SPI boundary: extract raw fd for io_uring_register syscall
+        // and wakeup closure. The raw value is factory-local only.
 
         let rawEfd = eventfd.descriptor._rawValue
         try registerEventfd(rawEfd, with: ringDescriptor)
@@ -349,7 +353,7 @@ extension Kernel.Completion {
         )
 
         // -- Assemble Completion --
-        // Notification consumes the eventfd descriptor — owns its lifecycle.
+        // Notification owns the eventfd descriptor's lifecycle.
 
         return Kernel.Completion(
             driver: consume driver,

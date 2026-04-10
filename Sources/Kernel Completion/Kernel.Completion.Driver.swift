@@ -78,8 +78,6 @@ extension Kernel.Completion {
         /// needs to propagate an error (e.g., continuation resolution failure),
         /// it stores the error in its dispatch table entry. The caller
         /// processes errors after drain returns.
-        // WHEN TO REVISIT: if Event becomes ~Copyable, visitor signature
-        // changes to (borrowing Event) -> Void.
         package let _drain: (
             (Kernel.Completion.Event) -> Void
         ) -> Event.Count
