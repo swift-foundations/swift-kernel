@@ -148,10 +148,10 @@ private final class UringState {
 
         switch submission.opcode {
         case .nop:
-            sqe.pointee.prepare.nop(data: data)
+            unsafe sqe.prepare.nop(data: data)
 
         case .read:
-            unsafe sqe.pointee.prepare.read(
+            unsafe sqe.prepare.read(
                 fd: target,
                 buffer: unsafe bufferPointer(submission.address),
                 length: Kernel.IO.Uring.Length(submission.length.rawValue),
@@ -160,7 +160,7 @@ private final class UringState {
             )
 
         case .write:
-            unsafe sqe.pointee.prepare.write(
+            unsafe sqe.prepare.write(
                 fd: target,
                 buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
                 length: Kernel.IO.Uring.Length(submission.length.rawValue),
@@ -169,18 +169,18 @@ private final class UringState {
             )
 
         case .close:
-            sqe.pointee.prepare.close(fd: target, data: data)
+            unsafe sqe.prepare.close(fd: target, data: data)
 
         case .accept:
-            unsafe sqe.pointee.prepare.accept(
+            unsafe sqe.prepare.accept(
                 fd: target, addr: nil, addrLen: nil, flags: 0, data: data
             )
 
         case .fsync:
-            sqe.pointee.prepare.fsync(fd: target, datasync: false, data: data)
+            unsafe sqe.prepare.fsync(fd: target, datasync: false, data: data)
 
         case .cancel:
-            sqe.pointee.prepare.cancel(
+            unsafe sqe.prepare.cancel(
                 target: Kernel.IO.Uring.Operation.Data(
                     __unchecked: (), submission.address._rawValue
                 ),
@@ -188,7 +188,7 @@ private final class UringState {
             )
 
         case .send:
-            unsafe sqe.pointee.prepare.send(
+            unsafe sqe.prepare.send(
                 fd: target,
                 buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
                 length: Kernel.IO.Uring.Length(submission.length.rawValue),
@@ -197,7 +197,7 @@ private final class UringState {
             )
 
         case .recv:
-            unsafe sqe.pointee.prepare.recv(
+            unsafe sqe.prepare.recv(
                 fd: target,
                 buffer: unsafe bufferPointer(submission.address),
                 length: Kernel.IO.Uring.Length(submission.length.rawValue),
@@ -206,7 +206,7 @@ private final class UringState {
             )
 
         case .connect:
-            unsafe sqe.pointee.prepare.connect(
+            unsafe sqe.prepare.connect(
                 fd: target,
                 addr: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
                 addrLen: submission.length.rawValue,
@@ -214,7 +214,7 @@ private final class UringState {
             )
 
         default:
-            sqe.pointee.prepare.nop(data: data)
+            unsafe sqe.prepare.nop(data: data)
         }
 
         // SQE-level flags
