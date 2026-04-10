@@ -4,26 +4,19 @@
 //
 //  io_uring–backed completion driver for Linux.
 //
-//  State class holds the L1 ring struct and ring descriptor. Driver
-//  closures are one-line delegations expressing intent, not mechanism.
+//  State class holds the L1 ring struct (which owns its descriptor).
+//  Driver closures are one-line delegations expressing intent, not mechanism.
 //
-//  INV-1: SPI imports bounded to this file — the L1 platform boundary.
-//         Raw fd extraction is factory-local scope only.
+//  INV-1: Zero SPI — all platform details encapsulated in L1 typed methods.
 //  INV-2: State class is file-private, captured by closures.
-//  INV-3: Deinit ordering — uring first (unmaps), ringDescriptor last (closes fd).
+//  INV-3: Ring owns descriptor — deinit unmaps regions then closes fd.
 //  INV-4: Boundary conversions use .retag() / .map(), not .rawValue.
 //
 
 #if os(Linux)
 
-// WHY: SPI needed at the L1 platform boundary for:
-// - Kernel.Descriptor._rawValue (eventfd raw fd for io_uring registration)
-// - Kernel.Event.Descriptor.signal(rawDescriptor:) (wakeup closure)
-// - Kernel.Event.Descriptor.descriptor (accessing inner Kernel.Descriptor)
-// WHEN TO REMOVE: Commit B adds typed L1 methods (wakeup, register) that
-// eliminate all SPI usage from this file.
-@_spi(Syscall) import Kernel_Core
-@_spi(Syscall) import Linux_Kernel_Primitives
+import Kernel_Core
+import Linux_Kernel_Primitives
 
 // MARK: - Error Conversion
 
@@ -37,12 +30,10 @@ extension Kernel.Completion.Error {
         }
     }
 
-    fileprivate init(_ eventfdError: Kernel.Event.Descriptor.Error) {
-        switch eventfdError {
-        case .create(let code): self = .platform(code)
-        case .read(let code): self = .platform(code)
-        case .write(let code): self = .platform(code)
-        case .wouldBlock: self = .platform(.POSIX.EAGAIN)
+    fileprivate init(_ wakeupError: Kernel.IO.Uring.Wakeup.Error) {
+        switch wakeupError {
+        case .eventfd(let code): self = .platform(code)
+        case .register(let code): self = .platform(code)
         }
     }
 }
@@ -54,30 +45,21 @@ extension Kernel.Completion.Error {
 /// Thread-confined to the event loop thread. Captured by non-`@Sendable`
 /// driver closures. NOT `Sendable`.
 ///
-/// Stored property declaration order determines deinit ordering (INV-3):
-/// 1. `uring` deinit unmaps SQ/CQ shared memory
-/// 2. `ringDescriptor` deinit closes the io_uring fd (after unmap)
-///
-/// The eventfd descriptor is consumed into ``Kernel/Completion/Notification``
-/// and owned there — not stored here.
+/// The ring owns its descriptor (INV-3) — deinit unmaps SQ/CQ regions
+/// then closes the fd. The eventfd descriptor is consumed into
+/// ``Kernel/Completion/Notification`` and owned there — not stored here.
 private final class UringState {
-    /// L1 shared-memory ring (owns mmap'd SQ/CQ regions, deinit unmaps).
+    /// L1 ring (owns descriptor + mmap'd SQ/CQ regions).
     private var uring: Kernel.IO.Uring
-
-    /// The io_uring ring descriptor. Deinit closes the fd.
-    /// Declared after `uring` so it is deinitialized last (INV-3).
-    private let ringDescriptor: Kernel.Descriptor
 
     /// CQ ring capacity — used as drain limit to process all available CQEs.
     private let cqCapacity: Kernel.IO.Uring.Completion.Count
 
     init(
         uring: consuming Kernel.IO.Uring,
-        ringDescriptor: consuming Kernel.Descriptor,
         cqCapacity: Kernel.IO.Uring.Completion.Count
     ) {
         self.uring = consume uring
-        self.ringDescriptor = consume ringDescriptor
         self.cqCapacity = cqCapacity
     }
 
@@ -105,8 +87,8 @@ private final class UringState {
         guard pending > .zero else { return .zero }
 
         do throws(Kernel.IO.Uring.Error) {
-            _ = try Kernel.IO.Uring.enter(
-                ringDescriptor, toSubmit: pending, minComplete: .zero, flags: []
+            _ = try uring.enter(
+                toSubmit: pending, minComplete: .zero, flags: []
             )
         } catch {
             throw Kernel.Completion.Error(error)
@@ -142,8 +124,7 @@ private final class UringState {
         return l1Count.retag(Kernel.Completion.Event.self)
     }
 
-    /// Tear down state. Class deinit releases uring (unmap) then
-    /// ringDescriptor (close fd).
+    /// Tear down state. Class deinit releases uring (unmaps regions, closes fd).
     func teardown() {
         // Intentionally empty — resource cleanup happens through
         // ~Copyable deinit cascade when this class deallocates.
@@ -285,52 +266,30 @@ extension Kernel.Completion {
         entries: Kernel.IO.Uring.Submission.Count = .init(__unchecked: (), Cardinal(256))
     ) throws(Error) -> Kernel.Completion {
 
-        // -- Create io_uring ring fd --
+        // -- Create ring (setup fd + mmap SQ/CQ — ring owns descriptor) --
         // WHY: Direct return from helper avoids deferred ~Copyable init
         // inside do throws(E) {}, which triggers compiler bug on Swift 6.3.
         // TRACKING: noncopyable-throwing-init experiment, v7_fix.swift
 
         var params = Kernel.IO.Uring.Params()
-        let ringDescriptor = try createRingDescriptor(
-            entries: entries, params: &params
-        )
+        var ring = try createRing(entries: entries, params: &params)
 
-        // -- Create eventfd for epoll integration --
+        // -- Wakeup: eventfd + registration + channel (all L1-local) --
 
-        let eventfd = try createEventfd()
-
-        // -- Register eventfd with io_uring --
-        // SPI boundary: extract raw fd for io_uring_register syscall
-        // and wakeup closure. The raw value is factory-local only.
-
-        let rawEfd = eventfd.descriptor._rawValue
-        try registerEventfd(rawEfd, with: ringDescriptor)
-
-        // -- Wakeup channel --
-        // SPI boundary: captures raw fd in @Sendable closure.
-        // The ~Copyable Kernel.Event.Descriptor cannot be captured
-        // in an @Sendable closure — same pattern as the epoll driver.
-
-        let wakeup = Kernel.Wakeup.Channel {
-            Kernel.Event.Descriptor.signal(rawDescriptor: rawEfd)
-        }
-
-        // -- Create io_uring struct (mmap's SQ/CQ regions) --
-
-        let uring: Kernel.IO.Uring
-        do throws(Kernel.IO.Uring.Error) {
-            uring = try Kernel.IO.Uring(
-                descriptor: ringDescriptor, params: params
-            )
+        var wakeupResult: Kernel.IO.Uring.Wakeup.Result
+        do throws(Kernel.IO.Uring.Wakeup.Error) {
+            wakeupResult = try ring.createWakeup()
         } catch {
             throw Error(error)
         }
 
-        // -- Create State (owns uring + ringDescriptor) --
+        let wakeup = wakeupResult.channel
+        let eventfd = wakeupResult.eventfd()
+
+        // -- Create State --
 
         let state = UringState(
-            uring: consume uring,
-            ringDescriptor: consume ringDescriptor,
+            uring: consume ring,
             cqCapacity: params.cqEntries
         )
 
@@ -371,41 +330,14 @@ extension Kernel.Completion {
 
     // MARK: - Helpers (avoid deferred ~Copyable init in typed throws)
 
-    /// Acquire the io_uring ring descriptor — no deferred init.
-    private static func createRingDescriptor(
+    /// Create the ring (setup fd + mmap) — no deferred init.
+    private static func createRing(
         entries: Kernel.IO.Uring.Submission.Count,
         params: inout Kernel.IO.Uring.Params
-    ) throws(Error) -> Kernel.Descriptor {
+    ) throws(Error) -> Kernel.IO.Uring {
         do throws(Kernel.IO.Uring.Error) {
-            return try Kernel.IO.Uring.setup(entries: entries, params: &params)
-        } catch {
-            throw Error(error)
-        }
-    }
-
-    /// Acquire the eventfd descriptor — no deferred init.
-    private static func createEventfd() throws(Error) -> Kernel.Event.Descriptor {
-        do throws(Kernel.Event.Descriptor.Error) {
-            return try Kernel.Event.Descriptor.create(flags: .cloexec | .nonblock)
-        } catch {
-            throw Error(error)
-        }
-    }
-
-    /// Register an eventfd with the io_uring ring.
-    ///
-    /// SPI boundary: takes raw fd value for io_uring_register syscall.
-    private static func registerEventfd(
-        _ efd: Int32,
-        with descriptor: borrowing Kernel.Descriptor
-    ) throws(Error) {
-        do throws(Kernel.IO.Uring.Error) {
-            var efdRaw = efd
-            try withUnsafeMutablePointer(to: &efdRaw) { (ptr: UnsafeMutablePointer<Int32>) throws(Kernel.IO.Uring.Error) in
-                try Kernel.IO.Uring.register(
-                    descriptor, opcode: .eventfd.register, argument: ptr, count: 1
-                )
-            }
+            let fd = try Kernel.IO.Uring.setup(entries: entries, params: &params)
+            return try Kernel.IO.Uring(descriptor: consume fd, params: params)
         } catch {
             throw Error(error)
         }
