@@ -18,27 +18,26 @@ extension Kernel.Completion.Event {
     /// - nop/close: 0 on success, negative errno on failure
     ///
     /// Error code extraction is platform-specific. The IO layer
-    /// creates `Kernel.Error.Code` from the raw value based on
+    /// creates ``Kernel/Error/Code`` from the raw value based on
     /// the platform's error reporting convention.
     public struct Result: Sendable, Equatable, Hashable {
-        @_spi(Syscall) public let _rawValue: Int32
+        package let rawValue: Int32
 
-        @_spi(Syscall)
-        public init(_rawValue: Int32) {
-            self._rawValue = _rawValue
+        package init(rawValue: Int32) {
+            self.rawValue = rawValue
         }
 
         /// Whether the operation completed successfully (result >= 0).
-        public var isSuccess: Bool { _rawValue >= 0 }
+        public var isSuccess: Bool { rawValue >= 0 }
 
         /// The result value if the operation succeeded, or nil on failure.
         ///
         /// For read/write/send/recv: bytes transferred.
         /// For accept: raw file descriptor value (use the IO layer
-        /// to create a typed `Kernel.Descriptor`).
+        /// to create a typed ``Kernel/Descriptor``).
         /// For nop/close: 0.
         public var value: Int32? {
-            isSuccess ? _rawValue : nil
+            isSuccess ? rawValue : nil
         }
     }
 }

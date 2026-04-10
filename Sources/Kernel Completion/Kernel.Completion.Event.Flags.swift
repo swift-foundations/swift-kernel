@@ -2,28 +2,33 @@
 //  Kernel.Completion.Event.Flags.swift
 //  swift-kernel
 //
-//  Typed completion event flags.
-//
-//  Opaque at the platform-agnostic layer. Platform packages
-//  (swift-linux, swift-windows) add semantic extensions
-//  (e.g., hasMore, bufferID for io_uring multishot).
+//  Cross-platform completion event flags.
 //
 
 extension Kernel.Completion.Event {
-    /// Platform-specific completion flags.
+    /// Completion event flags carrying cross-platform semantic information.
     ///
-    /// Opaque at this layer. Platform packages add semantic
-    /// accessors (e.g., `hasMore` for io_uring multishot,
-    /// `bufferID` for provided buffer selection).
-    public struct Flags: Sendable, Equatable, Hashable {
-        @_spi(Syscall) public let _rawValue: UInt32
+    /// The backend normalizes platform-specific flags into this `OptionSet`.
+    /// Callers inspect flags to determine multishot lifecycle and other
+    /// delivery-mode semantics.
+    ///
+    /// Named flags (``more``) are the intended public API. Raw construction
+    /// is available per Swift `OptionSet` convention but not encouraged.
+    public struct Flags: OptionSet, Sendable, Hashable {
+        public let rawValue: UInt32
 
-        @_spi(Syscall)
-        public init(_rawValue: UInt32) {
-            self._rawValue = _rawValue
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
         }
 
-        /// No flags.
-        public static let none = Flags(_rawValue: 0)
+        /// More completions will follow for the same submission token.
+        ///
+        /// When present, the originating submission remains active and will
+        /// produce additional completion events. When absent on a completion
+        /// for a multishot submission, this is the terminal event — the token
+        /// is no longer active.
+        ///
+        /// Single-shot submissions never set this flag.
+        public static let more = Flags(rawValue: 1 << 0)
     }
 }

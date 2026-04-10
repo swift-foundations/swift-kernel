@@ -2,86 +2,108 @@
 //  Kernel.Completion.Driver.swift
 //  swift-kernel
 //
-//  Pure Copyable witness for completion-based I/O operations.
+//  Proactor witness — struct of closures capturing backend state.
 //
-//  The Driver is the recipe — four operational closures that know how
-//  to talk to io_uring/IOCP, plus capabilities metadata.
-//  Kernel.Completion is the thing — it owns the fd and calls the Driver.
-//
-
-@_spi(Syscall) import Kernel_Core
 
 extension Kernel.Completion {
-    /// Pure Copyable witness for completion backend operations.
+    /// Kernel Completion Driver — Proactor Witness.
     ///
-    /// Contains four operational closures: submit, flush, harvest, drain.
-    /// Does NOT own any resources — `Kernel.Completion` owns the fd.
-    /// Ring state (mmap'd memory) is captured by the closures.
+    /// A struct of closures capturing backend state. `~Copyable` — single
+    /// ownership prevents aliasing of ring state. NOT `Sendable` —
+    /// thread-confined to the completion poll thread after `sending` transfer.
     ///
-    /// Non-`Sendable`: thread-confined with the owning `Kernel.Completion`.
-    /// The closures capture mmap'd ring state that is not thread-safe.
+    /// ## Four Operations
     ///
-    /// The closures receive `borrowing Kernel.Descriptor` (the ring/port fd)
-    /// as their first parameter. `Kernel.Completion` methods borrow
-    /// `self.descriptor` and pass it to the Driver closures.
-    public struct Driver {
-        /// Backend capabilities.
-        public let capabilities: Capabilities
+    /// - ``_submit``: enqueue an operation in the submission queue
+    /// - ``_flush``: commit accumulated submissions to the kernel
+    /// - ``_drain``: drain available completions via callback
+    /// - ``_close``: tear down backend state
+    ///
+    /// ## Three-Boundary Completion Model
+    ///
+    /// - **Backend**: Raw platform completion entry → ``Event``.
+    ///   Translates platform-specific fields and normalizes multishot
+    ///   semantics (``Event/Flags/more``).
+    /// - **Driver**: State lifecycle management, error domain translation,
+    ///   and teardown orchestration. Does not filter events — all completions
+    ///   correspond to submitted operations and are delivered to the visitor.
+    /// - **Caller**: Consumes events, resolves continuations, maintains
+    ///   dispatch tables for multishot and provided-buffer lifecycle.
+    ///
+    /// ## Drain-After-Notification
+    ///
+    /// ``_drain`` is a post-notification drain — it processes whatever is in
+    /// the completion queue at the time of the call. It does not block. The
+    /// blocking wait belongs to the event loop (epoll on Linux, IOCP on
+    /// Windows).
+    public struct Driver: ~Copyable {
 
-        // MARK: - Operational Closures
+        // MARK: - Witness Closures
 
-        /// Enqueue a submission in the ring.
+        /// Enqueue a submission for the specified target descriptor.
         ///
-        /// The target descriptor is the fd/handle the operation acts on
-        /// (the file, socket, etc.). The ring descriptor is the completion
-        /// ring itself. Both are borrowed — the driver extracts raw values
-        /// at the kernel boundary.
+        /// Writes the submission to the backend's submission queue. The
+        /// operation is not committed to the kernel until ``_flush`` is called.
         ///
-        /// Does NOT call the kernel — batches until `flush()`.
-        public let _submit: (
-            borrowing Kernel.Descriptor,
-            borrowing Kernel.Descriptor,
-            Submission
+        /// The target descriptor is the fd the operation acts on (file, socket).
+        /// It is borrowed — ownership remains with the caller. The backend
+        /// extracts the raw fd at the L1 syscall boundary.
+        package let _submit: (
+            Kernel.Completion.Submission,
+            borrowing Kernel.Descriptor
         ) throws(Kernel.Completion.Error) -> Void
 
-        /// Flush accumulated submissions to the kernel.
+        /// Commit accumulated submissions to the kernel.
         ///
-        /// Returns the number of submissions accepted.
-        public let _flush: (
-            borrowing Kernel.Descriptor
-        ) throws(Kernel.Completion.Error) -> Int
+        /// Returns the count of submissions accepted. Backends that submit
+        /// immediately (IOCP) return `.zero`.
+        package let _flush: () throws(Kernel.Completion.Error) -> Submission.Count
 
-        /// Harvest completed operations from the ring.
+        /// Drain available completion events, advancing the completion queue.
         ///
-        /// On Linux (io_uring): non-blocking shared-memory CQ read.
-        /// The deadline parameter is ignored — epoll_wait handles blocking.
-        /// On Windows (IOCP): `GetQueuedCompletionStatusEx` with timeout.
-        /// Returns the number of events harvested.
-        public let _harvest: (
-            borrowing Kernel.Descriptor,
-            Kernel.Time.Deadline?,
-            inout [Kernel.Completion.Event]
-        ) throws(Kernel.Completion.Error) -> Int
+        /// Visits up to the currently available completion events in queue
+        /// order, advancing the backend completion queue as events are
+        /// delivered. The visitor receives each drained completion exactly
+        /// once, in delivery order, and may not retain backend-owned storage.
+        /// The visitor is non-throwing.
+        ///
+        /// Returns the count of completion entries consumed and delivered
+        /// to the visitor.
+        ///
+        /// This is a post-notification drain — it processes whatever is in
+        /// the completion queue at the time of the call. It does not block.
+        ///
+        /// The non-throwing contract is load-bearing: CQ advancement is a
+        /// protocol action — partial drain corrupts ring state. If the visitor
+        /// needs to propagate an error (e.g., continuation resolution failure),
+        /// it stores the error in its dispatch table entry. The caller
+        /// processes errors after drain returns.
+        // WHEN TO REVISIT: if Event becomes ~Copyable, visitor signature
+        // changes to (borrowing Event) -> Void.
+        package let _drain: (
+            (Kernel.Completion.Event) -> Void
+        ) -> Event.Count
 
-        /// Driver-specific cleanup (unmap rings, drain pending).
-        /// Does NOT close the fd — that's a resource-level concern
-        /// handled by `Completion.close()`.
-        public let _drain: (borrowing Kernel.Descriptor) -> Void
+        /// Tear down the driver's internal backend state.
+        ///
+        /// Releases any resources owned through that state. Teardown is
+        /// single-owner and occurs exactly once. Does not assert a specific
+        /// descriptor/resource split — the factory determines what the
+        /// state owns.
+        package let _close: () -> Void
 
-        // MARK: - Initializer
+        // MARK: - Init
 
-        public init(
-            capabilities: Capabilities,
-            submit: @escaping (borrowing Kernel.Descriptor, borrowing Kernel.Descriptor, Submission) throws(Kernel.Completion.Error) -> Void,
-            flush: @escaping (borrowing Kernel.Descriptor) throws(Kernel.Completion.Error) -> Int,
-            harvest: @escaping (borrowing Kernel.Descriptor, Kernel.Time.Deadline?, inout [Kernel.Completion.Event]) throws(Kernel.Completion.Error) -> Int,
-            drain: @escaping (borrowing Kernel.Descriptor) -> Void
+        package init(
+            submit: @escaping (Kernel.Completion.Submission, borrowing Kernel.Descriptor) throws(Kernel.Completion.Error) -> Void,
+            flush: @escaping () throws(Kernel.Completion.Error) -> Submission.Count,
+            drain: @escaping ((Kernel.Completion.Event) -> Void) -> Event.Count,
+            close: @escaping () -> Void
         ) {
-            self.capabilities = capabilities
             self._submit = submit
             self._flush = flush
-            self._harvest = harvest
             self._drain = drain
+            self._close = close
         }
     }
 }

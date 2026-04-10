@@ -4,26 +4,31 @@
 //
 //  io_uring–backed completion driver for Linux.
 //
-//  Ring encapsulates all shared-memory mechanism. Driver closures
-//  are one-line delegations expressing intent, not mechanism.
+//  State class holds the L1 ring struct and ring descriptor. Driver
+//  closures are one-line delegations expressing intent, not mechanism.
+//
+//  INV-1: SPI imports bounded to this file — the L1 platform boundary.
+//         Raw fd extraction is factory-local scope only.
+//  INV-2: State class is file-private, captured by closures.
+//  INV-3: Deinit ordering — uring first (unmaps), ringDescriptor last (closes fd).
+//  INV-4: Boundary conversions use .retag() / .map(), not .rawValue.
 //
 
 #if os(Linux)
 
-@_spi(Syscall) @_spi(Internal) import Kernel_Core
+// WHY: SPI needed at the L1 platform boundary for:
+// - Kernel.Descriptor._rawValue (eventfd raw fd for io_uring registration)
+// - Kernel.Event.Descriptor.signal(rawDescriptor:) (wakeup closure)
+// - Kernel.Event.Descriptor.descriptor (accessing inner Kernel.Descriptor)
+// WHEN TO REMOVE: Commit B adds typed L1 methods (wakeup, register) that
+// eliminate all SPI usage from this file.
+@_spi(Syscall) import Kernel_Core
 @_spi(Syscall) import Linux_Kernel_Primitives
-
-// MARK: - Namespace
-
-extension Kernel.Completion {
-    /// io_uring driver namespace.
-    enum IOUring {}
-}
 
 // MARK: - Error Conversion
 
 extension Kernel.Completion.Error {
-    init(_ uringError: Kernel.IO.Uring.Error) {
+    fileprivate init(_ uringError: Kernel.IO.Uring.Error) {
         switch uringError {
         case .setup(let code): self = .platform(code)
         case .enter(let code): self = .platform(code)
@@ -32,7 +37,7 @@ extension Kernel.Completion.Error {
         }
     }
 
-    init(_ eventfdError: Kernel.Event.Descriptor.Error) {
+    fileprivate init(_ eventfdError: Kernel.Event.Descriptor.Error) {
         switch eventfdError {
         case .create(let code): self = .platform(code)
         case .read(let code): self = .platform(code)
@@ -40,241 +45,220 @@ extension Kernel.Completion.Error {
         case .wouldBlock: self = .platform(.POSIX.EAGAIN)
         }
     }
-
 }
 
-// MARK: - Ring
+// MARK: - State (INV-2)
 
-extension Kernel.Completion.IOUring {
-    /// io_uring completion driver ring manager.
+/// Factory-local state for the io_uring backend.
+///
+/// Thread-confined to the event loop thread. Captured by non-`@Sendable`
+/// driver closures. NOT `Sendable`.
+///
+/// Stored property declaration order determines deinit ordering (INV-3):
+/// 1. `uring` deinit unmaps SQ/CQ shared memory
+/// 2. `ringDescriptor` deinit closes the io_uring fd (after unmap)
+///
+/// The eventfd descriptor is consumed into ``Kernel/Completion/Notification``
+/// and owned there — not stored here.
+private final class UringState {
+    /// L1 shared-memory ring (owns mmap'd SQ/CQ regions, deinit unmaps).
+    private var uring: Kernel.IO.Uring
+
+    /// The io_uring ring descriptor. Deinit closes the fd.
+    /// Declared after `uring` so it is deinitialized last (INV-3).
+    private let ringDescriptor: Kernel.Descriptor
+
+    /// CQ ring capacity — used as drain limit to process all available CQEs.
+    private let cqCapacity: Kernel.IO.Uring.Completion.Count
+
+    init(
+        uring: consuming Kernel.IO.Uring,
+        ringDescriptor: consuming Kernel.Descriptor,
+        cqCapacity: Kernel.IO.Uring.Completion.Count
+    ) {
+        self.uring = consume uring
+        self.ringDescriptor = consume ringDescriptor
+        self.cqCapacity = cqCapacity
+    }
+
+    // MARK: Domain Operations
+
+    /// Place an operation in the submission queue.
     ///
-    /// Thin delegation layer over the L1 ``Kernel/IO/Uring/Ring`` which
-    /// owns all shared-memory mechanism. This class adds:
-    /// - Boundary conversion (platform-agnostic Submission → io_uring SQE)
-    /// - CQE → Kernel.Completion.Event normalization
-    /// - Eventfd lifecycle for epoll integration
+    /// Does NOT notify the kernel — call ``flush()`` to submit.
+    func enqueue(
+        _ submission: Kernel.Completion.Submission,
+        target: borrowing Kernel.Descriptor
+    ) throws(Kernel.Completion.Error) {
+        guard let sqe = unsafe uring.nextEntry() else {
+            throw .submissionQueueFull
+        }
+        unsafe fill(sqe, from: submission, target: target)
+        uring.commitEntry()
+    }
+
+    /// Notify the kernel to process accumulated submissions.
     ///
-    /// NOT Sendable — thread-confined to the poll thread.
-    /// Captured by non-@Sendable Driver closures.
-    final class Ring {
+    /// Returns the count of submissions accepted.
+    func flush() throws(Kernel.Completion.Error) -> Kernel.Completion.Submission.Count {
+        let pending = uring.pendingSubmissions
+        guard pending > .zero else { return .zero }
 
-        // MARK: Private State
-
-        /// L1 shared-memory ring (owns mmap'd SQ/CQ regions, deinit unmaps).
-        private var uringRing: Kernel.IO.Uring.Ring
-
-        /// Eventfd for epoll integration.
-        nonisolated(unsafe) var eventfd: Kernel.Event.Descriptor?
-
-        // MARK: Lifecycle
-
-        private init(
-            ring: consuming Kernel.IO.Uring.Ring,
-            eventfd: consuming Kernel.Event.Descriptor
-        ) {
-            self.uringRing = consume ring
-            self.eventfd = consume eventfd
+        do throws(Kernel.IO.Uring.Error) {
+            _ = try Kernel.IO.Uring.enter(
+                ringDescriptor, toSubmit: pending, minComplete: .zero, flags: []
+            )
+        } catch {
+            throw Kernel.Completion.Error(error)
         }
 
-        /// Create a Ring by delegating mmap to the L1 io_uring Ring.
-        static func create(
-            descriptor: borrowing Kernel.Descriptor,
-            params: Kernel.IO.Uring.Params,
-            eventfd: consuming Kernel.Event.Descriptor
-        ) throws(Kernel.Completion.Error) -> Ring {
-            let uringRing: Kernel.IO.Uring.Ring
-            do throws(Kernel.IO.Uring.Error) {
-                uringRing = try Kernel.IO.Uring.Ring.create(
-                    descriptor: descriptor,
-                    params: params
+        uring.resetPending()
+        return pending.retag(Kernel.Completion.Submission.self)
+    }
+
+    /// Drain completed operations from the completion queue via callback.
+    ///
+    /// Non-blocking shared-memory read. Advances CQ head as entries are
+    /// delivered — this is a protocol action, not ordinary iteration.
+    ///
+    /// Eventfd acknowledgment is the event loop's responsibility
+    /// (it reads the eventfd counter after epoll signals), not ours.
+    func drain(
+        _ visitor: (Kernel.Completion.Event) -> Void
+    ) -> Kernel.Completion.Event.Count {
+        let l1Count = uring.drainCompletions(limit: cqCapacity) { cqe in
+            visitor(
+                Kernel.Completion.Event(
+                    token: cqe.data.retag(Kernel.Completion.self),
+                    result: Kernel.Completion.Event.Result(rawValue: cqe.res),
+                    flags: Kernel.Completion.Event.Flags(rawValue: cqe.flags.rawValue)
                 )
-            } catch {
-                throw Kernel.Completion.Error(error)
-            }
-
-            return Ring(ring: consume uringRing, eventfd: consume eventfd)
+            )
         }
+        return l1Count.retag(Kernel.Completion.Event.self)
+    }
 
-        // MARK: Domain Operations
+    /// Tear down state. Class deinit releases uring (unmap) then
+    /// ringDescriptor (close fd).
+    func teardown() {
+        // Intentionally empty — resource cleanup happens through
+        // ~Copyable deinit cascade when this class deallocates.
+        // The closures that captured `self` are dropped when
+        // Driver is consumed, releasing this class's refcount.
+    }
 
-        /// Place an operation in the submission queue.
-        ///
-        /// Does NOT notify the kernel — call `flush` to submit.
-        func enqueue(
-            _ submission: Kernel.Completion.Submission,
-            target: borrowing Kernel.Descriptor
-        ) throws(Kernel.Completion.Error) {
-            guard let sqe = unsafe uringRing.nextEntry() else {
-                throw .submissionQueueFull
-            }
-            unsafe fill(sqe, from: submission, target: target)
-            uringRing.commitEntry()
-        }
+    // MARK: SQE Filling (file-private boundary layer)
 
-        /// Notify the kernel to process accumulated submissions.
-        ///
-        /// Returns the number of submissions accepted.
-        func flush(
-            _ ringFd: borrowing Kernel.Descriptor
-        ) throws(Kernel.Completion.Error) -> Int {
-            let pending = uringRing.pendingSubmissions
-            guard pending > 0 else { return 0 }
+    /// Fill an SQE from a platform-agnostic Submission (INV-4).
+    ///
+    /// All boundary conversions (typed Submission → io_uring SQE) are
+    /// encapsulated here.
+    @unsafe
+    private func fill(
+        _ sqe: UnsafeMutablePointer<Kernel.IO.Uring.Submission.Queue.Entry>,
+        from submission: Kernel.Completion.Submission,
+        target: borrowing Kernel.Descriptor
+    ) {
+        let data = submission.token.retag(Kernel.IO.Uring.Operation.self)
 
-            let submitted: Int
-            do throws(Kernel.IO.Uring.Error) {
-                submitted = try Kernel.IO.Uring.enter(
-                    ringFd, toSubmit: pending, minComplete: 0, flags: []
-                )
-            } catch {
-                throw Kernel.Completion.Error(error)
-            }
+        switch submission.opcode {
+        case .nop:
+            sqe.pointee.prepare.nop(data: data)
 
-            uringRing.resetPending()
-            return submitted
-        }
-
-        /// Collect completed operations from the completion queue.
-        ///
-        /// Non-blocking shared-memory read. Returns the number of events harvested.
-        func drain(
-            into events: inout [Kernel.Completion.Event]
-        ) -> Int {
-            var count = 0
-            _ = uringRing.drainCompletions(limit: events.count) { cqe in
-                events[count] = Kernel.Completion.Event(
-                    token: Kernel.Completion.Token(cqe.data.rawValue),
-                    result: Kernel.Completion.Event.Result(_rawValue: cqe.res),
-                    flags: Kernel.Completion.Event.Flags(_rawValue: cqe.flags)
-                )
-                count += 1
-            }
-            return count
-        }
-
-        /// Close the eventfd.
-        ///
-        /// The L1 ``Kernel/IO/Uring/Ring`` deinit unmaps all
-        /// shared-memory regions when this class deallocates.
-        func teardown() {
-            eventfd = nil
-        }
-
-        // MARK: SQE Filling (private boundary layer)
-
-        /// Fill an SQE from a platform-agnostic Submission.
-        ///
-        /// All boundary conversions (typed Submission → io_uring SQE)
-        /// are encapsulated here. No raw pointer or rawValue access
-        /// escapes this method.
-        @unsafe
-        private func fill(
-            _ sqe: UnsafeMutablePointer<Kernel.IO.Uring.Submission.Queue.Entry>,
-            from submission: Kernel.Completion.Submission,
-            target: borrowing Kernel.Descriptor
-        ) {
-            let data = Kernel.IO.Uring.Operation.Data(
-                __unchecked: (), submission.token.rawValue
+        case .read:
+            unsafe sqe.pointee.prepare.read(
+                fd: target,
+                buffer: unsafe bufferPointer(submission.address),
+                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
+                data: data
             )
 
-            switch submission.opcode {
-            case .nop:
-                sqe.pointee.prepare.nop(data: data)
+        case .write:
+            unsafe sqe.pointee.prepare.write(
+                fd: target,
+                buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
+                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
+                data: data
+            )
 
-            case .read:
-                unsafe sqe.pointee.prepare.read(
-                    fd: target,
-                    buffer: unsafe bufferPointer(submission.address),
-                    length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                    offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
-                    data: data
-                )
+        case .close:
+            sqe.pointee.prepare.close(fd: target, data: data)
 
-            case .write:
-                unsafe sqe.pointee.prepare.write(
-                    fd: target,
-                    buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
-                    length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                    offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
-                    data: data
-                )
+        case .accept:
+            unsafe sqe.pointee.prepare.accept(
+                fd: target, addr: nil, addrLen: nil, flags: 0, data: data
+            )
 
-            case .close:
-                sqe.pointee.prepare.close(fd: target, data: data)
+        case .fsync:
+            sqe.pointee.prepare.fsync(fd: target, datasync: false, data: data)
 
-            case .accept:
-                unsafe sqe.pointee.prepare.accept(
-                    fd: target, addr: nil, addrLen: nil, flags: 0, data: data
-                )
+        case .cancel:
+            sqe.pointee.prepare.cancel(
+                target: Kernel.IO.Uring.Operation.Data(
+                    __unchecked: (), submission.address._rawValue
+                ),
+                data: data
+            )
 
-            case .fsync:
-                sqe.pointee.prepare.fsync(fd: target, datasync: false, data: data)
+        case .send:
+            unsafe sqe.pointee.prepare.send(
+                fd: target,
+                buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
+                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                flags: 0,
+                data: data
+            )
 
-            case .cancel:
-                sqe.pointee.prepare.cancel(
-                    target: Kernel.IO.Uring.Operation.Data(
-                        __unchecked: (), submission.address._rawValue
-                    ),
-                    data: data
-                )
+        case .recv:
+            unsafe sqe.pointee.prepare.recv(
+                fd: target,
+                buffer: unsafe bufferPointer(submission.address),
+                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                flags: 0,
+                data: data
+            )
 
-            case .send:
-                unsafe sqe.pointee.prepare.send(
-                    fd: target,
-                    buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
-                    length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                    flags: 0,
-                    data: data
-                )
+        case .connect:
+            unsafe sqe.pointee.prepare.connect(
+                fd: target,
+                addr: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
+                addrLen: submission.length.rawValue,
+                data: data
+            )
 
-            case .recv:
-                unsafe sqe.pointee.prepare.recv(
-                    fd: target,
-                    buffer: unsafe bufferPointer(submission.address),
-                    length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                    flags: 0,
-                    data: data
-                )
-
-            case .connect:
-                unsafe sqe.pointee.prepare.connect(
-                    fd: target,
-                    addr: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
-                    addrLen: submission.length.rawValue,
-                    data: data
-                )
-
-            default:
-                sqe.pointee.prepare.nop(data: data)
-            }
-
-            // SQE-level flags
-            var sqeFlags = Kernel.IO.Uring.Submission.Queue.Entry.Flags()
-            if submission.flags.contains(.bufferSelect) { sqeFlags.insert(.bufferSelect) }
-            if submission.flags.contains(.linked) { sqeFlags.insert(.ioLink) }
-            if submission.flags.contains(.fixedFile) { sqeFlags.insert(.fixedFile) }
-            sqe.pointee.flags = sqeFlags.rawValue
-
-            // Provided buffer group
-            if submission.flags.contains(.bufferSelect) {
-                sqe.pointee.buffer = .init(
-                    group: Kernel.IO.Uring.Buffer.Group(
-                        rawValue: submission.bufferGroup.rawValue
-                    )
-                )
-            }
+        default:
+            sqe.pointee.prepare.nop(data: data)
         }
 
-        /// Reconstruct a buffer pointer from an Address.
-        ///
-        /// The pointer was validated at Address construction time
-        /// (via @unsafe init). This is the single site where
-        /// UInt64 → pointer reconstruction occurs.
-        @unsafe
-        private func bufferPointer(
-            _ address: Kernel.Completion.Submission.Address
-        ) -> UnsafeMutableRawPointer {
-            unsafe UnsafeMutableRawPointer(bitPattern: UInt(address._rawValue))!
+        // SQE-level flags
+        var sqeFlags = Kernel.IO.Uring.Submission.Queue.Entry.Flags()
+        if submission.flags.contains(.bufferSelect) { sqeFlags.insert(.bufferSelect) }
+        if submission.flags.contains(.linked) { sqeFlags.insert(.ioLink) }
+        if submission.flags.contains(.fixedFile) { sqeFlags.insert(.fixedFile) }
+        sqe.pointee.flags = sqeFlags
+
+        // Provided buffer group
+        if submission.flags.contains(.bufferSelect) {
+            sqe.pointee.buffer = .init(
+                group: Kernel.IO.Uring.Buffer.Group(
+                    rawValue: submission.bufferGroup.rawValue
+                )
+            )
         }
+    }
+
+    /// Reconstruct a buffer pointer from an Address.
+    ///
+    /// The pointer was validated at Address construction time
+    /// (via `@unsafe` init). This is the single site where
+    /// UInt64 → pointer reconstruction occurs.
+    @unsafe
+    private func bufferPointer(
+        _ address: Kernel.Completion.Submission.Address
+    ) -> UnsafeMutableRawPointer {
+        unsafe UnsafeMutableRawPointer(bitPattern: UInt(address._rawValue))!
     }
 }
 
@@ -284,83 +268,108 @@ extension Kernel.Completion {
     /// Creates an io_uring–backed completion resource.
     ///
     /// Allocates the io_uring ring, mmap's SQ/CQ, creates an eventfd
-    /// for epoll integration, and returns a `Completion` owning all resources.
+    /// for epoll integration, and returns a ``Completion`` owning all
+    /// resources.
     ///
     /// The eventfd is registered with io_uring so that completions
-    /// signal epoll_wait in the IO.Event.Loop — one thread for both
+    /// signal epoll_wait in the event loop — one thread for both
     /// readiness and completion events.
     ///
-    /// - Parameter entries: Ring size (rounded up to power of 2 by kernel). Default 256.
-    public static func iouring(entries: UInt32 = 256) throws(Error) -> Kernel.Completion {
+    /// - Parameter entries: Ring size (rounded up to power of 2 by kernel).
+    ///   Default 256.
+    public static func iouring(
+        entries: Kernel.IO.Uring.Submission.Count = .init(__unchecked: (), Cardinal(256))
+    ) throws(Error) -> Kernel.Completion {
 
         // -- Create io_uring ring fd --
         // WHY: Direct return from helper avoids deferred ~Copyable init
-        // inside do throws(E) {}, which triggers compiler bug on Swift 6.3 Linux.
+        // inside do throws(E) {}, which triggers compiler bug on Swift 6.3.
         // TRACKING: noncopyable-throwing-init experiment, v7_fix.swift
 
         var params = Kernel.IO.Uring.Params()
-        let descriptor = try createRingDescriptor(entries: entries, params: &params)
+        let ringDescriptor = try createRingDescriptor(
+            entries: entries, params: &params
+        )
 
         // -- Create eventfd for epoll integration --
 
         let eventfd = try createEventfd()
 
         // -- Register eventfd with io_uring --
+        // SPI boundary: extract raw fd for io_uring_register syscall.
+        // The raw value stays factory-local — never stored in a type.
 
-        let efd = eventfd.descriptor._rawValue
-        try registerEventfd(efd, with: descriptor)
-
-        // -- Create Ring (mmap's SQ/CQ regions, owns eventfd) --
-
-        let ring = try IOUring.Ring.create(
-            descriptor: descriptor,
-            params: params,
-            eventfd: consume eventfd
-        )
+        let rawEfd = eventfd.descriptor._rawValue
+        try registerEventfd(rawEfd, with: ringDescriptor)
 
         // -- Wakeup channel --
-        // Captures raw Int32 — can't capture ~Copyable Kernel.Event.Descriptor.
-        // Same pattern as the epoll driver.
+        // SPI boundary: captures raw fd in @Sendable closure.
+        // The ~Copyable Kernel.Event.Descriptor cannot be captured
+        // in an @Sendable closure — same pattern as the epoll driver.
 
         let wakeup = Kernel.Wakeup.Channel {
-            Kernel.Event.Descriptor.signal(rawDescriptor: efd)
+            Kernel.Event.Descriptor.signal(rawDescriptor: rawEfd)
         }
 
+        // -- Create io_uring struct (mmap's SQ/CQ regions) --
+
+        let uring: Kernel.IO.Uring
+        do throws(Kernel.IO.Uring.Error) {
+            uring = try Kernel.IO.Uring(
+                descriptor: ringDescriptor, params: params
+            )
+        } catch {
+            throw Error(error)
+        }
+
+        // -- Create State (owns uring + ringDescriptor) --
+
+        let state = UringState(
+            uring: consume uring,
+            ringDescriptor: consume ringDescriptor,
+            cqCapacity: params.cqEntries
+        )
+
         // -- Build Driver witness --
-        // Each closure is a one-line delegation to Ring.
+        // Each closure is a one-line delegation to State.
 
         let driver = Driver(
-            capabilities: Driver.Capabilities(
-                ringSize: Int(params.sqEntries),
-                multishot: true,
-                providedBuffers: true
-            ),
-            submit: { (ringFd: borrowing Kernel.Descriptor, targetFd: borrowing Kernel.Descriptor, submission: Submission) throws(Error) in
-                try ring.enqueue(submission, target: targetFd)
+            submit: { (submission: Submission, target: borrowing Kernel.Descriptor) throws(Error) in
+                try state.enqueue(submission, target: target)
             },
-            flush: { (ringFd: borrowing Kernel.Descriptor) throws(Error) -> Int in
-                try ring.flush(ringFd)
+            flush: { () throws(Error) -> Submission.Count in
+                try state.flush()
             },
-            harvest: { (ringFd: borrowing Kernel.Descriptor, deadline: Kernel.Time.Deadline?, events: inout [Event]) throws(Error) -> Int in
-                ring.drain(into: &events)
+            drain: { (visitor: (Event) -> Void) -> Event.Count in
+                state.drain(visitor)
             },
-            drain: { (ringFd: borrowing Kernel.Descriptor) in
-                ring.teardown()
+            close: {
+                state.teardown()
             }
         )
 
+        // -- Assemble Completion --
+        // Notification consumes the eventfd descriptor — owns its lifecycle.
+
         return Kernel.Completion(
-            driver: driver,
-            descriptor: descriptor,
-            wakeup: wakeup
+            driver: consume driver,
+            wakeup: wakeup,
+            notification: Notification(eventfd: consume eventfd),
+            capabilities: Capabilities(
+                multishot: true,
+                providedBuffers: true
+            ),
+            overflowCount: { .zero }
+            // WHEN TO REVISIT: Wire real L1 CQ overflow counter in Commit B
+            // after adding cqOverflow pointer to Kernel.IO.Uring struct.
         )
     }
 
     // MARK: - Helpers (avoid deferred ~Copyable init in typed throws)
 
-    /// Acquire the io_uring ring descriptor directly — no deferred init.
+    /// Acquire the io_uring ring descriptor — no deferred init.
     private static func createRingDescriptor(
-        entries: UInt32,
+        entries: Kernel.IO.Uring.Submission.Count,
         params: inout Kernel.IO.Uring.Params
     ) throws(Error) -> Kernel.Descriptor {
         do throws(Kernel.IO.Uring.Error) {
@@ -370,7 +379,7 @@ extension Kernel.Completion {
         }
     }
 
-    /// Acquire the eventfd descriptor directly — no deferred init.
+    /// Acquire the eventfd descriptor — no deferred init.
     private static func createEventfd() throws(Error) -> Kernel.Event.Descriptor {
         do throws(Kernel.Event.Descriptor.Error) {
             return try Kernel.Event.Descriptor.create(flags: .cloexec | .nonblock)
@@ -380,6 +389,8 @@ extension Kernel.Completion {
     }
 
     /// Register an eventfd with the io_uring ring.
+    ///
+    /// SPI boundary: takes raw fd value for io_uring_register syscall.
     private static func registerEventfd(
         _ efd: Int32,
         with descriptor: borrowing Kernel.Descriptor

@@ -18,18 +18,18 @@ extension Kernel.Completion {
     public struct Event: Sendable {
         /// Matches the submission's token — used by the consumer
         /// to correlate completions with in-flight operations.
-        public let token: Token
+        public let token: Kernel.Completion.Token
 
         /// Operation result.
-        public let result: Result
+        public let result: Kernel.Completion.Event.Result
 
         /// Platform-specific completion flags.
-        public let flags: Flags
+        public let flags: Kernel.Completion.Event.Flags
 
         public init(
-            token: Token,
-            result: Result,
-            flags: Flags = .none
+            token: Kernel.Completion.Token,
+            result: Kernel.Completion.Event.Result,
+            flags: Kernel.Completion.Event.Flags = []
         ) {
             self.token = token
             self.result = result
