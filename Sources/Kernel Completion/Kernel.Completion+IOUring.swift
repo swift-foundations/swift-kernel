@@ -16,7 +16,7 @@
 #if os(Linux)
 
 import Kernel_Core
-import Linux_Kernel_Primitives
+import Linux_Kernel_Standard
 
 // MARK: - Error Conversion
 

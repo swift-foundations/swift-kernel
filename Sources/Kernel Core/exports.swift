@@ -37,9 +37,9 @@
 @_exported public import Ownership_Primitives
 
 #if arch(x86_64) || arch(i386)
-    @_exported public import X86_Primitives
+    @_exported public import X86_Standard
 #elseif arch(arm64) || arch(arm)
-    @_exported public import ARM_Primitives
+    @_exported public import ARM_Standard
 #endif
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD)
