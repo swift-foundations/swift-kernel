@@ -72,18 +72,18 @@ private final class UringState {
         _ submission: Kernel.Completion.Submission,
         target: borrowing Kernel.Descriptor
     ) throws(Kernel.Completion.Error) {
-        guard let sqe = unsafe uring.nextEntry() else {
+        guard let sqe = unsafe uring.submission.next() else {
             throw .submissionQueueFull
         }
         unsafe fill(sqe, from: submission, target: target)
-        uring.commitEntry()
+        uring.submission.commit()
     }
 
     /// Notify the kernel to process accumulated submissions.
     ///
     /// Returns the count of submissions accepted.
     func flush() throws(Kernel.Completion.Error) -> Kernel.Completion.Submission.Count {
-        let pending = uring.pendingSubmissions
+        let pending = uring.submission.pending
         guard pending > .zero else { return .zero }
 
         do throws(Kernel.IO.Uring.Error) {
@@ -94,7 +94,7 @@ private final class UringState {
             throw Kernel.Completion.Error(error)
         }
 
-        uring.resetPending()
+        uring.submission.reset()
         return pending.retag(Kernel.Completion.Submission.self)
     }
 
@@ -108,7 +108,7 @@ private final class UringState {
     func drain(
         _ visitor: (Kernel.Completion.Event) -> Void
     ) -> Kernel.Completion.Event.Count {
-        let l1Count = uring.drainCompletions(limit: cqCapacity) { cqe in
+        let l1Count = uring.completion.drain(limit: cqCapacity) { cqe in
             visitor(
                 Kernel.Completion.Event(
                     token: cqe.data.retag(Kernel.Completion.self),
