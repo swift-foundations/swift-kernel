@@ -60,7 +60,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-dictionary-primitives"),
         .package(path: "../../swift-primitives/swift-memory-primitives"),
         .package(path: "../../swift-intel/swift-x86-standard"),
-        .package(path: "../../swift-arm/swift-arm-standard"),
+        .package(path: "../../swift-arm-ltd/swift-arm-standard"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
         .package(path: "../swift-linux"),
