@@ -57,7 +57,6 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-queue-primitives"),
         .package(path: "../../swift-primitives/swift-reference-primitives"),
         .package(path: "../../swift-primitives/swift-ownership-primitives"),
-        .package(path: "../../swift-primitives/swift-dictionary-primitives"),
         .package(path: "../../swift-primitives/swift-memory-primitives"),
         .package(path: "../../swift-intel/swift-x86-standard"),
         .package(path: "../../swift-arm-ltd/swift-arm-standard"),
@@ -137,7 +136,6 @@ let package = Package(
             name: "Kernel Event",
             dependencies: [
                 "Kernel Core",
-                .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
             ]
         ),
 

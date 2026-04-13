@@ -79,9 +79,9 @@ extension Kernel.Event.Source {
 
     fileprivate static func normalize(
         _ events: Kernel.Event.Poll.Events
-    ) -> (Kernel.Event.Interest, Kernel.Event.Flags) {
+    ) -> (Kernel.Event.Interest, Kernel.Event.Options) {
         var interest: Kernel.Event.Interest = []
-        var flags: Kernel.Event.Flags = []
+        var flags: Kernel.Event.Options = []
         if events.contains(.in) { interest.insert(.read) }
         if events.contains(.out) { interest.insert(.write) }
         if events.contains(.pri) { interest.insert(.priority) }
@@ -212,7 +212,9 @@ extension Kernel.Event.Source {
                 }
             },
             poll: {
-                (timeout: Duration?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
+                (deadline: Kernel.Time.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
+
+                let timeout = deadline.map { $0.remaining(at: Kernel.Clock.Continuous.now()) }
 
                 // Poll epoll into pre-allocated scratch buffer.
                 let count: Int
