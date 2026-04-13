@@ -218,10 +218,10 @@ extension Kernel.File.Copy {
 
         // Set timestamps
         do throws(Kernel.File.Times.Error) {
-            try Kernel.File.Times.setTimes(
-                path: destination,
-                accessTime: accessTime,
-                modificationTime: modificationTime
+            try Kernel.File.Times.set(
+                access: accessTime,
+                modification: modificationTime,
+                at: destination
             )
         } catch {
             throw .times(error)
