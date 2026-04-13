@@ -137,6 +137,8 @@ let package = Package(
             name: "Kernel Event",
             dependencies: [
                 "Kernel Core",
+                .product(name: "Linux Kernel Event", package: "swift-linux",
+                         condition: .when(platforms: [.linux])),
             ]
         ),
 
@@ -146,6 +148,8 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 .product(name: "Kernel Completion Primitives", package: "swift-kernel-primitives"),
+                .product(name: "Linux Kernel IO Uring", package: "swift-linux",
+                         condition: .when(platforms: [.linux])),
             ]
         ),
 

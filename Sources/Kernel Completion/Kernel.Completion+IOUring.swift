@@ -16,6 +16,7 @@
 #if os(Linux)
 
 import Kernel_Core
+import Linux_Kernel_IO_Uring
 @_spi(Syscall) import Kernel_Completion_Primitives
 
 // MARK: - Error Conversion
@@ -67,35 +68,130 @@ private final class UringState {
 
     /// Place an operation in the submission queue.
     ///
-    /// Does NOT notify the kernel — call ``flush()`` to submit.
+    /// Fills the current SQE slot from the platform-agnostic Submission,
+    /// then advances the tail. Does NOT notify the kernel — call
+    /// ``flush()`` to submit.
     func enqueue(
         _ submission: Kernel.Completion.Submission,
         target: borrowing Kernel.Descriptor
     ) throws(Kernel.Completion.Error) {
-        guard let sqe = unsafe uring.submission.next() else {
+        guard uring.hasCapacity else {
             throw .submissionQueueFull
         }
-        unsafe fill(sqe, from: submission, target: target)
-        uring.submission.commit()
+
+        let data = submission.token.retag(Kernel.IO.Uring.Operation.self)
+
+        // Fill the SQE via the Slot coroutine (INV-4).
+        // Multiple `uring.next.entry` accesses hit the same slot until advance().
+        switch submission.opcode {
+        case .nop:
+            uring.next.entry.nop(data: data)
+
+        case .read:
+            unsafe uring.next.entry.read(
+                target: Kernel.IO.Uring.Target(descriptor: target),
+                buffer: unsafe bufferPointer(submission.address),
+                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
+                data: data
+            )
+
+        case .write:
+            unsafe uring.next.entry.write(
+                target: Kernel.IO.Uring.Target(descriptor: target),
+                buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
+                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
+                data: data
+            )
+
+        case .close:
+            uring.next.entry.close(target: Kernel.IO.Uring.Target(descriptor: target), data: data)
+
+        case .accept:
+            uring.next.entry.accept(
+                target: Kernel.IO.Uring.Target(descriptor: target), addr: nil, length: nil, flags: [], data: data
+            )
+
+        case .fsync:
+            uring.next.entry.fsync(target: Kernel.IO.Uring.Target(descriptor: target), datasync: false, data: data)
+
+        case .cancel:
+            uring.next.entry.cancel(
+                target: Kernel.IO.Uring.Operation.Data(
+                    __unchecked: (), submission.address._rawValue
+                ),
+                data: data
+            )
+
+        case .send:
+            unsafe uring.next.entry.send(
+                target: Kernel.IO.Uring.Target(descriptor: target),
+                buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
+                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                flags: [],
+                data: data
+            )
+
+        case .recv:
+            unsafe uring.next.entry.recv(
+                target: Kernel.IO.Uring.Target(descriptor: target),
+                buffer: unsafe bufferPointer(submission.address),
+                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                flags: [],
+                data: data
+            )
+
+        case .connect:
+            unsafe uring.next.entry.connect(
+                target: Kernel.IO.Uring.Target(descriptor: target),
+                address: UnsafePointer<Kernel.Socket.Address.Storage>(
+                    unsafe bufferPointer(submission.address).assumingMemoryBound(
+                        to: Kernel.Socket.Address.Storage.self
+                    )
+                ),
+                length: submission.length.rawValue,
+                data: data
+            )
+
+        default:
+            uring.next.entry.nop(data: data)
+        }
+
+        // SQE-level flags (applied after the opcode-specific fill)
+        if submission.flags.contains(.linked) {
+            uring.next.entry.flags.insert(.ioLink)
+        }
+        if submission.flags.contains(.fixedFile) {
+            uring.next.entry.flags.insert(.fixedFile)
+        }
+        if submission.flags.contains(.bufferSelect) {
+            uring.next.entry.flags.insert(.bufferSelect)
+            // FIXME: Buffer group ID requires _bufferGroup (internal to L2).
+            // Multishot read/recv overloads handle this internally.
+            // For the generic factory path, buffer group selection is deferred
+            // until _bufferGroup is promoted to package/public in L2.
+        }
+
+        uring.advance()
     }
 
     /// Notify the kernel to process accumulated submissions.
     ///
     /// Returns the count of submissions accepted.
     func flush() throws(Kernel.Completion.Error) -> Kernel.Completion.Submission.Count {
-        let pending = uring.submission.pending
-        guard pending > .zero else { return .zero }
+        let flushed = uring.flush()
+        guard flushed > .zero else { return .zero }
 
         do throws(Kernel.IO.Uring.Error) {
             _ = try uring.enter(
-                toSubmit: pending, minComplete: .zero, flags: []
+                toSubmit: flushed, minComplete: .zero, flags: []
             )
         } catch {
             throw Kernel.Completion.Error(error)
         }
 
-        uring.submission.reset()
-        return pending.retag(Kernel.Completion.Submission.self)
+        return flushed.retag(Kernel.Completion.Submission.self)
     }
 
     /// Drain completed operations from the completion queue via callback.
@@ -108,11 +204,21 @@ private final class UringState {
     func drain(
         _ visitor: (Kernel.Completion.Event) -> Void
     ) -> Kernel.Completion.Event.Count {
-        let l1Count = uring.completion.drain(limit: cqCapacity) { cqe in
+        let l1Count = uring.drain(limit: cqCapacity) { cqe in
+            // Reconstruct raw result from typed CQE API.
+            // Success: bytes.transferred gives Int(res) — works for
+            // bytes transferred, accept fd, and nop/close (0).
+            // Failure: errorNumber gives -res; negate to recover res.
+            let rawResult: Int32 = if cqe.isSuccess {
+                Int32(cqe.bytes.transferred!)
+            } else {
+                -Int32(cqe.errorNumber!.rawValue)
+            }
+
             visitor(
                 Kernel.Completion.Event(
                     token: cqe.data.retag(Kernel.Completion.self),
-                    result: Kernel.Completion.Event.Result(rawValue: cqe.res),
+                    result: Kernel.Completion.Event.Result(rawValue: rawResult),
                     // WHY: Bit positions are identical — .more (bit 0) = IORING_CQE_F_MORE (bit 1 in
                     // kernel headers, bit 0 after our normalization). If L1 ever renumbers flags,
                     // this pass-through breaks silently. A mapping table would be safer but is
@@ -132,107 +238,7 @@ private final class UringState {
         // Driver is consumed, releasing this class's refcount.
     }
 
-    // MARK: SQE Filling (file-private boundary layer)
-
-    /// Fill an SQE from a platform-agnostic Submission (INV-4).
-    ///
-    /// All boundary conversions (typed Submission → io_uring SQE) are
-    /// encapsulated here.
-    @unsafe
-    private func fill(
-        _ sqe: UnsafeMutablePointer<Kernel.IO.Uring.Submission.Queue.Entry>,
-        from submission: Kernel.Completion.Submission,
-        target: borrowing Kernel.Descriptor
-    ) {
-        let data = submission.token.retag(Kernel.IO.Uring.Operation.self)
-
-        switch submission.opcode {
-        case .nop:
-            unsafe sqe.prepare.nop(data: data)
-
-        case .read:
-            unsafe sqe.prepare.read(
-                target: .descriptor(target),
-                buffer: unsafe bufferPointer(submission.address),
-                length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
-                data: data
-            )
-
-        case .write:
-            unsafe sqe.prepare.write(
-                target: .descriptor(target),
-                buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
-                length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
-                data: data
-            )
-
-        case .close:
-            unsafe sqe.prepare.close(target: .descriptor(target), data: data)
-
-        case .accept:
-            unsafe sqe.prepare.accept(
-                target: .descriptor(target), addr: nil, addrLen: nil, flags: 0, data: data
-            )
-
-        case .fsync:
-            unsafe sqe.prepare.fsync(target: .descriptor(target), datasync: false, data: data)
-
-        case .cancel:
-            unsafe sqe.prepare.cancel(
-                target: Kernel.IO.Uring.Operation.Data(
-                    __unchecked: (), submission.address._rawValue
-                ),
-                data: data
-            )
-
-        case .send:
-            unsafe sqe.prepare.send(
-                target: .descriptor(target),
-                buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
-                length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                flags: 0,
-                data: data
-            )
-
-        case .recv:
-            unsafe sqe.prepare.recv(
-                target: .descriptor(target),
-                buffer: unsafe bufferPointer(submission.address),
-                length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                flags: 0,
-                data: data
-            )
-
-        case .connect:
-            unsafe sqe.prepare.connect(
-                target: .descriptor(target),
-                addr: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
-                addrLen: submission.length.rawValue,
-                data: data
-            )
-
-        default:
-            unsafe sqe.prepare.nop(data: data)
-        }
-
-        // SQE-level flags
-        var sqeFlags = Kernel.IO.Uring.Submission.Queue.Entry.Flags()
-        if submission.flags.contains(.bufferSelect) { sqeFlags.insert(.bufferSelect) }
-        if submission.flags.contains(.linked) { sqeFlags.insert(.ioLink) }
-        if submission.flags.contains(.fixedFile) { sqeFlags.insert(.fixedFile) }
-        sqe.pointee.flags = sqeFlags
-
-        // Provided buffer group
-        if submission.flags.contains(.bufferSelect) {
-            sqe.pointee.buffer = .init(
-                group: Kernel.IO.Uring.Buffer.Group(
-                    rawValue: submission.bufferGroup.rawValue
-                )
-            )
-        }
-    }
+    // MARK: - Helpers
 
     /// Reconstruct a buffer pointer from an Address.
     ///

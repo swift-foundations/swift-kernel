@@ -22,7 +22,7 @@
 #if os(Linux)
 
 import Kernel_Event_Primitives
-import Linux_Kernel_Standard
+import Linux_Kernel_Event
 
 // MARK: - Error Conversion
 
