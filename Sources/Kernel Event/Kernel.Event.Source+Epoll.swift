@@ -71,7 +71,7 @@ extension Kernel.Event.Poll.Data {
 extension Kernel.Event.Source {
     fileprivate static func events(oneShot interest: Kernel.Event.Interest) -> Kernel.Event.Poll.Events {
         var events: Kernel.Event.Poll.Events = [.et, .oneshot]
-        if interest.contains(.read) { events.insert(.in) }
+        if interest.contains(.read) { events.insert(.in); events.insert(.rdhup) }
         if interest.contains(.write) { events.insert(.out) }
         if interest.contains(.priority) { events.insert(.pri) }
         return events
