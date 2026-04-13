@@ -25,7 +25,7 @@ import Testing
 
 #if !os(Windows)
     /// Creates a temporary file with content and returns its path
-    private func createTempFile(prefix: String, content: String) -> String {
+    private func createTempFile(prefix: Swift.String, content: Swift.String) -> Swift.String {
         let path = "/tmp/\(prefix)-\(getpid())-\(Int.random(in: 0..<Int.max))"
         let fd = open(path, O_CREAT | O_WRONLY, 0o644)
         guard fd >= 0 else { return path }
@@ -39,7 +39,7 @@ import Testing
     }
 
     /// Reads content from a file
-    private func readFileContent(_ path: String) -> String? {
+    private func readFileContent(_ path: Swift.String) -> Swift.String? {
         let fd = open(path, O_RDONLY)
         guard fd >= 0 else { return nil }
         defer { close(fd) }
@@ -48,11 +48,11 @@ import Testing
         let bytesRead = read(fd, &buffer, buffer.count - 1)
         guard bytesRead > 0 else { return nil }
 
-        return String(cString: buffer)
+        return Swift.String(cString: buffer)
     }
 
     /// Cleans up a temp file
-    private func cleanup(_ path: String) {
+    private func cleanup(_ path: Swift.String) {
         _ = path.withCString { unlink($0) }
     }
 #endif
@@ -343,7 +343,7 @@ struct KernelFileCloneTests {
             func cloneLargeFile() throws {
                 // Create a 1MB file
                 let size = 1024 * 1024
-                let content = String(repeating: "X", count: size)
+                let content = Swift.String(repeating: "X", count: size)
                 let source = createTempFile(prefix: "clone-large-src", content: content)
                 let dest = "/tmp/clone-large-dst-\(getpid())-\(Int.random(in: 0..<Int.max))"
 

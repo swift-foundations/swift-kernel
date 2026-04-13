@@ -24,7 +24,7 @@ import Testing
 
 #if !os(Windows)
     /// Creates a temporary file with content and returns its path
-    private func makeTempFile(prefix: String, content: String) -> String {
+    private func makeTempFile(prefix: Swift.String, content: Swift.String) -> Swift.String {
         let path = "/tmp/\(prefix)-\(getpid())-\(Int.random(in: 0..<Int.max))"
         let fd = open(path, O_CREAT | O_WRONLY, 0o644)
         guard fd >= 0 else { return path }
@@ -38,7 +38,7 @@ import Testing
     }
 
     /// Cleans up a temp file
-    private func removeTempFile(_ path: String) {
+    private func removeTempFile(_ path: Swift.String) {
         _ = path.withCString { unlink($0) }
     }
 #endif

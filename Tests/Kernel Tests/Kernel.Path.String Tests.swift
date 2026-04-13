@@ -244,7 +244,7 @@ extension Kernel.Path.String {
 
         @Test("long path is valid")
         func longPath() throws {
-            let longComponent = String(repeating: "a", count: 200)
+            let longComponent = Swift.String(repeating: "a", count: 200)
             try Kernel.Path.scope("/tmp/\(longComponent)") { path in
                 let first = unsafe path.pointer.pointee
                 #expect(first == UInt8(47))
