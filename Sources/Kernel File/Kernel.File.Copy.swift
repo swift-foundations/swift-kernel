@@ -210,20 +210,20 @@ extension Kernel.File.Copy {
         modificationTime: Kernel.Time
     ) throws(Kernel.File.Copy.Error) {
         // Set permissions
-        do {
-            try Kernel.File.Attributes.setPermissions(path: destination, permissions: permissions)
-        } catch let error {
+        do throws(Kernel.File.Attributes.Error) {
+            try Kernel.File.Attributes.set(permissions, at: destination)
+        } catch {
             throw .attributes(error)
         }
 
         // Set timestamps
-        do {
+        do throws(Kernel.File.Times.Error) {
             try Kernel.File.Times.setTimes(
                 path: destination,
                 accessTime: accessTime,
                 modificationTime: modificationTime
             )
-        } catch let error {
+        } catch {
             throw .times(error)
         }
     }
