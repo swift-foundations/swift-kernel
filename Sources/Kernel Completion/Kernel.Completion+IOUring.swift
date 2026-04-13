@@ -17,19 +17,6 @@
 
 import Kernel_Core
 @_spi(Syscall) import Kernel_Completion_Primitives
-@_spi(Syscall) import Linux_Kernel_Standard
-
-// MARK: - Descriptor Extraction
-
-extension Kernel.Event.Descriptor {
-    /// Extract the underlying `Kernel.Descriptor`, consuming this wrapper.
-    ///
-    /// The caller takes ownership of the fd. This wrapper drops with
-    /// nothing left to clean up (no custom deinit).
-    fileprivate consuming func _takeDescriptor() -> Kernel.Descriptor {
-        descriptor
-    }
-}
 
 // MARK: - Error Conversion
 
@@ -285,7 +272,7 @@ extension Kernel.Completion {
         // TRACKING: noncopyable-throwing-init experiment, v7_fix.swift
 
         var params = Kernel.IO.Uring.Params()
-        var ring = try createRing(entries: entries, params: &params)
+        let ring = try createRing(entries: entries, params: &params)
 
         // -- Wakeup: eventfd + registration + channel (all L1-local) --
 
@@ -333,7 +320,7 @@ extension Kernel.Completion {
         return Kernel.Completion(
             driver: consume driver,
             wakeup: wakeup,
-            notification: Notification(descriptor: eventfd._takeDescriptor()),
+            notification: Notification(descriptor: Kernel.Descriptor(consume eventfd)),
             capabilities: Capabilities(
                 multishot: true,
                 providedBuffers: true
