@@ -16,7 +16,20 @@
 #if os(Linux)
 
 import Kernel_Core
-import Linux_Kernel_Standard
+@_spi(Syscall) import Kernel_Completion_Primitives
+@_spi(Syscall) import Linux_Kernel_Standard
+
+// MARK: - Descriptor Extraction
+
+extension Kernel.Event.Descriptor {
+    /// Extract the underlying `Kernel.Descriptor`, consuming this wrapper.
+    ///
+    /// The caller takes ownership of the fd. This wrapper drops with
+    /// nothing left to clean up (no custom deinit).
+    fileprivate consuming func _takeDescriptor() -> Kernel.Descriptor {
+        descriptor
+    }
+}
 
 // MARK: - Error Conversion
 
@@ -308,7 +321,10 @@ extension Kernel.Completion {
             },
             close: {
                 state.teardown()
-            }
+            },
+            overflowCount: { .zero }
+            // WHEN TO REVISIT: Wire real L1 CQ overflow counter in Commit B
+            // after adding cqOverflow pointer to Kernel.IO.Uring struct.
         )
 
         // -- Assemble Completion --
@@ -317,14 +333,11 @@ extension Kernel.Completion {
         return Kernel.Completion(
             driver: consume driver,
             wakeup: wakeup,
-            notification: Notification(eventfd: consume eventfd),
+            notification: Notification(descriptor: eventfd._takeDescriptor()),
             capabilities: Capabilities(
                 multishot: true,
                 providedBuffers: true
-            ),
-            overflowCount: { .zero }
-            // WHEN TO REVISIT: Wire real L1 CQ overflow counter in Commit B
-            // after adding cqOverflow pointer to Kernel.IO.Uring struct.
+            )
         )
     }
 

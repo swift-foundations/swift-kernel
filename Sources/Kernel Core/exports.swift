@@ -28,6 +28,7 @@
 @_exported public import Kernel_Socket_Primitives
 @_exported public import Kernel_Thread_Primitives
 @_exported public import Kernel_Event_Primitives
+@_exported public import Kernel_Completion_Primitives
 @_exported public import Kernel_Terminal_Primitives
 @_exported public import Kernel_Glob_Primitives
 @_exported public import System_Primitives

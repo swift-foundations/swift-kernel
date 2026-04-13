@@ -90,6 +90,7 @@ let package = Package(
                 .product(name: "Kernel Socket Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Thread Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Event Primitives", package: "swift-kernel-primitives"),
+                .product(name: "Kernel Completion Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Terminal Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Glob Primitives", package: "swift-kernel-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),
@@ -144,6 +145,7 @@ let package = Package(
             name: "Kernel Completion",
             dependencies: [
                 "Kernel Core",
+                .product(name: "Kernel Completion Primitives", package: "swift-kernel-primitives"),
             ]
         ),
 
