@@ -14,7 +14,6 @@ Policy-free syscall wrappers for Swift. Provides raw descriptors, typed throws, 
 - **Platform-native surfaces** – `Kernel.Kqueue` (Darwin), `Kernel.IOUring` (Linux), `Kernel.IOCP` (Windows)
 - **Foundation-free** – No Foundation module dependencies; no URL, Data, or Foundation string types
 - **Swift 6 strict concurrency** – Full `Sendable` compliance
-- **Thread executor integration** – Serial executors backed by dedicated OS threads
 
 ---
 
@@ -78,29 +77,6 @@ let bytesWritten = try data.withUnsafeBytes { ptr in
 
 // Close
 try Kernel.Close.close(fd)
-```
-
-### Thread Executor
-
-```swift
-import Kernel
-
-// Create a serial executor backed by a dedicated OS thread
-let executor = Kernel.Thread.Executor()
-defer { executor.shutdown() }
-
-// Pin an actor to this executor
-actor DatabaseWorker {
-    let executor: Kernel.Thread.Executor
-
-    init(executor: Kernel.Thread.Executor) {
-        self.executor = executor
-    }
-
-    nonisolated var unownedExecutor: UnownedSerialExecutor {
-        executor.asUnownedSerialExecutor()
-    }
-}
 ```
 
 ### Thread Spawning with Ownership Transfer
@@ -168,7 +144,7 @@ public enum Failure: Swift.Error, Sendable, Equatable {
 ┌─────────────────────────────────────────────────┐
 │               swift-file-system                  │  ← File, File.Directory API
 ├─────────────────────────────────────────────────┤
-│                   swift-io                       │  ← Executors, async I/O
+│   swift-io   swift-threads   swift-executors    │  ← I/O, thread-layer compositions, executor conformances
 ├─────────────────────────────────────────────────┤
 │                 swift-kernel                     │  ← Syscall wrappers (this package)
 ├─────────────────────────────────────────────────┤
@@ -192,7 +168,8 @@ public enum Failure: Swift.Error, Sendable, Equatable {
 | `Kernel.Kqueue`                  | Darwin event notification                            |
 | `Kernel.IOUring`                 | Linux io_uring interface                             |
 | `Kernel.IOCP`                    | Windows I/O completion ports                         |
-| `Kernel.Thread.Synchronization`  | Mutex + N condition variables wrapper                |
+| `Kernel.Thread.Handle`           | pthread_t / HANDLE wrapper (join, detach)            |
+| `Kernel.Thread.spawn`            | Thread creation with ownership transfer              |
 
 ---
 
@@ -262,7 +239,9 @@ Kernel guarantees:
 
 ### Used By
 
-- [swift-io](https://github.com/coenttb/swift-io): Async I/O executor with typed throws
+- [swift-executors](https://github.com/coenttb/swift-executors): Swift Executor protocol conformances backed by dedicated OS threads
+- [swift-threads](https://github.com/coenttb/swift-threads): Thread-layer compositions (Synchronization, Barrier, Gate, Semaphore, Worker, Pool)
+- [swift-io](https://github.com/coenttb/swift-io): Async I/O witness with typed throws
 - [swift-file-system](https://github.com/coenttb/swift-file-system): High-level file operations
 
 ---

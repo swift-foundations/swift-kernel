@@ -124,23 +124,13 @@ catch let error as Kernel.File.Open.Error {
 
 ### Threading
 
-- ``Kernel/Thread/Executor``
-- ``Kernel/Thread/Executors``
-- ``Kernel/Thread/Synchronization``
 - ``Kernel/Thread/Handle``
-- ``Kernel/Thread/Spawn``
+- ``Kernel/Thread/spawn(_:body:)``
 
-### Ownership Transfer
-
-- ``Kernel/Handoff``
-- ``Kernel/Handoff/Cell``
-- ``Kernel/Handoff/Storage``
-- ``Kernel/Handoff/Box``
-
-### Continuation Support
-
-- ``Kernel/Continuation``
-- ``Kernel/Continuation/Context``
+> Executor conformances (`Kernel.Thread.Executor`, `Kernel.Thread.Executor.Sharded`)
+> live in swift-executors. Thread-layer compositions (`Kernel.Thread.Synchronization`,
+> `Kernel.Thread.Barrier`, `Kernel.Thread.Gate`, `Kernel.Thread.Semaphore`,
+> `Kernel.Thread.Worker`, `Kernel.Thread.Pool`) live in swift-threads.
 
 ### Conceptual Articles
 

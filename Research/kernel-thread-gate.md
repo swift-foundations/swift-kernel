@@ -4,9 +4,18 @@
 ---
 version: 1.0.0
 last_updated: 2026-03-20
-status: DECISION
+status: DECISION (SUPERSEDED 2026-04-14 — type relocated, design findings still valid)
 ---
 -->
+
+> **Supersession note (2026-04-14)**: `Kernel.Thread.Gate` was extracted
+> from swift-kernel to the `Thread Gate` target in swift-threads as part
+> of the strict-mission refactor (swift-kernel = syscall-adjacent wrappers
+> only; thread-layer compositions live in swift-threads). The design
+> decisions documented below remain authoritative for the type's
+> semantics and API. Only the package location changed.
+>
+> Consumers now import via `import Thread_Gate` or the `Threads` umbrella.
 
 ## Context
 
