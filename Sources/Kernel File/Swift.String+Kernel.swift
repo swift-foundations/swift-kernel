@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel_Path_Primitives
-public import Kernel_String_Primitives
+internal import Kernel_String_Primitives
 internal import String_Primitives
 
 // MARK: - Swift.String from Kernel.Path
@@ -54,7 +54,7 @@ extension Swift.String {
     ///
     /// On POSIX, interprets the string bytes as UTF-8.
     /// On Windows, interprets the string code units as UTF-16.
-    public init(_ string: borrowing Kernel.String) {
+    package init(_ string: borrowing Kernel.String) {
         #if os(Windows)
         self = unsafe Swift.String(decodingCString: string.view.pointer, as: UTF16.self)
         #else
