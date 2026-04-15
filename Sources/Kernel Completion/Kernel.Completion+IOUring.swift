@@ -154,6 +154,20 @@ private final class UringState {
                 data: data
             )
 
+        case .poll:
+            // Single-shot POLL_ADD: multishot: false makes the backend
+            // produce exactly one CQE when the requested readiness fires,
+            // then the registration is dropped. Callers re-submit for
+            // subsequent reads. Edge-triggered so the CQE fires on state
+            // change, not continuously while the condition holds.
+            uring.next.entry.poll(
+                target: Kernel.IO.Uring.Target(descriptor: target),
+                events: Kernel.Event.Poll.Events(interest: submission.events),
+                multishot: false,
+                trigger: .edge,
+                data: data
+            )
+
         default:
             uring.next.entry.nop(data: data)
         }

@@ -69,11 +69,14 @@ extension Kernel.Event.Poll.Data {
 // MARK: - Helpers
 
 extension Kernel.Event.Source {
+    /// Epoll events mask for a one-shot edge-triggered registration on the
+    /// reactor: the shared `Poll.Events.init(interest:)` produces the base
+    /// read/write/priority mask, and this helper adds the reactor's policy
+    /// bits (`.et | .oneshot`).
     fileprivate static func events(oneShot interest: Kernel.Event.Interest) -> Kernel.Event.Poll.Events {
-        var events: Kernel.Event.Poll.Events = [.et, .oneshot]
-        if interest.contains(.read) { events.insert(.in); events.insert(.rdhup) }
-        if interest.contains(.write) { events.insert(.out) }
-        if interest.contains(.priority) { events.insert(.pri) }
+        var events = Kernel.Event.Poll.Events(interest: interest)
+        events.insert(.et)
+        events.insert(.oneshot)
         return events
     }
 
