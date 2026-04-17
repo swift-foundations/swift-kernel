@@ -38,6 +38,10 @@ let package = Package(
             name: "Kernel Completion",
             targets: ["Kernel Completion"]
         ),
+        .library(
+            name: "Kernel Clock",
+            targets: ["Kernel Clock"]
+        ),
         // MARK: - Umbrella
         .library(
             name: "Kernel",
@@ -51,6 +55,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../swift-primitives/swift-kernel-primitives"),
+        .package(path: "../../swift-primitives/swift-clock-primitives"),
         .package(path: "../../swift-primitives/swift-system-primitives"),
         .package(path: "../../swift-primitives/swift-binary-primitives"),
         .package(path: "../../swift-primitives/swift-dimension-primitives"),
@@ -60,6 +65,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-memory-primitives"),
         .package(path: "../../swift-intel/swift-x86-standard"),
         .package(path: "../../swift-arm-ltd/swift-arm-standard"),
+        .package(path: "../../swift-microsoft/swift-windows-standard"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
         .package(path: "../swift-linux"),
@@ -153,6 +159,21 @@ let package = Package(
             ]
         ),
 
+        // MARK: - Clock
+        // Narrow cross-platform Clock surface — does NOT go through Kernel Core,
+        // to avoid the POSIX Kernel umbrella's String_Primitives re-export.
+        .target(
+            name: "Kernel Clock",
+            dependencies: [
+                .product(name: "Kernel Clock Primitives", package: "swift-kernel-primitives"),
+                .product(name: "Clock Primitives", package: "swift-clock-primitives"),
+                .product(name: "POSIX Kernel Clock", package: "swift-posix",
+                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
+                .product(name: "Windows Kernel Clock Standard", package: "swift-windows-standard",
+                         condition: .when(platforms: [.windows])),
+            ]
+        ),
+
         // MARK: - Umbrella
         .target(
             name: "Kernel",
@@ -163,6 +184,7 @@ let package = Package(
                 "Kernel File",
                 "Kernel Event",
                 "Kernel Completion",
+                "Kernel Clock",
             ]
         ),
 
