@@ -4,13 +4,15 @@
 //
 //  io_uring–backed completion driver for Linux.
 //
-//  State class holds the L1 ring struct (which owns its descriptor).
-//  Driver closures are one-line delegations expressing intent, not mechanism.
+//  Dispatches on `Submission.Opcode` as an enum-with-associated-values
+//  so per-variant data (address/length/offset, cancel target, poll
+//  interest) is extracted by pattern matching. Opcodes without
+//  associated values cannot accidentally receive per-variant data.
 //
 //  INV-1: Zero SPI — all platform details encapsulated in L1 typed methods.
 //  INV-2: State class is file-private, captured by closures.
 //  INV-3: Ring owns descriptor — deinit unmaps regions then closes fd.
-//  INV-4: Boundary conversions use .retag() / .map(), not .rawValue.
+//  INV-4: Boundary conversions use .retag() / .map(), not .rawValue at call sites.
 //
 
 #if os(Linux)
@@ -39,6 +41,49 @@ extension Kernel.Completion.Error {
     }
 }
 
+// MARK: - Adapter Bridges
+//
+// Confine boundary conversions between ecosystem L1 types and
+// io_uring's dimensional types to adapter-local extension inits.
+// These are the only sites where `.rawValue` crosses the boundary.
+
+extension Kernel.IO.Uring.Length {
+    /// Bridge from cross-platform byte count to io_uring's UInt32 length.
+    ///
+    /// io_uring's length is UInt32; callers submitting a buffer larger
+    /// than UInt32.max must fragment. Backend expectation mirrors the
+    /// kernel ABI — the precondition is the contract.
+    fileprivate init(_ count: Memory.Address.Count) {
+        let raw = count.rawValue.rawValue
+        precondition(raw <= UInt(UInt32.max),
+            "io_uring length exceeds UInt32 range: \(raw)")
+        self.init(UInt32(raw))
+    }
+}
+
+extension Kernel.IO.Uring.Offset {
+    /// Bridge from `Kernel.File.Offset?` to io_uring's UInt64 offset.
+    ///
+    /// `nil` signals stream mode — translated to the io_uring sentinel
+    /// `UInt64.max` (which the kernel interprets as "use the current
+    /// file position"). Cross-platform code never sees the sentinel.
+    fileprivate init(_ offset: Kernel.File.Offset?) {
+        if let offset {
+            self.init(UInt64(bitPattern: offset.rawValue))
+        } else {
+            self.init(UInt64.max)
+        }
+    }
+}
+
+extension Kernel.IO.Uring.Operation.Data {
+    /// Bridge from the cross-platform correlation token to the io_uring
+    /// per-operation user_data word.
+    fileprivate init(_ token: Kernel.Completion.Token) {
+        self.init(__unchecked: (), token.rawValue)
+    }
+}
+
 // MARK: - State (INV-2)
 
 /// Factory-local state for the io_uring backend.
@@ -50,10 +95,7 @@ extension Kernel.Completion.Error {
 /// then closes the fd. The eventfd descriptor is consumed into
 /// ``Kernel/Completion/Notification`` and owned there — not stored here.
 private final class UringState {
-    /// L1 ring (owns descriptor + mmap'd SQ/CQ regions).
     private var uring: Kernel.IO.Uring
-
-    /// CQ ring capacity — used as drain limit to process all available CQEs.
     private let cqCapacity: Kernel.IO.Uring.Completion.Count
 
     init(
@@ -68,9 +110,9 @@ private final class UringState {
 
     /// Place an operation in the submission queue.
     ///
-    /// Fills the current SQE slot from the platform-agnostic Submission,
-    /// then advances the tail. Does NOT notify the kernel — call
-    /// ``flush()`` to submit.
+    /// Fills the current SQE slot by pattern matching the submission's
+    /// opcode, then advances the tail. Does NOT notify the kernel —
+    /// call ``flush()`` to submit.
     func enqueue(
         _ submission: Kernel.Completion.Submission,
         target: borrowing Kernel.Descriptor
@@ -79,97 +121,101 @@ private final class UringState {
             throw .submissionQueueFull
         }
 
-        let data = submission.token.retag(Kernel.IO.Uring.Operation.self)
+        let data = Kernel.IO.Uring.Operation.Data(submission.token)
+        let uringTarget = Kernel.IO.Uring.Target(descriptor: target)
 
-        // Fill the SQE via the Slot coroutine (INV-4).
-        // Multiple `uring.next.entry` accesses hit the same slot until advance().
         switch submission.opcode {
         case .nop:
             uring.next.entry.nop(data: data)
 
-        case .read:
+        case .read(let address, let length, let offset):
             unsafe uring.next.entry.read(
-                target: Kernel.IO.Uring.Target(descriptor: target),
-                buffer: unsafe bufferPointer(submission.address),
-                length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
+                target: uringTarget,
+                buffer: unsafe UnsafeMutableRawPointer(address),
+                length: .init(length),
+                offset: .init(offset),
                 data: data
             )
 
-        case .write:
+        case .write(let address, let length, let offset):
             unsafe uring.next.entry.write(
-                target: Kernel.IO.Uring.Target(descriptor: target),
-                buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
-                length: Kernel.IO.Uring.Length(submission.length.rawValue),
-                offset: Kernel.IO.Uring.Offset(submission.offset.rawValue),
+                target: uringTarget,
+                buffer: unsafe UnsafeRawPointer(address),
+                length: .init(length),
+                offset: .init(offset),
                 data: data
             )
 
         case .close:
-            uring.next.entry.close(target: Kernel.IO.Uring.Target(descriptor: target), data: data)
+            uring.next.entry.close(target: uringTarget, data: data)
 
         case .accept:
             uring.next.entry.accept(
-                target: Kernel.IO.Uring.Target(descriptor: target), addr: nil, length: nil, flags: [], data: data
+                target: uringTarget,
+                addr: nil,
+                length: nil,
+                flags: [],
+                data: data
             )
 
         case .fsync:
-            uring.next.entry.fsync(target: Kernel.IO.Uring.Target(descriptor: target), datasync: false, data: data)
+            uring.next.entry.fsync(
+                target: uringTarget,
+                datasync: false,
+                data: data
+            )
 
-        case .cancel:
+        case .cancel(let targetToken):
             uring.next.entry.cancel(
-                target: Kernel.IO.Uring.Operation.Data(
-                    __unchecked: (), submission.cancelTarget!.rawValue
-                ),
+                target: Kernel.IO.Uring.Operation.Data(targetToken),
                 data: data
             )
 
-        case .send:
+        case .send(let address, let length):
             unsafe uring.next.entry.send(
-                target: Kernel.IO.Uring.Target(descriptor: target),
-                buffer: UnsafeRawPointer(unsafe bufferPointer(submission.address)),
-                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                target: uringTarget,
+                buffer: unsafe UnsafeRawPointer(address),
+                length: .init(length),
                 flags: [],
                 data: data
             )
 
-        case .recv:
+        case .recv(let address, let length):
             unsafe uring.next.entry.recv(
-                target: Kernel.IO.Uring.Target(descriptor: target),
-                buffer: unsafe bufferPointer(submission.address),
-                length: Kernel.IO.Uring.Length(submission.length.rawValue),
+                target: uringTarget,
+                buffer: unsafe UnsafeMutableRawPointer(address),
+                length: .init(length),
                 flags: [],
                 data: data
             )
 
-        case .connect:
+        case .connect(let address, let length):
             unsafe uring.next.entry.connect(
-                target: Kernel.IO.Uring.Target(descriptor: target),
+                target: uringTarget,
                 address: UnsafePointer<Kernel.Socket.Address.Storage>(
-                    unsafe bufferPointer(submission.address).assumingMemoryBound(
+                    unsafe UnsafeMutableRawPointer(address).assumingMemoryBound(
                         to: Kernel.Socket.Address.Storage.self
                     )
                 ),
-                length: submission.length.rawValue,
+                length: length.rawValue.rawValue <= UInt(UInt32.max)
+                    ? UInt32(length.rawValue.rawValue)
+                    : UInt32.max,
                 data: data
             )
 
-        case .poll:
+        case .poll(let events):
             // Single-shot POLL_ADD: multishot: false makes the backend
             // produce exactly one CQE when the requested readiness fires,
             // then the registration is dropped. Callers re-submit for
             // subsequent reads. Edge-triggered so the CQE fires on state
             // change, not continuously while the condition holds.
             uring.next.entry.poll(
-                target: Kernel.IO.Uring.Target(descriptor: target),
-                events: Kernel.Event.Poll.Events(interest: submission.events),
+                target: uringTarget,
+                events: Kernel.Event.Poll.Events(interest: events),
                 multishot: false,
                 trigger: .edge,
                 data: data
             )
-
-        default:
-            uring.next.entry.nop(data: data)
         }
 
         // SQE-level flags (applied after the opcode-specific fill)
@@ -250,20 +296,6 @@ private final class UringState {
         // ~Copyable deinit cascade when this class deallocates.
         // The closures that captured `self` are dropped when
         // Driver is consumed, releasing this class's refcount.
-    }
-
-    // MARK: - Helpers
-
-    /// Reconstruct a buffer pointer from an Address.
-    ///
-    /// The pointer was validated at Address construction time
-    /// (via `@unsafe` init). This is the single site where
-    /// UInt64 → pointer reconstruction occurs.
-    @unsafe
-    private func bufferPointer(
-        _ address: Kernel.Completion.Submission.Address
-    ) -> UnsafeMutableRawPointer {
-        unsafe UnsafeMutableRawPointer(bitPattern: UInt(address._rawValue))!
     }
 }
 

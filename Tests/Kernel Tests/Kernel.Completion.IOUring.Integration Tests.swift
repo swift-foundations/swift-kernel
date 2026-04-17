@@ -128,9 +128,9 @@ struct `IOUring Integration Tests` {
     //
     // Deferred: Pipe creation at this layer requires direct syscall
     // access (Kernel.Pipe or POSIX pipe()), and wiring the buffer
-    // address into Submission.Address needs @unsafe pointer
-    // reconstruction. This is better tested at the IO layer where
-    // typed read/write operations exist.
+    // address through the .read opcode associated values requires
+    // @unsafe pointer construction. This is better tested at the IO
+    // layer where typed read/write operations exist.
 
     // MARK: - Close
 
