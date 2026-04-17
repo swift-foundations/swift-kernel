@@ -119,7 +119,7 @@ private final class UringState {
         case .cancel:
             uring.next.entry.cancel(
                 target: Kernel.IO.Uring.Operation.Data(
-                    __unchecked: (), submission.address._rawValue
+                    __unchecked: (), submission.cancelTarget!.rawValue
                 ),
                 data: data
             )
