@@ -174,7 +174,7 @@ extension Kernel.Event.Source {
                 }
             },
             poll: {
-                (deadline: Kernel.Time.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
+                (deadline: Kernel.Clock.Continuous.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
 
                 let timeout = deadline.map { $0.remaining(at: Kernel.Clock.Continuous.now()) }
 
