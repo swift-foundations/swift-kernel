@@ -16,13 +16,18 @@ extension Kernel.Event.Source {
     ///
     /// - **Darwin**: kqueue
     /// - **Linux**: epoll
+    ///
+    /// Throws ``Kernel/Event/Driver/Error/unsupportedPlatform`` if no
+    /// event backend is available for the current platform. Consumers
+    /// that want graceful fallback to a blocking strategy can catch
+    /// this via `try?` and select an alternative.
     public static func platform() throws(Kernel.Event.Driver.Error) -> Kernel.Event.Source {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
             try .kqueue()
         #elseif os(Linux)
             try .epoll()
         #else
-            fatalError("No event backend available for this platform")
+            throw .unsupportedPlatform
         #endif
     }
 }

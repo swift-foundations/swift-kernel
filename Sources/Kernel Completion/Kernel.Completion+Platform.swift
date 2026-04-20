@@ -15,11 +15,17 @@ extension Kernel.Completion {
     /// Returns the platform completion resource.
     ///
     /// - **Linux**: io_uring
+    ///
+    /// Throws ``Kernel/Completion/Error/unsupportedPlatform`` if no
+    /// completion backend is available for the current platform (for
+    /// example, on Darwin or on Linux without io_uring). Consumers that
+    /// want graceful fallback to a reactor or blocking strategy can catch
+    /// this via `try?` and select an alternative.
     public static func platform() throws(Error) -> Kernel.Completion {
         #if os(Linux)
             try .iouring()
         #else
-            fatalError("No completion backend available for this platform")
+            throw .unsupportedPlatform
         #endif
     }
 }

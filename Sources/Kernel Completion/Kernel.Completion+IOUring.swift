@@ -125,7 +125,7 @@ private final class UringState {
         let uringTarget = Kernel.IO.Uring.Target(descriptor: target)
 
         switch submission.opcode {
-        case .nop:
+        case .noOperation:
             uring.next.entry.nop(data: data)
 
         case .read(let address, let length, let offset):
@@ -158,7 +158,7 @@ private final class UringState {
                 data: data
             )
 
-        case .fsync:
+        case .synchronize:
             uring.next.entry.fsync(
                 target: uringTarget,
                 datasync: false,
@@ -180,7 +180,7 @@ private final class UringState {
                 data: data
             )
 
-        case .recv(let address, let length):
+        case .receive(let address, let length):
             unsafe uring.next.entry.recv(
                 target: uringTarget,
                 buffer: unsafe UnsafeMutableRawPointer(address),
@@ -203,7 +203,7 @@ private final class UringState {
                 data: data
             )
 
-        case .poll(let events):
+        case .readiness(let events):
             // Single-shot POLL_ADD: multishot: false makes the backend
             // produce exactly one CQE when the requested readiness fires,
             // then the registration is dropped. Callers re-submit for

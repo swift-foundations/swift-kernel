@@ -52,7 +52,7 @@ struct `IOUring Integration Tests` {
 
         // Submit a nop with a known token
         let token = Kernel.Completion.Token(42)
-        let submission = Kernel.Completion.Submission(opcode: .nop, token: token)
+        let submission = Kernel.Completion.Submission(opcode: .noOperation, token: token)
         try completion.submit(submission)
 
         // Flush to kernel — at least one submission accepted
@@ -87,9 +87,9 @@ struct `IOUring Integration Tests` {
         var completion = try Kernel.Completion.iouring()
 
         // Submit 3 nops with distinct tokens
-        let sub1 = Kernel.Completion.Submission(opcode: .nop, token: .init(1))
-        let sub2 = Kernel.Completion.Submission(opcode: .nop, token: .init(2))
-        let sub3 = Kernel.Completion.Submission(opcode: .nop, token: .init(3))
+        let sub1 = Kernel.Completion.Submission(opcode: .noOperation, token: .init(1))
+        let sub2 = Kernel.Completion.Submission(opcode: .noOperation, token: .init(2))
+        let sub3 = Kernel.Completion.Submission(opcode: .noOperation, token: .init(3))
 
         try completion.submit(sub1)
         try completion.submit(sub2)
