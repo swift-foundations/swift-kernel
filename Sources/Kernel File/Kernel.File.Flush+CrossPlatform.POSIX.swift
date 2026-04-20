@@ -35,28 +35,15 @@ extension Kernel.File.Flush {
         try POSIX.Kernel.File.Flush.flush(descriptor)
     }
 
-    /// Synchronizes file data to storage with the best available platform
-    /// semantic, automatically retrying on EINTR.
-    ///
-    /// Single entry point for "data-only sync" semantics. Consumer code writes
-    /// a single unconditional call site instead of a per-platform `#if`.
-    ///
-    /// Cross-platform contract:
-    /// - **Linux**: ``ISO_9945/Kernel/File/Flush/fdatasync(_:)`` via the L3
-    ///   policy layer — `fdatasync(2)`, data-only.
-    /// - **Darwin**: ``ISO_9945/Kernel/File/Flush/barrierFsync(_:)`` via the
-    ///   L3 policy layer — `fcntl(F_BARRIERFSYNC)`, closest "data-only-ish"
-    ///   semantic.
-    /// - **Windows**: `FlushFileBuffers` — Windows has no data-only
-    ///   distinction, so this is a strictly-stronger full flush, never
-    ///   weaker.
-    ///
-    /// - Parameter descriptor: The file descriptor.
-    /// - Throws: ``Kernel/File/Flush/Error`` on failure (excluding EINTR on POSIX).
-    @inlinable
-    public static func data(_ descriptor: borrowing Kernel.Descriptor) throws(Error) {
-        try POSIX.Kernel.File.Flush.data(descriptor)
-    }
+    // NOTE: `Kernel.File.Flush.data(_:)` is NOT defined here. The per-platform
+    // policy wrappers live in `Darwin.Kernel.File.Flush.data(_:)` (swift-darwin,
+    // `fcntl(F_BARRIERFSYNC)` + EINTR retry) and `Linux.Kernel.File.Flush.data(_:)`
+    // (swift-linux, `fdatasync(2)` + EINTR retry). Because both platform
+    // namespaces typealias to `Kernel`, their extensions land directly on
+    // `Kernel.File.Flush`, giving consumers a single unconditional call site —
+    // `try Kernel.File.Flush.data(fd)` — that resolves to the right platform
+    // implementation. A unifier delegate here would be a redeclaration of the
+    // same method on the same type. See [PLAT-ARCH-002] and [PLAT-ARCH-008d].
 
     /// Persists directory entries (rename visibility) to storage, automatically
     /// retrying on EINTR on POSIX.
