@@ -65,8 +65,8 @@ struct KernelFileCloneTests {
     @Suite("Types")
     struct TypeTests {
 
-        @Test("Capability enum values")
-        func capabilityValues() {
+        @Test
+        func `Capability enum values`() {
             let reflink = Kernel.File.Clone.Capability.reflink
             let none = Kernel.File.Clone.Capability.none
 
@@ -75,8 +75,8 @@ struct KernelFileCloneTests {
             #expect(none == .none)
         }
 
-        @Test("Behavior enum values")
-        func behaviorValues() {
+        @Test
+        func `Behavior enum values`() {
             let reflinkOrFail = Kernel.File.Clone.Behavior.reflinkOrFail
             let reflinkOrCopy = Kernel.File.Clone.Behavior.reflinkOrCopy
             let copyOnly = Kernel.File.Clone.Behavior.copyOnly
@@ -86,16 +86,16 @@ struct KernelFileCloneTests {
             #expect(reflinkOrFail != copyOnly)
         }
 
-        @Test("Result enum values")
-        func resultValues() {
+        @Test
+        func `Result enum values`() {
             let reflinked = Kernel.File.Clone.Result.reflinked
             let copied = Kernel.File.Clone.Result.copied
 
             #expect(reflinked != copied)
         }
 
-        @Test("types are Sendable")
-        func typesAreSendable() {
+        @Test
+        func `types are Sendable`() {
             let cap: Kernel.File.Clone.Capability = .reflink
             let behavior: Kernel.File.Clone.Behavior = .reflinkOrCopy
             let result: Kernel.File.Clone.Result = .copied
@@ -113,8 +113,8 @@ struct KernelFileCloneTests {
     @Suite("Error")
     struct ErrorTests {
 
-        @Test("error descriptions are meaningful")
-        func errorDescriptions() {
+        @Test
+        func `error descriptions are meaningful`() {
             let errors: [Kernel.File.Clone.Error] = [
                 .notSupported,
                 .crossDevice,
@@ -134,8 +134,8 @@ struct KernelFileCloneTests {
             #expect(Kernel.File.Clone.Error.crossDevice.description.contains("different"))
         }
 
-        @Test("error is Equatable")
-        func errorEquatable() {
+        @Test
+        func `error is Equatable`() {
             #expect(Kernel.File.Clone.Error.notSupported == .notSupported)
             #expect(Kernel.File.Clone.Error.crossDevice != .notSupported)
 
@@ -154,8 +154,8 @@ struct KernelFileCloneTests {
         @Suite("Capability Probing")
         struct CapabilityProbingTests {
 
-            @Test("probe capability returns valid result")
-            func probeCapability() throws {
+            @Test
+            func `probe capability returns valid result`() throws {
                 // Probe /tmp which is on the boot volume (typically APFS)
                 let cap = try Kernel.Path.scope("/tmp") { path in
                     try Kernel.File.Clone.Capability.probe(at: path)
@@ -166,8 +166,8 @@ struct KernelFileCloneTests {
                 #expect(cap == .reflink || cap == .none)
             }
 
-            @Test("probe nonexistent path throws")
-            func probeNonexistent() {
+            @Test
+            func `probe nonexistent path throws`() {
                 typealias E = Kernel.Path.String.Error<Kernel.File.Clone.Error.Syscall>
 
                 expectThrows(
@@ -191,8 +191,8 @@ struct KernelFileCloneTests {
         @Suite("Clone Operations")
         struct CloneOperationTests {
 
-            @Test("copyOnly creates independent copy")
-            func copyOnlyCreatesIndependentCopy() throws {
+            @Test
+            func `copyOnly creates independent copy`() throws {
                 let content = "Hello, World! This is test content for cloning."
                 let source = createTempFile(prefix: "clone-src", content: content)
                 let dest = "/tmp/clone-dst-\(getpid())-\(Int.random(in: 0..<Int.max))"
@@ -219,8 +219,8 @@ struct KernelFileCloneTests {
                 #expect(readContent == content)
             }
 
-            @Test("reflinkOrCopy succeeds on APFS")
-            func reflinkOrCopySucceeds() throws {
+            @Test
+            func `reflinkOrCopy succeeds on APFS`() throws {
                 let content = "Test content for reflink or copy"
                 let source = createTempFile(prefix: "clone-src", content: content)
                 let dest = "/tmp/clone-dst-\(getpid())-\(Int.random(in: 0..<Int.max))"
@@ -248,8 +248,8 @@ struct KernelFileCloneTests {
                 #expect(readContent == content)
             }
 
-            @Test("reflinkOrFail on APFS returns reflinked")
-            func reflinkOrFailOnAPFS() throws {
+            @Test
+            func `reflinkOrFail on APFS returns reflinked`() throws {
                 let content = "Test content for reflink only"
                 let source = createTempFile(prefix: "clone-src", content: content)
                 let dest = "/tmp/clone-dst-\(getpid())-\(Int.random(in: 0..<Int.max))"
@@ -285,8 +285,8 @@ struct KernelFileCloneTests {
                 }
             }
 
-            @Test("clone to existing destination fails")
-            func cloneToExistingFails() throws {
+            @Test
+            func `clone to existing destination fails`() throws {
                 let content = "Source content"
                 let source = createTempFile(prefix: "clone-src", content: content)
                 let dest = createTempFile(prefix: "clone-dst", content: "Existing")
@@ -315,8 +315,8 @@ struct KernelFileCloneTests {
                 )
             }
 
-            @Test("clone from nonexistent source fails")
-            func cloneFromNonexistentFails() {
+            @Test
+            func `clone from nonexistent source fails`() {
                 let source = "/tmp/nonexistent-\(getpid())"
                 let dest = "/tmp/clone-dst-\(getpid())"
 
@@ -339,8 +339,8 @@ struct KernelFileCloneTests {
                 )
             }
 
-            @Test("clone large file")
-            func cloneLargeFile() throws {
+            @Test
+            func `clone large file`() throws {
                 // Create a 1MB file
                 let size = 1024 * 1024
                 let content = Swift.String(repeating: "X", count: size)
@@ -371,8 +371,8 @@ struct KernelFileCloneTests {
                 #expect(Int(statBuf.st_size) == size)
             }
 
-            @Test("clone empty file")
-            func cloneEmptyFile() throws {
+            @Test
+            func `clone empty file`() throws {
                 let source = createTempFile(prefix: "clone-empty-src", content: "")
                 let dest = "/tmp/clone-empty-dst-\(getpid())-\(Int.random(in: 0..<Int.max))"
 

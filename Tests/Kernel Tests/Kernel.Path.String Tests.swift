@@ -28,24 +28,24 @@ extension Kernel.Path.String {
 
     extension Kernel.Path.String.Test.Unit {
 
-        @Test(".body extraction returns body error")
-        func bodyExtraction() {
+        @Test
+        func `.body extraction returns body error`() {
             enum TestError: Swift.Error, Equatable { case test }
             let error: Kernel.Path.String.Error<TestError> = .body(.test)
             #expect(error.body == .test)
             #expect(error.conversion == nil)
         }
 
-        @Test(".conversion extraction returns conversion error")
-        func conversionExtraction() {
+        @Test
+        func `.conversion extraction returns conversion error`() {
             enum TestError: Swift.Error { case test }
             let error: Kernel.Path.String.Error<TestError> = .conversion(.interiorNUL(index: 0))
             #expect(error.conversion == .interiorNUL(index: 0))
             #expect(error.body == nil)
         }
 
-        @Test(".mapBody preserves conversion errors")
-        func mapBodyPreservesConversion() {
+        @Test
+        func `.mapBody preserves conversion errors`() {
             enum A: Swift.Error { case a }
             enum B: Swift.Error { case b }
             let original: Kernel.Path.String.Error<A> = .conversion(.interiorNUL(index: 1))
@@ -53,8 +53,8 @@ extension Kernel.Path.String {
             #expect(mapped.conversion == .interiorNUL(index: 1))
         }
 
-        @Test(".mapBody transforms body errors")
-        func mapBodyTransformsBody() {
+        @Test
+        func `.mapBody transforms body errors`() {
             enum A: Swift.Error, Equatable { case a }
             enum B: Swift.Error, Equatable { case b }
             let original: Kernel.Path.String.Error<A> = .body(.a)
@@ -67,16 +67,16 @@ extension Kernel.Path.String {
 
     extension Kernel.Path.String.Test.Unit {
 
-        @Test("with passes valid string to body")
-        func singlePathValid() throws {
+        @Test
+        func `with passes valid string to body`() throws {
             let result = try Kernel.Path.scope("/tmp/test") { path in
                 unsafe path.pointer.pointee
             }
             #expect(result == UInt8(47))  // ASCII '/'
         }
 
-        @Test("with rejects interior NUL at start (conversion-only)")
-        func singlePathNULAtStart() {
+        @Test
+        func `with rejects interior NUL at start (conversion-only)`() {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
@@ -84,8 +84,8 @@ extension Kernel.Path.String {
             )
         }
 
-        @Test("with rejects interior NUL in middle (conversion-only)")
-        func singlePathNULInMiddle() {
+        @Test
+        func `with rejects interior NUL in middle (conversion-only)`() {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
@@ -93,8 +93,8 @@ extension Kernel.Path.String {
             )
         }
 
-        @Test("with rejects interior NUL at end (conversion-only)")
-        func singlePathNULAtEnd() {
+        @Test
+        func `with rejects interior NUL at end (conversion-only)`() {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
@@ -110,8 +110,8 @@ extension Kernel.Path.String {
         /// Dummy error type to force throwing-body overload selection.
         private enum Dummy: Swift.Error { case sentinel }
 
-        @Test("with wraps conversion errors (throwing-body overload)")
-        func singlePathNULWrapped() {
+        @Test
+        func `with wraps conversion errors (throwing-body overload)`() {
             typealias E = Kernel.Path.String.Error<Dummy>
             expectThrows(
                 { (error: E) in
@@ -126,8 +126,8 @@ extension Kernel.Path.String {
             )
         }
 
-        @Test("with wraps body errors")
-        func singlePathBodyErrorWrapped() {
+        @Test
+        func `with wraps body errors`() {
             enum Body: Swift.Error, Equatable { case boom }
             typealias E = Kernel.Path.String.Error<Body>
             expectThrows(
@@ -148,8 +148,8 @@ extension Kernel.Path.String {
 
     extension Kernel.Path.String.Test.Unit {
 
-        @Test("with two paths passes valid strings")
-        func twoPaths() throws {
+        @Test
+        func `with two paths passes valid strings`() throws {
             var saw1 = false
             var saw2 = false
             try Kernel.Path.scope("/path1", "/path2") { p1, p2 in
@@ -160,8 +160,8 @@ extension Kernel.Path.String {
             #expect(saw2)
         }
 
-        @Test("with two paths rejects NUL in first (index 0)")
-        func twoPathsNULInFirst() {
+        @Test
+        func `with two paths rejects NUL in first (index 0)`() {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
@@ -169,8 +169,8 @@ extension Kernel.Path.String {
             )
         }
 
-        @Test("with two paths rejects NUL in second (index 1)")
-        func twoPathsNULInSecond() {
+        @Test
+        func `with two paths rejects NUL in second (index 1)`() {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 1)) },
@@ -183,8 +183,8 @@ extension Kernel.Path.String {
 
     extension Kernel.Path.String.Test.Unit {
 
-        @Test("with three paths passes valid strings")
-        func threePaths() throws {
+        @Test
+        func `with three paths passes valid strings`() throws {
             var count = 0
             try Kernel.Path.scope("/a", "/b", "/c") { p1, p2, p3 in
                 if unsafe p1.pointer.pointee == UInt8(47) { count += 1 }
@@ -194,8 +194,8 @@ extension Kernel.Path.String {
             #expect(count == 3)
         }
 
-        @Test("with three paths rejects NUL in first (index 0)")
-        func threePathsNULInFirst() {
+        @Test
+        func `with three paths rejects NUL in first (index 0)`() {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 0)) },
@@ -203,8 +203,8 @@ extension Kernel.Path.String {
             )
         }
 
-        @Test("with three paths rejects NUL in second (index 1)")
-        func threePathsNULInSecond() {
+        @Test
+        func `with three paths rejects NUL in second (index 1)`() {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 1)) },
@@ -212,8 +212,8 @@ extension Kernel.Path.String {
             )
         }
 
-        @Test("with three paths rejects NUL in third (index 2)")
-        func threePathsNULInThird() {
+        @Test
+        func `with three paths rejects NUL in third (index 2)`() {
             typealias E = Kernel.Path.String.Conversion.Error
             expectThrows(
                 { (error: E) in #expect(error == .interiorNUL(index: 2)) },
@@ -226,24 +226,24 @@ extension Kernel.Path.String {
 
     extension Kernel.Path.String.Test.EdgeCase {
 
-        @Test("empty string is valid (no interior NUL)")
-        func emptyString() throws {
+        @Test
+        func `empty string is valid (no interior NUL)`() throws {
             let result = try Kernel.Path.scope("") { path in
                 unsafe path.pointer.pointee
             }
             #expect(result == 0)  // null terminator
         }
 
-        @Test("unicode path is valid")
-        func unicodePath() throws {
+        @Test
+        func `unicode path is valid`() throws {
             try Kernel.Path.scope("/tmp/\u{65E5}\u{672C}\u{8A9E}/\u{6587}\u{4EF6}.txt") { path in
                 let first = unsafe path.pointer.pointee
                 #expect(first == UInt8(47))
             }
         }
 
-        @Test("long path is valid")
-        func longPath() throws {
+        @Test
+        func `long path is valid`() throws {
             let longComponent = Swift.String(repeating: "a", count: 200)
             try Kernel.Path.scope("/tmp/\(longComponent)") { path in
                 let first = unsafe path.pointer.pointee

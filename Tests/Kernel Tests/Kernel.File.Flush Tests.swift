@@ -27,8 +27,8 @@ extension Kernel.File.Flush {
 #if !os(Windows)
 
 extension Kernel.File.Flush.Test.Flush {
-    @Test("flush(_:) on a fresh tmp file succeeds on every platform")
-    func flushOnTempFile() throws {
+    @Test
+    func `flush(_:) on a fresh tmp file succeeds on every platform`() throws {
         try KernelIOTest.withTempFile(prefix: "flush-smoke") { _, fd in
             // Cross-platform contract — no #if, single call.
             try Kernel.File.Flush.flush(fd)
@@ -43,8 +43,8 @@ extension Kernel.File.Flush.Test.Flush {
 #if !os(Windows)
 
 extension Kernel.File.Flush.Test.Data {
-    @Test("data(_:) on a fresh tmp file succeeds on every platform")
-    func dataOnTempFile() throws {
+    @Test
+    func `data(_:) on a fresh tmp file succeeds on every platform`() throws {
         try KernelIOTest.withTempFile(prefix: "flush-data") { _, fd in
             // Cross-platform contract — no #if, single call.
             // POSIX: retry-wrapped fdatasync (Linux) / barrierFsync (Darwin).
@@ -59,8 +59,8 @@ extension Kernel.File.Flush.Test.Data {
 // MARK: - directory(path:) Smoke
 
 extension Kernel.File.Flush.Test.Directory {
-    @Test("directory(path:) on the system temp directory succeeds (POSIX) / no-ops (Windows)")
-    func directoryOnTempDirectory() throws {
+    @Test
+    func `directory(path:) on the system temp directory succeeds (POSIX) / no-ops (Windows)`() throws {
         let tempDir = Kernel.Temporary.directory
         try Kernel.Path.scope(tempDir) { dirPath in
             // Cross-platform contract:

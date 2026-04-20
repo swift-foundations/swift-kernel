@@ -48,8 +48,8 @@ import Testing
 @Suite("Kernel.File.Open.Configuration")
 struct FileOpenConfigurationTests {
 
-    @Test("default configuration")
-    func defaultConfiguration() {
+    @Test
+    func `default configuration`() {
         let config = Kernel.File.Open.Configuration()
 
         #expect(config.mode == .read)
@@ -58,8 +58,8 @@ struct FileOpenConfigurationTests {
         #expect(config.cache == .buffered)
     }
 
-    @Test("configuration with mode")
-    func configurationWithMode() {
+    @Test
+    func `configuration with mode`() {
         let readConfig = Kernel.File.Open.Configuration(mode: .read)
         let writeConfig = Kernel.File.Open.Configuration(mode: .write)
         let readWriteConfig = Kernel.File.Open.Configuration(mode: .readWrite)
@@ -69,8 +69,8 @@ struct FileOpenConfigurationTests {
         #expect(readWriteConfig.mode == .readWrite)
     }
 
-    @Test("configuration cache modes")
-    func configurationCacheModes() {
+    @Test
+    func `configuration cache modes`() {
         var config = Kernel.File.Open.Configuration()
 
         config.cache = .buffered
@@ -87,8 +87,8 @@ struct FileOpenConfigurationTests {
     @Suite("Kernel.File Handle Integration")
     struct HandleIntegrationTests {
 
-        @Test("open and close file with buffered mode")
-        func openCloseBuffered() throws {
+        @Test
+        func `open and close file with buffered mode`() throws {
             let content = "Hello, World!"
             let pathString = makeTempFile(prefix: "handle-test", content: content)
             defer { removeTempFile(pathString) }
@@ -112,8 +112,8 @@ struct FileOpenConfigurationTests {
         // @Test("write file with buffered mode")
         // func writeBuffered() throws { ... }
 
-        @Test("open with .auto(.fallbackToBuffered) succeeds")
-        func openAutoFallback() throws {
+        @Test
+        func `open with .auto(.fallbackToBuffered) succeeds`() throws {
             let content = "Auto fallback test"
             let pathString = makeTempFile(prefix: "handle-auto", content: content)
             defer { removeTempFile(pathString) }

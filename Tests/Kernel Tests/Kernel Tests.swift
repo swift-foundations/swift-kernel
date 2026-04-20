@@ -26,14 +26,14 @@ extension Kernel {
 // MARK: - Integration Tests (require full Kernel module for file I/O)
 
 extension Kernel.Test.Unit {
-    @Test("Kernel namespace exists")
-    func namespaceExists() {
+    @Test
+    func `Kernel namespace exists`() {
         // Kernel is an enum namespace, verify it compiles
         _ = Kernel.self
     }
 
-    @Test("open and close file")
-    func openAndClose() throws {
+    @Test
+    func `open and close file`() throws {
         let pathString = Kernel.Temporary.filePath(prefix: "kernel-test")
 
         try Kernel.Path.scope(pathString) { path in
@@ -55,8 +55,8 @@ extension Kernel.Test.Unit {
         }
     }
 
-    @Test("open nonexistent file throws path error")
-    func openNonexistent() throws {
+    @Test
+    func `open nonexistent file throws path error`() throws {
         #if os(Windows)
             let pathString = "C:\\nonexistent\\path\\that\\does\\not\\exist\\file.txt"
         #else
@@ -75,8 +75,8 @@ extension Kernel.Test.Unit {
         }
     }
 
-    @Test("write and read data")
-    func writeAndRead() throws {
+    @Test
+    func `write and read data`() throws {
         let pathString = Kernel.Temporary.filePath(prefix: "kernel-test-rw")
         let testData: [UInt8] = [0x48, 0x65, 0x6C, 0x6C, 0x6F]  // "Hello"
 
@@ -110,8 +110,8 @@ extension Kernel.Test.Unit {
         }
     }
 
-    @Test("read returns 0 on EOF")
-    func readEOF() throws {
+    @Test
+    func `read returns 0 on EOF`() throws {
         let pathString = Kernel.Temporary.filePath(prefix: "kernel-test-eof")
 
         try Kernel.Path.scope(pathString) { path in
@@ -141,15 +141,15 @@ extension Kernel.Test.Unit {
 // MARK: - Edge Cases (Integration)
 
 extension Kernel.Test.EdgeCase {
-    @Test("close invalid descriptor throws")
-    func closeInvalid() {
+    @Test
+    func `close invalid descriptor throws`() {
         #expect(throws: (any Swift.Error).self) {
             try Kernel.Close.close(.invalid)
         }
     }
 
-    @Test("read from invalid descriptor throws")
-    func readInvalid() {
+    @Test
+    func `read from invalid descriptor throws`() {
         var buffer = [UInt8](repeating: 0, count: 10)
         #expect(throws: (any Swift.Error).self) {
             try buffer.withUnsafeMutableBytes { buf in
@@ -158,8 +158,8 @@ extension Kernel.Test.EdgeCase {
         }
     }
 
-    @Test("write to invalid descriptor throws")
-    func writeInvalid() {
+    @Test
+    func `write to invalid descriptor throws`() {
         let data: [UInt8] = [1, 2, 3]
         #expect(throws: (any Swift.Error).self) {
             try data.withUnsafeBytes { buf in

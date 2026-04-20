@@ -26,8 +26,8 @@ extension Kernel.Thread.Spawn {
 // MARK: - Unit Tests
 
 extension Kernel.Thread.Spawn.Test.Unit {
-    @Test("spawn creates thread that executes body")
-    func spawnExecutesBody() throws {
+    @Test
+    func `spawn creates thread that executes body`() throws {
         let executed = Atomic<Bool>(false)
         let handle = try Kernel.Thread.spawn {
             executed.store(true, ordering: .releasing)
@@ -36,8 +36,8 @@ extension Kernel.Thread.Spawn.Test.Unit {
         #expect(executed.load(ordering: .acquiring) == true)
     }
 
-    @Test("spawn with value transfers ownership")
-    func spawnWithValueTransfersOwnership() throws {
+    @Test
+    func `spawn with value transfers ownership`() throws {
         let receivedValue = Atomic<Int>(0)
         let handle = try Kernel.Thread.spawn(42) { value in
             receivedValue.store(value, ordering: .releasing)
@@ -46,8 +46,8 @@ extension Kernel.Thread.Spawn.Test.Unit {
         #expect(receivedValue.load(ordering: .acquiring) == 42)
     }
 
-    @Test("Handle.join waits for thread completion")
-    func handleJoinWaits() throws {
+    @Test
+    func `Handle.join waits for thread completion`() throws {
         let completed = Atomic<Bool>(false)
         let handle = try Kernel.Thread.spawn {
             // Small delay to ensure we're actually waiting
@@ -61,8 +61,8 @@ extension Kernel.Thread.Spawn.Test.Unit {
         #expect(completed.load(ordering: .acquiring) == true)
     }
 
-    @Test("Handle.isCurrent returns false from main thread")
-    func isCurrentFalseFromMain() throws {
+    @Test
+    func `Handle.isCurrent returns false from main thread`() throws {
         let handle = try Kernel.Thread.spawn {
             // Do nothing
         }
