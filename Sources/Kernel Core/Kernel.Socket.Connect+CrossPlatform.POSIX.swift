@@ -12,15 +12,27 @@
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)
 
 public import Kernel_Socket_Primitives
+public import RFC_791
+public import RFC_4291
 
 // MARK: - Cross-platform Connect surface on POSIX
 //
-// The typed address types (`Kernel.Socket.Address.IPv4`, `IPv6`, `Unix`,
-// `Storage`) and the `Kernel.Socket.Connect` namespace are declared in
-// swift-iso-9945 (L2 POSIX). No equivalent surface exists on Windows today,
-// so the cross-platform `Kernel.Socket.Connect.connect(_:, address:)` API is
-// POSIX-scoped. Windows consumers use `Windows.Kernel.Socket.connect(...)`
-// directly via the `UnsafePointer<sockaddr>` Winsock API.
+// Two surface layers:
+//
+// 1. POSIX-typed overloads (`Storage+length`, `Kernel.Socket.Address.IPv4`,
+//    `Kernel.Socket.Address.IPv6`, `Kernel.Socket.Address.Unix`) — thin
+//    delegates through `POSIX.Kernel.Socket.Connect.connect`. These take
+//    iso-9945's sockaddr-wrapping types directly. POSIX-only; the iso-9945
+//    types don't exist on Windows.
+//
+// 2. Cross-platform RFC-valued overloads (`RFC_791.IPv4.Address` + port,
+//    `RFC_4291.IPv6.Address` + port + flow + scope) — portable currency.
+//    On POSIX these marshal into iso-9945 sockaddr wrappers at the unifier
+//    boundary and delegate to the policy wrapper. When Windows gains a
+//    corresponding `Kernel.Socket.Connect+CrossPlatform.Windows.swift`
+//    (pending windows-standard sockaddr wrappers), it will expose the same
+//    RFC-valued signatures, closing the cross-platform gap without exposing
+//    `UnsafePointer<sockaddr>` or platform-specific types.
 
 extension Kernel.Socket.Connect {
     /// Connects a socket to a peer, awaiting completion if interrupted.
@@ -100,6 +112,88 @@ extension Kernel.Socket.Connect {
         address: Kernel.Socket.Address.Unix
     ) throws(Kernel.Socket.Error) {
         try POSIX.Kernel.Socket.Connect.connect(descriptor, address: address)
+    }
+}
+
+// MARK: - Cross-platform RFC-valued overloads
+
+extension Kernel.Socket.Connect {
+    /// Connects a socket to an IPv4 peer identified by an RFC 791 address
+    /// and a port, awaiting completion if interrupted.
+    ///
+    /// Takes the portable currency (``RFC_791/IPv4/Address``) and marshals
+    /// it into a POSIX `sockaddr_in` at the unifier boundary: `rawValue` is
+    /// host-order, `sin_addr.s_addr` expects network-order, so the marshal
+    /// is a single `.bigEndian` swap. See
+    /// `swift-institute/Research/ip-address-value-type-memory-layout.md` for
+    /// the design rationale.
+    ///
+    /// See ``connect(_:address:length:)`` for the completion-await semantic.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The socket descriptor.
+    ///   - address: The IPv4 peer address.
+    ///   - port: Port number in host byte order.
+    /// - Throws: ``Kernel/Socket/Error`` on failure (excluding EINTR).
+    @inlinable
+    public static func connect(
+        _ descriptor: borrowing Kernel.Socket.Descriptor,
+        address: RFC_791.IPv4.Address,
+        port: UInt16
+    ) throws(Kernel.Socket.Error) {
+        let socketAddress = Kernel.Socket.Address.IPv4(
+            address: address.rawValue.bigEndian,
+            port: port
+        )
+        try POSIX.Kernel.Socket.Connect.connect(descriptor, address: socketAddress)
+    }
+
+    /// Connects a socket to an IPv6 peer identified by an RFC 4291 address
+    /// plus port / flow / scope metadata, awaiting completion if interrupted.
+    ///
+    /// Marshals the RFC value's 8 host-order segments into 16 network-order
+    /// bytes at the unifier boundary, constructs an iso-9945
+    /// `Kernel.Socket.Address.IPv6`, and delegates through the POSIX policy
+    /// wrapper.
+    ///
+    /// See ``connect(_:address:length:)`` for the completion-await semantic.
+    ///
+    /// - Parameters:
+    ///   - descriptor: The socket descriptor.
+    ///   - address: The IPv6 peer address.
+    ///   - port: Port number in host byte order.
+    ///   - flowInfo: IPv6 flow information field.
+    ///   - scopeId: IPv6 scope identifier.
+    /// - Throws: ``Kernel/Socket/Error`` on failure (excluding EINTR).
+    @inlinable
+    public static func connect(
+        _ descriptor: borrowing Kernel.Socket.Descriptor,
+        address: RFC_4291.IPv6.Address,
+        port: UInt16,
+        flowInfo: UInt32 = 0,
+        scopeId: UInt32 = 0
+    ) throws(Kernel.Socket.Error) {
+        let s = address.segments
+        let bytes: (
+            UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
+            UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8
+        ) = (
+            UInt8(s.0 >> 8), UInt8(s.0 & 0xFF),
+            UInt8(s.1 >> 8), UInt8(s.1 & 0xFF),
+            UInt8(s.2 >> 8), UInt8(s.2 & 0xFF),
+            UInt8(s.3 >> 8), UInt8(s.3 & 0xFF),
+            UInt8(s.4 >> 8), UInt8(s.4 & 0xFF),
+            UInt8(s.5 >> 8), UInt8(s.5 & 0xFF),
+            UInt8(s.6 >> 8), UInt8(s.6 & 0xFF),
+            UInt8(s.7 >> 8), UInt8(s.7 & 0xFF)
+        )
+        let socketAddress = Kernel.Socket.Address.IPv6(
+            address: bytes,
+            port: port,
+            flowInfo: flowInfo,
+            scopeId: scopeId
+        )
+        try POSIX.Kernel.Socket.Connect.connect(descriptor, address: socketAddress)
     }
 }
 
