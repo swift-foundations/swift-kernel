@@ -427,6 +427,66 @@ After landing the fix:
    to this handoff's landing SHA. That handoff stays in place (its
    primary scope is Read/Write; Addendum §4 was informational).
 
+## Supervisor Ground Rules (per `/supervise` [SUPER-002], [SUPER-014])
+
+Principal: the chat that authored this handoff (2026-04-21). Subordinate:
+whichever session picks up the copy-pastable instruction. The entries
+below are the binding constraint contract for the duration of this
+handoff; they compose with the architectural constraints in the §
+Constraints section below. Drift from any entry triggers re-injection
+per [SUPER-013]; in-absentia questions re-classify per [SUPER-014a].
+
+1. **fact:** In scope — exactly the ten iso-9945 L2 `public static func` declarations enumerated in § Relevant Files § "L2 raw (target of `@_disfavoredOverload`)" (Accept ×2, Connect ×4, Send ×2, Receive ×2). Out of scope — the Windows closure handoff, swift-sockets `Sockets.Error.swift` / `Sockets.TCP.*` files (user's Phase-2 IO refactor debt), RFC→sockaddr marshalling seam, any swift-sockets / swift-kernel / swift-posix / swift-file-system / swift-io source file. Deferred — iso-9945 `to(_:…)` / `from(_:…)` overloads (no current swift-sockets sibling, so no collision to pre-empt).
+
+2. **MUST** apply `@_disfavoredOverload` as one line immediately above each of the ten targeted `public static func` declarations, with no edits to bodies, signatures, docstrings, or imports.
+   - Expected diff shape across the four iso-9945 Socket files: ≤10 insertions, 0 deletions.
+
+3. **MUST NOT** attempt the import-demotion route (internal `import ISO_9945_Kernel_Socket` in swift-sockets, or demoting iso-9945 `@_exported` re-exports anywhere in the chain).
+   - (why: per `feedback_inlinable_blocks_internal_import` — swift-sockets' unifiers are `@inlinable`, which is structurally incompatible with internal-imported public-API references. The Read/Write investigation exhausted this route; re-attempting burns time and surfaces identical compile errors.)
+
+4. **MUST NOT** preemptively tag iso-9945's `to(_:, from:, options:, address:, addressLength:)` (Send) or `from(_:, into:, options:)` (Receive) overloads with `@_disfavoredOverload`.
+   - (why: those have no matching swift-sockets unifier today, so there is no competing overload to disfavor. `@_disfavoredOverload` on an uncompeted overload is dead-weight noise and risks confusing a future reader into assuming a collision that doesn't exist.)
+
+5. **MUST NOT** propose renaming iso-9945 Socket L2 methods (Phase-A style, as used for Flush `fsync`/`fdatasync`/`fullFsync`/`barrierFsync`).
+   - (why: POSIX defines the spec-literal names as `connect`, `accept`, `send`, `sendmsg`, `recv`, `recvmsg` — these ARE the spec names. No renaming alternative exists. Same reasoning that ruled out renaming for Read/Write.)
+
+6. **ask:** STOP and escalate to the user when ANY of the following holds:
+   - A fifth or later collision appears beyond the ten enumerated (indicating a new unifier or L2 method has landed since 2026-04-21 drafting);
+   - swift-sockets' `main` is no longer blocked on the Phase-2 IO refactor (build passes without `IO_Core` / `IO.Error` errors) AND a test now exercises a Socket unifier method — verification shifts from latent-preventative to active-fix, which changes acceptance criterion #1's signal semantics;
+   - Any build error surfaces on iso-9945 / swift-kernel / swift-posix / swift-file-system / swift-io that is NOT obviously a direct consequence of `@_disfavoredOverload` placement — that would be drift, not fix effect.
+
+### Acceptance criteria (per [SUPER-009])
+
+Each criterion names its positive verification source per [SUPER-009].
+
+1. `rm -rf .build && swift build --build-tests` exits 0 on Darwin for swift-iso-9945, swift-kernel, swift-posix, swift-file-system, swift-io (five packages).
+   - verified via: **build/test output** — principal runs the clean build in its own shell and reads the exit code per package.
+2. `swift test` on Darwin produces the expected pre-existing test counts — swift-iso-9945 560/560, swift-kernel 90/90, swift-posix 20/20, swift-file-system 712/712, swift-io 61/61.
+   - verified via: **build/test output** — principal runs tests in its own shell. Counts match the Read/Write landing baseline.
+3. `git diff --stat` in swift-iso-9945 shows exactly four files modified (`ISO 9945 Kernel Socket/ISO 9945.Kernel.Socket.{Accept,Connect,Send,Receive}.swift`) with total insertions ≤10, deletions = 0.
+   - verified via: **disk/git state** — principal runs `git diff --stat` and inspects the diff manually, confirming only `@_disfavoredOverload` lines were added.
+4. `git status --short` is clean across swift-kernel, swift-posix, swift-file-system, swift-io, swift-sockets, swift-darwin, swift-linux, swift-windows-standard — no incidental modifications leaked out of scope.
+   - verified via: **disk/git state** — principal runs `git status --short` in each repo.
+5. Commit lands in swift-iso-9945 with the exact message template from § Per-phase commits (the `ISO 9945 Kernel Socket: @_disfavoredOverload on Connect/Accept/Send/Receive L2` block, not a paraphrase).
+   - verified via: **current file state** — principal reads `git log -1` and compares body to the template.
+6. `## Findings` section appended to `swift-kernel/HANDOFF-socket-family-l2-l3-ambiguity.md` with: resolution summary, the Appendix C counts table filled in, commit SHA, any surprises encountered, reflection prompt on whether Addendum §4 anticipation held.
+   - verified via: **current file state** — principal re-reads the handoff's Findings section end-to-end, not a subordinate summary of it (per [SUPER-009] "Read the artifact, not the summary").
+7. One-line pointer appended to `swift-kernel/HANDOFF-io-read-write-l2-l3-ambiguity.md` Addendum §4 (after the `## 4. Scope warning — Socket family …` block) citing the Socket handoff's landing SHA and marking the deferred item closed.
+   - verified via: **current file state** — principal reads the end of §4 and confirms the pointer is present.
+
+### Termination modes (per [SUPER-010])
+
+- **Success**: all 7 acceptance criteria verified by the principal. Report which criteria verified by which source, end supervision, no further dispatch.
+- **Re-handoff**: if criterion #1 or #2 reveals an ecosystem regression unrelated to `@_disfavoredOverload` (e.g., a toolchain update mid-session broke something else), or if criterion #3 shows unintended diffs that cannot be cleanly reverted, invoke `/handoff` to re-scope. Cite ground-rules entry status per [SUPER-011].
+- **Escalation**: any ground-rules entry **ask:** condition fires. Halt work, surface the question to the user per [SUPER-012], persist to this file's § Open Questions section (create the section if needed).
+
+### Drift signals specific to this handoff (additive to [SUPER-006] defaults)
+
+- Subordinate edits any file outside `swift-iso-9945/Sources/ISO 9945 Kernel Socket/` (append-only exception: the handoff's Findings section per criterion #6 and the Read/Write handoff's §4 pointer per criterion #7 are in-scope).
+- Subordinate proposes "while we're here, fix {X}" improvements to iso-9945 or swift-sockets beyond the ten-line mechanical change.
+- Subordinate's diff includes comments, docstring edits, signature reformatting, or whitespace-only changes in the four files — the fix is attribute-only, a pure one-line insertion above each method.
+- Subordinate reports success on criterion #1 or #2 without naming which command they ran and its exit code — attestation ≠ verification per [SUPER-009].
+
 ## Constraints
 
 - swift-6.3+ / swift 6 language mode (per ecosystem `[PATTERN-005]`).
