@@ -51,7 +51,7 @@ extension Kernel.Random {
     /// - Throws: ``Kernel/Random/Error`` on failure.
     @inlinable
     public static func fill(_ buffer: UnsafeMutableRawBufferPointer) throws(Kernel.Random.Error) {
-        #if canImport(Darwin)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
         try unsafe Darwin.Kernel.Random.arc4random(buffer)
         #else
         try unsafe Linux.Kernel.Random.getrandom(buffer)
