@@ -149,23 +149,29 @@ All iso-9945 methods listed below receive `@_disfavoredOverload`.
 | `swift-iso-9945/.../ISO 9945.Kernel.Socket.Connect.swift:63` — `connect(_, address: IPv6)` | `swift-sockets/.../Kernel.Socket.Connect+CrossPlatform.POSIX.swift:94` |
 | `swift-iso-9945/.../ISO 9945.Kernel.Socket.Connect.swift:71` — `connect(_, address: Unix)` | `swift-sockets/.../Kernel.Socket.Connect+CrossPlatform.POSIX.swift:110` |
 | `swift-iso-9945/.../ISO 9945.Kernel.Socket.Send.swift:35` — `send(_, from span:, options:)` | `swift-sockets/.../Kernel.Socket.Send+CrossPlatform.POSIX.swift:44` |
+| `swift-iso-9945/.../ISO 9945.Kernel.Socket.Send.swift:65` — `to(_, from span:, options:, address:, addressLength:)` | `swift-sockets/.../Kernel.Socket.Send+CrossPlatform.POSIX.swift:70` |
 | `swift-iso-9945/.../ISO 9945.Kernel.Socket.Send.swift:100` — `message(_, header:, options:)` | `swift-sockets/.../Kernel.Socket.Send+CrossPlatform.POSIX.swift:103` |
 | `swift-iso-9945/.../ISO 9945.Kernel.Socket.Receive.swift:34` — `receive(_, into span:, options:)` | `swift-sockets/.../Kernel.Socket.Receive+CrossPlatform.POSIX.swift:46` |
+| `swift-iso-9945/.../ISO 9945.Kernel.Socket.Receive.swift:62` — `from(_, into span:, options:)` | `swift-sockets/.../Kernel.Socket.Receive+CrossPlatform.POSIX.swift:70` |
 | `swift-iso-9945/.../ISO 9945.Kernel.Socket.Receive.swift:102` — `message(_, header:, options:)` | `swift-sockets/.../Kernel.Socket.Receive+CrossPlatform.POSIX.swift:95` |
 
 ### L2 raw (NOT part of this fix — no collision)
 
-iso-9945 also declares these methods; swift-sockets has no matching
-unifier overloads, so no `@_disfavoredOverload` is needed:
+No remaining iso-9945 Socket methods are outside this handoff's scope:
+every `public static func` declaration in the four `ISO 9945.Kernel.Socket.{Accept,Connect,Send,Receive}.swift`
+files has a matching swift-sockets unifier overload with identical
+signature and is covered by the collision map above.
 
-- `ISO 9945.Kernel.Socket.Send.swift:65` — `to(_, from span:, options:, address:, addressLength:)`. No swift-sockets sibling; call sites would resolve unambiguously through iso-9945 today.
-- `ISO 9945.Kernel.Socket.Receive.swift:62` — `from(_, into span:, options:)`. No swift-sockets sibling.
-
-Do NOT add `@_disfavoredOverload` to these. If swift-sockets later adds
-`Kernel.Socket.Send.to(…)` / `Kernel.Socket.Receive.from(…)` unifiers —
-or when the handoff's Out of Scope §"Span overloads parity" follow-on is
-reconsidered — the same mechanical treatment applies THEN, not
-speculatively now.
+> **Drafting note retained for traceability**: this section originally
+> listed `Send.to(_:…)` and `Receive.from(_:…)` as "no collision"
+> based on an incomplete verification of swift-sockets' state at
+> handoff-drafting time (2026-04-21). A subordinate grep pass against
+> current swift-sockets sources surfaced the live collisions; scope
+> extended from 10 to 12 declarations per the supervisor's amendment
+> to Ground Rules entry #1 (see § Supervisor Ground Rules). Both `to`
+> and `from` unifiers landed in swift-sockets commit `9a83433` (the
+> same migration commit already cited), not in a subsequent change —
+> the drafting error was author-side, not drift.
 
 ### L3 domain (unchanged by this handoff)
 
@@ -297,7 +303,7 @@ investigation already exhausted this route; do not re-retread.
 
 One phase, one commit:
 
-1. **swift-iso-9945**: apply `@_disfavoredOverload` to all ten `public
+1. **swift-iso-9945**: apply `@_disfavoredOverload` to all twelve `public
    static func` declarations in `Sources/ISO 9945 Kernel Socket/`. Commit
    message mirrors `9aa06e6`:
 
@@ -310,7 +316,8 @@ One phase, one commit:
    > typealias. Swift's overload resolution ambiguates between the L2 raw
    > and L3 unifier entries.
    >
-   > Tag the ten colliding L2 `public static func` declarations with
+   > Tag the twelve colliding L2 `public static func` declarations
+   > (Accept ×2, Connect ×4, Send ×3, Receive ×3) with
    > `@_disfavoredOverload` so the L3 unifier wins resolution cleanly;
    > raw L2 access remains reachable via the qualified
    > `ISO_9945.Kernel.Socket.*` path. Mirrors the architecture established
@@ -436,16 +443,17 @@ handoff; they compose with the architectural constraints in the §
 Constraints section below. Drift from any entry triggers re-injection
 per [SUPER-013]; in-absentia questions re-classify per [SUPER-014a].
 
-1. **fact:** In scope — exactly the ten iso-9945 L2 `public static func` declarations enumerated in § Relevant Files § "L2 raw (target of `@_disfavoredOverload`)" (Accept ×2, Connect ×4, Send ×2, Receive ×2). Out of scope — the Windows closure handoff, swift-sockets `Sockets.Error.swift` / `Sockets.TCP.*` files (user's Phase-2 IO refactor debt), RFC→sockaddr marshalling seam, any swift-sockets / swift-kernel / swift-posix / swift-file-system / swift-io source file. Deferred — iso-9945 `to(_:…)` / `from(_:…)` overloads (no current swift-sockets sibling, so no collision to pre-empt).
+1. **fact:** In scope — exactly the twelve iso-9945 L2 `public static func` declarations enumerated in § Relevant Files § "L2 raw (target of `@_disfavoredOverload`)" (Accept ×2, Connect ×4, Send ×3, Receive ×3). Out of scope — the Windows closure handoff, swift-sockets `Sockets.Error.swift` / `Sockets.TCP.*` files (user's Phase-2 IO refactor debt), RFC→sockaddr marshalling seam, any swift-sockets / swift-kernel / swift-posix / swift-file-system / swift-io source file. (Revised 2026-04-21: originally scoped to 10; subordinate staleness-check against current swift-sockets surface surfaced two additional live collisions — `Send.to(_:from:options:address:addressLength:)` at swift-sockets `Kernel.Socket.Send+CrossPlatform.POSIX.swift:70` and `Receive.from(_:into:options:)` at swift-sockets `Kernel.Socket.Receive+CrossPlatform.POSIX.swift:70`. Both landed in the same migration commit `9a83433` the handoff already cites. Scope extended to include them; the former "deferred — no sibling" claim is retired.)
 
-2. **MUST** apply `@_disfavoredOverload` as one line immediately above each of the ten targeted `public static func` declarations, with no edits to bodies, signatures, docstrings, or imports.
-   - Expected diff shape across the four iso-9945 Socket files: ≤10 insertions, 0 deletions.
+2. **MUST** apply `@_disfavoredOverload` as one line immediately above each of the twelve targeted `public static func` declarations, with no edits to bodies, signatures, docstrings, or imports.
+   - Expected diff shape across the four iso-9945 Socket files: ≤12 insertions, 0 deletions.
 
 3. **MUST NOT** attempt the import-demotion route (internal `import ISO_9945_Kernel_Socket` in swift-sockets, or demoting iso-9945 `@_exported` re-exports anywhere in the chain).
    - (why: per `feedback_inlinable_blocks_internal_import` — swift-sockets' unifiers are `@inlinable`, which is structurally incompatible with internal-imported public-API references. The Read/Write investigation exhausted this route; re-attempting burns time and surfaces identical compile errors.)
 
-4. **MUST NOT** preemptively tag iso-9945's `to(_:, from:, options:, address:, addressLength:)` (Send) or `from(_:, into:, options:)` (Receive) overloads with `@_disfavoredOverload`.
-   - (why: those have no matching swift-sockets unifier today, so there is no competing overload to disfavor. `@_disfavoredOverload` on an uncompeted overload is dead-weight noise and risks confusing a future reader into assuming a collision that doesn't exist.)
+4. ~~**MUST NOT** preemptively tag iso-9945's `to(_:, from:, options:, address:, addressLength:)` (Send) or `from(_:, into:, options:)` (Receive) overloads with `@_disfavoredOverload`.~~
+   - **RETIRED 2026-04-21** per [SUPER-015] on subordinate staleness-check. Rationale (`no matching swift-sockets unifier today`) was false at drafting time — the migration commit `9a83433` the handoff cites did include `Kernel.Socket.Send.to` and `Kernel.Socket.Receive.from` unifier overloads with bit-for-bit identical signatures to iso-9945's. Scope fact #1 now covers 12 declarations; this MUST NOT is retired, not replaced. Merges into entry #1.
+   - **Replacement guidance**: apply `@_disfavoredOverload` to those two declarations under the same mechanical rule as the other ten. Do NOT skip them; their omission would leave a known latent ambiguity on `main`, contradicting the preventative intent of the handoff.
 
 5. **MUST NOT** propose renaming iso-9945 Socket L2 methods (Phase-A style, as used for Flush `fsync`/`fdatasync`/`fullFsync`/`barrierFsync`).
    - (why: POSIX defines the spec-literal names as `connect`, `accept`, `send`, `sendmsg`, `recv`, `recvmsg` — these ARE the spec names. No renaming alternative exists. Same reasoning that ruled out renaming for Read/Write.)
@@ -463,7 +471,7 @@ Each criterion names its positive verification source per [SUPER-009].
    - verified via: **build/test output** — principal runs the clean build in its own shell and reads the exit code per package.
 2. `swift test` on Darwin produces the expected pre-existing test counts — swift-iso-9945 560/560, swift-kernel 90/90, swift-posix 20/20, swift-file-system 712/712, swift-io 61/61.
    - verified via: **build/test output** — principal runs tests in its own shell. Counts match the Read/Write landing baseline.
-3. `git diff --stat` in swift-iso-9945 shows exactly four files modified (`ISO 9945 Kernel Socket/ISO 9945.Kernel.Socket.{Accept,Connect,Send,Receive}.swift`) with total insertions ≤10, deletions = 0.
+3. `git diff --stat` in swift-iso-9945 shows exactly four files modified (`ISO 9945 Kernel Socket/ISO 9945.Kernel.Socket.{Accept,Connect,Send,Receive}.swift`) with total insertions ≤12, deletions = 0.
    - verified via: **disk/git state** — principal runs `git diff --stat` and inspects the diff manually, confirming only `@_disfavoredOverload` lines were added.
 4. `git status --short` is clean across swift-kernel, swift-posix, swift-file-system, swift-io, swift-sockets, swift-darwin, swift-linux, swift-windows-standard — no incidental modifications leaked out of scope.
    - verified via: **disk/git state** — principal runs `git status --short` in each repo.
@@ -606,7 +614,7 @@ Fill in during landing:
 
 | Package | Methods tagged | Sites compared | Build clean | Tests |
 |---|---|---|---|---|
-| swift-iso-9945 | 10 | 10 | pending | pending |
+| swift-iso-9945 | 12 | 12 | pending | pending |
 | swift-kernel | 0 (scope boundary) | — | pending | pending |
 | swift-posix | 0 (scope boundary) | — | pending | pending |
 | swift-sockets | 0 (scope boundary; still blocked by IO refactor) | — | blocked | blocked |
