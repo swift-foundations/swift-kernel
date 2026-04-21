@@ -610,13 +610,133 @@ skill; that is out of this handoff's scope.
 
 ## Appendix C — Ambiguity counts table (for the Findings section)
 
-Fill in during landing:
+Filled at landing (commit `be4bfcc`, 2026-04-21):
 
 | Package | Methods tagged | Sites compared | Build clean | Tests |
 |---|---|---|---|---|
-| swift-iso-9945 | 12 | 12 | pending | pending |
-| swift-kernel | 0 (scope boundary) | — | pending | pending |
-| swift-posix | 0 (scope boundary) | — | pending | pending |
-| swift-sockets | 0 (scope boundary; still blocked by IO refactor) | — | blocked | blocked |
-| swift-file-system | 0 | — | pending | pending |
-| swift-io | 0 | — | pending | pending |
+| swift-iso-9945 | 12 | 12 | yes | 560 / 560 |
+| swift-kernel | 0 (scope boundary) | — | yes | 90 / 90 |
+| swift-posix | 0 (scope boundary) | — | yes | 20 / 20 |
+| swift-sockets | 0 (scope boundary; still blocked by Phase-2 IO refactor) | — | blocked | blocked |
+| swift-file-system | 0 | — | yes | 712 / 712 |
+| swift-io | 0 | — | yes | 61 / 61 |
+
+---
+
+## Findings (2026-04-21, executing session)
+
+### Resolution: `@_disfavoredOverload` on iso-9945 Socket family (12 declarations)
+
+Applied the recommended approach verbatim. Twelve `public static func`
+declarations in `swift-iso-9945/Sources/ISO 9945 Kernel Socket/` received
+`@_disfavoredOverload` on the line immediately above the `public static
+func` keyword, after the final doc comment — bit-for-bit the mechanical
+shape established by the Read/Write precedent at `9aa06e6`.
+
+Distribution:
+
+- `ISO 9945.Kernel.Socket.Accept.swift`: 2 — `accept(_:Kernel.Socket.Descriptor)` and `accept(_:Kernel.Descriptor)`.
+- `ISO 9945.Kernel.Socket.Connect.swift`: 4 — `connect(_, address: Storage, length:)`, `…Address.IPv4`, `…Address.IPv6`, `…Address.Unix`. The adjacent `awaitCompletion(_:)` is NOT tagged — no swift-sockets sibling exists.
+- `ISO 9945.Kernel.Socket.Send.swift`: 3 — `send(_, from span:, options:)`, `to(_, from span:, options:, address:, addressLength:)`, `message(_, header:, options:)`.
+- `ISO 9945.Kernel.Socket.Receive.swift`: 3 — `receive(_, into span:, options:)`, `from(_, into span:, options:)`, `message(_, header:, options:)`.
+
+Landing SHA: swift-iso-9945 **`be4bfcc`** on `main` (`ISO 9945 Kernel
+Socket: @_disfavoredOverload on Connect/Accept/Send/Receive L2`, template-
+verbatim commit message from § Per-phase commits).
+
+Diff shape: 12 insertions across 4 files, 0 deletions — matches the
+supervisor's expected diff shape exactly (ground-rule acceptance
+criterion #3: insertions ≤12).
+
+### Verification
+
+Clean builds (`rm -rf .build` + `swift build --build-tests`) + `swift
+test` on Darwin (Xcode 26.4.1 / Swift 6.3.1):
+
+| Package             | Tests       | Status |
+|---------------------|-------------|--------|
+| swift-iso-9945      | 560 / 560   | pass   |
+| swift-kernel        | 90 / 90     | pass   |
+| swift-posix         | 20 / 20     | pass   |
+| swift-file-system   | 712 / 712   | pass   |
+| swift-io            | 61 / 61     | pass   |
+
+All five packages exactly matched the baseline counts from the Read/Write
+landing. `git status --short` clean in all other repos in the scope
+boundary (swift-kernel, swift-posix, swift-file-system, swift-io,
+swift-sockets) — no incidental changes leaked out of scope.
+
+### Surprises
+
+1. **Drafting-time scope enumeration error — 10 vs 12.** The staleness-
+   check grep pass (per § Proposal staleness) surfaced two live
+   collisions that the handoff had listed as "no collision" under
+   § Relevant Files § "L2 raw (NOT part of this fix — no collision)":
+
+   - `Send.swift:65` — `to(_:…)` — swift-sockets sibling at `Send+CrossPlatform.POSIX.swift:70`, bit-for-bit identical signature.
+   - `Receive.swift:62` — `from(_:…)` — swift-sockets sibling at `Receive+CrossPlatform.POSIX.swift:70`, bit-for-bit identical signature.
+
+   Both landed in swift-sockets' unifier migration commit `9a83433` (the
+   same commit the handoff already cites) — the handoff author's survey
+   simply missed them. Confirmed via direct read of both files; not an
+   upstream drift, not a sibling-session edit.
+
+   Surfaced as a class-(b) decision at the file-write boundary per
+   [SUPER] ground-rules. Supervisor amended the handoff's Ground Rules
+   entry #1 ("ten" → "twelve"), retired entry #4 (the `to`/`from` MUST-
+   NOT) with strikethrough + replacement guidance per [SUPER-015]
+   merges-into semantics, and committed at swift-kernel `688574a`. The
+   original drafting rationale is preserved in a drafting-note block in
+   § Relevant Files for audit traceability.
+
+   Working-as-designed: the [HANDOFF-016] staleness protocol caught a
+   genuine drafting error before landing, not an after-drift scope gap.
+
+2. **Transient build error on first cold-cache build.** The initial
+   `rm -rf .build && swift build --build-tests` in swift-iso-9945
+   surfaced a one-shot `error: no such module 'Kernel_Event_Primitives'`
+   from `Tests/Support/Lock Helper/ISO 9945.Lock.Helper.swift:33`, while
+   the module itself was concurrently being compiled (adjacent lines of
+   the same build log show `Compiling Kernel_Event_Primitives
+   Kernel.Event.Options.swift` et al.). Rebuilding with my changes re-
+   stashed — main at `9aa06e6` builds clean; restoring my changes builds
+   clean too. Reproducibly transient; attributable to SwiftPM build
+   ordering on a cold cache with a large dependency graph. No follow-up
+   warranted — does not reproduce on warm incremental builds.
+
+3. **No scope-boundary leaks.** None of swift-kernel, swift-posix,
+   swift-file-system, swift-io required any edit. The ambiguity fix is
+   fully upstream of the L3 policy wrappers and the domain packages, as
+   the handoff asserted.
+
+### Reflection prompt — was the Addendum §4 anticipation accurate?
+
+Yes, the Read/Write handoff's Addendum §4 anticipation held, with one
+nuance worth noting:
+
+- **Anticipated**: the ambiguity shape is identical to Read/Write; the
+  `@_disfavoredOverload` remedy ports over mechanically. ✓ Confirmed —
+  12 one-line insertions, zero body edits, template-verbatim commit
+  message, all five package test baselines held.
+- **Anticipated**: the swift-sockets migration would shift the unifier
+  home but not the ambiguity pattern. ✓ Confirmed — the paths moved,
+  the shape persisted, and the fix still operates strictly on the iso-
+  9945 L2 surface.
+- **Partial miss**: the Addendum §4 enumeration of affected methods
+  (`Accept`, `Send`, `Receive`, `Connect`) and the handoff's scope
+  table matched the POSIX-typed overload family but under-counted by
+  two (Send's `to`, Receive's `from`). This is the same class of error
+  as Read/Write's Addendum §3 initial bias toward the simpler fix —
+  both handoffs had a first-pass enumeration that the executing
+  session's staleness check tightened. The rule suggested by the
+  Read/Write Addendum §6 reflection (*"any [PLAT-ARCH-008e] remediation
+  where the spec-literal name equals the intent-level name requires a
+  Phase-A-style disambiguation before the L3 unifier lands, not
+  after"*) would have caught the same-name collision at unifier-
+  landing time; the follow-on [HANDOFF-016] staleness re-grep caught
+  it at remediation time. Either gate works; the earlier gate would
+  avoid the drafting-then-amendment round trip.
+
+No further Socket-family ambiguity remains on POSIX. Windows-side
+closure is correctly scoped to the sibling Windows-closure handoff
+per Appendix A.

@@ -322,6 +322,8 @@ Connect}` methods. Do not fold this into the Read/Write fix; track
 separately. The audit rows for Findings #10–#17 need a status caveat when
 this secondary handoff opens.
 
+**CLOSED 2026-04-21**: Socket-family ambiguity resolved by `@_disfavoredOverload` on twelve iso-9945 L2 declarations (Accept ×2, Connect ×4, Send ×3, Receive ×3) at swift-iso-9945 `be4bfcc`, scoped and tracked via `swift-kernel/HANDOFF-socket-family-l2-l3-ambiguity.md`. Scope extended from 10 to 12 after a subordinate staleness-check surfaced two additional live collisions (`Send.to`, `Receive.from`) that the handoff had overlooked at drafting time — supervisor ground-rule amendment at swift-kernel `688574a`.
+
 ### 5. Corrections to the "Findings Destination" section
 
 - Line 200 reads "Findings **#5–9**" — accurate, but the audit update in
