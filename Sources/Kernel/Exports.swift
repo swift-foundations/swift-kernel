@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 @_exported public import Kernel_Core
+@_exported public import Kernel_Clock
 @_exported public import Kernel_System
 @_exported public import Kernel_Thread
 @_exported public import Kernel_File
