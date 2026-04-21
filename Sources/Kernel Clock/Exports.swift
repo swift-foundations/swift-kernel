@@ -12,7 +12,7 @@
 @_exported public import Kernel_Clock_Primitives
 @_exported public import Clock_Primitives
 
-#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD)
     @_exported public import POSIX_Kernel_Clock
 #elseif os(Windows)
     @_exported public import Windows_Kernel_Clock_Standard
