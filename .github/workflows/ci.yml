@@ -31,7 +31,7 @@ jobs:
       umbrella-module: Kernel
       umbrella-display-name: "Kernel"
       umbrella-bundle-id: "swift-kernel.Kernel"
-      umbrella-docc-path: "Sources/Kernel/Documentation.docc"
+      umbrella-docc-path: "Sources/Kernel/Kernel.docc"
       exclude-modules: "Kernel_Test_Support"
       enable-private-repos: true
     secrets:
