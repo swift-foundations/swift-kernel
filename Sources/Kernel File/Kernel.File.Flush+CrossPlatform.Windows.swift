@@ -59,7 +59,7 @@ extension Kernel.File.Flush {
     /// - Parameter path: The directory path (borrowed view; unused on Windows).
     /// - Throws: never.
     @inlinable
-    public static func directory(path: borrowing Kernel.Path.View) throws(Error) {
+    public static func directory(path: borrowing Kernel.Path.Borrowed) throws(Error) {
         _ = path
     }
 }

@@ -33,8 +33,8 @@ extension Kernel.File.Copy {
     ///   - options: Copy options (overwrite, attributes, symlinks).
     /// - Throws: `Kernel.File.Copy.Error` if the operation fails.
     public static func copy(
-        from source: borrowing Kernel.Path.View,
-        to destination: borrowing Kernel.Path.View,
+        from source: borrowing Kernel.Path.Borrowed,
+        to destination: borrowing Kernel.Path.Borrowed,
         options: Options = .init()
     ) throws(Kernel.File.Copy.Error) {
         // Get source stats (use lstat when not following symlinks)
@@ -81,7 +81,7 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func getSourceStats(
-        _ source: borrowing Kernel.Path.View,
+        _ source: borrowing Kernel.Path.Borrowed,
         followSymlinks: Bool
     ) throws(Kernel.File.Copy.Error) -> Kernel.File.Stats {
         do {
@@ -105,7 +105,7 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func handleDestination(
-        _ destination: borrowing Kernel.Path.View,
+        _ destination: borrowing Kernel.Path.Borrowed,
         overwrite: Bool
     ) throws(Kernel.File.Copy.Error) {
         // Check if destination exists
@@ -143,8 +143,8 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func cloneFile(
-        from source: borrowing Kernel.Path.View,
-        to destination: borrowing Kernel.Path.View
+        from source: borrowing Kernel.Path.Borrowed,
+        to destination: borrowing Kernel.Path.Borrowed
     ) throws(Kernel.File.Copy.Error) {
         do throws(Kernel.File.Clone.Error) {
             _ = try Kernel.File.Clone.clone(
@@ -173,8 +173,8 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func copySymlink(
-        from source: borrowing Kernel.Path.View,
-        to destination: borrowing Kernel.Path.View
+        from source: borrowing Kernel.Path.Borrowed,
+        to destination: borrowing Kernel.Path.Borrowed
     ) throws(Kernel.File.Copy.Error) {
         // Read the symlink target
         let target: Swift.String
@@ -204,7 +204,7 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func copyAttributes(
-        to destination: borrowing Kernel.Path.View,
+        to destination: borrowing Kernel.Path.Borrowed,
         permissions: Kernel.File.Permissions,
         accessTime: Kernel.Time,
         modificationTime: Kernel.Time

@@ -48,7 +48,7 @@ extension Kernel.File {
     /// - Returns: A file handle with Direct I/O state.
     /// - Throws: `Kernel.File.Open.Error` on failure.
     public static func open(
-        _ path: borrowing Kernel.Path.View,
+        _ path: borrowing Kernel.Path.Borrowed,
         configuration: Open.Configuration = .init()
     ) throws(Open.Error) -> Handle {
         // 1. Discover requirements

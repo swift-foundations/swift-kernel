@@ -79,7 +79,7 @@
         /// Descriptor closes via deinit at end of scope.
         public static func withTempFile<R>(
             prefix: Swift.String = "io-test",
-            _ body: (borrowing Kernel.Path.View, borrowing Kernel.Descriptor) throws -> R
+            _ body: (borrowing Kernel.Path.Borrowed, borrowing Kernel.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
             return try Kernel.Path.scope(pathString) { path in
@@ -101,7 +101,7 @@
         public static func withTempFile<R>(
             content: Swift.String,
             prefix: Swift.String = "io-test",
-            _ body: (borrowing Kernel.Path.View, borrowing Kernel.Descriptor) throws -> R
+            _ body: (borrowing Kernel.Path.Borrowed, borrowing Kernel.Descriptor) throws -> R
         ) throws -> R {
             try withTempFile(prefix: prefix) { path, fd in
                 var contentBytes = Array(content.utf8)
@@ -116,7 +116,7 @@
         public static func withTempFileForHandle<R>(
             content: Swift.String? = nil,
             prefix: Swift.String = "handle-test",
-            _ body: (borrowing Kernel.Path.View, borrowing Kernel.File.Descriptor) throws -> R
+            _ body: (borrowing Kernel.Path.Borrowed, borrowing Kernel.File.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
             return try Kernel.Path.scope(pathString) { path in

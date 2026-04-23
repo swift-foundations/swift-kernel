@@ -64,7 +64,7 @@ extension Kernel.File.Flush {
     /// - Parameter path: The directory path (borrowed view).
     /// - Throws: ``Kernel/File/Flush/Error`` on failure.
     @inlinable
-    public static func directory(path: borrowing Kernel.Path.View) throws(Error) {
+    public static func directory(path: borrowing Kernel.Path.Borrowed) throws(Error) {
         try POSIX.Kernel.File.Flush.directory(path: path)
     }
 }

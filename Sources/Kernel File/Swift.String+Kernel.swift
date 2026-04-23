@@ -30,7 +30,7 @@ extension Swift.String {
     }
 }
 
-// MARK: - Swift.String from Kernel.Path.View
+// MARK: - Swift.String from Kernel.Path.Borrowed
 
 extension Swift.String {
     /// Creates a Swift string from a kernel path view.
@@ -38,7 +38,7 @@ extension Swift.String {
     /// On POSIX, interprets the path bytes as UTF-8.
     /// On Windows, interprets the path code units as UTF-16.
     @inlinable
-    public init(_ view: borrowing Kernel.Path.View) {
+    public init(_ view: borrowing Kernel.Path.Borrowed) {
         #if os(Windows)
         self = unsafe Swift.String(decodingCString: view.pointer, as: UTF16.self)
         #else

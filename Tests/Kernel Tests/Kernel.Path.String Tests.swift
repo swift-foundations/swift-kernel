@@ -119,7 +119,7 @@ extension Kernel.Path.String {
                     #expect(error.body == nil)
                 },
                 { () throws(E) in
-                    _ = try Kernel.Path.scope("\0/tmp/file") { (_: borrowing Path.View) throws(Dummy) in
+                    _ = try Kernel.Path.scope("\0/tmp/file") { (_: borrowing Path.Borrowed) throws(Dummy) in
                         ()  // never reached
                     }
                 }
@@ -136,7 +136,7 @@ extension Kernel.Path.String {
                     #expect(error.conversion == nil)
                 },
                 { () throws(E) in
-                    _ = try Kernel.Path.scope("/tmp/x") { (_: borrowing Path.View) throws(Body) in
+                    _ = try Kernel.Path.scope("/tmp/x") { (_: borrowing Path.Borrowed) throws(Body) in
                         throw .boom
                     }
                 }
