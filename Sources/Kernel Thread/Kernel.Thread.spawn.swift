@@ -49,8 +49,8 @@ extension Kernel.Thread.Spawn {
     ///
     /// The closure is invoked exactly once on the spawned OS thread.
     /// This guarantee is essential for ownership-transfer patterns using
-    /// `Reference.Transfer.Cell`, where the closure takes ownership of a value
-    /// that must be consumed exactly once.
+    /// `Ownership.Transfer.Value<T>.Outgoing`, where the closure takes ownership
+    /// of a value that must be consumed exactly once.
     ///
     /// - Parameter body: The work to run on the new thread. Executed exactly once.
     /// - Returns: An opaque handle to the thread.
@@ -66,8 +66,8 @@ extension Kernel.Thread.Spawn {
     ///
     /// This variant accepts a `~Copyable` value that is passed to the closure,
     /// avoiding closure capture issues with move-only types. The value is
-    /// transferred using `Ownership.Transfer.Cell`, the single audited mechanism for
-    /// cross-boundary ownership transfer.
+    /// transferred using `Ownership.Transfer.Value<T>.Outgoing`, the audited
+    /// mechanism for cross-boundary ownership transfer of a value payload.
     ///
     /// - Parameters:
     ///   - value: A value to pass to the thread. Ownership is transferred.
@@ -80,7 +80,7 @@ extension Kernel.Thread.Spawn {
         _ body: @escaping @Sendable (consuming T) -> Void
     ) throws(Kernel.Thread.Error) -> Kernel.Thread.Handle {
         // Use Ownership.Transfer for cross-boundary ownership transfer
-        let cell = Ownership.Transfer.Cell(value)
+        let cell = Ownership.Transfer.Value<T>.Outgoing(value)
         let token = cell.token()
 
         return try self {
