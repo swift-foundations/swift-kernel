@@ -53,14 +53,19 @@ extension Kernel.Thread {
     /// `Local` instance across threads is the intended design (one
     /// platform key, many threads, each with its own slot).
     ///
-    /// ## Cleanup caveat
+    /// ## Per-thread cleanup
     ///
-    /// The wrapper's `deinit` does not enumerate per-thread slot values
-    /// (POSIX TLS has no portable iteration API). Values set by threads
-    /// other than the deinit'ing thread can leak if the `Local` instance
-    /// is destroyed while other threads still hold values; in practice
-    /// `Local` is held as a process-lifetime `static let` and the OS
-    /// reclaims storage on exit.
+    /// On POSIX, the wrapper installs a `pthread_key_t` destructor
+    /// that releases the retained payload automatically when a thread
+    /// exits with a non-nil slot value. Threads that come and go
+    /// safely; payloads do not leak per-thread.
+    ///
+    /// On Windows, `TlsAlloc` provides no destructor mechanism, so
+    /// per-thread payloads on Windows are NOT automatically released
+    /// on thread exit. Callers using `Local` from short-lived threads
+    /// on Windows MUST set the slot to `nil` before thread exit, or
+    /// accept the leak. (Future work: wire `FlsAlloc`/`FlsSetCallback`
+    /// for symmetric cleanup.)
     @safe
     public final class Local<Payload: AnyObject>: @unchecked Sendable {
         @usableFromInline
@@ -68,7 +73,11 @@ extension Kernel.Thread {
 
         @inlinable
         public init() {
+            #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+            _slot = unsafe _PlatformSlot(destructor: _kernelThreadLocalRelease)
+            #elseif os(Windows)
             _slot = _PlatformSlot()
+            #endif
         }
 
         /// The calling thread's slot value, or `nil` if the thread has
@@ -99,6 +108,21 @@ extension Kernel.Thread {
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
 @usableFromInline
 internal typealias _PlatformSlot = ISO_9945.Kernel.Thread.Key
+
+/// POSIX `pthread_key` destructor — invoked per thread on thread exit
+/// with the (non-nil) slot value. Releases the `Unmanaged<AnyObject>`
+/// retain installed when the slot was set.
+///
+/// `Unmanaged<AnyObject>` is type-erased intentionally: the destructor
+/// cannot capture the `Payload` generic parameter (it must be a
+/// `@convention(c)` function pointer), but ARC release is type-agnostic
+/// — it just decrements the retain count via the same runtime path as
+/// any concrete `Unmanaged<Payload>.release()`.
+@usableFromInline
+internal func _kernelThreadLocalRelease(_ raw: UnsafeMutableRawPointer) {
+    unsafe Unmanaged<AnyObject>.fromOpaque(raw).release()
+}
+
 #elseif os(Windows)
 @usableFromInline
 internal typealias _PlatformSlot = Windows.Kernel.Thread.Index
