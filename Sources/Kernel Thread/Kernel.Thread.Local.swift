@@ -10,32 +10,33 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel.Thread {
-    /// Per-thread storage slot — a policy-free wrapper around the
-    /// platform's TLS key family, unified at L3.
+    /// Per-thread typed storage slot for a class-typed payload.
     ///
-    /// Resolves to:
-    /// - POSIX: ``ISO_9945/Kernel/Thread/Local`` (`pthread_key_*`)
-    /// - Windows: ``Windows/Kernel/Thread/Local`` (`TlsAlloc`/`TlsFree` family)
+    /// L3 cross-platform unifier over the platform's TLS family:
+    /// - POSIX: `pthread_key_create` / `pthread_setspecific` / etc., via
+    ///   ``ISO_9945/Kernel/Thread/Key``.
+    /// - Windows: `TlsAlloc` / `TlsSetValue` / etc., via
+    ///   ``Windows/Kernel/Thread/Index``.
     ///
-    /// Each `Local` instance owns one platform-allocated TLS key
-    /// freed on `deinit`. The slot stores an
-    /// `UnsafeMutableRawPointer?` per thread; consumers cast to/from
-    /// their typed payload at the boundary.
+    /// Owns one platform-allocated TLS slot and stores a retained
+    /// `Payload?` reference per thread. The `Unmanaged` retain/release
+    /// dance is encapsulated inside the slot's `value` accessor so call
+    /// sites see only the safe `Payload?` surface.
     ///
-    /// Per [PLAT-ARCH-005a], no platform C types appear in the public
-    /// API: `pthread_key_t` / `DWORD` are internal storage; the slot
-    /// type is `UnsafeMutableRawPointer?` (stdlib).
-    ///
-    /// ## Threading
-    /// - **value (get)**: Returns the calling thread's slot value, or
-    ///   `nil` if the thread has not set one (or has not allocated).
-    /// - **value (set)**: Sets the calling thread's slot value.
+    /// Per [PLAT-ARCH-008f] solution (a), the L2 raw classes use spec-
+    /// literal names (`Key` for POSIX, `Index` for Windows) so this L3
+    /// generic class can carry the canonical `Local` name without
+    /// namespace collision.
     ///
     /// ## Usage
+    ///
     /// ```swift
-    /// let local = Kernel.Thread.Local()
-    /// local.value = UnsafeMutableRawPointer(...)
-    /// // ... synchronous code on the same thread reads `local.value` ...
+    /// final class Frame { /* ... */ }
+    ///
+    /// let slot = Kernel.Thread.Local<Frame>()
+    /// slot.value = Frame()           // retains
+    /// // ... synchronous code on the same thread reads slot.value ...
+    /// slot.value = nil               // releases
     /// ```
     ///
     /// Use case: thread-local context propagation for synchronous
@@ -43,9 +44,62 @@ extension Kernel.Thread {
     /// explicit parameter passing — e.g., observation tracking
     /// contexts where SwiftUI body evaluation is synchronous and
     /// `TaskLocal` would not propagate.
-    #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-    public typealias Local = ISO_9945.Kernel.Thread.Local
-    #elseif os(Windows)
-    public typealias Local = Windows.Kernel.Thread.Local
-    #endif
+    ///
+    /// ## Thread safety
+    ///
+    /// `@unchecked Sendable` because the slot's per-thread isolation
+    /// comes from the kernel TLS machinery — by construction, one
+    /// thread cannot observe another thread's slot value. Sharing a
+    /// `Local` instance across threads is the intended design (one
+    /// platform key, many threads, each with its own slot).
+    ///
+    /// ## Cleanup caveat
+    ///
+    /// The wrapper's `deinit` does not enumerate per-thread slot values
+    /// (POSIX TLS has no portable iteration API). Values set by threads
+    /// other than the deinit'ing thread can leak if the `Local` instance
+    /// is destroyed while other threads still hold values; in practice
+    /// `Local` is held as a process-lifetime `static let` and the OS
+    /// reclaims storage on exit.
+    @safe
+    public final class Local<Payload: AnyObject>: @unchecked Sendable {
+        @usableFromInline
+        let _slot: _PlatformSlot
+
+        @inlinable
+        public init() {
+            _slot = _PlatformSlot()
+        }
+
+        /// The calling thread's slot value, or `nil` if the thread has
+        /// not set one. The setter retains the new value and releases
+        /// any previous retain — the slot owns one strong reference
+        /// per thread for as long as the slot stays set.
+        @inlinable
+        public var value: Payload? {
+            get {
+                guard let opaque = unsafe _slot.value else { return nil }
+                return unsafe Unmanaged<Payload>.fromOpaque(opaque).takeUnretainedValue()
+            }
+            set {
+                if let oldOpaque = unsafe _slot.value {
+                    unsafe Unmanaged<Payload>.fromOpaque(oldOpaque).release()
+                }
+                if let newValue {
+                    let retained = unsafe Unmanaged.passRetained(newValue).toOpaque()
+                    unsafe (_slot.value = retained)
+                } else {
+                    unsafe (_slot.value = nil)
+                }
+            }
+        }
+    }
 }
+
+#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+@usableFromInline
+internal typealias _PlatformSlot = ISO_9945.Kernel.Thread.Key
+#elseif os(Windows)
+@usableFromInline
+internal typealias _PlatformSlot = Windows.Kernel.Thread.Index
+#endif
