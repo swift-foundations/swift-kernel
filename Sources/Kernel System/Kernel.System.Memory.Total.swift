@@ -1,11 +1,11 @@
 //
-//  Kernel.System.Memory.Total.swift
+//  System.Memory.Total.swift
 //  swift-kernel
 //
 //  Cross-platform typed total memory accessor.
 //
 
-extension Kernel.System.Memory {
+extension System.Memory {
     /// Total installed physical memory in bytes.
     ///
     /// ## Platform Implementation
@@ -17,7 +17,7 @@ extension Kernel.System.Memory {
     /// ## Usage
     ///
     /// ```swift
-    /// let totalRAM = Kernel.System.Memory.total
+    /// let totalRAM = System.Memory.total
     /// let gigabytes = UInt64(totalRAM) / (1024 * 1024 * 1024)
     /// ```
     @inlinable
@@ -29,7 +29,7 @@ extension Kernel.System.Memory {
         #elseif os(Windows)
         System.Memory.total
         #else
-        fatalError("Kernel.System.Memory.total: unsupported platform")
+        fatalError("System.Memory.total: unsupported platform")
         #endif
     }
 }

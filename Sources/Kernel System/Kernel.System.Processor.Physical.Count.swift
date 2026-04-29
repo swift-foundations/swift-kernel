@@ -1,11 +1,11 @@
 //
-//  Kernel.System.Processor.Physical.Count.swift
+//  System.Processor.Physical.Count.swift
 //  swift-kernel
 //
 //  Cross-platform typed physical processor count accessor.
 //
 
-extension Kernel.System.Processor.Physical {
+extension System.Processor.Physical {
     /// Number of physical processors.
     ///
     /// Returns the physical core count, excluding hyperthreading.
@@ -20,8 +20,8 @@ extension Kernel.System.Processor.Physical {
     /// ## Usage
     ///
     /// ```swift
-    /// let physical = Kernel.System.Processor.Physical.count
-    /// let logical = Kernel.System.Processor.count
+    /// let physical = System.Processor.Physical.count
+    /// let logical = System.Processor.count
     /// let hasHyperthreading = Int(logical) > Int(physical)
     /// ```
     @inlinable
@@ -29,11 +29,11 @@ extension Kernel.System.Processor.Physical {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
         System.Processor.Physical.count
         #elseif os(Linux) || os(Android) || os(OpenBSD)
-        ISO_9945.Kernel.System.processorCount
+        System.processorCount
         #elseif os(Windows)
-        Windows.Kernel.System.processorCount
+        System.processorCount
         #else
-        fatalError("Kernel.System.Processor.Physical.count: unsupported platform")
+        fatalError("System.Processor.Physical.count: unsupported platform")
         #endif
     }
 }

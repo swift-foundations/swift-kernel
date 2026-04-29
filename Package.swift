@@ -94,7 +94,7 @@ let package = Package(
                 .product(name: "Kernel Syscall Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Time Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Outcome Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Kernel System Primitives", package: "swift-kernel-primitives"),
+                .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Path Primitives", package: "swift-path-primitives"),
                 .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Socket Primitives", package: "swift-kernel-primitives"),
