@@ -67,6 +67,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-path-primitives"),
         .package(path: "../../swift-primitives/swift-string-primitives"),
         .package(path: "../../swift-primitives/swift-memory-primitives"),
+        .package(path: "../../swift-primitives/swift-dictionary-primitives"),
         .package(path: "../../swift-intel/swift-x86-standard"),
         .package(path: "../../swift-arm-ltd/swift-arm-standard"),
         .package(path: "../../swift-microsoft/swift-windows-standard"),
@@ -140,6 +141,7 @@ let package = Package(
             name: "Kernel Event",
             dependencies: [
                 "Kernel Core",
+                .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
                 .product(name: "Linux Kernel Event", package: "swift-linux",
                          condition: .when(platforms: [.linux])),
             ]

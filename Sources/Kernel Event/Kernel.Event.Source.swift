@@ -1,33 +1,80 @@
+public import Kernel_Descriptor_Primitives
+
 //
 //  Kernel.Event.Source.swift
-//  swift-kernel
+//  swift-kernel-primitives
 //
-//  Platform factory for event notification.
-//
-//  The Source struct, Driver, Registration, and Error types live at L1
-//  (Kernel Event Primitives). This file provides only the platform
-//  factory that dispatches to backend-specific implementations.
+//  ~Copyable resource for event notification.
 //
 
-// MARK: - Platform Default
 
-extension Kernel.Event.Source {
-    /// Returns the platform event source.
+extension Kernel.Event {
+    /// Event notification resource.
     ///
-    /// - **Darwin**: kqueue
-    /// - **Linux**: epoll
+    /// `~Copyable`: single ownership, consumed on `close()`.
+    /// Not `Sendable` — transferred to the poll thread via `sending`.
+    /// Extract `wakeup` (Sendable) before transferring.
     ///
-    /// Throws ``Kernel/Event/Driver/Error/unsupportedPlatform`` if no
-    /// event backend is available for the current platform. Consumers
-    /// that want graceful fallback to a blocking strategy can catch
-    /// this via `try?` and select an alternative.
-    public static func platform() throws(Kernel.Event.Driver.Error) -> Kernel.Event.Source {
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-            try .kqueue()
-        #elseif os(Linux)
-            try .epoll()
-        #else
-            throw .unsupportedPlatform
-        #endif
+    /// ## Usage
+    /// ```swift
+    /// var source = try Kernel.Event.Source.platform()
+    /// let wakeup = source.wakeup
+    /// let id = try source.register(descriptor: dup, interest: .read)
+    /// let count = try source.poll(deadline: nil, into: &buffer)
+    /// source.close()
+    /// ```
+    public struct Source: ~Copyable {
+        package let driver: Kernel.Event.Driver
+
+        /// Thread-safe channel for interrupting blocking `poll()`.
+        public let wakeup: Kernel.Wakeup.Channel
+
+        public init(driver: consuming Kernel.Event.Driver, wakeup: Kernel.Wakeup.Channel) {
+            self.driver = driver
+            self.wakeup = wakeup
+        }
     }
 }
+
+// MARK: - Public API
+
+extension Kernel.Event.Source {
+    public func register(
+        descriptor: consuming Kernel.Descriptor,
+        interest: Kernel.Event.Interest
+    ) throws(Kernel.Event.Driver.Error) -> Kernel.Event.ID {
+        try driver._register(descriptor, interest)
+    }
+
+    public func modify(
+        id: Kernel.Event.ID,
+        interest: Kernel.Event.Interest
+    ) throws(Kernel.Event.Driver.Error) {
+        try driver._modify(id, interest)
+    }
+
+    public func deregister(
+        id: Kernel.Event.ID
+    ) throws(Kernel.Event.Driver.Error) {
+        try driver._deregister(id)
+    }
+
+    public func arm(
+        id: Kernel.Event.ID,
+        interest: Kernel.Event.Interest
+    ) throws(Kernel.Event.Driver.Error) {
+        try driver._arm(id, interest)
+    }
+
+    public func poll(
+        deadline: Clock.Continuous.Deadline?,
+        into buffer: inout [Kernel.Event]
+    ) throws(Kernel.Event.Driver.Error) -> Int {
+        try driver._poll(deadline, &buffer)
+    }
+
+    public consuming func close() {
+        driver._close()
+    }
+}
+
