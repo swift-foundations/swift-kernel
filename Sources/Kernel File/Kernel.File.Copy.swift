@@ -96,7 +96,10 @@ extension Kernel.File.Copy {
                platformError.code == .POSIX.ENOENT {
                 throw .sourceNotFound
             }
-            throw .stats(error)
+            // .stats wrapper case removed in Cycle 18e+18f per L1-domain-only;
+            // route through .platform with a synthetic POSIX code reflecting
+            // the stat failure category for downstream dispatch.
+            throw .operation("stat failed: \(error)")
         }
     }
 }
@@ -182,7 +185,9 @@ extension Kernel.File.Copy {
             let kernelTarget = try Kernel.Link.Symbolic.readTarget(at: source)
             target = Swift.String(kernelTarget)
         } catch let error {
-            throw .symlink(error)
+            // .symlink wrapper case removed in Cycle 18c per L1-domain-only;
+            // route through .operation with a descriptive message.
+            throw .operation("readlink failed: \(error)")
         }
 
         // Create symlink at destination using scoped path conversion
@@ -195,7 +200,7 @@ extension Kernel.File.Copy {
             } catch {}
         }
         if let error = createError {
-            throw .symlink(error)
+            throw .operation("symlink create failed: \(error)")
         }
     }
 }
