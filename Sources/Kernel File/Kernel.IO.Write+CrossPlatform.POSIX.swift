@@ -13,7 +13,6 @@
 
 public import Kernel_Descriptor_Primitives
 public import Kernel_File_Primitives
-public import Kernel_IO_Primitives
 
 // MARK: - Cross-platform Write surface on POSIX
 //

@@ -14,7 +14,6 @@
 @_exported public import Kernel_Descriptor_Primitives
 @_exported public import Kernel_Environment_Primitives
 @_exported public import Error_Primitives
-@_exported public import Kernel_IO_Primitives
 @_exported public import Memory_Primitives
 @_exported public import Kernel_Permission_Primitives
 @_exported public import Kernel_Process_Primitives
