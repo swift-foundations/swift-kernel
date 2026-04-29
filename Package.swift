@@ -65,6 +65,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-error-primitives"),
         .package(path: "../../swift-primitives/swift-random-primitives"),
         .package(path: "../../swift-primitives/swift-path-primitives"),
+        .package(path: "../../swift-primitives/swift-string-primitives"),
         .package(path: "../../swift-primitives/swift-memory-primitives"),
         .package(path: "../../swift-intel/swift-x86-standard"),
         .package(path: "../../swift-arm-ltd/swift-arm-standard"),
@@ -137,7 +138,7 @@ let package = Package(
             name: "Kernel File",
             dependencies: [
                 "Kernel Core",
-                .product(name: "Kernel String Primitives", package: "swift-kernel-primitives"),
+                .product(name: "String Primitives", package: "swift-string-primitives"),
             ]
         ),
 

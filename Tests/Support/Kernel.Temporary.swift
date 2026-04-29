@@ -39,15 +39,15 @@ extension Kernel.Temporary {
     public static var directory: Swift.String {
         #if os(Windows)
             if let temp = Kernel.Environment.get("TEMP") {
-                return Swift.String(temp.rawValue)
+                return unsafe temp.withUnsafePointer { Swift.String(cString: $0) }
             }
             if let tmp = Kernel.Environment.get("TMP") {
-                return Swift.String(tmp.rawValue)
+                return unsafe tmp.withUnsafePointer { Swift.String(cString: $0) }
             }
             return "C:\\Temp"
         #else
             if let tmpdir = unsafe Kernel.Environment.get("TMPDIR") {
-                return Swift.String(tmpdir.rawValue)
+                return unsafe tmpdir.withUnsafePointer { Swift.String(cString: $0) }
             }
             return "/tmp"
         #endif
