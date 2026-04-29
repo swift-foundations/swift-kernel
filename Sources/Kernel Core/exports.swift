@@ -19,7 +19,6 @@
 @_exported public import Kernel_Permission_Primitives
 @_exported public import Kernel_Process_Primitives
 @_exported public import Random_Primitives
-@_exported public import Kernel_Syscall_Primitives
 @_exported public import Kernel_Time_Primitives
 @_exported public import Kernel_Outcome_Primitives
 @_exported public import System_Primitives

@@ -91,7 +91,6 @@ let package = Package(
                 .product(name: "Kernel Permission Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Process Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Random Primitives", package: "swift-random-primitives"),
-                .product(name: "Kernel Syscall Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Time Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Outcome Primitives", package: "swift-kernel-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),
