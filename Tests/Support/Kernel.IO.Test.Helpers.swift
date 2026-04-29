@@ -41,7 +41,7 @@
         /// Caller is responsible for path cleanup via `cleanupTempFile`.
         public static func createTempFile(prefix: Swift.String = "io-test") throws -> TempFile {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
-            let fd = try Kernel.Path.scope(pathString) { path in
+            let fd = try Path.scope(pathString) { path in
                 try Kernel.File.Open.open(
                     path: path,
                     mode: .readWrite,
@@ -66,7 +66,7 @@
         /// Cleans up a temporary file (deletes path).
         /// Descriptor closes via deinit when tempFile drops.
         public static func cleanupTempFile(_ tempFile: borrowing TempFile) {
-            try? Kernel.Path.scope(tempFile.path) { p in
+            try? Path.scope(tempFile.path) { p in
                 try Kernel.File.Delete.delete(p)
             }
         }
@@ -79,10 +79,10 @@
         /// Descriptor closes via deinit at end of scope.
         public static func withTempFile<R>(
             prefix: Swift.String = "io-test",
-            _ body: (borrowing Kernel.Path.Borrowed, borrowing Kernel.Descriptor) throws -> R
+            _ body: (borrowing Path.Borrowed, borrowing Kernel.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
-            return try Kernel.Path.scope(pathString) { path in
+            return try Path.scope(pathString) { path in
                 let fd = try Kernel.File.Open.open(
                     path: path,
                     mode: .readWrite,
@@ -101,7 +101,7 @@
         public static func withTempFile<R>(
             content: Swift.String,
             prefix: Swift.String = "io-test",
-            _ body: (borrowing Kernel.Path.Borrowed, borrowing Kernel.Descriptor) throws -> R
+            _ body: (borrowing Path.Borrowed, borrowing Kernel.Descriptor) throws -> R
         ) throws -> R {
             try withTempFile(prefix: prefix) { path, fd in
                 var contentBytes = Array(content.utf8)
@@ -116,10 +116,10 @@
         public static func withTempFileForHandle<R>(
             content: Swift.String? = nil,
             prefix: Swift.String = "handle-test",
-            _ body: (borrowing Kernel.Path.Borrowed, borrowing Kernel.File.Descriptor) throws -> R
+            _ body: (borrowing Path.Borrowed, borrowing Kernel.File.Descriptor) throws -> R
         ) throws -> R {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
-            return try Kernel.Path.scope(pathString) { path in
+            return try Path.scope(pathString) { path in
                 let fd = try Kernel.File.Open.open(
                     path: path,
                     mode: .readWrite,

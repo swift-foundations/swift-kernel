@@ -157,7 +157,7 @@ struct KernelFileCloneTests {
             @Test
             func `probe capability returns valid result`() throws {
                 // Probe /tmp which is on the boot volume (typically APFS)
-                let cap = try Kernel.Path.scope("/tmp") { path in
+                let cap = try Path.scope("/tmp") { path in
                     try Kernel.File.Clone.Capability.probe(at: path)
                 }
 
@@ -168,14 +168,14 @@ struct KernelFileCloneTests {
 
             @Test
             func `probe nonexistent path throws`() {
-                typealias E = Kernel.Path.String.Error<Kernel.File.Clone.Error.Syscall>
+                typealias E = Path.String.Error<Kernel.File.Clone.Error.Syscall>
 
                 expectThrows(
                     { (error: E) in
                         #expect(error.body != nil)
                     },
                     { () throws(E) in
-                        _ = try Kernel.Path.scope("/nonexistent/path/that/does/not/exist") {
+                        _ = try Path.scope("/nonexistent/path/that/does/not/exist") {
                             (path) throws(Kernel.File.Clone.Error.Syscall) in
                             try Kernel.File.Clone.Capability.probe(at: path)
                         }
@@ -202,8 +202,8 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                let result = try Kernel.Path.scope(source) { srcPath in
-                    try Kernel.Path.scope(dest) { dstPath in
+                let result = try Path.scope(source) { srcPath in
+                    try Path.scope(dest) { dstPath in
                         try Kernel.File.Clone.clone(
                             from: srcPath,
                             to: dstPath,
@@ -230,8 +230,8 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                let result = try Kernel.Path.scope(source) { srcPath in
-                    try Kernel.Path.scope(dest) { dstPath in
+                let result = try Path.scope(source) { srcPath in
+                    try Path.scope(dest) { dstPath in
                         try Kernel.File.Clone.clone(
                             from: srcPath,
                             to: dstPath,
@@ -259,8 +259,8 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                try Kernel.Path.scope(source) { srcPath in
-                    try Kernel.Path.scope(dest) { dstPath in
+                try Path.scope(source) { srcPath in
+                    try Path.scope(dest) { dstPath in
                         // First check capability
                         let cap = try Kernel.File.Clone.Capability.probe(at: srcPath)
 
@@ -296,14 +296,14 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                typealias E = Kernel.Path.String.Error<Kernel.File.Clone.Error>
+                typealias E = Path.String.Error<Kernel.File.Clone.Error>
 
                 expectThrows(
                     { (error: E) in
                         #expect(error.body == .destinationExists)
                     },
                     { () throws(E) in
-                        _ = try Kernel.Path.scope(source, dest) {
+                        _ = try Path.scope(source, dest) {
                             (srcPath, dstPath) throws(Kernel.File.Clone.Error) in
                             try Kernel.File.Clone.clone(
                                 from: srcPath,
@@ -320,14 +320,14 @@ struct KernelFileCloneTests {
                 let source = "/tmp/nonexistent-\(getpid())"
                 let dest = "/tmp/clone-dst-\(getpid())"
 
-                typealias E = Kernel.Path.String.Error<Kernel.File.Clone.Error>
+                typealias E = Path.String.Error<Kernel.File.Clone.Error>
 
                 expectThrows(
                     { (error: E) in
                         #expect(error.body == .sourceNotFound)
                     },
                     { () throws(E) in
-                        _ = try Kernel.Path.scope(source, dest) {
+                        _ = try Path.scope(source, dest) {
                             (srcPath, dstPath) throws(Kernel.File.Clone.Error) in
                             try Kernel.File.Clone.clone(
                                 from: srcPath,
@@ -352,8 +352,8 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                let result = try Kernel.Path.scope(source) { srcPath in
-                    try Kernel.Path.scope(dest) { dstPath in
+                let result = try Path.scope(source) { srcPath in
+                    try Path.scope(dest) { dstPath in
                         try Kernel.File.Clone.clone(
                             from: srcPath,
                             to: dstPath,
@@ -381,8 +381,8 @@ struct KernelFileCloneTests {
                     cleanup(dest)
                 }
 
-                let result = try Kernel.Path.scope(source) { srcPath in
-                    try Kernel.Path.scope(dest) { dstPath in
+                let result = try Path.scope(source) { srcPath in
+                    try Path.scope(dest) { dstPath in
                         try Kernel.File.Clone.clone(
                             from: srcPath,
                             to: dstPath,

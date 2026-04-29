@@ -30,7 +30,7 @@ struct KernelLockIntegration {}
 /// Caller is responsible for cleanup via `cleanupLockFile`.
 private func createLockFile(prefix: Swift.String) throws -> Swift.String {
     let pathString = Kernel.Temporary.filePath(prefix: prefix)
-    try Kernel.Path.scope(pathString) { path in
+    try Path.scope(pathString) { path in
         let fd = try Kernel.File.Open.open(
             path: path,
             mode: .readWrite,
@@ -48,14 +48,14 @@ private func createLockFile(prefix: Swift.String) throws -> Swift.String {
 
 /// Opens a file for locking. Returns a consuming descriptor for Lock.Token.
 private func openForLock(_ pathString: Swift.String) throws -> Kernel.Descriptor {
-    try Kernel.Path.scope(pathString) { path in
+    try Path.scope(pathString) { path in
         try Kernel.File.Open.open(path: path, mode: .readWrite, options: [], permissions: .ownerReadWrite)
     }
 }
 
 /// Deletes the file at the given path.
 private func cleanupLockFile(_ pathString: Swift.String) {
-    try? Kernel.Path.scope(pathString) { path in
+    try? Path.scope(pathString) { path in
         try Kernel.File.Delete.delete(path)
     }
 }

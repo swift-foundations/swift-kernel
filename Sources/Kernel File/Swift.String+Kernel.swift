@@ -9,11 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Kernel_Path_Primitives
+import Path_Primitives
 public import Kernel_String_Primitives
 internal import String_Primitives
 
-// MARK: - Swift.String from Kernel.Path
+// MARK: - Swift.String from Path
 
 extension Swift.String {
     /// Creates a Swift string from a kernel path.
@@ -21,7 +21,7 @@ extension Swift.String {
     /// On POSIX, interprets the path bytes as UTF-8.
     /// On Windows, interprets the path code units as UTF-16.
     @inlinable
-    public init(_ path: borrowing Kernel.Path) {
+    public init(_ path: borrowing Path) {
         #if os(Windows)
         self = unsafe Swift.String(decodingCString: path.view.pointer, as: UTF16.self)
         #else
@@ -30,7 +30,7 @@ extension Swift.String {
     }
 }
 
-// MARK: - Swift.String from Kernel.Path.Borrowed
+// MARK: - Swift.String from Path.Borrowed
 
 extension Swift.String {
     /// Creates a Swift string from a kernel path view.
@@ -38,7 +38,7 @@ extension Swift.String {
     /// On POSIX, interprets the path bytes as UTF-8.
     /// On Windows, interprets the path code units as UTF-16.
     @inlinable
-    public init(_ view: borrowing Kernel.Path.Borrowed) {
+    public init(_ view: borrowing Path.Borrowed) {
         #if os(Windows)
         self = unsafe Swift.String(decodingCString: view.pointer, as: UTF16.self)
         #else

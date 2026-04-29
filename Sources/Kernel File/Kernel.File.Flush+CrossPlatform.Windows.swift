@@ -13,7 +13,7 @@
 
 public import Kernel_Descriptor_Primitives
 public import Kernel_File_Primitives
-public import Kernel_Path_Primitives
+public import Path_Primitives
 
 // MARK: - Cross-platform Flush surface on Windows
 //
@@ -59,7 +59,7 @@ extension Kernel.File.Flush {
     /// - Parameter path: The directory path (borrowed view; unused on Windows).
     /// - Throws: never.
     @inlinable
-    public static func directory(path: borrowing Kernel.Path.Borrowed) throws(Error) {
+    public static func directory(path: borrowing Path.Borrowed) throws(Error) {
         _ = path
     }
 }

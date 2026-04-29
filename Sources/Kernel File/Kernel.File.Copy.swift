@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 public import Kernel_File_Primitives
-public import Kernel_Path_Primitives
+public import Path_Primitives
 public import Kernel_Time_Primitives
 public import Error_Primitives
 
@@ -33,8 +33,8 @@ extension Kernel.File.Copy {
     ///   - options: Copy options (overwrite, attributes, symlinks).
     /// - Throws: `Kernel.File.Copy.Error` if the operation fails.
     public static func copy(
-        from source: borrowing Kernel.Path.Borrowed,
-        to destination: borrowing Kernel.Path.Borrowed,
+        from source: borrowing Path.Borrowed,
+        to destination: borrowing Path.Borrowed,
         options: Options = .init()
     ) throws(Kernel.File.Copy.Error) {
         // Get source stats (use lstat when not following symlinks)
@@ -81,7 +81,7 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func getSourceStats(
-        _ source: borrowing Kernel.Path.Borrowed,
+        _ source: borrowing Path.Borrowed,
         followSymlinks: Bool
     ) throws(Kernel.File.Copy.Error) -> Kernel.File.Stats {
         do {
@@ -105,7 +105,7 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func handleDestination(
-        _ destination: borrowing Kernel.Path.Borrowed,
+        _ destination: borrowing Path.Borrowed,
         overwrite: Bool
     ) throws(Kernel.File.Copy.Error) {
         // Check if destination exists
@@ -143,8 +143,8 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func cloneFile(
-        from source: borrowing Kernel.Path.Borrowed,
-        to destination: borrowing Kernel.Path.Borrowed
+        from source: borrowing Path.Borrowed,
+        to destination: borrowing Path.Borrowed
     ) throws(Kernel.File.Copy.Error) {
         do throws(Kernel.File.Clone.Error) {
             _ = try Kernel.File.Clone.clone(
@@ -173,8 +173,8 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func copySymlink(
-        from source: borrowing Kernel.Path.Borrowed,
-        to destination: borrowing Kernel.Path.Borrowed
+        from source: borrowing Path.Borrowed,
+        to destination: borrowing Path.Borrowed
     ) throws(Kernel.File.Copy.Error) {
         // Read the symlink target
         let target: Swift.String
@@ -187,7 +187,7 @@ extension Kernel.File.Copy {
 
         // Create symlink at destination using scoped path conversion
         var createError: Kernel.Link.Symbolic.Error?
-        try? Kernel.Path.scope(target) { targetView in
+        try? Path.scope(target) { targetView in
             do {
                 try Kernel.Link.Symbolic.create(target: targetView, at: destination)
             } catch let error as Kernel.Link.Symbolic.Error {
@@ -204,7 +204,7 @@ extension Kernel.File.Copy {
 
 extension Kernel.File.Copy {
     private static func copyAttributes(
-        to destination: borrowing Kernel.Path.Borrowed,
+        to destination: borrowing Path.Borrowed,
         permissions: Kernel.File.Permissions,
         accessTime: Kernel.Time,
         modificationTime: Kernel.Time

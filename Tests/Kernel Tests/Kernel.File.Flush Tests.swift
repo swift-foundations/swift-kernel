@@ -62,7 +62,7 @@ extension Kernel.File.Flush.Test.Directory {
     @Test
     func `directory(path:) on the system temp directory succeeds (POSIX) / no-ops (Windows)`() throws {
         let tempDir = Kernel.Temporary.directory
-        try Kernel.Path.scope(tempDir) { dirPath in
+        try Path.scope(tempDir) { dirPath in
             // Cross-platform contract:
             //   POSIX: open(O_RDONLY) + fsync + auto-close with EINTR retry — must not throw.
             //   Windows: documented no-op — must not throw.

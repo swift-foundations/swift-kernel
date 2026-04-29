@@ -22,7 +22,7 @@ extension Kernel {
     /// - **EOF is NOT an error**: `read`/`pread` return 0 on EOF.
     public enum Failure: Swift.Error, Sendable, Equatable {
         /// Path resolution errors.
-        case path(Kernel.Path.Resolution.Error)
+        case path(Path.Resolution.Error)
 
         /// File descriptor/handle errors.
         case handle(Kernel.Descriptor.Validity.Error)
@@ -92,7 +92,7 @@ extension Kernel.Failure {
         _ code: Error_Primitives.Error.Code
     ) {
         // Try each domain in priority order
-        if let e = Kernel.Path.Resolution.Error(code: code) {
+        if let e = Path.Resolution.Error(code: code) {
             self = .path(e)
             return
         }
