@@ -87,7 +87,7 @@ let package = Package(
                 .product(name: "Kernel Environment Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Error Primitives", package: "swift-error-primitives"),
                 .product(name: "Kernel IO Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Kernel Memory Primitives", package: "swift-kernel-primitives"),
+                .product(name: "Memory Primitives", package: "swift-memory-primitives"),
                 .product(name: "Kernel Permission Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Process Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Random Primitives", package: "swift-random-primitives"),

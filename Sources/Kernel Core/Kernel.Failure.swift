@@ -34,8 +34,8 @@ extension Kernel {
         /// File locking errors.
         case lock(Kernel.Lock.Error)
 
-        /// Memory-related errors.
-        case memory(Kernel.Memory.Error)
+        /// Memory allocation errors.
+        case memory(Memory.Allocation.Error)
 
         /// Permission errors.
         case permission(Kernel.Permission.Error)
@@ -118,7 +118,7 @@ extension Kernel.Failure {
             self = .space(e)
             return
         }
-        if let e = Kernel.Memory.Error(code: code) {
+        if let e = Memory.Allocation.Error(code: code) {
             self = .memory(e)
             return
         }
