@@ -174,9 +174,9 @@ extension Kernel.Event.Source {
                 }
             },
             poll: {
-                (deadline: Kernel.Clock.Continuous.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
+                (deadline: Clock.Continuous.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
 
-                let timeout = deadline.map { $0.remaining(at: Kernel.Clock.Continuous.now()) }
+                let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
 
                 // Poll kqueue into pre-allocated scratch buffer.
                 let count: Int

@@ -82,7 +82,7 @@ let package = Package(
             name: "Kernel Core",
             dependencies: [
                 .product(name: "Kernel Primitives Core", package: "swift-kernel-primitives"),
-                .product(name: "Kernel Clock Primitives", package: "swift-kernel-primitives"),
+                .product(name: "Clock Primitives", package: "swift-clock-primitives"),
                 .product(name: "Kernel Descriptor Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Environment Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Error Primitives", package: "swift-error-primitives"),
@@ -169,7 +169,7 @@ let package = Package(
         .target(
             name: "Kernel Clock",
             dependencies: [
-                .product(name: "Kernel Clock Primitives", package: "swift-kernel-primitives"),
+                .product(name: "Clock Primitives", package: "swift-clock-primitives"),
                 .product(name: "Clock Primitives", package: "swift-clock-primitives"),
                 .product(name: "POSIX Kernel Clock", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),

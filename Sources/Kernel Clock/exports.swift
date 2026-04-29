@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-@_exported public import Kernel_Clock_Primitives
+@_exported public import Clock_Primitives
 @_exported public import Clock_Primitives
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD)
