@@ -57,7 +57,7 @@ extension Kernel.Failure.Test.Unit {
     }
 
     @Test func `platform case exists and wraps kernel error`() {
-        let kernelError = Kernel.Error(code: .POSIX.EPERM)
+        let kernelError = Error_Primitives.Error(code: .POSIX.EPERM)
         let failure = Kernel.Failure.platform(kernelError)
 
         if case .platform(let wrapped) = failure {
@@ -94,7 +94,7 @@ extension Kernel.Failure.Test.Unit {
             .io(.broken),
             .handle(.invalid),
             .blocking(.wouldBlock),
-            .platform(Kernel.Error(code: .POSIX.EPERM)),
+            .platform(Error_Primitives.Error(code: .POSIX.EPERM)),
         ]
 
         for failure in cases {

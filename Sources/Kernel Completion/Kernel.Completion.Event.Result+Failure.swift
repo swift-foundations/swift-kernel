@@ -2,7 +2,7 @@
 //  Kernel.Completion.Event.Result+Failure.swift
 //  swift-kernel
 //
-//  Bridge from a raw kernel completion result to a typed Kernel.Error.
+//  Bridge from a raw kernel completion result to a typed Error_Primitives.Error.
 //  The raw value's encoding convention is set by the platform factory's
 //  drain implementation (e.g., Kernel.Completion+IOUring.swift encodes
 //  POSIX failures as negated errno). This property undoes the convention
@@ -21,12 +21,12 @@ extension Kernel.Completion.Event.Result {
     ///
     /// ```swift
     /// if let error = event.result.failure {
-    ///     // handle Kernel.Error
+    ///     // handle Error_Primitives.Error
     /// }
     /// let value = event.result.value!  // success path
     /// ```
-    public var failure: Kernel.Error? {
+    public var failure: Error_Primitives.Error? {
         guard !isSuccess else { return nil }
-        return Kernel.Error(code: .posix(-rawValue))
+        return Error_Primitives.Error(code: .posix(-rawValue))
     }
 }

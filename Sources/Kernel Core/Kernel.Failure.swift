@@ -52,7 +52,7 @@ extension Kernel {
         case blocking(Kernel.IO.Blocking.Error)
 
         /// Unmapped platform-specific errors.
-        case platform(Kernel.Error)
+        case platform(Error_Primitives.Error)
     }
 }
 
@@ -89,7 +89,7 @@ extension Kernel.Failure: CustomStringConvertible {
 
 extension Kernel.Failure {
     public init?(
-        _ code: Kernel.Error.Code
+        _ code: Error_Primitives.Error.Code
     ) {
         // Try each domain in priority order
         if let e = Kernel.Path.Resolution.Error(code: code) {
@@ -138,12 +138,12 @@ extension Kernel.Failure {
     /// Returns the platform error message for a given error code.
     ///
     /// Delegates to platform-provided message properties:
-    /// - POSIX: `Kernel.Error.Code.posixMessage` (via swift-posix, strerror)
-    /// - Windows: `Kernel.Error.Code.win32Message` (via swift-windows, FormatMessageW)
+    /// - POSIX: `Error_Primitives.Error.Code.posixMessage` (via swift-posix, strerror)
+    /// - Windows: `Error_Primitives.Error.Code.win32Message` (via swift-windows, FormatMessageW)
     ///
     /// - Parameter code: The unified error code.
     /// - Returns: A human-readable error message, or `nil` if not available.
-    public static func message(for code: Kernel.Error.Code) -> Swift.String? {
+    public static func message(for code: Error_Primitives.Error.Code) -> Swift.String? {
         #if os(Windows)
         code.win32Message
         #else
