@@ -9,7 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-@_exported public import Kernel_Primitives_Core
+@_exported public import Kernel_Namespace
+@_exported public import Binary_Primitives_Core
+@_exported public import CPU_Primitives
+@_exported public import Cardinal_Primitives
+@_exported public import Tagged_Primitives
+@_exported public import Time_Primitives_Core
+@_exported public import ASCII_Primitives
 @_exported public import Clock_Primitives
 @_exported public import Error_Primitives
 @_exported public import Memory_Primitives
