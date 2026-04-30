@@ -51,6 +51,7 @@ func v1_consumeInBody() async {
 
 // MARK: - V2: Consuming function params + executor preference
 // Result: REFUTED — function parameters captured in executor closure
+// Revalidated: Swift 6.3.1 (2026-04-30) — STILL PRESENT
 //   give "missing reinitialization" error.
 #if false
 func v2_consumingParams(

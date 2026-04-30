@@ -14,7 +14,6 @@
 @_exported public import Error_Primitives
 @_exported public import Memory_Primitives
 @_exported public import Random_Primitives
-@_exported public import Kernel_Time_Primitives
 @_exported public import System_Primitives
 @_exported public import Path_Primitives
 @_exported public import Kernel_File_Primitives

@@ -11,7 +11,6 @@
 
 public import Kernel_File_Primitives
 public import Path_Primitives
-public import Kernel_Time_Primitives
 public import Error_Primitives
 
 // MARK: - Copy API
