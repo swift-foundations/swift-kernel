@@ -9,7 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_File_Primitives
 
 extension Kernel.File.Open {
     /// Configuration for opening a file.

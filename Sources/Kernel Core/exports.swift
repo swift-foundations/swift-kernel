@@ -9,7 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-@_exported public import Kernel_Namespace
 @_exported public import Binary_Primitives_Core
 @_exported public import CPU_Primitives
 @_exported public import Cardinal_Primitives
@@ -22,7 +21,6 @@
 @_exported public import Random_Primitives
 @_exported public import System_Primitives
 @_exported public import Path_Primitives
-@_exported public import Kernel_File_Primitives
 @_exported public import System_Primitives
 @_exported public import Queue_Primitives
 @_exported public import Dimension_Primitives

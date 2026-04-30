@@ -11,7 +11,6 @@
 
 #if os(Windows)
 
-public import Kernel_File_Primitives
 public import Path_Primitives
 
 // MARK: - Cross-platform Flush surface on Windows

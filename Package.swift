@@ -58,7 +58,6 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(path: "../../swift-primitives/swift-kernel-primitives"),
         .package(path: "../../swift-primitives/swift-clock-primitives"),
         .package(path: "../../swift-primitives/swift-system-primitives"),
         .package(path: "../../swift-primitives/swift-binary-primitives"),
@@ -93,7 +92,6 @@ let package = Package(
         .target(
             name: "Kernel Core",
             dependencies: [
-                .product(name: "Kernel Namespace", package: "swift-kernel-primitives"),
                 .product(name: "Binary Primitives Core", package: "swift-binary-primitives"),
                 .product(name: "CPU Primitives", package: "swift-cpu-primitives"),
                 .product(name: "Cardinal Primitives", package: "swift-cardinal-primitives"),
@@ -106,7 +104,6 @@ let package = Package(
                 .product(name: "Random Primitives", package: "swift-random-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Path Primitives", package: "swift-path-primitives"),
-                .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Reference Primitives", package: "swift-reference-primitives"),
                 .product(name: "Ownership Primitives", package: "swift-ownership-primitives"),
                 .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
@@ -221,7 +218,6 @@ let package = Package(
             name: "Kernel Test Support",
             dependencies: [
                 "Kernel",
-                .product(name: "Kernel Primitives Test Support", package: "swift-kernel-primitives"),
                 .product(name: "Strings", package: "swift-strings")
             ],
             path: "Tests/Support",
@@ -232,7 +228,6 @@ let package = Package(
             name: "_Lock Test Process",
             dependencies: [
                 "Kernel",
-                .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
                 .product(name: "ISO 9945 Core", package: "swift-iso-9945",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
