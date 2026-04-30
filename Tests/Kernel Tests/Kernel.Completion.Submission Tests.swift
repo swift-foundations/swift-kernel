@@ -5,7 +5,6 @@
 
 import Testing
 import Kernel_Primitives_Test_Support
-import Kernel_Descriptor_Primitives
 
 @testable import Kernel_Completion
 

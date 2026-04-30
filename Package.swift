@@ -85,7 +85,6 @@ let package = Package(
             dependencies: [
                 .product(name: "Kernel Primitives Core", package: "swift-kernel-primitives"),
                 .product(name: "Clock Primitives", package: "swift-clock-primitives"),
-                .product(name: "Kernel Descriptor Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Error Primitives", package: "swift-error-primitives"),
                 .product(name: "Memory Primitives", package: "swift-memory-primitives"),
                 .product(name: "Kernel Process Primitives", package: "swift-kernel-primitives"),
@@ -206,7 +205,6 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Kernel Descriptor Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives")
             ],
             path: "Tests/Support/_Lock Test Process"

@@ -10,7 +10,6 @@
 //
 
 
-public import Kernel_Descriptor_Primitives
 
 extension Kernel.Completion {
     /// A submission to enqueue in the completion ring.

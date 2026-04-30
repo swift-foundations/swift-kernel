@@ -11,7 +11,6 @@
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)
 
-public import Kernel_Descriptor_Primitives
 public import Kernel_File_Primitives
 
 // MARK: - Cross-platform Write surface on POSIX

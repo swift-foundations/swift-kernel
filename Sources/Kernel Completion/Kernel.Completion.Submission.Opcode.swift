@@ -1,4 +1,3 @@
-public import Kernel_Descriptor_Primitives
 
 //
 //  Kernel.Completion.Submission.Opcode.swift

@@ -7,7 +7,6 @@
 
 import Testing
 import Kernel_Primitives_Test_Support
-import Kernel_Descriptor_Primitives
 
 @_spi(Syscall) @testable import Kernel_Completion
 

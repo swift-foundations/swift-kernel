@@ -31,7 +31,6 @@
 import Binary_Primitives
 import Kernel
 @_spi(Syscall) import Kernel_File_Primitives
-@_spi(Syscall) import Kernel_Descriptor_Primitives
 
 #if canImport(Darwin)
     internal import Darwin

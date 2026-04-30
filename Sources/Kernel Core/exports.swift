@@ -11,7 +11,6 @@
 
 @_exported public import Kernel_Primitives_Core
 @_exported public import Clock_Primitives
-@_exported public import Kernel_Descriptor_Primitives
 @_exported public import Error_Primitives
 @_exported public import Memory_Primitives
 @_exported public import Kernel_Process_Primitives

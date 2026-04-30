@@ -11,7 +11,6 @@
 
 public import Kernel_File_Primitives
 public import Path_Primitives
-public import Kernel_Descriptor_Primitives
 
 // MARK: - Clone API
 
