@@ -61,9 +61,15 @@ extension Kernel.Thread.Affinity {
         case .cores, .numaNode:
             #if os(Linux)
             try Linux.Thread.Affinity.apply(affinity)
-            #elseif os(Windows)
-            try Windows.Thread.Affinity.apply(affinity)
             #else
+            // Windows + Darwin: Wave 1.9 (2026-04-30) removed the Windows-side
+            // Affinity dispatch as part of Path X relocation orphan cleanup
+            // (option c REMOVE per principal disposition). Affinity is
+            // currently Linux-only across the cross-platform Kernel.Thread.Affinity
+            // surface. Tier 5 vocab relocation (deferred) will restore
+            // Windows-side Affinity properly when the type relocates from
+            // iso-9945 L2 to swift-kernel L3 with #if-gated platform
+            // implementations.
             throw .unsupported
             #endif
         }
