@@ -79,7 +79,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-terminal-primitives"),
         .package(path: "../../swift-intel/swift-x86-standard"),
         .package(path: "../../swift-arm-ltd/swift-arm-standard"),
-        .package(path: "../../swift-microsoft/swift-windows-standard"),
+        .package(path: "../../swift-microsoft/swift-windows-32"),
         .package(path: "../../swift-iso/swift-iso-9945"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
@@ -175,7 +175,7 @@ let package = Package(
                 .product(name: "Clock Primitives", package: "swift-clock-primitives"),
                 .product(name: "POSIX Kernel Clock", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "Windows Kernel Clock Standard", package: "swift-windows-standard",
+                .product(name: "Windows 32 Kernel Clock", package: "swift-windows-32",
                          condition: .when(platforms: [.windows])),
             ]
         ),
@@ -208,7 +208,7 @@ let package = Package(
                 "Kernel Clock",
                 .product(name: "ISO 9945 Kernel Socket", package: "swift-iso-9945",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "Windows Kernel Socket Standard", package: "swift-windows-standard",
+                .product(name: "Windows 32 Kernel Socket", package: "swift-windows-32",
                          condition: .when(platforms: [.windows])),
             ]
         ),
