@@ -42,6 +42,10 @@ let package = Package(
             name: "Kernel Clock",
             targets: ["Kernel Clock"]
         ),
+        .library(
+            name: "Kernel Terminal",
+            targets: ["Kernel Terminal"]
+        ),
         // MARK: - Umbrella
         .library(
             name: "Kernel",
@@ -68,6 +72,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-string-primitives"),
         .package(path: "../../swift-primitives/swift-memory-primitives"),
         .package(path: "../../swift-primitives/swift-dictionary-primitives"),
+        .package(path: "../../swift-primitives/swift-terminal-primitives"),
         .package(path: "../../swift-intel/swift-x86-standard"),
         .package(path: "../../swift-arm-ltd/swift-arm-standard"),
         .package(path: "../../swift-microsoft/swift-windows-standard"),
@@ -93,7 +98,6 @@ let package = Package(
                 .product(name: "Path Primitives", package: "swift-path-primitives"),
                 .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Event Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Kernel Terminal Primitives", package: "swift-kernel-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Reference Primitives", package: "swift-reference-primitives"),
                 .product(name: "Ownership Primitives", package: "swift-ownership-primitives"),
@@ -168,6 +172,21 @@ let package = Package(
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Windows Kernel Clock Standard", package: "swift-windows-standard",
                          condition: .when(platforms: [.windows])),
+            ]
+        ),
+
+        // MARK: - Terminal
+        // Cross-platform Terminal.Mode.Raw.Token (relocated from L1
+        // swift-terminal-primitives in Cycle 22 because Token.Previous's
+        // .posix case carries Kernel.Termios.Attributes — an L2 type post-
+        // Cycle 22 — so Token must be at L3 to compose L1 namespace + L2 type).
+        .target(
+            name: "Kernel Terminal",
+            dependencies: [
+                "Kernel Core",
+                .product(name: "Terminal Primitives Core", package: "swift-terminal-primitives"),
+                .product(name: "ISO 9945 Kernel Terminal", package: "swift-iso-9945",
+                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
             ]
         ),
 
