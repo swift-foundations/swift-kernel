@@ -17,6 +17,19 @@
 @_exported public import Kernel_Event
 @_exported public import Kernel_Completion
 
+// MARK: - G6.D namespace anchor (typealias-via-L3 per [PLAT-ARCH-005])
+//
+// Path X terminal: swift-kernel-primitives package deleted; Kernel root
+// namespace lives at L2 spec packages canonically nested under their platform
+// namespace (ISO_9945.Kernel for POSIX, Windows.Kernel for Windows). This
+// public typealias provides the unified cross-platform `Kernel` name at L3.
+
+#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+public typealias Kernel = ISO_9945.Kernel
+#elseif os(Windows)
+public typealias Kernel = Windows.Kernel
+#endif
+
 // MARK: - Cycle 19 Descriptor typealias chain (typed handles at L2 spec packages)
 //
 // Per user direction 2026-04-30 + [PLAT-ARCH-005], typed descriptor lives at
