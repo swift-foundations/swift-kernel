@@ -140,6 +140,8 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
+                .product(name: "ISO 9945 Core", package: "swift-iso-9945",
+                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Linux Kernel Event", package: "swift-linux",
                          condition: .when(platforms: [.linux])),
             ]
@@ -205,7 +207,9 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Binary Primitives", package: "swift-binary-primitives")
+                .product(name: "Binary Primitives", package: "swift-binary-primitives"),
+                .product(name: "ISO 9945 Core", package: "swift-iso-9945",
+                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
             ],
             path: "Tests/Support/_Lock Test Process"
         ),

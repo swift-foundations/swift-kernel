@@ -87,6 +87,6 @@ extension Kernel.Completion.Submission {
         /// synthesised through the completion port on Windows. The
         /// opcode name describes the domain operation ("readiness"),
         /// not a specific platform syscall.
-        case readiness(events: Kernel.Descriptor.Interest)
+        case readiness(events: Kernel.Event.Interest)
     }
 }
