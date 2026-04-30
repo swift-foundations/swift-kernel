@@ -87,7 +87,6 @@ let package = Package(
                 .product(name: "Clock Primitives", package: "swift-clock-primitives"),
                 .product(name: "Error Primitives", package: "swift-error-primitives"),
                 .product(name: "Memory Primitives", package: "swift-memory-primitives"),
-                .product(name: "Kernel Process Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Random Primitives", package: "swift-random-primitives"),
                 .product(name: "Kernel Time Primitives", package: "swift-kernel-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),

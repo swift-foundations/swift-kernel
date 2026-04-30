@@ -9,7 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Process_Primitives
 
 extension Kernel.Process.ID: @retroactive CustomStringConvertible {
     public var description: Swift.String { "\(rawValue)" }
