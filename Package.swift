@@ -71,6 +71,7 @@ let package = Package(
         .package(path: "../../swift-intel/swift-x86-standard"),
         .package(path: "../../swift-arm-ltd/swift-arm-standard"),
         .package(path: "../../swift-microsoft/swift-windows-standard"),
+        .package(path: "../../swift-iso/swift-iso-9945"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
         .package(path: "../swift-linux"),
@@ -93,7 +94,6 @@ let package = Package(
                 .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Path Primitives", package: "swift-path-primitives"),
                 .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Kernel Socket Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Event Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Completion Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Terminal Primitives", package: "swift-kernel-primitives"),
@@ -184,6 +184,10 @@ let package = Package(
                 "Kernel Event",
                 "Kernel Completion",
                 "Kernel Clock",
+                .product(name: "ISO 9945 Kernel Socket", package: "swift-iso-9945",
+                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
+                .product(name: "Windows Kernel Socket Standard", package: "swift-windows-standard",
+                         condition: .when(platforms: [.windows])),
             ]
         ),
 
