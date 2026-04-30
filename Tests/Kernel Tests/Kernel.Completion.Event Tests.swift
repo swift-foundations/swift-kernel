@@ -4,7 +4,6 @@
 //
 
 import Testing
-import Kernel_Primitives_Test_Support
 
 @_spi(Syscall) @testable import Kernel_Completion
 
