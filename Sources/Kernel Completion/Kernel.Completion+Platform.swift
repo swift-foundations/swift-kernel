@@ -5,8 +5,8 @@
 //  Platform factory for completion I/O.
 //
 //  The Completion struct, Driver, Submission, Event, and Error types
-//  live at L1 (Kernel Completion Primitives). This file provides only
-//  the platform factory that dispatches to backend-specific implementations.
+//  live in this same target. This file provides only the platform
+//  factory that dispatches to backend-specific implementations.
 //
 
 // MARK: - Platform Default

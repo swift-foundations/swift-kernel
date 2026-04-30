@@ -11,8 +11,6 @@
 
 #if os(Linux)
 
-import Kernel_Completion_Primitives
-
 extension Kernel.Completion.Submission.Flags {
     /// Select a buffer from the specified buffer group at completion time.
     ///

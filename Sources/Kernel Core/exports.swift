@@ -21,7 +21,6 @@
 @_exported public import Path_Primitives
 @_exported public import Kernel_File_Primitives
 @_exported public import Kernel_Event_Primitives
-@_exported public import Kernel_Completion_Primitives
 @_exported public import Kernel_Terminal_Primitives
 @_exported public import System_Primitives
 @_exported public import Queue_Primitives

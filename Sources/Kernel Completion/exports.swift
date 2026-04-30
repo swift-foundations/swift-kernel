@@ -1,2 +1,2 @@
 @_exported public import Kernel_Core
-@_exported public import Kernel_Completion_Primitives
+@_exported public import Error_Primitives

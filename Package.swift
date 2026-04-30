@@ -95,7 +95,6 @@ let package = Package(
                 .product(name: "Path Primitives", package: "swift-path-primitives"),
                 .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Event Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Kernel Completion Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Kernel Terminal Primitives", package: "swift-kernel-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Reference Primitives", package: "swift-reference-primitives"),
@@ -152,7 +151,6 @@ let package = Package(
             name: "Kernel Completion",
             dependencies: [
                 "Kernel Core",
-                .product(name: "Kernel Completion Primitives", package: "swift-kernel-primitives"),
                 .product(name: "Linux Kernel IO Uring", package: "swift-linux",
                          condition: .when(platforms: [.linux])),
             ]

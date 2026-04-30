@@ -9,8 +9,6 @@
 //  to produce a typed error.
 //
 
-@_spi(Syscall) import Kernel_Completion_Primitives
-
 extension Kernel.Completion.Event.Result {
     /// The failure error, or `nil` if the result is a success.
     ///

@@ -19,7 +19,6 @@
 
 import Kernel_Core
 import Linux_Kernel_IO_Uring
-@_spi(Syscall) import Kernel_Completion_Primitives
 
 // MARK: - Error Conversion
 
