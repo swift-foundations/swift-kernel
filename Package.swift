@@ -96,7 +96,6 @@ let package = Package(
                 .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Path Primitives", package: "swift-path-primitives"),
                 .product(name: "Kernel File Primitives", package: "swift-kernel-primitives"),
-                .product(name: "Kernel Event Primitives", package: "swift-kernel-primitives"),
                 .product(name: "System Primitives", package: "swift-system-primitives"),
                 .product(name: "Reference Primitives", package: "swift-reference-primitives"),
                 .product(name: "Ownership Primitives", package: "swift-ownership-primitives"),

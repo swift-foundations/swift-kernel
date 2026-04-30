@@ -21,7 +21,6 @@
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 
-import Kernel_Event_Primitives
 import Darwin_Kernel_Event_Standard
 
 // MARK: - Error Conversion
