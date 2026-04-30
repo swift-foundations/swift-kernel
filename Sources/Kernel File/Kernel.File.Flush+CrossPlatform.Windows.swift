@@ -16,11 +16,11 @@ public import Path_Primitives
 // MARK: - Cross-platform Flush surface on Windows
 //
 // `Kernel.File.Flush.flush(_:)` is NOT defined here; it is inherited from
-// `Windows.Kernel.File.Flush.flush(_:)` in swift-windows-standard (L2) via
-// namespace identity (`Windows.Kernel == Kernel`). Windows has no EINTR, so
-// no L3 policy wrapper exists in swift-windows — the [PLAT-ARCH-008e]
-// exception applies: if the L3 platform tier is empty, the unifier MAY
-// delegate to L2 raw directly.
+// `Windows.`32`.Kernel.File.Flush.flush(_:)` in swift-windows-32 (L2) per
+// the Wave 2 Tier 1a sub-namespace migration ([PLAT-ARCH-008k]). Windows
+// has no EINTR, so no L3 policy wrapper exists in swift-windows — the
+// [PLAT-ARCH-008e] exception applies: if the L3 platform tier is empty,
+// the unifier MAY delegate to L2 spec directly.
 //
 // `data(_:)` and `directory(path:)` are new cross-platform intent names that
 // do not exist at L2, so this file adds them with Windows semantics.
@@ -35,15 +35,15 @@ extension Kernel.File.Flush {
     /// names the cross-platform intent; on Windows it is implemented as a
     /// full flush.
     ///
-    /// Delegates directly to ``Windows/Kernel/File/Flush/flush(_:)`` in
-    /// swift-windows-standard (L2). The [PLAT-ARCH-008e] exception applies:
+    /// Delegates directly to `Windows.`32`.Kernel.File.Flush.flush(_:)` in
+    /// swift-windows-32 (L2). The [PLAT-ARCH-008e] exception applies:
     /// Windows has no EINTR and no L3 policy wrapper.
     ///
     /// - Parameter descriptor: The file descriptor.
     /// - Throws: ``Kernel/File/Flush/Error`` on failure.
     @inlinable
     public static func data(_ descriptor: borrowing Kernel.Descriptor) throws(Error) {
-        try Windows.Kernel.File.Flush.flush(descriptor)
+        try Windows.`32`.Kernel.File.Flush.flush(descriptor)
     }
 
     /// Documented no-op on Windows.

@@ -125,5 +125,5 @@ internal func _kernelThreadLocalRelease(_ raw: UnsafeMutableRawPointer) {
 
 #elseif os(Windows)
 @usableFromInline
-internal typealias _PlatformSlot = Windows.Kernel.Thread.Index
+internal typealias _PlatformSlot = Windows.`32`.Kernel.Thread.Index
 #endif
