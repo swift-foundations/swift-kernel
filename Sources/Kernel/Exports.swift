@@ -30,38 +30,34 @@ public typealias Kernel = ISO_9945.Kernel
 public typealias Kernel = Windows.Kernel
 #endif
 
-// MARK: - Cycle 19 Descriptor typealias chain (typed handles at L2 spec packages)
+// MARK: - Descriptor typealias chain (L2-canonical per [PLAT-ARCH-005] revised, Wave 4c-Socket Prerequisite 2026-05-01)
 //
-// Per user direction 2026-04-30 + [PLAT-ARCH-005], typed descriptor lives at
-// L2 spec packages per platform. This typealias chain at the L3-unifier
-// resolves the cross-platform name `Kernel.Descriptor` to either
-// `ISO_9945.Kernel.Descriptor` (POSIX, Int32 storage + close(2)) or
-// `Windows.Kernel.Descriptor` (Windows, UInt storage + CloseHandle).
+// Per [PLAT-ARCH-005] revised (Wave 4c-Socket Prerequisite, 2026-05-01): the
+// per-platform Descriptor is canonical at the L2 spec layer when one exists.
+// POSIX → `ISO_9945.Kernel.Descriptor` (Int32 storage + close(2)) at swift-iso-9945.
+// Win32 → `Windows.\`32\`.Kernel.Descriptor` (UInt storage + CloseHandle) at
+// swift-windows-32. The L3-policy packages (swift-posix / swift-windows) provide
+// typealiases (`POSIX.Kernel.Descriptor` / `Windows.Kernel.Descriptor`); this
+// L3-unifier typealias chain resolves directly to the L2 canonical types,
+// skipping the L3-policy hop, so cross-platform consumers see one chain step.
 //
-// Validity / Validity.Error / Validity.Error.Limit and Close / Close.Error
-// and Duplicate / Duplicate.Error: all at L2 per-platform under the
-// platform-namespaced types. The cross-platform `Kernel.Descriptor.X` names
-// resolve via the typealias on the descriptor itself + ISO_9945.Kernel ==
-// Kernel / Windows.Kernel == Kernel namespace identity.
+// Validity / Validity.Error / Validity.Error.Limit / Close / Close.Error /
+// Duplicate / Duplicate.Error: all canonically at L2 under the platform-namespaced
+// types; `Kernel.Descriptor.X` resolves via the typealias on the descriptor itself.
 //
-// Note: ISO_9945.Kernel and Windows.Kernel are typealiases to
-// Kernel_Primitives_Core.Kernel, so within their respective platform
-// packages, `Kernel.Descriptor.Validity` resolves to the platform L2 type
-// directly without further typealiasing.
-//
-// The L1 swift-kernel-primitives Kernel Descriptor Primitives target was
-// deleted in Cycle 19. Cross-platform abstract vocabulary like `Interest`
-// relocated to swift-kernel L3 (Kernel Core target).
+// The L1 swift-kernel-primitives Kernel Descriptor Primitives target was deleted
+// in Cycle 19. Cross-platform abstract vocabulary like `Interest` relocated to
+// swift-kernel L3 (Kernel Core target).
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
 extension Kernel {
-    /// Cross-platform file descriptor (POSIX fd-shape on POSIX platforms).
+    /// Cross-platform file descriptor — L2-canonical at iso-9945 (POSIX).
     public typealias Descriptor = ISO_9945.Kernel.Descriptor
 }
 #elseif os(Windows)
 extension Kernel {
-    /// Cross-platform descriptor (Windows HANDLE-shape on Windows).
-    public typealias Descriptor = Windows.Kernel.Descriptor
+    /// Cross-platform descriptor — L2-canonical at swift-windows-32 (Win32).
+    public typealias Descriptor = Windows.`32`.Kernel.Descriptor
 }
 #endif
 
