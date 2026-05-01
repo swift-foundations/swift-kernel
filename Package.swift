@@ -172,7 +172,6 @@ let package = Package(
             name: "Kernel Clock",
             dependencies: [
                 .product(name: "Clock Primitives", package: "swift-clock-primitives"),
-                .product(name: "Clock Primitives", package: "swift-clock-primitives"),
                 .product(name: "POSIX Kernel Clock", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Windows 32 Kernel Clock", package: "swift-windows-32",
