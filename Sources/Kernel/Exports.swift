@@ -30,34 +30,41 @@ public typealias Kernel = ISO_9945.Kernel
 public typealias Kernel = Windows.Kernel
 #endif
 
-// MARK: - Descriptor typealias chain (L2-canonical per [PLAT-ARCH-005] revised, Wave 4c-Socket Prerequisite 2026-05-01)
+// MARK: - Descriptor typealias chain (three-tier per [PLAT-ARCH-005] revised + [PLAT-ARCH-008e], Wave 4c-Socket Prerequisite II 2026-05-01)
 //
-// Per [PLAT-ARCH-005] revised (Wave 4c-Socket Prerequisite, 2026-05-01): the
-// per-platform Descriptor is canonical at the L2 spec layer when one exists.
-// POSIX → `ISO_9945.Kernel.Descriptor` (Int32 storage + close(2)) at swift-iso-9945.
-// Win32 → `Windows.\`32\`.Kernel.Descriptor` (UInt storage + CloseHandle) at
-// swift-windows-32. The L3-policy packages (swift-posix / swift-windows) provide
-// typealiases (`POSIX.Kernel.Descriptor` / `Windows.Kernel.Descriptor`); this
-// L3-unifier typealias chain resolves directly to the L2 canonical types,
-// skipping the L3-policy hop, so cross-platform consumers see one chain step.
+// Per [PLAT-ARCH-005] revised + [PLAT-ARCH-008e] (Wave 4c-Socket Prerequisite II,
+// 2026-05-01): the per-platform Descriptor is canonical at the L2 spec layer
+// (POSIX → `ISO_9945.Kernel.Descriptor` at swift-iso-9945; Win32 →
+// `Windows.\`32\`.Kernel.Descriptor` at swift-windows-32). The L3-policy
+// packages (swift-posix / swift-windows) own `POSIX.Kernel.Descriptor` /
+// `Windows.Kernel.Descriptor` as public typealiases of the L2 canonical
+// types. This L3-unifier typealias targets the L3-policy name; typealias
+// transitivity then resolves the chain to the L2 canonical at compile time,
+// preserving the three-tier composition discipline (L3-unifier composes its
+// peer L3-policy tier; never reaches across into L2).
 //
 // Validity / Validity.Error / Validity.Error.Limit / Close / Close.Error /
 // Duplicate / Duplicate.Error: all canonically at L2 under the platform-namespaced
-// types; `Kernel.Descriptor.X` resolves via the typealias on the descriptor itself.
+// types; `Kernel.Descriptor.X` resolves via typealias transitivity through the
+// three-tier chain.
 //
 // The L1 swift-kernel-primitives Kernel Descriptor Primitives target was deleted
 // in Cycle 19. Cross-platform abstract vocabulary like `Interest` relocated to
 // swift-kernel L3 (Kernel Core target).
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+@_exported public import POSIX_Kernel_Descriptor
+
 extension Kernel {
-    /// Cross-platform file descriptor — L2-canonical at iso-9945 (POSIX).
-    public typealias Descriptor = ISO_9945.Kernel.Descriptor
+    /// Cross-platform file descriptor — composes through L3-policy per [PLAT-ARCH-008e].
+    public typealias Descriptor = POSIX.Kernel.Descriptor
 }
 #elseif os(Windows)
+@_exported public import Windows_Kernel_Descriptor
+
 extension Kernel {
-    /// Cross-platform descriptor — L2-canonical at swift-windows-32 (Win32).
-    public typealias Descriptor = Windows.`32`.Kernel.Descriptor
+    /// Cross-platform descriptor — composes through L3-policy per [PLAT-ARCH-008e].
+    public typealias Descriptor = Windows.Kernel.Descriptor
 }
 #endif
 
@@ -69,29 +76,32 @@ extension Kernel.Descriptor {
     public typealias Interest = Kernel.Event.Interest
 }
 
-// MARK: - Cycle 21 Socket.Descriptor typealias chain (typed handles at L2)
+// MARK: - Socket.Descriptor typealias chain (three-tier per [PLAT-ARCH-005] + [PLAT-ARCH-008e], Wave 4c-Socket Prerequisite II 2026-05-01)
 //
-// Per user direction 2026-04-30, typed handles relocate to L2 spec packages
-// per platform (NOT L3-policy). This typealias chain at the L3-unifier
-// resolves the cross-platform name `Kernel.Socket.Descriptor` to either
-// `ISO_9945.Kernel.Socket.Descriptor` (POSIX, typealias to Kernel.Descriptor
-// since fd=socket on POSIX) or `Windows.Kernel.Socket.Descriptor` (Windows,
-// struct with `closesocket`-on-deinit). swift-kernel-primitives' Kernel
-// Socket Primitives target was deleted in Cycle 21; vocab + errors absorbed
-// at iso-9945 ISO 9945 Core.
+// Typed socket handles are canonical at L2 spec packages per platform:
+// POSIX → `ISO_9945.Kernel.Socket.Descriptor` at swift-iso-9945 (typealias to
+// Kernel.Descriptor since fd=socket on POSIX); Win32 →
+// `Windows.\`32\`.Kernel.Socket.Descriptor` at swift-windows-32 (struct with
+// `closesocket`-on-deinit). L3-policy packages (swift-posix / swift-windows)
+// own `POSIX.Kernel.Socket.Descriptor` / `Windows.Kernel.Socket.Descriptor`
+// as typealiases. This L3-unifier typealias targets the L3-policy name;
+// the three-tier chain (L3-unifier → L3-policy → L2) composes one tier at
+// a time per [PLAT-ARCH-008e]. swift-kernel-primitives' Kernel Socket
+// Primitives target was deleted in Cycle 21; vocab + errors absorbed at
+// iso-9945 ISO 9945 Core.
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-@_exported public import ISO_9945_Kernel_Socket
+@_exported public import POSIX_Kernel_Socket
 
 extension Kernel.Socket {
-    /// Cross-platform socket descriptor (POSIX fd-shape on POSIX platforms).
-    public typealias Descriptor = ISO_9945.Kernel.Socket.Descriptor
+    /// Cross-platform socket descriptor — composes through L3-policy per [PLAT-ARCH-008e].
+    public typealias Descriptor = POSIX.Kernel.Socket.Descriptor
 }
 #elseif os(Windows)
-@_exported public import Windows_Kernel_Socket_Standard
+@_exported public import Windows_Kernel_Socket
 
 extension Kernel.Socket {
-    /// Cross-platform socket descriptor (Windows SOCKET-shape on Windows).
+    /// Cross-platform socket descriptor — composes through L3-policy per [PLAT-ARCH-008e].
     public typealias Descriptor = Windows.Kernel.Socket.Descriptor
 }
 #endif

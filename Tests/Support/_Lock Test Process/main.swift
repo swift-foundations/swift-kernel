@@ -30,7 +30,7 @@
 
 import Binary_Primitives
 import Kernel
-@_spi(Syscall) import ISO_9945_Core
+@_spi(Syscall) import POSIX_Kernel_Descriptor
 
 #if canImport(Darwin)
     internal import Darwin

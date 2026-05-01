@@ -77,10 +77,12 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-memory-primitives"),
         .package(path: "../../swift-primitives/swift-dictionary-primitives"),
         .package(path: "../../swift-primitives/swift-terminal-primitives"),
+        // CPU L2 deps — OPEN finding for separate cycle (project_cpu_isa_three_layer_split.md).
+        // Per [PLAT-ARCH-008e], L3-unifier should compose L3-policy; for CPU there is no
+        // current L3-policy tier (swift-cpu lives at L3-unifier; swift-x86-standard /
+        // swift-arm-standard are L2 spec packages). Restructure deferred to its own cycle.
         .package(path: "../../swift-intel/swift-x86-standard"),
         .package(path: "../../swift-arm-ltd/swift-arm-standard"),
-        .package(path: "../../swift-microsoft/swift-windows-32"),
-        .package(path: "../../swift-iso/swift-iso-9945"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
         .package(path: "../swift-linux"),
@@ -148,7 +150,7 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
-                .product(name: "ISO 9945 Core", package: "swift-iso-9945",
+                .product(name: "POSIX Kernel Descriptor", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Linux Kernel Event", package: "swift-linux",
                          condition: .when(platforms: [.linux])),
@@ -174,7 +176,7 @@ let package = Package(
                 .product(name: "Clock Primitives", package: "swift-clock-primitives"),
                 .product(name: "POSIX Kernel Clock", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "Windows 32 Kernel Clock", package: "swift-windows-32",
+                .product(name: "Windows Kernel Clock", package: "swift-windows",
                          condition: .when(platforms: [.windows])),
             ]
         ),
@@ -189,7 +191,7 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 .product(name: "Terminal Primitives Core", package: "swift-terminal-primitives"),
-                .product(name: "ISO 9945 Kernel Terminal", package: "swift-iso-9945",
+                .product(name: "POSIX Kernel Terminal", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
             ]
         ),
@@ -205,9 +207,13 @@ let package = Package(
                 "Kernel Event",
                 "Kernel Completion",
                 "Kernel Clock",
-                .product(name: "ISO 9945 Kernel Socket", package: "swift-iso-9945",
+                .product(name: "POSIX Kernel Descriptor", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "Windows 32 Kernel Socket", package: "swift-windows-32",
+                .product(name: "POSIX Kernel Socket", package: "swift-posix",
+                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
+                .product(name: "Windows Kernel Descriptor", package: "swift-windows",
+                         condition: .when(platforms: [.windows])),
+                .product(name: "Windows Kernel Socket", package: "swift-windows",
                          condition: .when(platforms: [.windows])),
             ]
         ),
@@ -228,7 +234,7 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
-                .product(name: "ISO 9945 Core", package: "swift-iso-9945",
+                .product(name: "POSIX Kernel Descriptor", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
             ],
             path: "Tests/Support/_Lock Test Process"
