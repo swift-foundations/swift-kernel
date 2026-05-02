@@ -45,7 +45,7 @@ extension Terminal.Mode.Raw.Token {
     /// Previous terminal state (platform-specific).
     public enum Previous: Sendable {
         #if !os(Windows)
-        case posix(Kernel.Termios.Attributes)
+        case posix(ISO_9945.Kernel.Termios.Attributes)
         #endif
 
         #if os(Windows)
@@ -69,9 +69,9 @@ extension Terminal.Mode.Raw {
     /// - Throws: ``Terminal.Error`` if entering raw mode fails.
     public func enter() throws(Terminal.Error) -> Token {
         do {
-            let original = try Kernel.Termios.Attributes.get(fd: stream.rawValue)
+            let original = try ISO_9945.Kernel.Termios.Attributes.get(fd: stream.rawValue)
             let raw = original.withRaw()
-            try Kernel.Termios.Attributes.set(raw, fd: stream.rawValue)
+            try ISO_9945.Kernel.Termios.Attributes.set(raw, fd: stream.rawValue)
             return Token(stream: stream, previous: .posix(original))
         } catch {
             throw Terminal.Error(operation: .enterRaw, underlying: .kernel(error))
@@ -89,7 +89,7 @@ extension Terminal.Mode.Raw.Token {
             throw Terminal.Error(operation: .exitRaw, underlying: .unsupported)
         }
         do {
-            try Kernel.Termios.Attributes.set(attrs, fd: stream.rawValue)
+            try ISO_9945.Kernel.Termios.Attributes.set(attrs, fd: stream.rawValue)
             restored = true
         } catch let error {
             throw Terminal.Error(operation: .exitRaw, underlying: .kernel(error))
