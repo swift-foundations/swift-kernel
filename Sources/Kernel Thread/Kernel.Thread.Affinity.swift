@@ -61,15 +61,22 @@ extension Kernel.Thread.Affinity {
         case .cores, .numaNode:
             #if os(Linux)
             try Linux.Thread.Affinity.apply(affinity)
+            #elseif os(Windows)
+            // Tier 5-Windows-FOS+Affinity-Combined Phase 5 (2026-05-02):
+            // restored the Windows-side dispatch removed in Wave 1.9
+            // (commit `afb3a19`). The Path X relocation orphan that blocked
+            // Wave 1.9 is now resolved: Phase 1 recreated the L2 type at
+            // `Windows.\`32\`.Kernel.Thread.Affinity` (swift-windows-32
+            // commit `7509c37`), Phase 3 added the L3-policy
+            // `Windows.Kernel.Thread.Affinity.apply(_:)` dispatch surface
+            // at swift-windows (commit `f40a2e9`), and Phase 5 re-exports
+            // the `Windows Kernel Thread` product through Kernel Thread's
+            // exports so this call site can resolve.
+            try Windows.Kernel.Thread.Affinity.apply(affinity)
             #else
-            // Windows + Darwin: Wave 1.9 (2026-04-30) removed the Windows-side
-            // Affinity dispatch as part of Path X relocation orphan cleanup
-            // (option c REMOVE per principal disposition). Affinity is
-            // currently Linux-only across the cross-platform Kernel.Thread.Affinity
-            // surface. Tier 5 vocab relocation (deferred) will restore
-            // Windows-side Affinity properly when the type relocates from
-            // iso-9945 L2 to swift-kernel L3 with #if-gated platform
-            // implementations.
+            // Darwin: macOS/iOS/tvOS/watchOS/visionOS lack thread affinity
+            // syscalls; the cross-platform surface throws `.unsupported`
+            // for non-`.any` cases on these platforms.
             throw .unsupported
             #endif
         }

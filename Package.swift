@@ -122,7 +122,12 @@ let package = Package(
         // MARK: - Thread
         .target(
             name: "Kernel Thread",
-            dependencies: ["Kernel Core", "Kernel System"]
+            dependencies: [
+                "Kernel Core",
+                "Kernel System",
+                .product(name: "Windows Kernel Thread", package: "swift-windows",
+                         condition: .when(platforms: [.windows])),
+            ]
         ),
 
         // MARK: - File
@@ -131,6 +136,8 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 .product(name: "String Primitives", package: "swift-string-primitives"),
+                .product(name: "Windows Kernel File", package: "swift-windows",
+                         condition: .when(platforms: [.windows])),
             ]
         ),
 
