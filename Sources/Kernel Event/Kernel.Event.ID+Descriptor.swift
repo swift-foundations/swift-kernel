@@ -27,15 +27,9 @@ extension Tagged where Tag == Kernel.Event, RawValue == UInt {
     }
 }
 
-extension Kernel.Descriptor {
-    /// Creates a file descriptor from an event identifier, if valid.
-    @_spi(Syscall)
-    public init?(_ id: Kernel.Event.ID) {
-        #if os(Windows)
-            self.init(_rawValue: id.rawValue)
-        #else
-            guard id.rawValue <= UInt(Int32.max) else { return nil }
-            self.init(_rawValue: Int32(id.rawValue))
-        #endif
-    }
-}
+// Reverse conversion `Descriptor?(_ id: Event.ID)` removed per
+// `feedback_no_raw_descriptor_reconstruction`: a `~Copyable` `Descriptor`
+// must not be reconstructed from a raw integer once the original wrapper
+// has been consumed. Consumers that need to act on a descriptor obtained
+// via an event must hold the original `Descriptor` (e.g., via a registered
+// handle table) rather than rebuild it from `Event.ID.rawValue`.

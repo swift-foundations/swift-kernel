@@ -72,8 +72,13 @@ try Kernel.Kqueue.register(kq, events: [event])
 var events = [Kernel.Kqueue.Event](repeating: .init(), count: 64)
 let count = try Kernel.Kqueue.poll(kq, into: &events, timeout: .seconds(1))
 for i in 0..<count {
-    let fd = Kernel.Descriptor(rawValue: Int32(events[i].ident))
-    // fd is ready for reading
+    // Use `events[i].ident` (or the equivalent `Kernel.Event.ID`) as a key
+    // into your own registration table to look up the original descriptor.
+    // Reconstructing a `Kernel.Descriptor` from `events[i].ident` is
+    // disallowed: the `~Copyable` descriptor must be held by its original
+    // owner across the wait, not rebuilt from a raw identifier.
+    let id = Kernel.Event.ID(__unchecked: (), UInt(events[i].ident))
+    handle(eventID: id)  // your registry lookup
 }
 ```
 
