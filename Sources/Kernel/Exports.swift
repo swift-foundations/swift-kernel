@@ -19,13 +19,25 @@
 
 // MARK: - G6.D namespace anchor (typealias-via-L3 per [PLAT-ARCH-005])
 //
+// Wave 3.5-Final-Atomic (2026-05-02): POSIX path flipped from
+// `ISO_9945.Kernel` to `POSIX.Kernel`. Per Wave 3.5 envelope (Item 4 of
+// post-Path-X cycles), POSIX-shared content is now wrapped at the
+// `POSIX.Kernel.X` namespace with method-wrappers + value-type
+// typealiases delegating to iso-9945 typed Phase 1.5 forms; the L3-unifier
+// `Kernel` typealias targets POSIX.Kernel and typealias transitivity
+// resolves the chain to iso-9945 (and L1 where applicable) at compile
+// time, preserving L3-policy → L2 → L1 composition discipline per
+// [PLAT-ARCH-008e]. The Windows path remains unchanged (Windows uses its
+// own L3-policy chain via Windows.Kernel; no POSIX wrapping applies).
+//
 // Path X terminal: swift-kernel-primitives package deleted; Kernel root
-// namespace lives at L2 spec packages canonically nested under their platform
-// namespace (ISO_9945.Kernel for POSIX, Windows.Kernel for Windows). This
-// public typealias provides the unified cross-platform `Kernel` name at L3.
+// namespace lives at L2 spec packages canonically nested under their
+// platform namespace (ISO_9945.Kernel for POSIX, Windows.Kernel for
+// Windows). This public typealias provides the unified cross-platform
+// `Kernel` name at L3.
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-public typealias Kernel = ISO_9945.Kernel
+public typealias Kernel = POSIX.Kernel
 #elseif os(Windows)
 public typealias Kernel = Windows.Kernel
 #endif
