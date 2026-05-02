@@ -61,7 +61,6 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-clock-primitives"),
         .package(path: "../../swift-primitives/swift-system-primitives"),
         .package(path: "../../swift-primitives/swift-binary-primitives"),
-        .package(path: "../../swift-primitives/swift-cpu-primitives"),
         .package(path: "../../swift-primitives/swift-cardinal-primitives"),
         .package(path: "../../swift-primitives/swift-tagged-primitives"),
         .package(path: "../../swift-primitives/swift-time-primitives"),
@@ -77,12 +76,7 @@ let package = Package(
         .package(path: "../../swift-primitives/swift-memory-primitives"),
         .package(path: "../../swift-primitives/swift-dictionary-primitives"),
         .package(path: "../../swift-primitives/swift-terminal-primitives"),
-        // CPU L2 deps — OPEN finding for separate cycle (project_cpu_isa_three_layer_split.md).
-        // Per [PLAT-ARCH-008e], L3-unifier should compose L3-policy; for CPU there is no
-        // current L3-policy tier (swift-cpu lives at L3-unifier; swift-x86-standard /
-        // swift-arm-standard are L2 spec packages). Restructure deferred to its own cycle.
-        .package(path: "../../swift-intel/swift-x86-standard"),
-        .package(path: "../../swift-arm-ltd/swift-arm-standard"),
+        .package(path: "../swift-cpu"),
         .package(path: "../swift-posix"),
         .package(path: "../swift-darwin"),
         .package(path: "../swift-linux"),
@@ -95,7 +89,7 @@ let package = Package(
             name: "Kernel Core",
             dependencies: [
                 .product(name: "Binary Primitives Core", package: "swift-binary-primitives"),
-                .product(name: "CPU Primitives", package: "swift-cpu-primitives"),
+                .product(name: "CPU", package: "swift-cpu"),
                 .product(name: "Cardinal Primitives", package: "swift-cardinal-primitives"),
                 .product(name: "Tagged Primitives", package: "swift-tagged-primitives"),
                 .product(name: "Time Primitives Core", package: "swift-time-primitives"),
@@ -110,10 +104,6 @@ let package = Package(
                 .product(name: "Ownership Primitives", package: "swift-ownership-primitives"),
                 .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
                 .product(name: "Queue Primitives", package: "swift-queue-primitives"),
-                .product(name: "X86 Standard", package: "swift-x86-standard",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .windows])),
-                .product(name: "ARM Standard", package: "swift-arm-standard",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux])),
                 .product(name: "POSIX Kernel", package: "swift-posix", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
                 .product(name: "Darwin System", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),

@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 @_exported public import Binary_Primitives_Core
-@_exported public import CPU_Primitives
+@_exported public import CPU
 @_exported public import Cardinal_Primitives
 @_exported public import Tagged_Primitives
 @_exported public import Time_Primitives_Core
@@ -26,12 +26,6 @@
 @_exported public import Dimension_Primitives
 @_exported public import Reference_Primitives
 @_exported public import Ownership_Primitives
-
-#if arch(x86_64) || arch(i386)
-    @_exported public import X86_Standard
-#elseif arch(arm64) || arch(arm)
-    @_exported public import ARM_Standard
-#endif
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux) || os(Android) || os(OpenBSD)
     @_exported public import POSIX_Kernel
