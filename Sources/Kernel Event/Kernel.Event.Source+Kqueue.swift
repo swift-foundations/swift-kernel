@@ -23,6 +23,10 @@
 
 import Darwin_Kernel_Event_Standard
 
+// Wave 3.5-Final-Atomic (2026-05-02): explicit import for Kernel.Descriptor
+// member access (Swift 6.x #MemberImportVisibility post-flip).
+public import POSIX_Kernel_Descriptor
+
 // MARK: - Error Conversion
 
 extension Kernel.Event.Driver.Error {

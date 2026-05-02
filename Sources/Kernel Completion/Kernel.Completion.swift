@@ -6,6 +6,11 @@
 //  ~Copyable resource owner for completion-based I/O notification.
 //
 
+// Wave 3.5-Final-Atomic (2026-05-02): explicit import for Kernel.Descriptor
+// member access (Swift 6.x #MemberImportVisibility post-flip).
+#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+public import POSIX_Kernel_Descriptor
+#endif
 
 extension Kernel {
     /// Completion-based I/O notification resource.

@@ -9,6 +9,16 @@
 //
 // ===----------------------------------------------------------------------===//
 
+// Wave 3.5-Final-Atomic (2026-05-02): explicit import required for
+// `Kernel.Descriptor.Validity.Error` member access. Post-flip
+// (`Kernel = POSIX.Kernel`), Kernel.Descriptor's defining module is
+// POSIX_Kernel_Descriptor; Swift 6.x #MemberImportVisibility strictness
+// requires explicit `public import` (not `internal`) since the enum case
+// `handle(Kernel.Descriptor.Validity.Error)` is part of the public Failure type.
+#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+public import POSIX_Kernel_Descriptor
+#endif
+
 extension Kernel {
     /// Unified error type for all kernel syscalls.
     ///

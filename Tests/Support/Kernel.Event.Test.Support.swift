@@ -46,7 +46,7 @@ extension Kernel.Event {
         public static func writeByte(_ fd: borrowing Kernel.Descriptor, value: UInt8 = 1) {
             var byte = value
             _ = unsafe withUnsafeBytes(of: &byte) { buffer in
-                try? unsafe Kernel.IO.Write.write(fd, from: buffer)
+                try? unsafe POSIX.Kernel.IO.Write.write(fd, from: buffer)
             }
         }
 
@@ -56,7 +56,7 @@ extension Kernel.Event {
         public static func readDrain(_ fd: borrowing Kernel.Descriptor) {
             var byte: UInt8 = 0
             _ = unsafe withUnsafeMutableBytes(of: &byte) { buffer in
-                try? unsafe Kernel.IO.Read.read(fd, into: buffer)
+                try? unsafe POSIX.Kernel.IO.Read.read(fd, into: buffer)
             }
         }
     }

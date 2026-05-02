@@ -6,6 +6,11 @@
 //  Notification handle for event loop integration.
 //
 
+// Wave 3.5-Final-Atomic (2026-05-02): explicit import for Kernel.Descriptor
+// member access (Swift 6.x #MemberImportVisibility post-flip).
+#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+public import POSIX_Kernel_Descriptor
+#endif
 
 extension Kernel.Completion {
     /// Notification handle for event loop integration.

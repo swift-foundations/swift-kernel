@@ -58,7 +58,7 @@
             let tempFile = try createTempFile(prefix: prefix)
             var contentBytes = Array(content.utf8)
             _ = try? unsafe contentBytes.withUnsafeMutableBytes { ptr in
-                try unsafe Kernel.IO.Write.write(tempFile.descriptor, from: UnsafeRawBufferPointer(ptr))
+                try unsafe POSIX.Kernel.IO.Write.write(tempFile.descriptor, from: UnsafeRawBufferPointer(ptr))
             }
             return tempFile
         }
@@ -106,7 +106,7 @@
             try withTempFile(prefix: prefix) { path, fd in
                 var contentBytes = Array(content.utf8)
                 _ = try? unsafe contentBytes.withUnsafeMutableBytes { ptr in
-                    try unsafe Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
+                    try unsafe POSIX.Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
                 }
                 return try body(path, fd)
             }
@@ -130,7 +130,7 @@
                 if let content = content {
                     var contentBytes = Array(content.utf8)
                     _ = try? unsafe contentBytes.withUnsafeMutableBytes { ptr in
-                        try unsafe Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
+                        try unsafe POSIX.Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))
                     }
                 }
 
