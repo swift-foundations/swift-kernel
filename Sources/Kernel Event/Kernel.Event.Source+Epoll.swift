@@ -142,11 +142,12 @@ extension Kernel.Event.Source {
             throw Kernel.Event.Driver.Error(error)
         }
 
-        // -- Wakeup (eventfd, encapsulated in L1) --
+        // -- Wakeup (eventfd, registered at L2; Channel constructed at L3 site-of-use) --
 
         let wakeup: Kernel.Wakeup.Channel
         do throws(Kernel.Event.Poll.Error) {
-            wakeup = try epoll.wakeup(eventfd: eventfd)
+            let signal = try epoll.wakeup(eventfd: eventfd)
+            wakeup = Kernel.Wakeup.Channel(signal: signal)
         } catch {
             throw Kernel.Event.Driver.Error(error)
         }

@@ -325,7 +325,7 @@ extension Kernel.Completion {
         var params = Kernel.IO.Uring.Params()
         let ring = try createRing(entries: entries, params: &params)
 
-        // -- Wakeup: eventfd + registration + channel (all L1-local) --
+        // -- Wakeup: eventfd + registration at L2; Channel constructed at L3 site-of-use --
 
         var wakeupResult: Kernel.IO.Uring.Wakeup.Result
         do throws(Kernel.IO.Uring.Wakeup.Error) {
@@ -334,7 +334,7 @@ extension Kernel.Completion {
             throw Error(error)
         }
 
-        let wakeup = wakeupResult.channel
+        let wakeup = Kernel.Wakeup.Channel(signal: wakeupResult.signal)
         let eventfd = wakeupResult.eventfd()
 
         // -- Create State --

@@ -103,11 +103,12 @@ extension Kernel.Event.Source {
             throw Kernel.Event.Driver.Error(error)
         }
 
-        // -- Wakeup (EVFILT_USER, encapsulated in L1) --
+        // -- Wakeup (EVFILT_USER, registered at L2; Channel constructed at L3 site-of-use) --
 
         let wakeup: Kernel.Wakeup.Channel
         do throws(Kernel.Kqueue.Error) {
-            wakeup = try kq.wakeup()
+            let signal = try kq.wakeup()
+            wakeup = Kernel.Wakeup.Channel(signal: signal)
         } catch {
             throw Kernel.Event.Driver.Error(error)
         }
