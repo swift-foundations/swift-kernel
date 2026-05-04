@@ -16,13 +16,13 @@
 @_spi(Internal) import Tagged_Primitives
 @_spi(Syscall) public import POSIX_Kernel_Descriptor
 
-extension Tagged where Tag == Kernel.Event, RawValue == UInt {
+extension Tagged where Tag == Kernel.Event, Underlying == UInt {
     /// Creates an identifier from a file descriptor.
     public init(descriptor: borrowing Kernel.Descriptor) {
         #if os(Windows)
-            self.init(__unchecked: (), descriptor._rawValue)
+            self.init(_unchecked: descriptor._rawValue)
         #else
-            self.init(__unchecked: (), UInt(bitPattern: Int(descriptor._rawValue)))
+            self.init(_unchecked: UInt(bitPattern: Int(descriptor._rawValue)))
         #endif
     }
 }

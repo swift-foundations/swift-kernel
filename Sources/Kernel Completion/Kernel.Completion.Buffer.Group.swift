@@ -21,9 +21,9 @@ extension Kernel.Completion.Buffer {
 extension Kernel.Completion.Buffer.Group {
     /// Create a buffer group from an identifier.
     public init(_ id: UInt16) {
-        self = Self(__unchecked: (), id)
+        self = Self(_unchecked: id)
     }
 
     /// No buffer group (not using provided buffers).
-    public static let none = Self(__unchecked: (), 0)
+    public static let none = Self(_unchecked: 0)
 }

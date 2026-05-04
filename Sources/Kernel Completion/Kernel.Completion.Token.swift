@@ -25,9 +25,9 @@ extension Kernel.Completion {
 extension Kernel.Completion.Token {
     /// Create a token from a correlation identifier.
     public init(_ identifier: UInt64) {
-        self = Self(__unchecked: (), identifier)
+        self = Self(_unchecked: identifier)
     }
 
     /// The zero token.
-    public static let zero = Self(__unchecked: (), 0)
+    public static let zero = Self(_unchecked: 0)
 }

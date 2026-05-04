@@ -79,7 +79,7 @@ extension Kernel.IO.Uring.Operation.Data {
     /// Bridge from the cross-platform correlation token to the io_uring
     /// per-operation user_data word.
     fileprivate init(_ token: Kernel.Completion.Token) {
-        self.init(__unchecked: (), token.rawValue)
+        self.init(_unchecked: token.rawValue)
     }
 }
 
@@ -314,7 +314,7 @@ extension Kernel.Completion {
     /// - Parameter entries: Ring size (rounded up to power of 2 by kernel).
     ///   Default 256.
     public static func iouring(
-        entries: Kernel.IO.Uring.Submission.Count = .init(__unchecked: (), Cardinal(256))
+        entries: Kernel.IO.Uring.Submission.Count = .init(_unchecked: Cardinal(256))
     ) throws(Error) -> Kernel.Completion {
 
         // -- Create ring (setup fd + mmap SQ/CQ — ring owns descriptor) --

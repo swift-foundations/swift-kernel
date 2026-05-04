@@ -49,7 +49,7 @@ extension Instant {
     @inlinable
     package init(seconds: Int64, nanoseconds: Int32) {
         self.init(
-            __unchecked: (),
+            _unchecked: (),
             secondsSinceUnixEpoch: seconds,
             nanosecondFraction: nanoseconds
         )
