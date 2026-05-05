@@ -21,8 +21,8 @@ extension Kernel.Thread.Handle {
     ///
     /// - Precondition: Must NOT be called from this thread (deadlock).
     /// - Note: Must be called exactly once. The `~Copyable` constraint enforces this.
-    // WORKAROUND: Compound name — consuming ~Copyable prevents Property.View accessor
-    // WHY: join() must consume self; Property.View borrows
+    // WORKAROUND: Compound name — consuming ~Copyable prevents Property.Inout accessor
+    // WHY: join() must consume self; Property.Inout borrows
     // WHEN TO REMOVE: When Swift supports consuming property accessors
     // TRACKING: swift-kernel-deep-audit [API-NAME-002]
     @inlinable
