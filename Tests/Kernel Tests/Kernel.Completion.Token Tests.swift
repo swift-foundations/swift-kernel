@@ -4,6 +4,7 @@
 //
 
 import Testing
+import Tagged_Primitives_Standard_Library_Integration
 
 @testable import Kernel_Completion
 

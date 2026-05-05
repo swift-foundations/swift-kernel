@@ -8,6 +8,7 @@
 #if KERNEL_AVAILABLE
 
 import Testing
+import Tagged_Primitives_Standard_Library_Integration
 
 @_spi(Syscall) @testable import Kernel_Completion
 

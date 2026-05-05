@@ -246,6 +246,7 @@ let package = Package(
                 "Kernel Event",
                 "Kernel Completion",
                 "Kernel Test Support",
+                .product(name: "Tagged Primitives Standard Library Integration", package: "swift-tagged-primitives"),
             ],
             path: "Tests/Kernel Tests"
         ),
