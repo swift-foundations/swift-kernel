@@ -66,6 +66,7 @@ public typealias Kernel = Windows.Kernel
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
 @_exported public import POSIX_Kernel_Descriptor
+@_exported public import POSIX_Kernel_Directory
 
 extension Kernel {
     /// Cross-platform file descriptor — composes through L3-policy per [PLAT-ARCH-008e].

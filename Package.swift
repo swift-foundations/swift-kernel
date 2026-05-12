@@ -206,6 +206,8 @@ let package = Package(
                 "Kernel Clock",
                 .product(name: "POSIX Kernel Descriptor", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
+                .product(name: "POSIX Kernel Directory", package: "swift-posix",
+                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "POSIX Kernel Socket", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Windows Kernel Descriptor", package: "swift-windows",
