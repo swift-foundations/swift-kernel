@@ -66,6 +66,8 @@ extension Kernel.Thread {
     /// on Windows MUST set the slot to `nil` before thread exit, or
     /// accept the leak. (Future work: wire `FlsAlloc`/`FlsSetCallback`
     /// for symmetric cleanup.)
+    // SAFETY: Encapsulates unsafe internals behind a safe API; see
+    // SAFETY: [MEM-SAFE-024] for the absorber-pattern taxonomy.
     @safe
     public final class Local<Payload: AnyObject>: @unchecked Sendable {
         @usableFromInline
