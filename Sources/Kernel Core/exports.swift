@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-@_exported public import Binary_Primitives_Core
+@_exported public import Binary_Primitives
 @_exported public import CPU
 @_exported public import Cardinal_Primitives
 @_exported public import Tagged_Primitives
