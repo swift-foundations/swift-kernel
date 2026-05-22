@@ -128,9 +128,10 @@ catch let error as Kernel.File.Open.Error {
 - ``Kernel/Thread/spawn(_:body:)``
 
 > Executor conformances (`Kernel.Thread.Executor`, `Kernel.Thread.Executor.Sharded`)
-> live in swift-executors. Thread-layer compositions (`Kernel.Thread.Synchronization`,
-> `Kernel.Thread.Barrier`, `Kernel.Thread.Gate`, `Kernel.Thread.Semaphore`,
-> `Kernel.Thread.Worker`, `Kernel.Thread.Pool`) live in swift-threads.
+> live in swift-executors. Thread-layer compositions (`Kernel.Thread.Barrier`,
+> `Kernel.Thread.Gate`, `Kernel.Thread.Semaphore`, `Kernel.Thread.Worker`,
+> `Kernel.Thread.Pool`) live in swift-threads. The substrate-layer mutex +
+> condvar bundle (`Synchronizer.Blocking<N>`) lives in swift-synchronizers.
 
 ### Conceptual Articles
 
