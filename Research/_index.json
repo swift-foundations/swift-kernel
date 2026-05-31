@@ -7,17 +7,6 @@
   "scope": "swift-kernel (swift-foundations)",
   "documents": [
     {
-      "file": "audit.md",
-      "displayName": "audit.md",
-      "topic": "Systematic code audit: code-surface, implementation, modularization, platform + batch-B modularization (MOD-001–MOD-014)",
-      "date": "2026-03-24",
-      "status": "ACTIVE",
-      "statusDetail": null,
-      "statusRaw": "ACTIVE",
-      "tier": null,
-      "scope": null
-    },
-    {
       "file": "conditional-compilation-public-enum-cases.md",
       "displayName": "conditional-compilation-public-enum-cases.md",
       "topic": "#if !os(Windows) on Kernel.Failure.signal: prior art, dependency chain, consumer impact",
@@ -69,17 +58,6 @@
       "status": "CONVERGED",
       "statusDetail": null,
       "statusRaw": "CONVERGED",
-      "tier": null,
-      "scope": null
-    },
-    {
-      "file": "completion-architecture-audit.md",
-      "displayName": "completion-architecture-audit.md",
-      "topic": "L1 vocabulary purity audit: vestigial L1 finding, type-by-type [PLAT-ARCH-012] assessment, IOCP integration path",
-      "date": "2026-04-13",
-      "status": "DECISION",
-      "statusDetail": null,
-      "statusRaw": "DECISION",
       "tier": null,
       "scope": null
     },
