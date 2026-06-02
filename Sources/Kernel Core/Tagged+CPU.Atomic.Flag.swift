@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Tagged where Underlying == CPU.Atomic.Flag, Tag: ~Copyable {
+extension Tagged where Underlying == CPU.Atomic.Flag, Tag: ~Copyable & ~Escapable {
     /// Whether the flag has been set.
     ///
     /// Uses acquiring memory ordering.
