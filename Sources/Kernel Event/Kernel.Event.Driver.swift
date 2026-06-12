@@ -12,6 +12,15 @@
 
 
 import Dictionary_Primitives
+import Hash_Indexed_Primitive
+import Hash_Tagged_Primitives
+import Buffer_Primitive
+import Buffer_Linear_Primitive
+import Buffer_Linear_Primitives
+import Storage_Primitive
+import Storage_Contiguous_Primitives
+import Memory_Heap_Primitives
+import Memory_Allocator_Primitive
 
 extension Kernel.Event {
     /// Witness for event notification backends (kqueue, epoll).
@@ -99,8 +108,14 @@ extension Kernel.Event {
             // Thread-confined mutable state captured by all witness closures.
             // No synchronization — single-threaded after `sending` transfer.
             final class Shared {
+                /// The registration column — the move-only ADT-families Dictionary
+                /// over the ordered hashed entry column (generic-instantiation
+                /// alias localizing the column choice).
+                typealias Registry = Dictionary_Primitives.Dictionary<
+                    Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<Kernel.Event.ID, Registration>>>.Linear>
+                >
                 var nextID = Kernel.Event.ID.zero
-                var registry = Dictionary_Primitives.Dictionary<Kernel.Event.ID, Registration>()
+                var registry = Registry()
             }
 
             let shared = Shared()
@@ -115,7 +130,7 @@ extension Kernel.Event {
                 try add(descriptor, id, interest)
 
                 var box: Kernel.Descriptor? = consume descriptor
-                shared.registry.set(id, Registration(descriptor: box.take()!, interest: interest))
+                shared.registry.insert(key: id, value: Registration(descriptor: box.take()!, interest: interest))
 
                 return id
             }
@@ -123,23 +138,23 @@ extension Kernel.Event {
             self._modify = {
                 (id: Kernel.Event.ID, newInterest: Kernel.Event.Interest) throws(Error) in
 
-                guard var entry = shared.registry.remove(id) else {
+                guard var entry = shared.registry.removeValue(forKey: id) else {
                     throw Error.notRegistered
                 }
                 do throws(Error) {
                     try modify(entry.descriptor, id, entry.interest, newInterest)
                 } catch {
-                    shared.registry.set(id, consume entry)
+                    shared.registry.insert(key: id, value: consume entry)
                     throw error
                 }
                 entry.interest = newInterest
-                shared.registry.set(id, consume entry)
+                shared.registry.insert(key: id, value: consume entry)
             }
 
             self._deregister = {
                 (id: Kernel.Event.ID) throws(Error) in
 
-                guard let removed = shared.registry.remove(id) else { return }
+                guard let removed = shared.registry.removeValue(forKey: id) else { return }
 
                 // Backend removes kernel registration; benign errors already swallowed.
                 // Registration deinit closes the dup'd descriptor when `removed` drops.
@@ -149,7 +164,7 @@ extension Kernel.Event {
             self._arm = {
                 (id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Error) in
 
-                guard var entry = shared.registry.remove(id) else {
+                guard var entry = shared.registry.removeValue(forKey: id) else {
                     throw Error.notRegistered
                 }
                 // Merge with existing armed interest so backends with shared
@@ -161,10 +176,10 @@ extension Kernel.Event {
                 do throws(Error) {
                     try arm(entry.descriptor, id, combined)
                 } catch {
-                    shared.registry.set(id, consume entry)
+                    shared.registry.insert(key: id, value: consume entry)
                     throw error
                 }
-                shared.registry.set(id, consume entry)
+                shared.registry.insert(key: id, value: consume entry)
             }
 
             self._poll = {
@@ -178,7 +193,7 @@ extension Kernel.Event {
                 // Staleness suppression: in-place compaction by registry membership.
                 var write = 0
                 for read in 0..<rawCount {
-                    if shared.registry.contains(buffer[read].id) {
+                    if shared.registry.contains(key: buffer[read].id) {
                         if write != read { buffer[write] = buffer[read] }
                         write += 1
                     }
@@ -197,20 +212,20 @@ extension Kernel.Event {
                 // full-duplex load.
                 for i in 0..<write {
                     let event = buffer[i]
-                    guard var entry = shared.registry.remove(event.id) else { continue }
+                    guard var entry = shared.registry.removeValue(forKey: event.id) else { continue }
                     let residual = entry.armedInterest.subtracting(event.interest)
                     entry.armedInterest = residual
                     if !residual.isEmpty {
                         try? arm(entry.descriptor, event.id, residual)
                     }
-                    shared.registry.set(event.id, consume entry)
+                    shared.registry.insert(key: event.id, value: consume entry)
                 }
 
                 return write
             }
 
             self._close = {
-                shared.registry.drain { _ in }
+                shared.registry.removeAll(keepingCapacity: false)
                 close()
             }
         }
