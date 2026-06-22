@@ -112,7 +112,7 @@ extension Kernel.Event {
                 /// over the ordered hashed entry column (generic-instantiation
                 /// alias localizing the column choice).
                 typealias Registry = Dictionary_Primitives.Dictionary<
-                    Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>.System>.Contiguous<Hash.Entry<Kernel.Event.ID, Registration>>>.Linear>
+                    Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<Kernel.Event.ID, Registration>>>.Linear>
                 >
                 var nextID = Kernel.Event.ID.zero
                 var registry = Registry()
