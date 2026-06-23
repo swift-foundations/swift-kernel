@@ -99,7 +99,7 @@ let package = Package(
                 .product(name: "CPU", package: "swift-cpu"),
                 .product(name: "Cardinal Primitives", package: "swift-cardinal-primitives"),
                 .product(name: "Tagged Primitives", package: "swift-tagged-primitives"),
-                .product(name: "Time Primitives Core", package: "swift-time-primitives"),
+                .product(name: "Time Primitives", package: "swift-time-primitives"),
                 .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
                 .product(name: "Clock Primitives", package: "swift-clock-primitives"),
                 .product(name: "Error Primitives", package: "swift-error-primitives"),
@@ -203,7 +203,7 @@ let package = Package(
             name: "Kernel Terminal",
             dependencies: [
                 "Kernel Core",
-                .product(name: "Terminal Primitives Core", package: "swift-terminal-primitives"),
+                .product(name: "Terminal Primitives", package: "swift-terminal-primitives"),
                 .product(name: "POSIX Kernel Terminal", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
             ]
