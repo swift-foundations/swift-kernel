@@ -53,7 +53,7 @@ extension Kernel.IO.Uring.Length {
     /// than UInt32.max must fragment. Backend expectation mirrors the
     /// kernel ABI — the precondition is the contract.
     fileprivate init(_ count: Memory.Address.Count) {
-        let raw = count.rawValue.rawValue
+        let raw = count.underlying.underlying
         precondition(raw <= UInt(UInt32.max),
             "io_uring length exceeds UInt32 range: \(raw)")
         self.init(UInt32(raw))
@@ -68,7 +68,7 @@ extension Kernel.IO.Uring.Offset {
     /// file position"). Cross-platform code never sees the sentinel.
     fileprivate init(_ offset: Kernel.File.Offset?) {
         if let offset {
-            self.init(UInt64(bitPattern: offset.rawValue))
+            self.init(UInt64(bitPattern: offset.underlying))
         } else {
             self.init(UInt64.max)
         }
@@ -79,7 +79,7 @@ extension Kernel.IO.Uring.Operation.Data {
     /// Bridge from the cross-platform correlation token to the io_uring
     /// per-operation user_data word.
     fileprivate init(_ token: Kernel.Completion.Token) {
-        self.init(_unchecked: token.rawValue)
+        self.init(_unchecked: token.underlying)
     }
 }
 
@@ -196,8 +196,8 @@ private final class UringState {
                         to: Kernel.Socket.Address.Storage.self
                     )
                 ),
-                length: length.rawValue.rawValue <= UInt(UInt32.max)
-                    ? UInt32(length.rawValue.rawValue)
+                length: length.underlying.underlying <= UInt(UInt32.max)
+                    ? UInt32(length.underlying.underlying)
                     : UInt32.max,
                 data: data
             )
