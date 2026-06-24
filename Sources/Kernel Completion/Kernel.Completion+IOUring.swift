@@ -53,7 +53,7 @@ extension Kernel.IO.Uring.Length {
     /// than UInt32.max must fragment. Backend expectation mirrors the
     /// kernel ABI — the precondition is the contract.
     fileprivate init(_ count: Memory.Address.Count) {
-        let raw = count.underlying.underlying
+        let raw = count.underlying.rawValue
         precondition(raw <= UInt(UInt32.max),
             "io_uring length exceeds UInt32 range: \(raw)")
         self.init(UInt32(raw))
@@ -196,8 +196,8 @@ private final class UringState {
                         to: Kernel.Socket.Address.Storage.self
                     )
                 ),
-                length: length.underlying.underlying <= UInt(UInt32.max)
-                    ? UInt32(length.underlying.underlying)
+                length: length.underlying.rawValue <= UInt(UInt32.max)
+                    ? UInt32(length.underlying.rawValue)
                     : UInt32.max,
                 data: data
             )
@@ -271,7 +271,7 @@ private final class UringState {
             let rawResult: Int32 = if cqe.isSuccess {
                 Int32(cqe.bytes.transferred!)
             } else {
-                -Int32(cqe.errorNumber!.rawValue)
+                -Int32(cqe.errorNumber!.underlying)
             }
 
             visitor(
