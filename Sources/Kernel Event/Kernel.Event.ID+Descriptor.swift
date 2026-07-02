@@ -14,7 +14,11 @@
 // Kernel.Event.ID is L1 vocabulary.
 
 @_spi(Internal) import Tagged_Primitives
-@_spi(Syscall) public import POSIX_Kernel_Descriptor
+#if os(Windows)
+    @_spi(Syscall) public import Windows_32_Kernel_Core
+#else
+    @_spi(Syscall) public import POSIX_Kernel_Descriptor
+#endif
 
 extension Tagged where Tag == Kernel.Event, Underlying == UInt {
     /// Creates an identifier from a file descriptor.
