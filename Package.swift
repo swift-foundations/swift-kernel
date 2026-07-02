@@ -117,6 +117,7 @@ let package = Package(
                 .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Linux System", package: "swift-linux", condition: .when(platforms: [.linux])),
                 .product(name: "Windows Kernel", package: "swift-windows", condition: .when(platforms: [.windows])),
+                .product(name: "Windows Kernel Process", package: "swift-windows", condition: .when(platforms: [.windows])),
             ]
         ),
 
