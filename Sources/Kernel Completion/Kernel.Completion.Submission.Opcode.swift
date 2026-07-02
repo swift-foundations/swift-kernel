@@ -10,6 +10,12 @@
 
 
 public import Memory_Primitives
+#if os(Windows)
+// Per-file member visibility for `Kernel.File.Offset`: the `File` alias on
+// `Windows.Kernel` is declared in the L3 Windows_Kernel_File module, which
+// this target's exports (Kernel_Core) do not re-export.
+public import Windows_Kernel_File
+#endif
 
 extension Kernel.Completion.Submission {
     /// Platform-agnostic operation descriptor.
@@ -81,12 +87,19 @@ extension Kernel.Completion.Submission {
         /// specific platform syscall.
         case synchronize
 
+        #if !os(Windows)
         /// Register single-shot readiness interest on the target descriptor.
         ///
-        /// Platform-neutral: backed by `IORING_OP_POLL_ADD` on Linux;
-        /// synthesised through the completion port on Windows. The
-        /// opcode name describes the domain operation ("readiness"),
-        /// not a specific platform syscall.
+        /// Backed by `IORING_OP_POLL_ADD` on Linux. The opcode name
+        /// describes the domain operation ("readiness"), not a specific
+        /// platform syscall.
+        ///
+        /// Absent on Windows: the payload is `Kernel.Event.Interest` —
+        /// epoll/kqueue vocabulary whose target does not exist there —
+        /// and the only producer (IO Events) is likewise POSIX-gated.
+        /// The IOCP path will express readiness through the completion
+        /// port itself.
         case readiness(events: Kernel.Event.Interest)
+        #endif
     }
 }

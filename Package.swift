@@ -178,6 +178,8 @@ let package = Package(
                 "Kernel Core",
                 .product(name: "Linux Kernel IO Uring", package: "swift-linux",
                          condition: .when(platforms: [.linux])),
+                .product(name: "Windows Kernel File", package: "swift-windows",
+                         condition: .when(platforms: [.windows])),
             ]
         ),
 
