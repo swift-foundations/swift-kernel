@@ -85,9 +85,13 @@ extension Kernel {
 // (where its primary L1 consumer, Kernel.Event, references it). Expose it
 // here under the descriptor namespace for L3+ consumers (Kernel.Completion,
 // IO drivers, etc.) that think of readiness as a Descriptor-level concept.
+// Absent on Windows with the rest of the Kernel.Event (epoll/kqueue)
+// vocabulary; IOCP readiness lives on the completion port.
+#if !os(Windows)
 extension Kernel.Descriptor {
     public typealias Interest = Kernel.Event.Interest
 }
+#endif
 
 // MARK: - Socket.Descriptor typealias chain (three-tier per [PLAT-ARCH-005] + [PLAT-ARCH-008e], Wave 4c-Socket Prerequisite II 2026-05-01)
 //
