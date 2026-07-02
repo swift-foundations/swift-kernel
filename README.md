@@ -1,7 +1,7 @@
 # swift-kernel
 
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
-[![CI](https://github.com/coenttb/swift-kernel/workflows/CI/badge.svg)](https://github.com/coenttb/swift-kernel/actions/workflows/ci.yml)
+[![CI](https://github.com/swift-foundations/swift-kernel/workflows/CI/badge.svg)](https://github.com/swift-foundations/swift-kernel/actions/workflows/ci.yml)
 
 Policy-free syscall wrappers for Swift. Provides raw descriptors, typed throws, and unified error types across macOS, Linux, and Windows. Swift 6 strict concurrency with Foundation-free design.
 
@@ -23,9 +23,11 @@ Policy-free syscall wrappers for Swift. Provides raw descriptors, typed throws, 
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/coenttb/swift-kernel.git", from: "0.1.0")
+    .package(url: "https://github.com/swift-foundations/swift-kernel.git", branch: "main")
 ]
 ```
+
+> Pre-1.0: no version tags yet. APIs may change; pin a commit for reproducible builds.
 
 ### Target dependency
 
@@ -231,18 +233,18 @@ Kernel guarantees:
 ### Dependencies
 
 - [swift-kernel-primitives](https://github.com/coenttb/swift-kernel-primitives): Low-level syscall bindings
-- [swift-posix](https://github.com/coenttb/swift-posix): POSIX syscall wrappers
-- [swift-darwin](https://github.com/coenttb/swift-darwin): Darwin-specific syscalls
-- [swift-linux](https://github.com/coenttb/swift-linux): Linux-specific syscalls (epoll, io_uring)
-- [swift-windows](https://github.com/coenttb/swift-windows): Windows-specific syscalls (IOCP)
+- [swift-posix](https://github.com/swift-foundations/swift-posix): POSIX syscall wrappers
+- [swift-darwin](https://github.com/swift-foundations/swift-darwin): Darwin-specific syscalls
+- [swift-linux](https://github.com/swift-foundations/swift-linux): Linux-specific syscalls (epoll, io_uring)
+- [swift-windows](https://github.com/swift-foundations/swift-windows): Windows-specific syscalls (IOCP)
 - [apple/swift-system](https://github.com/apple/swift-system): `FilePath` for path-accepting APIs
 
 ### Used By
 
-- [swift-executors](https://github.com/coenttb/swift-executors): Swift Executor protocol conformances backed by dedicated OS threads
+- [swift-executors](https://github.com/swift-foundations/swift-executors): Swift Executor protocol conformances backed by dedicated OS threads
 - [swift-threads](https://github.com/coenttb/swift-threads): Thread-layer compositions (Synchronization, Barrier, Gate, Semaphore, Worker, Pool)
-- [swift-io](https://github.com/coenttb/swift-io): Async I/O witness with typed throws
-- [swift-file-system](https://github.com/coenttb/swift-file-system): High-level file operations
+- [swift-io](https://github.com/swift-foundations/swift-io): Async I/O witness with typed throws
+- [swift-file-system](https://github.com/swift-foundations/swift-file-system): High-level file operations
 
 ---
 
