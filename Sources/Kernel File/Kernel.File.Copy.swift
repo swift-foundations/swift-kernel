@@ -89,11 +89,21 @@ extension Kernel.File.Copy {
                 return try Kernel.File.Stats.lget(path: source)
             }
         } catch let error {
-            // Check if it's a "not found" error
-            if case .platform(let platformError) = error,
-               platformError.code == .POSIX.ENOENT {
-                throw .sourceNotFound
-            }
+            // Check if it's a "not found" error (platform code namespaces:
+            // the POSIX constants live in ISO_9945, the Win32 ones in
+            // swift-windows-standard)
+            #if os(Windows)
+                if case .platform(let platformError) = error,
+                   platformError.code == .Windows.ERROR_FILE_NOT_FOUND
+                       || platformError.code == .Windows.ERROR_PATH_NOT_FOUND {
+                    throw .sourceNotFound
+                }
+            #else
+                if case .platform(let platformError) = error,
+                   platformError.code == .POSIX.ENOENT {
+                    throw .sourceNotFound
+                }
+            #endif
             // .stats wrapper case removed in Cycle 18e+18f per L1-domain-only;
             // route through .platform with a synthetic POSIX code reflecting
             // the stat failure category for downstream dispatch.

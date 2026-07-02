@@ -13,6 +13,11 @@
 // Kernel.Descriptor is L3-unified (typealiased per platform), while
 // Kernel.Event.ID is L1 vocabulary.
 
+// Windows: the event-driver vocabulary (Kernel.Event.Source: epoll/kqueue)
+// is POSIX-only; the Windows analog is the IOCP completion path. Gated
+// whole-file to match the IO Events / IO Completions posture — the Windows
+// leg never constructs an event reactor.
+#if !os(Windows)
 @_spi(Internal) import Tagged_Primitives
 #if !os(Windows)
     @_spi(Syscall) public import POSIX_Kernel_Descriptor
@@ -37,3 +42,4 @@ extension Tagged where Tag == Kernel.Event, Underlying == UInt {
 // has been consumed. Consumers that need to act on a descriptor obtained
 // via an event must hold the original `Descriptor` (e.g., via a registered
 // handle table) rather than rebuild it from `Event.ID.rawValue`.
+#endif

@@ -19,6 +19,11 @@
 //    INV-7: Wake Responsiveness         — factory below (EVFILT_USER trigger)
 //
 
+// Windows: the event-driver vocabulary (Kernel.Event.Source: epoll/kqueue)
+// is POSIX-only; the Windows analog is the IOCP completion path. Gated
+// whole-file to match the IO Events / IO Completions posture — the Windows
+// leg never constructs an event reactor.
+#if !os(Windows)
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 
 import Darwin_Kernel_Event_Standard
@@ -229,4 +234,5 @@ extension Kernel.Event.Source {
     }
 }
 
+#endif
 #endif

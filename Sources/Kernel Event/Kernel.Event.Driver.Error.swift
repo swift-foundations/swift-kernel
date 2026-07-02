@@ -6,6 +6,11 @@
 //
 
 
+// Windows: the event-driver vocabulary (Kernel.Event.Source: epoll/kqueue)
+// is POSIX-only; the Windows analog is the IOCP completion path. Gated
+// whole-file to match the IO Events / IO Completions posture — the Windows
+// leg never constructs an event reactor.
+#if !os(Windows)
 extension Kernel.Event.Driver {
     /// Errors from event driver operations.
     ///
@@ -31,4 +36,4 @@ extension Kernel.Event.Driver {
         case unsupportedPlatform
     }
 }
-
+#endif
