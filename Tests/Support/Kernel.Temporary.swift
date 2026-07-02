@@ -38,11 +38,13 @@ extension Kernel.Temporary {
     /// - Windows: `TEMP` or `TMP`, falling back to "C:\Temp"
     public static var directory: Swift.String {
         #if os(Windows)
+            // String.Char is UInt16 on Windows — decode as UTF-16
+            // (String(cString:) has no wide overload).
             if let temp = Kernel.Environment.get("TEMP") {
-                return unsafe temp.withUnsafePointer { Swift.String(cString: $0) }
+                return unsafe temp.withUnsafePointer { Swift.String(decodingCString: $0, as: UTF16.self) }
             }
             if let tmp = Kernel.Environment.get("TMP") {
-                return unsafe tmp.withUnsafePointer { Swift.String(cString: $0) }
+                return unsafe tmp.withUnsafePointer { Swift.String(decodingCString: $0, as: UTF16.self) }
             }
             return "C:\\Temp"
         #else

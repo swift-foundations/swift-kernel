@@ -9,6 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
+// Windows has no Kernel.Event: the target carries epoll/kqueue vocabulary
+// and is !os(Windows); its test utilities gate with it (POSIX.Kernel.IO
+// below is likewise absent from the Windows graph).
+#if !os(Windows)
+
 public import Kernel
 
 extension Kernel.Event {
@@ -61,3 +66,5 @@ extension Kernel.Event {
         }
     }
 }
+
+#endif
