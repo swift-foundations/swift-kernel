@@ -14,9 +14,7 @@
 // Kernel.Event.ID is L1 vocabulary.
 
 @_spi(Internal) import Tagged_Primitives
-#if os(Windows)
-    @_spi(Syscall) public import Windows_32_Kernel_Core
-#else
+#if !os(Windows)
     @_spi(Syscall) public import POSIX_Kernel_Descriptor
 #endif
 
@@ -24,7 +22,9 @@ extension Tagged where Tag == Kernel.Event, Underlying == UInt {
     /// Creates an identifier from a file descriptor.
     public init(descriptor: borrowing Kernel.Descriptor) {
         #if os(Windows)
-            self.init(_unchecked: descriptor._rawValue)
+            // Windows exposes the raw HANDLE publicly; _rawValue is
+            // package-scoped to swift-windows-standard.
+            self.init(_unchecked: UInt(bitPattern: descriptor.handle))
         #else
             self.init(_unchecked: UInt(bitPattern: Int(descriptor._rawValue)))
         #endif
