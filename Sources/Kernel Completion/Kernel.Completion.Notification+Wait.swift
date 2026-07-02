@@ -5,6 +5,12 @@
 //  Blocking wait for completion notifications.
 //
 
+// Windows has no counterpart: the completion mechanism IS the notification
+// there (IOCP blocks in GetQueuedCompletionStatus), so a descriptor-read
+// wait never exists. POSIX_Kernel_File is also absent from the Windows
+// dependency graph.
+#if !os(Windows)
+
 import POSIX_Kernel_File
 
 // MARK: - Blocking Wait
@@ -42,3 +48,5 @@ extension Kernel.Completion.Notification {
         }
     }
 }
+
+#endif
