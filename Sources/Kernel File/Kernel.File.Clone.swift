@@ -10,6 +10,13 @@
 // ===----------------------------------------------------------------------===//
 
 public import Path_Primitives
+#if os(Windows)
+// Direct import (not via the target's @_exported exports.swift):
+// MemberImportVisibility resolves member types like the sibling
+// `Kernel.File.Copy` per-file, and in-module @_exported imports only
+// affect module clients.
+public import Windows_Kernel_File
+#endif
 
 // MARK: - Clone API
 
