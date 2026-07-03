@@ -19,7 +19,7 @@ import Testing
 /// - Parameters:
 ///   - validate: Closure to validate the thrown error
 ///   - body: The typed-throwing closure under test
-public func expectThrows<E: Error, R>(
+public func expectThrows<E: Swift.Error, R>(
     _ validate: (E) -> Void,
     _ body: () throws(E) -> R
 ) {
