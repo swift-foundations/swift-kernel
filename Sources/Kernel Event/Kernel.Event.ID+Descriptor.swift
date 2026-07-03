@@ -19,20 +19,15 @@
 // leg never constructs an event reactor.
 #if !os(Windows)
 @_spi(Internal) import Tagged_Primitives
-#if !os(Windows)
-    @_spi(Syscall) public import POSIX_Kernel_Descriptor
-#endif
+@_spi(Syscall) public import POSIX_Kernel_Descriptor
 
 extension Tagged where Tag == Kernel.Event, Underlying == UInt {
     /// Creates an identifier from a file descriptor.
     public init(descriptor: borrowing Kernel.Descriptor) {
-        #if os(Windows)
-            // Windows exposes the raw HANDLE publicly; _rawValue is
-            // package-scoped to swift-windows-standard.
-            self.init(_unchecked: UInt(bitPattern: descriptor.handle))
-        #else
-            self.init(_unchecked: UInt(bitPattern: Int(descriptor._rawValue)))
-        #endif
+        // Windows Event.ID path intentionally absent: the Kernel Event
+        // target is Windows-gated at the target level, so there is no
+        // #if os(Windows) leg here to maintain.
+        self.init(_unchecked: UInt(bitPattern: Int(descriptor._rawValue)))
     }
 }
 
