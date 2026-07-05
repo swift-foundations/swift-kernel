@@ -114,11 +114,9 @@ extension Kernel.Event {
             // No synchronization — single-threaded after `sending` transfer.
             final class Shared {
                 /// The registration column — the move-only ADT-families Dictionary
-                /// over the ordered hashed entry column (generic-instantiation
-                /// alias localizing the column choice).
-                typealias Registry = Dictionary_Primitives.Dictionary<
-                    Hash.Indexed<Buffer<Storage<Memory.Allocator<Memory.Heap>>.Contiguous<Hash.Entry<Kernel.Event.ID, Registration>>>.Linear>
-                >
+                /// over the default ordered hashed entry column, pinned through the
+                /// canonical `Dictionary<Key, Value>` front door ([DS-028]).
+                typealias Registry = Dictionary_Primitives.Dictionary<Kernel.Event.ID, Registration>
                 var nextID = Kernel.Event.ID.zero
                 var registry = Registry()
             }
