@@ -5,7 +5,6 @@
 //  Semantic feature flags for a completion backend.
 //
 
-
 extension Kernel.Completion {
     /// Semantic feature flags for a completion backend.
     ///

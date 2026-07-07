@@ -26,15 +26,15 @@ extension Kernel.File.Flush {
 
 #if !os(Windows)
 
-extension Kernel.File.Flush.Test.Flush {
-    @Test
-    func `flush(_:) on a fresh tmp file succeeds on every platform`() throws {
-        try KernelIOTest.withTempFile(prefix: "flush-smoke") { _, fd in
-            // Cross-platform contract — no #if, single call.
-            try Kernel.File.Flush.flush(fd)
+    extension Kernel.File.Flush.Test.Flush {
+        @Test
+        func `flush(_:) on a fresh tmp file succeeds on every platform`() throws {
+            try KernelIOTest.withTempFile(prefix: "flush-smoke") { _, fd in
+                // Cross-platform contract — no #if, single call.
+                try Kernel.File.Flush.flush(fd)
+            }
         }
     }
-}
 
 #endif
 
@@ -42,17 +42,17 @@ extension Kernel.File.Flush.Test.Flush {
 
 #if !os(Windows)
 
-extension Kernel.File.Flush.Test.Data {
-    @Test
-    func `data(_:) on a fresh tmp file succeeds on every platform`() throws {
-        try KernelIOTest.withTempFile(prefix: "flush-data") { _, fd in
-            // Cross-platform contract — no #if, single call.
-            // POSIX: retry-wrapped fdatasync (Linux) / barrierFsync (Darwin).
-            // Windows: FlushFileBuffers (strictly-stronger full flush).
-            try Kernel.File.Flush.data(fd)
+    extension Kernel.File.Flush.Test.Data {
+        @Test
+        func `data(_:) on a fresh tmp file succeeds on every platform`() throws {
+            try KernelIOTest.withTempFile(prefix: "flush-data") { _, fd in
+                // Cross-platform contract — no #if, single call.
+                // POSIX: retry-wrapped fdatasync (Linux) / barrierFsync (Darwin).
+                // Windows: FlushFileBuffers (strictly-stronger full flush).
+                try Kernel.File.Flush.data(fd)
+            }
         }
     }
-}
 
 #endif
 

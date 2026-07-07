@@ -10,14 +10,15 @@
 // ===----------------------------------------------------------------------===//
 
 public import Path_Primitives
+
 #if os(Windows)
-// Direct import for per-file member visibility of `Copy.file` and
-// `Clone.Error.init(from:)` (declared in the L2 modules this re-exports).
-// Note: this does NOT enable bare sibling references like `Copy` — on the
-// Windows 6.3.3 toolchain, unqualified enclosing-context lookup two hops
-// up (`Clone` → `File` → cross-module member `Copy`) fails regardless of
-// imports; sibling references must be qualified as `Kernel.File.Copy`.
-public import Windows_Kernel_File
+    // Direct import for per-file member visibility of `Copy.file` and
+    // `Clone.Error.init(from:)` (declared in the L2 modules this re-exports).
+    // Note: this does NOT enable bare sibling references like `Copy` — on the
+    // Windows 6.3.3 toolchain, unqualified enclosing-context lookup two hops
+    // up (`Clone` → `File` → cross-module member `Copy`) fails regardless of
+    // imports; sibling references must be qualified as `Kernel.File.Copy`.
+    public import Windows_Kernel_File
 #endif
 
 // MARK: - Clone API

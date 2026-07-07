@@ -27,40 +27,40 @@ extension Kernel.Event.Source {
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 
-extension Kernel.Event.Source.Test.Integration {
-    @Test func `platform creates kqueue source`() throws {
-        let source = try Kernel.Event.Source.platform()
-        _ = source
-    }
+    extension Kernel.Event.Source.Test.Integration {
+        @Test func `platform creates kqueue source`() throws {
+            let source = try Kernel.Event.Source.platform()
+            _ = source
+        }
 
-    @Test func `kqueue factory creates valid source`() throws {
-        let source = try Kernel.Event.Source.kqueue()
-        _ = source
-    }
+        @Test func `kqueue factory creates valid source`() throws {
+            let source = try Kernel.Event.Source.kqueue()
+            _ = source
+        }
 
-    @Test func `kqueue factory accepts custom max events`() throws {
-        let source = try Kernel.Event.Source.kqueue(maxEvents: 64)
-        _ = source
+        @Test func `kqueue factory accepts custom max events`() throws {
+            let source = try Kernel.Event.Source.kqueue(maxEvents: 64)
+            _ = source
+        }
     }
-}
 
 #elseif os(Linux)
 
-extension Kernel.Event.Source.Test.Integration {
-    @Test func `platform creates epoll source`() throws {
-        let source = try Kernel.Event.Source.platform()
-        _ = source
-    }
+    extension Kernel.Event.Source.Test.Integration {
+        @Test func `platform creates epoll source`() throws {
+            let source = try Kernel.Event.Source.platform()
+            _ = source
+        }
 
-    @Test func `epoll factory creates valid source`() throws {
-        let source = try Kernel.Event.Source.epoll()
-        _ = source
-    }
+        @Test func `epoll factory creates valid source`() throws {
+            let source = try Kernel.Event.Source.epoll()
+            _ = source
+        }
 
-    @Test func `epoll factory accepts custom max events`() throws {
-        let source = try Kernel.Event.Source.epoll(maxEvents: 64)
-        _ = source
+        @Test func `epoll factory accepts custom max events`() throws {
+            let source = try Kernel.Event.Source.epoll(maxEvents: 64)
+            _ = source
+        }
     }
-}
 
 #endif

@@ -16,7 +16,7 @@
 // requires explicit `public import` (not `internal`) since the enum case
 // `handle(Kernel.Descriptor.Validity.Error)` is part of the public Failure type.
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-public import POSIX_Kernel_Descriptor
+    public import POSIX_Kernel_Descriptor
 #endif
 
 extension Kernel {
@@ -155,9 +155,9 @@ extension Kernel.Failure {
     /// - Returns: A human-readable error message, or `nil` if not available.
     public static func message(for code: Error_Primitives.Error.Code) -> Swift.String? {
         #if os(Windows)
-        code.win32Message
+            code.win32Message
         #else
-        code.posixMessage
+            code.posixMessage
         #endif
     }
 }

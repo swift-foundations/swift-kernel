@@ -5,7 +5,6 @@
 //  Errors from completion driver operations.
 //
 
-
 extension Kernel.Completion {
     /// Errors from completion driver operations.
     ///

@@ -7,3 +7,6 @@ parent_config: https://raw.githubusercontent.com/swift-standards/swift-standards
 disabled_rules:
   - function_parameter_count
   - identifier_name
+  # Deliberate try! in test fixtures only (mock drivers / sentinel-descriptor
+  # setup steps that are provably-valid by construction). iso-8601 precedent.
+  - force_try

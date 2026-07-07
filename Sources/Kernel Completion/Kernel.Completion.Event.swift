@@ -9,7 +9,6 @@
 //  determine success/failure.
 //
 
-
 extension Kernel.Completion {
     /// A completion event harvested from the kernel.
     ///

@@ -3,8 +3,8 @@
 //  swift-kernel-primitives
 //
 
-import Testing
 import Tagged_Primitives_Standard_Library_Integration
+import Testing
 
 @testable import Kernel_Completion
 
@@ -45,10 +45,14 @@ extension Kernel.Completion.Submission.Opcode.Test.Unit {
         let address: Memory.Address = 0x1000
         let length: Memory.Address.Count = 256
         let a: Kernel.Completion.Submission.Opcode = .read(
-            address: address, length: length, offset: 64
+            address: address,
+            length: length,
+            offset: 64
         )
         let b: Kernel.Completion.Submission.Opcode = .read(
-            address: address, length: length, offset: 64
+            address: address,
+            length: length,
+            offset: 64
         )
         #expect(a == b)
     }
@@ -58,10 +62,14 @@ extension Kernel.Completion.Submission.Opcode.Test.Unit {
         let address: Memory.Address = 0x1000
         let length: Memory.Address.Count = 256
         let streamMode: Kernel.Completion.Submission.Opcode = .read(
-            address: address, length: length, offset: nil
+            address: address,
+            length: length,
+            offset: nil
         )
         let positional: Kernel.Completion.Submission.Opcode = .read(
-            address: address, length: length, offset: 0
+            address: address,
+            length: length,
+            offset: 0
         )
         #expect(streamMode != positional)
     }

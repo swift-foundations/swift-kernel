@@ -5,7 +5,6 @@
 //  Typed operation result from a completion event.
 //
 
-
 extension Kernel.Completion.Event {
     /// Result of a completed operation.
     ///

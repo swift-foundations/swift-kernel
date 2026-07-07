@@ -5,7 +5,6 @@
 //  Namespace for completion-layer buffer types.
 //
 
-
 extension Kernel.Completion {
     /// Buffer management types for completion-based I/O.
     ///

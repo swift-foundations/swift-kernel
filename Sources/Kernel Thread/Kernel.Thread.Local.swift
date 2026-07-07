@@ -10,6 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 extension Kernel.Thread {
+    // SAFETY: Encapsulates unsafe internals behind a safe API; see
+    // SAFETY: [MEM-SAFE-024] for the absorber-pattern taxonomy.
     /// Per-thread typed storage slot for a class-typed payload.
     ///
     /// L3 cross-platform unifier over the platform's TLS family:
@@ -66,8 +68,6 @@ extension Kernel.Thread {
     /// on Windows MUST set the slot to `nil` before thread exit, or
     /// accept the leak. (Future work: wire `FlsAlloc`/`FlsSetCallback`
     /// for symmetric cleanup.)
-    // SAFETY: Encapsulates unsafe internals behind a safe API; see
-    // SAFETY: [MEM-SAFE-024] for the absorber-pattern taxonomy.
     @safe
     public final class Local<Payload: AnyObject>: @unchecked Sendable {
         @usableFromInline
@@ -76,9 +76,9 @@ extension Kernel.Thread {
         @inlinable
         public init() {
             #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-            _slot = unsafe _PlatformSlot(destructor: _kernelThreadLocalRelease)
+                _slot = unsafe _PlatformSlot(destructor: _kernelThreadLocalRelease)
             #elseif os(Windows)
-            _slot = _PlatformSlot()
+                _slot = _PlatformSlot()
             #endif
         }
 
@@ -108,24 +108,24 @@ extension Kernel.Thread {
 }
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-@usableFromInline
-internal typealias _PlatformSlot = ISO_9945.Kernel.Thread.Key
+    @usableFromInline
+    internal typealias _PlatformSlot = ISO_9945.Kernel.Thread.Key
 
-/// POSIX `pthread_key` destructor — invoked per thread on thread exit
-/// with the (non-nil) slot value. Releases the `Unmanaged<AnyObject>`
-/// retain installed when the slot was set.
-///
-/// `Unmanaged<AnyObject>` is type-erased intentionally: the destructor
-/// cannot capture the `Payload` generic parameter (it must be a
-/// `@convention(c)` function pointer), but ARC release is type-agnostic
-/// — it just decrements the retain count via the same runtime path as
-/// any concrete `Unmanaged<Payload>.release()`.
-@usableFromInline
-internal func _kernelThreadLocalRelease(_ raw: UnsafeMutableRawPointer) {
-    unsafe Unmanaged<AnyObject>.fromOpaque(raw).release()
-}
+    /// POSIX `pthread_key` destructor — invoked per thread on thread exit
+    /// with the (non-nil) slot value. Releases the `Unmanaged<AnyObject>`
+    /// retain installed when the slot was set.
+    ///
+    /// `Unmanaged<AnyObject>` is type-erased intentionally: the destructor
+    /// cannot capture the `Payload` generic parameter (it must be a
+    /// `@convention(c)` function pointer), but ARC release is type-agnostic
+    /// — it just decrements the retain count via the same runtime path as
+    /// any concrete `Unmanaged<Payload>.release()`.
+    @usableFromInline
+    internal func _kernelThreadLocalRelease(_ raw: UnsafeMutableRawPointer) {
+        unsafe Unmanaged<AnyObject>.fromOpaque(raw).release()
+    }
 
 #elseif os(Windows)
-@usableFromInline
-internal typealias _PlatformSlot = Windows.`32`.Kernel.Thread.Index
+    @usableFromInline
+    internal typealias _PlatformSlot = Windows.`32`.Kernel.Thread.Index
 #endif

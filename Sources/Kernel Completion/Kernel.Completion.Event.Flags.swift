@@ -5,7 +5,6 @@
 //  Cross-platform completion event flags.
 //
 
-
 extension Kernel.Completion.Event {
     /// Completion event flags carrying cross-platform semantic information.
     ///

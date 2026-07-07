@@ -3,8 +3,8 @@
 //  swift-kernel-primitives
 //
 
-import Testing
 import Tagged_Primitives_Standard_Library_Integration
+import Testing
 
 @testable import Kernel_Completion
 

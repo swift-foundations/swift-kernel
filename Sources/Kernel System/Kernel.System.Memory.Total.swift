@@ -22,11 +22,11 @@
 //
 
 #if os(Android) || os(OpenBSD) || os(Windows)
-extension System.Memory {
-    /// Total installed physical memory in bytes.
-    @inlinable
-    public static var total: System.Memory.Capacity {
-        System.Memory.total
+    extension System.Memory {
+        /// Total installed physical memory in bytes.
+        @inlinable
+        public static var total: System.Memory.Capacity {
+            System.Memory.total
+        }
     }
-}
 #endif

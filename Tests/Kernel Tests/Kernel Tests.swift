@@ -10,8 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 import Kernel_Test_Support
-import Testing
 import Tagged_Primitives_Standard_Library_Integration
+import Testing
 
 @testable import Kernel
 
@@ -46,7 +46,10 @@ extension Kernel.Test.Unit {
                 permissions: .standard
             )
 
-            do { let v = fd.isValid; #expect(v) }
+            do {
+                let v = fd.isValid
+                #expect(v)
+            }
 
             // Close
             try Kernel.Close.close(fd)

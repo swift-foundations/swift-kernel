@@ -67,9 +67,9 @@ extension Kernel.File {
         if configuration.create { kernelOptions.insert(.create) }
         if configuration.truncate { kernelOptions.insert(.truncate) }
         #if os(Linux)
-        if resolved == .direct { kernelOptions.insert(.direct) }
+            if resolved == .direct { kernelOptions.insert(.direct) }
         #elseif os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-        if resolved == .direct { kernelOptions.insert(.noCache) }
+            if resolved == .direct { kernelOptions.insert(.noCache) }
         #endif
 
         // 4. Open via Kernel primitives

@@ -18,18 +18,18 @@
 // whole-file to match the IO Events / IO Completions posture — the Windows
 // leg never constructs an event reactor.
 #if !os(Windows)
-@_spi(Internal) import Tagged_Primitives
-@_spi(Syscall) public import POSIX_Kernel_Descriptor
+    @_spi(Internal) import Tagged_Primitives
+    @_spi(Syscall) public import POSIX_Kernel_Descriptor
 
-extension Tagged where Tag == Kernel.Event, Underlying == UInt {
-    /// Creates an identifier from a file descriptor.
-    public init(descriptor: borrowing Kernel.Descriptor) {
-        // Windows Event.ID path intentionally absent: the Kernel Event
-        // target is Windows-gated at the target level, so there is no
-        // #if os(Windows) leg here to maintain.
-        self.init(_unchecked: UInt(bitPattern: Int(descriptor._rawValue)))
+    extension Tagged where Tag == Kernel.Event, Underlying == UInt {
+        /// Creates an identifier from a file descriptor.
+        public init(descriptor: borrowing Kernel.Descriptor) {
+            // Windows Event.ID path intentionally absent: the Kernel Event
+            // target is Windows-gated at the target level, so there is no
+            // #if os(Windows) leg here to maintain.
+            self.init(_unchecked: UInt(bitPattern: Int(descriptor._rawValue)))
+        }
     }
-}
 
 // Reverse conversion `Descriptor?(_ id: Event.ID)` removed per
 // `feedback_no_raw_descriptor_reconstruction`: a `~Copyable` `Descriptor`

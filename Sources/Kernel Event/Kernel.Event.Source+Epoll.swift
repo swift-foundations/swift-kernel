@@ -24,239 +24,239 @@
 // whole-file to match the IO Events / IO Completions posture — the Windows
 // leg never constructs an event reactor.
 #if !os(Windows)
-#if os(Linux)
+    #if os(Linux)
 
-import Linux_Kernel_Event
+        import Linux_Kernel_Event
 
-// MARK: - Error Conversion
+        // MARK: - Error Conversion
 
-extension Kernel.Event.Driver.Error {
-    init(_ epollError: Kernel.Event.Poll.Error) {
-        switch epollError {
-        case .create(let code): self = .platform(code)
-        case .ctl(let code): self = .platform(code)
-        case .wait(let code): self = .platform(code)
-        case .interrupted: self = .platform(.POSIX.EINTR)
-        }
-    }
+        extension Kernel.Event.Driver.Error {
+            init(_ epollError: Kernel.Event.Poll.Error) {
+                switch epollError {
+                case .create(let code): self = .platform(code)
+                case .ctl(let code): self = .platform(code)
+                case .wait(let code): self = .platform(code)
+                case .interrupted: self = .platform(.POSIX.EINTR)
+                }
+            }
 
-    init(_ eventfdError: Kernel.Event.Descriptor.Error) {
-        switch eventfdError {
-        case .create(let code): self = .platform(code)
-        case .read(let code): self = .platform(code)
-        case .write(let code): self = .platform(code)
-        case .wouldBlock: self = .platform(.POSIX.EAGAIN)
-        }
-    }
-}
-
-// MARK: - ID Boundary
-
-extension Kernel.Event.ID {
-    /// Decodes a registration ID from epoll poll data.
-    ///
-    /// Returns nil when the data encodes `.zero` — the sentinel for
-    /// non-registration events (wakeup eventfd).
-    init?(pollData: Kernel.Event.Poll.Data) {
-        guard pollData != .zero else { return nil }
-        self = pollData.map { UInt(truncatingIfNeeded: $0) }.retag(Kernel.Event.self)
-    }
-}
-
-extension Kernel.Event.Poll.Data {
-    /// Encodes a registration ID into poll data for the kernel boundary.
-    init(registrationID id: Kernel.Event.ID) {
-        self = id.map { UInt64($0) }.retag(Kernel.Event.Poll.self)
-    }
-}
-
-// MARK: - Helpers
-
-extension Kernel.Event.Source {
-    /// Epoll events mask for a one-shot edge-triggered registration on the
-    /// reactor: the shared `Poll.Events.init(interest:)` produces the base
-    /// read/write/priority mask, and this helper adds the reactor's policy
-    /// bits (`.et | .oneshot`).
-    fileprivate static func events(oneShot interest: Kernel.Event.Interest) -> Kernel.Event.Poll.Events {
-        var events = Kernel.Event.Poll.Events(interest: interest)
-        events.insert(.et)
-        events.insert(.oneshot)
-        return events
-    }
-
-    fileprivate static func normalize(
-        _ events: Kernel.Event.Poll.Events
-    ) -> (Kernel.Event.Interest, Kernel.Event.Options) {
-        var interest: Kernel.Event.Interest = []
-        var flags: Kernel.Event.Options = []
-        if events.contains(.in) { interest.insert(.read) }
-        if events.contains(.out) { interest.insert(.write) }
-        if events.contains(.pri) { interest.insert(.priority) }
-        if events.contains(.err) { flags.insert(.error) }
-        if events.contains(.hup) { flags.insert(.hangup) }
-        if events.contains(.rdhup) { flags.insert(.readHangup) }
-        return (interest, flags)
-    }
-}
-
-// MARK: - Factory
-
-extension Kernel.Event.Source {
-    /// Creates an epoll-backed event source.
-    ///
-    /// - Parameter maxEvents: Maximum events per poll cycle. Controls the
-    ///   pre-allocated scratch buffer size. Default: 256.
-    public static func epoll(
-        maxEvents: Int = 256
-    ) throws(Kernel.Event.Driver.Error) -> Kernel.Event.Source {
-
-        // -- State class (owns L1 epoll struct + eventfd + scratch buffer) --
-
-        final class State {
-            let epoll: Kernel.Event.Poll
-            // Write-once (init), then nil-once (_close). No concurrent
-            // access — the driver is thread-confined.
-            nonisolated(unsafe) var eventfd: Kernel.Event.Descriptor?
-            var rawEvents: [Kernel.Event.Poll.Event]
-
-            init(
-                epoll: consuming Kernel.Event.Poll,
-                eventfd: consuming Kernel.Event.Descriptor,
-                maxEvents: Int
-            ) {
-                self.epoll = epoll
-                self.eventfd = consume eventfd
-                self.rawEvents = Swift.Array<Kernel.Event.Poll.Event>(
-                    repeating: Kernel.Event.Poll.Event(events: .init(rawValue: 0)),
-                    count: maxEvents
-                )
+            init(_ eventfdError: Kernel.Event.Descriptor.Error) {
+                switch eventfdError {
+                case .create(let code): self = .platform(code)
+                case .read(let code): self = .platform(code)
+                case .write(let code): self = .platform(code)
+                case .wouldBlock: self = .platform(.POSIX.EAGAIN)
+                }
             }
         }
 
-        var epoll: Kernel.Event.Poll
-        do throws(Kernel.Event.Poll.Error) {
-            epoll = try Kernel.Event.Poll()
-        } catch {
-            throw Kernel.Event.Driver.Error(error)
+        // MARK: - ID Boundary
+
+        extension Kernel.Event.ID {
+            /// Decodes a registration ID from epoll poll data.
+            ///
+            /// Returns nil when the data encodes `.zero` — the sentinel for
+            /// non-registration events (wakeup eventfd).
+            init?(pollData: Kernel.Event.Poll.Data) {
+                guard pollData != .zero else { return nil }
+                self = pollData.map { UInt(truncatingIfNeeded: $0) }.retag(Kernel.Event.self)
+            }
         }
 
-        var eventfd: Kernel.Event.Descriptor
-        do throws(Kernel.Event.Descriptor.Error) {
-            eventfd = try Kernel.Event.Descriptor.create(flags: .cloexec | .nonblock)
-        } catch {
-            throw Kernel.Event.Driver.Error(error)
+        extension Kernel.Event.Poll.Data {
+            /// Encodes a registration ID into poll data for the kernel boundary.
+            init(registrationID id: Kernel.Event.ID) {
+                self = id.map { UInt64($0) }.retag(Kernel.Event.Poll.self)
+            }
         }
 
-        // -- Wakeup (eventfd, registered at L2; Channel constructed at L3 site-of-use) --
+        // MARK: - Helpers
 
-        let wakeup: Kernel.Wakeup.Channel
-        do throws(Kernel.Event.Poll.Error) {
-            let signal = try epoll.wakeup(eventfd: eventfd)
-            wakeup = Kernel.Wakeup.Channel(signal: signal)
-        } catch {
-            throw Kernel.Event.Driver.Error(error)
+        extension Kernel.Event.Source {
+            /// Epoll events mask for a one-shot edge-triggered registration on the
+            /// reactor: the shared `Poll.Events.init(interest:)` produces the base
+            /// read/write/priority mask, and this helper adds the reactor's policy
+            /// bits (`.et | .oneshot`).
+            fileprivate static func events(oneShot interest: Kernel.Event.Interest) -> Kernel.Event.Poll.Events {
+                var events = Kernel.Event.Poll.Events(interest: interest)
+                events.insert(.et)
+                events.insert(.oneshot)
+                return events
+            }
+
+            fileprivate static func normalize(
+                _ events: Kernel.Event.Poll.Events
+            ) -> (Kernel.Event.Interest, Kernel.Event.Options) {
+                var interest: Kernel.Event.Interest = []
+                var flags: Kernel.Event.Options = []
+                if events.contains(.in) { interest.insert(.read) }
+                if events.contains(.out) { interest.insert(.write) }
+                if events.contains(.pri) { interest.insert(.priority) }
+                if events.contains(.err) { flags.insert(.error) }
+                if events.contains(.hup) { flags.insert(.hangup) }
+                if events.contains(.rdhup) { flags.insert(.readHangup) }
+                return (interest, flags)
+            }
         }
 
-        let state = State(
-            epoll: consume epoll,
-            eventfd: consume eventfd,
-            maxEvents: maxEvents
-        )
+        // MARK: - Factory
 
-        // -- Build Driver from backend operations --
+        extension Kernel.Event.Source {
+            /// Creates an epoll-backed event source.
+            ///
+            /// - Parameter maxEvents: Maximum events per poll cycle. Controls the
+            ///   pre-allocated scratch buffer size. Default: 256.
+            public static func epoll(
+                maxEvents: Int = 256
+            ) throws(Kernel.Event.Driver.Error) -> Kernel.Event.Source {
 
-        let driver = Kernel.Event.Driver(
-            add: {
-                (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                // -- State class (owns L1 epoll struct + eventfd + scratch buffer) --
 
-                let event = Kernel.Event.Poll.Event(
-                    events: events(oneShot: interest),
-                    data: .init(registrationID: id)
-                )
-                do throws(Kernel.Event.Poll.Error) {
-                    try state.epoll.add(fd: fd, event: event)
-                } catch {
-                    throw Kernel.Event.Driver.Error(error)
-                }
-            },
-            modify: {
-                (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, _: Kernel.Event.Interest, new: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                final class State {
+                    let epoll: Kernel.Event.Poll
+                    // Write-once (init), then nil-once (_close). No concurrent
+                    // access — the driver is thread-confined.
+                    nonisolated(unsafe) var eventfd: Kernel.Event.Descriptor?
+                    var rawEvents: [Kernel.Event.Poll.Event]
 
-                let event = Kernel.Event.Poll.Event(
-                    events: events(oneShot: new),
-                    data: .init(registrationID: id)
-                )
-                do throws(Kernel.Event.Poll.Error) {
-                    try state.epoll.modify(fd: fd, event: event)
-                } catch {
-                    throw Kernel.Event.Driver.Error(error)
-                }
-            },
-            remove: {
-                (fd: borrowing Kernel.Descriptor, _: Kernel.Event.ID, _: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
-
-                do throws(Kernel.Event.Poll.Error) {
-                    try state.epoll.remove(fd: fd)
-                } catch {
-                    if case .ctl(let code) = error,
-                       code == .POSIX.ENOENT || code == .POSIX.EBADF
-                    {
-                        return // Benign: event auto-removed or fd recycled.
+                    init(
+                        epoll: consuming Kernel.Event.Poll,
+                        eventfd: consuming Kernel.Event.Descriptor,
+                        maxEvents: Int
+                    ) {
+                        self.epoll = epoll
+                        self.eventfd = consume eventfd
+                        self.rawEvents = [Kernel.Event.Poll.Event](
+                            repeating: Kernel.Event.Poll.Event(events: .init(rawValue: 0)),
+                            count: maxEvents
+                        )
                     }
+                }
+
+                var epoll: Kernel.Event.Poll
+                do throws(Kernel.Event.Poll.Error) {
+                    epoll = try Kernel.Event.Poll()
+                } catch {
                     throw Kernel.Event.Driver.Error(error)
                 }
-            },
-            arm: {
-                (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
-                let event = Kernel.Event.Poll.Event(
-                    events: events(oneShot: interest),
-                    data: .init(registrationID: id)
+                var eventfd: Kernel.Event.Descriptor
+                do throws(Kernel.Event.Descriptor.Error) {
+                    eventfd = try Kernel.Event.Descriptor.create(flags: .cloexec | .nonblock)
+                } catch {
+                    throw Kernel.Event.Driver.Error(error)
+                }
+
+                // -- Wakeup (eventfd, registered at L2; Channel constructed at L3 site-of-use) --
+
+                let wakeup: Kernel.Wakeup.Channel
+                do throws(Kernel.Event.Poll.Error) {
+                    let signal = try epoll.wakeup(eventfd: eventfd)
+                    wakeup = Kernel.Wakeup.Channel(signal: signal)
+                } catch {
+                    throw Kernel.Event.Driver.Error(error)
+                }
+
+                let state = State(
+                    epoll: consume epoll,
+                    eventfd: consume eventfd,
+                    maxEvents: maxEvents
                 )
-                do throws(Kernel.Event.Poll.Error) {
-                    try state.epoll.modify(fd: fd, event: event)
-                } catch {
-                    throw Kernel.Event.Driver.Error(error)
-                }
-            },
-            poll: {
-                (deadline: Clock.Continuous.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
 
-                let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
+                // -- Build Driver from backend operations --
 
-                // Poll epoll into pre-allocated scratch buffer.
-                let count: Int
-                do throws(Kernel.Event.Poll.Error) {
-                    count = try state.epoll.poll(events: &state.rawEvents, timeout: timeout)
-                } catch {
-                    if case .interrupted = error { return 0 }
-                    throw Kernel.Event.Driver.Error(error)
-                }
+                let driver = Kernel.Event.Driver(
+                    add: {
+                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
-                guard count > 0 else { return 0 }
+                        let event = Kernel.Event.Poll.Event(
+                            events: events(oneShot: interest),
+                            data: .init(registrationID: id)
+                        )
+                        do throws(Kernel.Event.Poll.Error) {
+                            try state.epoll.add(fd: fd, event: event)
+                        } catch {
+                            throw Kernel.Event.Driver.Error(error)
+                        }
+                    },
+                    modify: {
+                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, _: Kernel.Event.Interest, new: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
-                // Normalize: raw epoll events → cross-platform Kernel.Event.
-                var writeIdx = 0
-                for i in 0..<count {
-                    let raw = state.rawEvents[i]
-                    guard let id = Kernel.Event.ID(pollData: raw.data) else { continue }
-                    let (interest, flags) = normalize(raw.events)
-                    guard writeIdx < output.count else { break }
-                    output[writeIdx] = Kernel.Event(id: id, interest: interest, flags: flags)
-                    writeIdx += 1
-                }
-                return writeIdx
-            },
-            close: {
-                state.eventfd = nil
-                // State deinit closes the epoll fd when all closures
-                // are dropped and the State class is deallocated.
+                        let event = Kernel.Event.Poll.Event(
+                            events: events(oneShot: new),
+                            data: .init(registrationID: id)
+                        )
+                        do throws(Kernel.Event.Poll.Error) {
+                            try state.epoll.modify(fd: fd, event: event)
+                        } catch {
+                            throw Kernel.Event.Driver.Error(error)
+                        }
+                    },
+                    remove: {
+                        (fd: borrowing Kernel.Descriptor, _: Kernel.Event.ID, _: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+
+                        do throws(Kernel.Event.Poll.Error) {
+                            try state.epoll.remove(fd: fd)
+                        } catch {
+                            if case .ctl(let code) = error,
+                                code == .POSIX.ENOENT || code == .POSIX.EBADF
+                            {
+                                return  // Benign: event auto-removed or fd recycled.
+                            }
+                            throw Kernel.Event.Driver.Error(error)
+                        }
+                    },
+                    arm: {
+                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+
+                        let event = Kernel.Event.Poll.Event(
+                            events: events(oneShot: interest),
+                            data: .init(registrationID: id)
+                        )
+                        do throws(Kernel.Event.Poll.Error) {
+                            try state.epoll.modify(fd: fd, event: event)
+                        } catch {
+                            throw Kernel.Event.Driver.Error(error)
+                        }
+                    },
+                    poll: {
+                        (deadline: Clock.Continuous.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
+
+                        let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
+
+                        // Poll epoll into pre-allocated scratch buffer.
+                        let count: Int
+                        do throws(Kernel.Event.Poll.Error) {
+                            count = try state.epoll.poll(events: &state.rawEvents, timeout: timeout)
+                        } catch {
+                            if case .interrupted = error { return 0 }
+                            throw Kernel.Event.Driver.Error(error)
+                        }
+
+                        guard count > 0 else { return 0 }
+
+                        // Normalize: raw epoll events → cross-platform Kernel.Event.
+                        var writeIdx = 0
+                        for i in 0..<count {
+                            let raw = state.rawEvents[i]
+                            guard let id = Kernel.Event.ID(pollData: raw.data) else { continue }
+                            let (interest, flags) = normalize(raw.events)
+                            guard writeIdx < output.count else { break }
+                            output[writeIdx] = Kernel.Event(id: id, interest: interest, flags: flags)
+                            writeIdx += 1
+                        }
+                        return writeIdx
+                    },
+                    close: {
+                        state.eventfd = nil
+                        // State deinit closes the epoll fd when all closures
+                        // are dropped and the State class is deallocated.
+                    }
+                )
+
+                return Kernel.Event.Source(driver: driver, wakeup: wakeup)
             }
-        )
+        }
 
-        return Kernel.Event.Source(driver: driver, wakeup: wakeup)
-    }
-}
-
-#endif
+    #endif
 #endif

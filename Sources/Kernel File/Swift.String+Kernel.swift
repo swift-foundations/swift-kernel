@@ -11,7 +11,6 @@
 
 import Path_Primitives
 public import String_Primitives
-internal import String_Primitives
 
 // MARK: - Swift.String from Path
 
@@ -23,9 +22,9 @@ extension Swift.String {
     @inlinable
     public init(_ path: borrowing Path) {
         #if os(Windows)
-        self = unsafe Swift.String(decodingCString: path.view.pointer, as: UTF16.self)
+            self = unsafe Swift.String(decodingCString: path.view.pointer, as: UTF16.self)
         #else
-        self = unsafe Swift.String(cString: path.view.pointer)
+            self = unsafe Swift.String(cString: path.view.pointer)
         #endif
     }
 }
@@ -40,9 +39,9 @@ extension Swift.String {
     @inlinable
     public init(_ view: borrowing Path.Borrowed) {
         #if os(Windows)
-        self = unsafe Swift.String(decodingCString: view.pointer, as: UTF16.self)
+            self = unsafe Swift.String(decodingCString: view.pointer, as: UTF16.self)
         #else
-        self = unsafe Swift.String(cString: view.pointer)
+            self = unsafe Swift.String(cString: view.pointer)
         #endif
     }
 }
@@ -56,9 +55,9 @@ extension Swift.String {
     /// On Windows, interprets the string code units as UTF-16.
     public init(_ string: borrowing String) {
         #if os(Windows)
-        self = unsafe Swift.String(decodingCString: string.view.pointer, as: UTF16.self)
+            self = unsafe Swift.String(decodingCString: string.view.pointer, as: UTF16.self)
         #else
-        self = unsafe Swift.String(cString: string.view.pointer)
+            self = unsafe Swift.String(cString: string.view.pointer)
         #endif
     }
 }

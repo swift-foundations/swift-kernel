@@ -5,7 +5,6 @@
 //  Phantom-tagged count of completion submissions.
 //
 
-
 extension Kernel.Completion.Submission {
     /// Count of completion submissions.
     ///

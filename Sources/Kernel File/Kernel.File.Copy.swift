@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Path_Primitives
 public import Error_Primitives
+public import Path_Primitives
 
 // MARK: - Copy API
 
@@ -94,13 +94,15 @@ extension Kernel.File.Copy {
             // swift-windows-standard)
             #if os(Windows)
                 if case .platform(let platformError) = error,
-                   platformError.code == .Windows.ERROR_FILE_NOT_FOUND
-                       || platformError.code == .Windows.ERROR_PATH_NOT_FOUND {
+                    platformError.code == .Windows.ERROR_FILE_NOT_FOUND
+                        || platformError.code == .Windows.ERROR_PATH_NOT_FOUND
+                {
                     throw .sourceNotFound
                 }
             #else
                 if case .platform(let platformError) = error,
-                   platformError.code == .POSIX.ENOENT {
+                    platformError.code == .POSIX.ENOENT
+                {
                     throw .sourceNotFound
                 }
             #endif
@@ -129,7 +131,7 @@ extension Kernel.File.Copy {
         }
 
         guard let stats = destStats else {
-            return // No destination, nothing to do
+            return  // No destination, nothing to do
         }
 
         if !overwrite {

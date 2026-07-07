@@ -6,7 +6,6 @@
 //  to their completions.
 //
 
-
 @_spi(Internal) public import Tagged_Primitives
 
 extension Kernel.Completion {

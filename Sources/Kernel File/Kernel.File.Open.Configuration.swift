@@ -9,7 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-
 extension Kernel.File.Open {
     /// Configuration for opening a file.
     ///

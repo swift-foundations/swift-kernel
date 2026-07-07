@@ -68,16 +68,16 @@ extension Kernel.Failure.Test.Unit {
     }
 
     #if !os(Windows)
-    @Test func `signal case exists on non-Windows`() {
-        let signalError = Kernel.Signal.Error.interrupted
-        let failure = Kernel.Failure.signal(signalError)
+        @Test func `signal case exists on non-Windows`() {
+            let signalError = Kernel.Signal.Error.interrupted
+            let failure = Kernel.Failure.signal(signalError)
 
-        if case .signal(let wrapped) = failure {
-            #expect(wrapped == signalError)
-        } else {
-            Issue.record("Expected .signal case")
+            if case .signal(let wrapped) = failure {
+                #expect(wrapped == signalError)
+            } else {
+                Issue.record("Expected .signal case")
+            }
         }
-    }
     #endif
 
     @Test func `equatable conformance works`() {
@@ -147,9 +147,9 @@ extension Kernel.Process.ID.Test.Unit {
 
     @Test func `description formats init process correctly`() {
         #if !os(Windows)
-        let pid = Kernel.Process.ID.`init`
-        let desc: Swift.String = pid.description
-        #expect(desc == "1")
+            let pid = Kernel.Process.ID.`init`
+            let desc: Swift.String = pid.description
+            #expect(desc == "1")
         #endif
     }
 

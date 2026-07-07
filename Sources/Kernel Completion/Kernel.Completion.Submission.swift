@@ -9,8 +9,6 @@
 //  associated values — unrepresentable for opcodes that don't use it.
 //
 
-
-
 extension Kernel.Completion {
     /// A submission to enqueue in the completion ring.
     ///

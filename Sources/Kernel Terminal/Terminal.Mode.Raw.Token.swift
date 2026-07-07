@@ -16,7 +16,7 @@
 // `Terminal.Mode.Raw` namespace and the L2 typed Termios.Attributes.
 
 #if !os(Windows)
-@_spi(Syscall) import POSIX_Kernel_Terminal
+    @_spi(Syscall) import POSIX_Kernel_Terminal
 #endif
 
 extension Terminal.Mode.Raw {
@@ -45,11 +45,11 @@ extension Terminal.Mode.Raw.Token {
     /// Previous terminal state (platform-specific).
     public enum Previous: Sendable {
         #if !os(Windows)
-        case posix(ISO_9945.Kernel.Termios.Attributes)
+            case posix(ISO_9945.Kernel.Termios.Attributes)
         #endif
 
         #if os(Windows)
-        case windows(UInt32)  // Console mode flags
+            case windows(UInt32)  // Console mode flags
         #endif
     }
 }
@@ -58,43 +58,43 @@ extension Terminal.Mode.Raw.Token {
 
 #if !os(Windows)
 
-extension Terminal.Mode.Raw {
-    /// Enter raw mode on this stream (POSIX).
-    ///
-    /// Captures the current termios state, applies raw flags via
-    /// `Termios.Attributes.withRaw()`, and returns a token that
-    /// preserves the previous state for restoration.
-    ///
-    /// - Returns: A token to restore the previous terminal mode.
-    /// - Throws: ``Terminal.Error`` if entering raw mode fails.
-    public func enter() throws(Terminal.Error) -> Token {
-        do {
-            let original = try ISO_9945.Kernel.Termios.Attributes.get(fd: stream.rawValue)
-            let raw = original.withRaw()
-            try ISO_9945.Kernel.Termios.Attributes.set(raw, fd: stream.rawValue)
-            return Token(stream: stream, previous: .posix(original))
-        } catch {
-            throw Terminal.Error(operation: .enterRaw, underlying: .kernel(error))
+    extension Terminal.Mode.Raw {
+        /// Enter raw mode on this stream (POSIX).
+        ///
+        /// Captures the current termios state, applies raw flags via
+        /// `Termios.Attributes.withRaw()`, and returns a token that
+        /// preserves the previous state for restoration.
+        ///
+        /// - Returns: A token to restore the previous terminal mode.
+        /// - Throws: ``Terminal.Error`` if entering raw mode fails.
+        public func enter() throws(Terminal.Error) -> Token {
+            do {
+                let original = try ISO_9945.Kernel.Termios.Attributes.get(fd: stream.rawValue)
+                let raw = original.withRaw()
+                try ISO_9945.Kernel.Termios.Attributes.set(raw, fd: stream.rawValue)
+                return Token(stream: stream, previous: .posix(original))
+            } catch {
+                throw Terminal.Error(operation: .enterRaw, underlying: .kernel(error))
+            }
         }
     }
-}
 
-extension Terminal.Mode.Raw.Token {
-    /// Restore the previous terminal mode.
-    ///
-    /// - Throws: ``Terminal.Error`` if restoration fails.
-    public mutating func restore() throws(Terminal.Error) {
-        guard !restored else { return }
-        guard case .posix(let attrs) = previous else {
-            throw Terminal.Error(operation: .exitRaw, underlying: .unsupported)
-        }
-        do {
-            try ISO_9945.Kernel.Termios.Attributes.set(attrs, fd: stream.rawValue)
-            restored = true
-        } catch let error {
-            throw Terminal.Error(operation: .exitRaw, underlying: .kernel(error))
+    extension Terminal.Mode.Raw.Token {
+        /// Restore the previous terminal mode.
+        ///
+        /// - Throws: ``Terminal.Error`` if restoration fails.
+        public mutating func restore() throws(Terminal.Error) {
+            guard !restored else { return }
+            guard case .posix(let attrs) = previous else {
+                throw Terminal.Error(operation: .exitRaw, underlying: .unsupported)
+            }
+            do {
+                try ISO_9945.Kernel.Termios.Attributes.set(attrs, fd: stream.rawValue)
+                restored = true
+            } catch let error {
+                throw Terminal.Error(operation: .exitRaw, underlying: .kernel(error))
+            }
         }
     }
-}
 
 #endif

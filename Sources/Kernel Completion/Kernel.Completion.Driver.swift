@@ -1,4 +1,3 @@
-
 //
 //  Kernel.Completion.Driver.swift
 //  swift-kernel-primitives
@@ -9,7 +8,7 @@
 // Wave 3.5-Final-Atomic (2026-05-02): explicit import for Kernel.Descriptor
 // member access (Swift 6.x #MemberImportVisibility post-flip).
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-public import POSIX_Kernel_Descriptor
+    public import POSIX_Kernel_Descriptor
 #endif
 
 extension Kernel.Completion {
@@ -56,10 +55,11 @@ extension Kernel.Completion {
         /// The target descriptor is the fd the operation acts on (file, socket).
         /// It is borrowed — ownership remains with the caller. The backend
         /// extracts the raw fd at the syscall boundary.
-        package let _submit: (
-            Kernel.Completion.Submission,
-            borrowing Kernel.Descriptor
-        ) throws(Kernel.Completion.Error) -> Void
+        package let _submit:
+            (
+                Kernel.Completion.Submission,
+                borrowing Kernel.Descriptor
+            ) throws(Kernel.Completion.Error) -> Void
 
         /// Commit accumulated submissions to the kernel.
         ///
@@ -86,9 +86,10 @@ extension Kernel.Completion {
         /// needs to propagate an error (e.g., continuation resolution failure),
         /// it stores the error in its dispatch table entry. The caller
         /// processes errors after drain returns.
-        package let _drain: (
-            (Kernel.Completion.Event) -> Void
-        ) -> Event.Count
+        package let _drain:
+            (
+                (Kernel.Completion.Event) -> Void
+            ) -> Event.Count
 
         /// Tear down the driver's internal backend state.
         ///

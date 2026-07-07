@@ -3,10 +3,8 @@
 //  swift-kernel-primitives
 //
 
-
-import Testing
 import Kernel_Test_Support
-
+import Testing
 
 @testable import Kernel
 
@@ -31,7 +29,7 @@ extension Kernel.Event.Driver.Test.Unit {
             remove: { _, _, _ in },
             arm: { _, _, interest in armInterests.append(interest) },
             poll: { _, _ in 0 },
-            close: { }
+            close: {}
         )
 
         let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
@@ -57,7 +55,7 @@ extension Kernel.Event.Driver.Test.Unit {
             remove: { _, _, _ in },
             arm: { _, _, interest in armInterests.append(interest) },
             poll: { _, _ in 0 },
-            close: { }
+            close: {}
         )
 
         let id = try driver._register(Kernel.Descriptor.invalid, .read)
@@ -94,7 +92,7 @@ extension Kernel.Event.Driver.Test.Unit {
                 output[0] = Kernel.Event(id: registeredID, interest: .read)
                 return 1
             },
-            close: { }
+            close: {}
         )
 
         let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
@@ -132,7 +130,7 @@ extension Kernel.Event.Driver.Test.Unit {
                 output[0] = Kernel.Event(id: registeredID, interest: [.read, .write])
                 return 1
             },
-            close: { }
+            close: {}
         )
 
         let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
@@ -167,7 +165,7 @@ extension Kernel.Event.Driver.Test.Unit {
                 output[0] = Kernel.Event(id: registeredID, interest: .read)
                 return 1
             },
-            close: { }
+            close: {}
         )
 
         let id = try driver._register(Kernel.Descriptor.invalid, .read)
@@ -201,7 +199,7 @@ extension Kernel.Event.Driver.Test.Unit {
                 output[0] = Kernel.Event(id: registeredID, interest: [.read, .write])
                 return 1
             },
-            close: { }
+            close: {}
         )
 
         let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
@@ -223,4 +221,3 @@ extension Kernel.Event.Driver.Test.Unit {
         driver._close()
     }
 }
-

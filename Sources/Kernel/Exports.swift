@@ -9,13 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-@_exported public import Kernel_Core
 @_exported public import Kernel_Clock
+@_exported public import Kernel_Completion
+@_exported public import Kernel_Core
+@_exported public import Kernel_Event
+@_exported public import Kernel_File
 @_exported public import Kernel_System
 @_exported public import Kernel_Thread
-@_exported public import Kernel_File
-@_exported public import Kernel_Event
-@_exported public import Kernel_Completion
 
 // MARK: - G6.D namespace anchor (typealias-via-L3 per [PLAT-ARCH-005])
 //
@@ -37,9 +37,9 @@
 // `Kernel` name at L3.
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-public typealias Kernel = POSIX.Kernel
+    public typealias Kernel = POSIX.Kernel
 #elseif os(Windows)
-public typealias Kernel = Windows.Kernel
+    public typealias Kernel = Windows.Kernel
 #endif
 
 // MARK: - Descriptor typealias chain (three-tier per [PLAT-ARCH-005] revised + [PLAT-ARCH-008e], Wave 4c-Socket Prerequisite II 2026-05-01)
@@ -65,20 +65,20 @@ public typealias Kernel = Windows.Kernel
 // swift-kernel L3 (Kernel Core target).
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-@_exported public import POSIX_Kernel_Descriptor
-@_exported public import POSIX_Kernel_Directory
+    @_exported public import POSIX_Kernel_Descriptor
+    @_exported public import POSIX_Kernel_Directory
 
-extension Kernel {
-    /// Cross-platform file descriptor — composes through L3-policy per [PLAT-ARCH-008e].
-    public typealias Descriptor = POSIX.Kernel.Descriptor
-}
+    extension Kernel {
+        /// Cross-platform file descriptor — composes through L3-policy per [PLAT-ARCH-008e].
+        public typealias Descriptor = POSIX.Kernel.Descriptor
+    }
 #elseif os(Windows)
-@_exported public import Windows_Kernel_Descriptor
+    @_exported public import Windows_Kernel_Descriptor
 
-extension Kernel {
-    /// Cross-platform descriptor — composes through L3-policy per [PLAT-ARCH-008e].
-    public typealias Descriptor = Windows.Kernel.Descriptor
-}
+    extension Kernel {
+        /// Cross-platform descriptor — composes through L3-policy per [PLAT-ARCH-008e].
+        public typealias Descriptor = Windows.Kernel.Descriptor
+    }
 #endif
 
 // Cross-paradigm Interest vocabulary lives at L1 as `Kernel.Event.Interest`
@@ -88,9 +88,9 @@ extension Kernel {
 // Absent on Windows with the rest of the Kernel.Event (epoll/kqueue)
 // vocabulary; IOCP readiness lives on the completion port.
 #if !os(Windows)
-extension Kernel.Descriptor {
-    public typealias Interest = Kernel.Event.Interest
-}
+    extension Kernel.Descriptor {
+        public typealias Interest = Kernel.Event.Interest
+    }
 #endif
 
 // MARK: - Socket.Descriptor typealias chain (three-tier per [PLAT-ARCH-005] + [PLAT-ARCH-008e], Wave 4c-Socket Prerequisite II 2026-05-01)
@@ -108,17 +108,17 @@ extension Kernel.Descriptor {
 // iso-9945 ISO 9945 Core.
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-@_exported public import POSIX_Kernel_Socket
+    @_exported public import POSIX_Kernel_Socket
 
-extension Kernel.Socket {
-    /// Cross-platform socket descriptor — composes through L3-policy per [PLAT-ARCH-008e].
-    public typealias Descriptor = POSIX.Kernel.Socket.Descriptor
-}
+    extension Kernel.Socket {
+        /// Cross-platform socket descriptor — composes through L3-policy per [PLAT-ARCH-008e].
+        public typealias Descriptor = POSIX.Kernel.Socket.Descriptor
+    }
 #elseif os(Windows)
-@_exported public import Windows_Kernel_Socket
+    @_exported public import Windows_Kernel_Socket
 
-extension Kernel.Socket {
-    /// Cross-platform socket descriptor — composes through L3-policy per [PLAT-ARCH-008e].
-    public typealias Descriptor = Windows.Kernel.Socket.Descriptor
-}
+    extension Kernel.Socket {
+        /// Cross-platform socket descriptor — composes through L3-policy per [PLAT-ARCH-008e].
+        public typealias Descriptor = Windows.Kernel.Socket.Descriptor
+    }
 #endif

@@ -5,7 +5,6 @@
 //  Phantom-tagged count of completion events.
 //
 
-
 extension Kernel.Completion.Event {
     /// Count of completion events.
     ///

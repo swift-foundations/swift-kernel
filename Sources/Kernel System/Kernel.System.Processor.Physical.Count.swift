@@ -16,16 +16,16 @@
 //
 
 #if os(Linux) || os(Android) || os(OpenBSD) || os(Windows)
-extension System.Processor.Physical {
-    /// Number of physical processors.
-    ///
-    /// Linux/Windows fallback: returns the online processor count. Linux does not
-    /// distinguish physical from logical without parsing `/proc/cpuinfo`; a precise
-    /// per-platform physical count belongs in `swift-linux` / `swift-windows`'s own
-    /// `System` target (parallel to `swift-darwin`'s) per [PLAT-ARCH-026].
-    @inlinable
-    public static var count: System.Processor.Count {
-        System.processorCount
+    extension System.Processor.Physical {
+        /// Number of physical processors.
+        ///
+        /// Linux/Windows fallback: returns the online processor count. Linux does not
+        /// distinguish physical from logical without parsing `/proc/cpuinfo`; a precise
+        /// per-platform physical count belongs in `swift-linux` / `swift-windows`'s own
+        /// `System` target (parallel to `swift-darwin`'s) per [PLAT-ARCH-026].
+        @inlinable
+        public static var count: System.Processor.Count {
+            System.processorCount
+        }
     }
-}
 #endif

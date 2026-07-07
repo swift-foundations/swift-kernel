@@ -9,7 +9,6 @@
 //  by the platform layer via extension (shell + values pattern).
 //
 
-
 extension Kernel.Completion.Submission {
     /// Flags controlling submission behavior.
     ///
