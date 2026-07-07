@@ -87,7 +87,7 @@ extension Kernel.Completion.Submission.Test.Unit {
 
     @Test
     func `poll opcode carries descriptor interest`() {
-        let interest: Kernel.Descriptor.Interest = [.read]
+        let interest: Kernel.Event.Interest = [.read]
         let sub = Kernel.Completion.Submission(
             opcode: .readiness(events: interest),
             token: 1

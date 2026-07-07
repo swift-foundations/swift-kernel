@@ -11,8 +11,6 @@
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
 
-    public import Path_Primitives
-
     // MARK: - Cross-platform Flush surface on POSIX
     //
     // `Kernel.File.Flush.flush(_:)` resolves through `POSIX.Kernel.File.Flush.flush(_:)`
@@ -39,18 +37,11 @@
             try ISO_9945.Kernel.File.Flush.data(descriptor)
         }
 
-        /// Synchronizes a directory to persist rename / unlink operations.
-        ///
-        /// Opens the directory and calls `fsync(2)` on the descriptor — the POSIX
-        /// idiom for ensuring a rename or unlink within the directory is durably
-        /// recorded.
-        ///
-        /// - Parameter path: The directory path.
-        /// - Throws: ``Kernel/File/Flush/Error`` on failure.
-        @inlinable
-        public static func directory(path: borrowing Path.Borrowed) throws(Error) {
-            try POSIX.Kernel.File.Flush.directory(path: path)
-        }
+        // `directory(path:)` is provided directly by `POSIX.Kernel.File.Flush`
+        // (swift-posix) on this same underlying type and is surfaced through the
+        // Kernel umbrella. A forwarder here would be a same-type duplicate of that
+        // declaration and make `Kernel.File.Flush.directory(path:)` ambiguous at
+        // every call site; the Windows no-op peer lives in the Windows file.
     }
 
 #endif
