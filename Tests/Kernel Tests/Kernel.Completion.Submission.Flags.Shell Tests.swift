@@ -9,14 +9,14 @@ import Testing
 
 extension Kernel.Completion.Submission.Flags {
     @Suite
-    struct Test {
+    struct ShellTest {
         @Suite struct Unit {}
     }
 }
 
 // MARK: - Unit Tests
 
-extension Kernel.Completion.Submission.Flags.Test.Unit {
+extension Kernel.Completion.Submission.Flags.ShellTest.Unit {
     @Test
     func `empty flags has zero rawValue`() {
         let flags: Kernel.Completion.Submission.Flags = []

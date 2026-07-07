@@ -16,7 +16,7 @@ import Testing
 
 extension Kernel.Thread.Spawn {
     enum Test {
-        @Suite struct Unit {}
+        @Suite(.serialized) struct Unit {}
         @Suite struct EdgeCase {}
         @Suite struct Integration {}
         @Suite(.serialized) struct Performance {}

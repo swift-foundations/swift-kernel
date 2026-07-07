@@ -102,7 +102,7 @@
             var receivedTokens: Set<UInt64> = []
 
             let drained = completion.drain { event in
-                receivedTokens.insert(event.token.rawValue)
+                receivedTokens.insert(event.token.underlying)
             }
 
             #expect(drained == 3)
