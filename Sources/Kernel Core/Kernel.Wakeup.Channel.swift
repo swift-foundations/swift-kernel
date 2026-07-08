@@ -45,13 +45,15 @@ extension Kernel.Wakeup {
         public init(signal: @escaping @Sendable () -> Void) {
             self.signal = signal
         }
+    }
+}
 
-        /// Triggers the wakeup signal.
-        ///
-        /// Safe to call from any thread. Causes the registered platform
-        /// primitive to wake any blocked poll/wait operation.
-        public func wake() {
-            signal()
-        }
+extension Kernel.Wakeup.Channel {
+    /// Triggers the wakeup signal.
+    ///
+    /// Safe to call from any thread. Causes the registered platform
+    /// primitive to wake any blocked poll/wait operation.
+    public func wake() {
+        signal()
     }
 }

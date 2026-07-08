@@ -69,7 +69,7 @@ extension Kernel.File.Clone {
     ) throws(Kernel.File.Clone.Error) -> Result {
         #if os(macOS)
             let cloned: Bool
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 cloned = try Clonefile.attempt(source: source, destination: destination)
             } catch {
                 throw Error(from: error)
@@ -85,7 +85,7 @@ extension Kernel.File.Clone {
             let dstDescriptor = try createDestination(destination)
 
             let cloned: Bool
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 cloned = try Ficlone.attempt(
                     source: srcDescriptor,
                     destination: dstDescriptor
@@ -116,7 +116,7 @@ extension Kernel.File.Clone {
         #if os(macOS)
             // First try pure clonefile
             var cloned = false
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 cloned = try Clonefile.attempt(source: source, destination: destination)
             } catch {
                 cloned = false
@@ -127,7 +127,7 @@ extension Kernel.File.Clone {
             }
 
             // Use copyfile with COPYFILE_CLONE flag
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 try Copyfile.clone(source: source, destination: destination)
                 return .copied
             } catch {
@@ -142,7 +142,7 @@ extension Kernel.File.Clone {
 
             // Try FICLONE
             var reflinked = false
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 reflinked = try Ficlone.attempt(
                     source: srcDescriptor,
                     destination: dstDescriptor
@@ -156,7 +156,7 @@ extension Kernel.File.Clone {
             }
 
             // Use copy_file_range
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 try CopyRange.copy(
                     source: srcDescriptor,
                     destination: dstDescriptor,
@@ -187,7 +187,7 @@ extension Kernel.File.Clone {
         to destination: borrowing Path.Borrowed
     ) throws(Kernel.File.Clone.Error) {
         #if os(macOS)
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 try Copyfile.data(source: source, destination: destination)
             } catch {
                 throw Error(from: error)
@@ -199,7 +199,7 @@ extension Kernel.File.Clone {
 
             let dstDescriptor = try createDestination(destination)
 
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 try CopyRange.copy(
                     source: srcDescriptor,
                     destination: dstDescriptor,
@@ -228,7 +228,7 @@ extension Kernel.File.Clone {
 #if os(Linux)
     extension Kernel.File.Clone {
         private static func openSource(_ path: borrowing Path.Borrowed) throws(Kernel.File.Clone.Error) -> Kernel.Descriptor {
-            do {
+            do throws(Kernel.File.Open.Error) {
                 return try Kernel.File.Open.open(
                     path: path,
                     mode: .read,
@@ -244,7 +244,7 @@ extension Kernel.File.Clone {
         }
 
         private static func createDestination(_ path: borrowing Path.Borrowed) throws(Kernel.File.Clone.Error) -> Kernel.Descriptor {
-            do {
+            do throws(Kernel.File.Open.Error) {
                 return try Kernel.File.Open.open(
                     path: path,
                     mode: .write,
@@ -260,7 +260,7 @@ extension Kernel.File.Clone {
         }
 
         private static func getSize(_ path: borrowing Path.Borrowed) throws(Kernel.File.Clone.Error) -> Int {
-            do {
+            do throws(Kernel.File.Clone.Error.Syscall) {
                 return try Metadata.size(at: path)
             } catch {
                 throw Error.notSupported

@@ -48,7 +48,7 @@ extension Kernel.Thread.Trap {
     public func callAsFunction(
         _ body: @escaping @Sendable () -> Void
     ) -> Kernel.Thread.Handle {
-        do { return try Kernel.Thread.spawn(body) } catch { fatalError(error.description) }
+        do throws(Kernel.Thread.Error) { return try Kernel.Thread.spawn(body) } catch { fatalError(error.description) }
     }
 
     /// Spawns a dedicated OS thread with an explicit value, trapping on failure.
@@ -62,6 +62,6 @@ extension Kernel.Thread.Trap {
         _ value: consuming T,
         _ body: @escaping @Sendable (consuming T) -> Void
     ) -> Kernel.Thread.Handle {
-        do { return try Kernel.Thread.spawn(value, body) } catch { fatalError(error.description) }
+        do throws(Kernel.Thread.Error) { return try Kernel.Thread.spawn(value, body) } catch { fatalError(error.description) }
     }
 }

@@ -55,7 +55,7 @@ extension Kernel.File {
 
         // 2. Resolve cache mode
         let resolved: Direct.Mode.Resolved
-        do {
+        do throws(Kernel.File.Direct.Error) {
             resolved = try configuration.cache.resolve(given: requirements)
         } catch {
             // Fall back to buffered if direct not supported

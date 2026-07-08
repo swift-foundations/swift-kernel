@@ -68,7 +68,7 @@ extension Terminal.Mode.Raw.Token {
         /// - Returns: A token to restore the previous terminal mode.
         /// - Throws: ``Terminal.Error`` if entering raw mode fails.
         public func enter() throws(Terminal.Error) -> Token {
-            do {
+            do throws(Error_Primitives.Error) {
                 let original = try ISO_9945.Kernel.Termios.Attributes.get(fd: stream.rawValue)
                 let raw = original.withRaw()
                 try ISO_9945.Kernel.Termios.Attributes.set(raw, fd: stream.rawValue)
@@ -88,7 +88,7 @@ extension Terminal.Mode.Raw.Token {
             guard case .posix(let attrs) = previous else {
                 throw Terminal.Error(operation: .exitRaw, underlying: .unsupported)
             }
-            do {
+            do throws(Error_Primitives.Error) {
                 try ISO_9945.Kernel.Termios.Attributes.set(attrs, fd: stream.rawValue)
                 restored = true
             } catch let error {

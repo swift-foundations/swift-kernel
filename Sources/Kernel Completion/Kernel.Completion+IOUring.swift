@@ -106,6 +106,9 @@
             self.uring = consume uring
             self.cqCapacity = cqCapacity
         }
+    }
+
+    extension UringState {
 
         // MARK: Domain Operations
 

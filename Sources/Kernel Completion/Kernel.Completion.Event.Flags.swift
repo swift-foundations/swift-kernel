@@ -20,15 +20,17 @@ extension Kernel.Completion.Event {
         public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
-
-        /// More completions will follow for the same submission token.
-        ///
-        /// When present, the originating submission remains active and will
-        /// produce additional completion events. When absent on a completion
-        /// for a multishot submission, this is the terminal event — the token
-        /// is no longer active.
-        ///
-        /// Single-shot submissions never set this flag.
-        public static let more = Flags(rawValue: 1 << 0)
     }
+}
+
+extension Kernel.Completion.Event.Flags {
+    /// More completions will follow for the same submission token.
+    ///
+    /// When present, the originating submission remains active and will
+    /// produce additional completion events. When absent on a completion
+    /// for a multishot submission, this is the terminal event — the token
+    /// is no longer active.
+    ///
+    /// Single-shot submissions never set this flag.
+    public static let more = Self(rawValue: 1 << 0)
 }

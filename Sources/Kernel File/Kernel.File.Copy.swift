@@ -82,7 +82,7 @@ extension Kernel.File.Copy {
         _ source: borrowing Path.Borrowed,
         followSymlinks: Bool
     ) throws(Kernel.File.Copy.Error) -> Kernel.File.Stats {
-        do {
+        do throws(Kernel.File.Stats.Error) {
             if followSymlinks {
                 return try Kernel.File.Stats.get(path: source)
             } else {
@@ -123,7 +123,7 @@ extension Kernel.File.Copy {
     ) throws(Kernel.File.Copy.Error) {
         // Check if destination exists
         let destStats: Kernel.File.Stats?
-        do {
+        do throws(Kernel.File.Stats.Error) {
             destStats = try Kernel.File.Stats.lget(path: destination)
         } catch {
             // Destination doesn't exist - that's fine
@@ -144,7 +144,7 @@ extension Kernel.File.Copy {
         }
 
         // Unlink destination before copy
-        do {
+        do throws(Kernel.File.Delete.Error) {
             try Kernel.File.Delete.delete(destination)
         } catch let error {
             throw .unlink(error)
