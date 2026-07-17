@@ -45,8 +45,8 @@ import Testing
 
 // MARK: - Kernel.File.Open.Configuration Tests
 
-@Suite("Kernel.File.Open.Configuration")
-struct FileOpenConfigurationTests {
+@Suite
+struct Test {
 
     @Test
     func `default configuration`() {
@@ -84,8 +84,8 @@ struct FileOpenConfigurationTests {
 // MARK: - Integration Tests
 
 #if !os(Windows)
-    @Suite("Kernel.File Handle Integration")
-    struct HandleIntegrationTests {
+    @Suite
+    struct Test {
 
         @Test
         func `open and close file with buffered mode`() throws {
@@ -105,11 +105,11 @@ struct FileOpenConfigurationTests {
         }
 
         // TODO: Enable when Handle.read is implemented in platform packages
-        // @Test("read file with buffered mode")
+        // @Test
         // func readBuffered() throws { ... }
 
         // TODO: Enable when Handle.write is implemented in platform packages
-        // @Test("write file with buffered mode")
+        // @Test
         // func writeBuffered() throws { ... }
 
         @Test
