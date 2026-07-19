@@ -200,16 +200,21 @@ extension Kernel.File.Copy {
             throw .operation("readlink failed: \(error)")
         }
 
-        // Create symlink at destination using scoped path conversion
-        var createError: Kernel.Link.Symbolic.Error?
-        try? Path.scope(target) { targetView in
-            do {
+        // Create symlink at destination using scoped path conversion.
+        //
+        // F-007: this used to be `try? Path.scope(target) { ... }` with an
+        // inner `do { ... } catch let error as X { } catch {}` — both the
+        // outer `try?` (silently discarding a Path.scope validation
+        // failure, e.g. a symlink target containing a NUL byte) and the
+        // inner empty `catch {}` swallowed real failures, letting copySymlink
+        // — and therefore Copy.copy — return success without ever creating
+        // the destination symlink. Propagate both failure modes as typed
+        // Copy.Error instead: no try?, no empty catch.
+        do {
+            try Path.scope(target) { targetView in
                 try Kernel.Link.Symbolic.create(target: targetView, at: destination)
-            } catch let error as Kernel.Link.Symbolic.Error {
-                createError = error
-            } catch {}
-        }
-        if let error = createError {
+            }
+        } catch {
             throw .operation("symlink create failed: \(error)")
         }
     }
