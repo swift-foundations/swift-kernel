@@ -76,7 +76,7 @@ extension Kernel.Thread.Spawn {
     /// - Throws: `Kernel.Thread.Error` if thread creation fails.
     @inlinable
     public func callAsFunction<T: ~Copyable>(
-        _ value: consuming T,
+        _ value: consuming sending T,
         _ body: @escaping @Sendable (consuming T) -> Void
     ) throws(Kernel.Thread.Error) -> Kernel.Thread.Handle {
         // Use Ownership.Transfer for cross-boundary ownership transfer

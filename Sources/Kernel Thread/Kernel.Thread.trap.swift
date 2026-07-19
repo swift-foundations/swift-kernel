@@ -59,7 +59,7 @@ extension Kernel.Thread.Trap {
     /// - Returns: An opaque handle to the thread.
     @inlinable
     public func callAsFunction<T: ~Copyable>(
-        _ value: consuming T,
+        _ value: consuming sending T,
         _ body: @escaping @Sendable (consuming T) -> Void
     ) -> Kernel.Thread.Handle {
         do throws(Kernel.Thread.Error) { return try Kernel.Thread.spawn(value, body) } catch { fatalError(error.description) }
