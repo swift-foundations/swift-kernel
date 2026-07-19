@@ -226,6 +226,9 @@
             if submission.flags.contains(.linked) {
                 uring.next.entry.flags.insert(.ioLink)
             }
+            if submission.flags.contains(.drain) {
+                uring.next.entry.flags.insert(.ioDrain)
+            }
             if submission.flags.contains(.fixedFile) {
                 uring.next.entry.flags.insert(.fixedFile)
             }

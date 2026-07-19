@@ -114,6 +114,40 @@
             completion.close()
         }
 
+        // MARK: - Flags
+
+        // F-002 regression: `.drain` (IOSQE_IO_DRAIN) was declared on the
+        // shell but never mapped to the L2 `.ioDrain` SQE flag in
+        // Kernel.Completion+IOUring.swift's submit loop — silently ignored.
+        // This does not observe the kernel-level ordering-barrier effect
+        // (not practically assertable in a deterministic unit test), but it
+        // exercises the exact fixed mapping line end-to-end: submitting a
+        // `.drain`-flagged operation alongside a plain one must still
+        // round-trip through submit → flush → drain without error, proving
+        // the flag no longer falls into an unhandled/rejected path.
+        @Test func `submission with drain flag round-trips through submit flush drain`() throws {
+            var completion = try Kernel.Completion.iouring()
+
+            let plain = Kernel.Completion.Submission(opcode: .noOperation, token: .init(10))
+            let drained = Kernel.Completion.Submission(opcode: .noOperation, token: .init(11), flags: .drain)
+
+            try completion.submit(plain)
+            try completion.submit(drained)
+
+            let flushed = try completion.flush()
+            #expect(flushed == 2)
+
+            var receivedTokens: Set<UInt64> = []
+            let count = completion.drain { event in
+                receivedTokens.insert(event.token.underlying)
+            }
+
+            #expect(count == 2)
+            #expect(receivedTokens == [10, 11])
+
+            completion.close()
+        }
+
         // MARK: - CQE Result Reconstruction
 
         // TODO: `pipe read produces bytes-transferred result`
