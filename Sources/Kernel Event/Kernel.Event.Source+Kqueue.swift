@@ -193,10 +193,26 @@
 
                         let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
 
+                        // Never ask the kernel for more events than `output` can hold.
+                        // kevent() dequeues whatever it hands back from the kernel's
+                        // readiness list, so over-requesting past `output.count` would
+                        // silently drop already-dequeued one-shot registrations. Clamp
+                        // the request so any events beyond `output`'s capacity stay
+                        // queued in the kernel for a subsequent poll instead of being
+                        // lost.
+                        let requestCount = min(state.rawEvents.count, output.count)
+                        guard requestCount > 0 else { return 0 }
+
                         // Poll kqueue into pre-allocated scratch buffer.
                         let count: Int
                         do throws(Kernel.Kqueue.Error) {
-                            count = try state.kq.poll(into: &state.rawEvents, timeout: timeout)
+                            if requestCount == state.rawEvents.count {
+                                count = try state.kq.poll(into: &state.rawEvents, timeout: timeout)
+                            } else {
+                                var scratch = Array(state.rawEvents[0..<requestCount])
+                                count = try state.kq.poll(into: &scratch, timeout: timeout)
+                                state.rawEvents.replaceSubrange(0..<requestCount, with: scratch)
+                            }
                         } catch {
                             if case .interrupted = error { return 0 }
                             throw Kernel.Event.Driver.Error(error)

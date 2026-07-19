@@ -224,10 +224,25 @@
 
                         let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
 
+                        // Never ask the kernel for more events than `output` can hold.
+                        // epoll_wait dequeues whatever it hands back from the kernel's
+                        // readiness list, so over-requesting past `output.count` would
+                        // silently drop already-dequeued one-shot events. Clamp the
+                        // request so any events beyond `output`'s capacity stay queued
+                        // in the kernel for a subsequent poll instead of being lost.
+                        let requestCount = min(state.rawEvents.count, output.count)
+                        guard requestCount > 0 else { return 0 }
+
                         // Poll epoll into pre-allocated scratch buffer.
                         let count: Int
                         do throws(Kernel.Event.Poll.Error) {
-                            count = try state.epoll.poll(events: &state.rawEvents, timeout: timeout)
+                            if requestCount == state.rawEvents.count {
+                                count = try state.epoll.poll(events: &state.rawEvents, timeout: timeout)
+                            } else {
+                                var scratch = Array(state.rawEvents[0..<requestCount])
+                                count = try state.epoll.poll(events: &scratch, timeout: timeout)
+                                state.rawEvents.replaceSubrange(0..<requestCount, with: scratch)
+                            }
                         } catch {
                             if case .interrupted = error { return 0 }
                             throw Kernel.Event.Driver.Error(error)
