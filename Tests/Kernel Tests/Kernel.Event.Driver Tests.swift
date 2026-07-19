@@ -12,7 +12,7 @@ extension Kernel.Event.Driver {
     @Suite(
         .disabled(
             if: Toolchain.hasTaggedMetadataSIGSEGV,
-            "catalog §A9 site 3: Kernel.Event.ID (Tagged<ISO_9945.Kernel.Event, UInt>) registry key forces the institute __Dictionary/__HashIndexed metadata; swift_getTypeByMangledName null-deref SIGSEGV at Kernel.Event.Driver's registry insert (Sources/Kernel Event/Kernel.Event.Driver.swift:117, first _register call) on compiler(<6.4). Fixed on Swift 6.4+. See swift-institute/Issues/swift-issue-tagged-dictionary-insert-metadata-crash."
+
         )
     )
     struct Test {

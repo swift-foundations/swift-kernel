@@ -22,7 +22,7 @@ extension Kernel.Event.Source {
         @Suite(
             .disabled(
                 if: Toolchain.hasTaggedMetadataSIGSEGV,
-                "catalog §A9 site 3: constructing a real Kernel.Event.Source builds the Kernel.Event.Driver whose registry Dictionary<Kernel.Event.ID, Registration> (Tagged key) forces the institute __Dictionary/__HashIndexed metadata; swift_getTypeByMangledName null-deref SIGSEGV on compiler(<6.4) — construction alone suffices (gate-attributed serially 2026-07-10, no _register call needed). Fixed on Swift 6.4+. See swift-institute/Issues/swift-issue-tagged-dictionary-insert-metadata-crash."
+
             )
         )
         struct Integration {}

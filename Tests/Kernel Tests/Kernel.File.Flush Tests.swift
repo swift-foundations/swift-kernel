@@ -17,8 +17,8 @@ extension Kernel.File.Flush {
     @Suite
     struct Test {
         @Suite struct Flush {}
-        @Suite struct Data {}
-        @Suite struct Directory {}
+        @Suite struct `Data` {}
+        @Suite struct `Directory` {}
     }
 }
 

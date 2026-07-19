@@ -12,7 +12,7 @@ extension Kernel.Completion.Submission.Opcode {
     @Suite
     struct Test {
         @Suite struct Unit {}
-        @Suite struct Exhaustiveness {}
+        @Suite struct `Exhaustiveness` {}
     }
 }
 

@@ -9,7 +9,7 @@ import Testing
 
 extension Kernel.Completion.Submission.Flags {
     @Suite
-    struct ShellTest {
+    struct `Shell Test` {
         @Suite struct Unit {}
     }
 }

@@ -57,13 +57,13 @@ import Testing
     }
 #endif
 
-@Suite("Kernel.File.Clone")
-struct KernelFileCloneTests {
+@Suite
+struct Test {
 
     // MARK: - Type Tests
 
-    @Suite("Types")
-    struct TypeTests {
+    @Suite
+    struct Test {
 
         @Test
         func `Capability enum values`() {
@@ -110,8 +110,8 @@ struct KernelFileCloneTests {
 
     // MARK: - Error Tests
 
-    @Suite("Error")
-    struct ErrorTests {
+    @Suite
+    struct Test {
 
         @Test
         func `error descriptions are meaningful`() {
@@ -151,8 +151,8 @@ struct KernelFileCloneTests {
     // MARK: - Capability Probing Tests
 
     #if os(macOS)
-        @Suite("Capability Probing")
-        struct CapabilityProbingTests {
+        @Suite
+        struct Test {
 
             @Test
             func `probe capability returns valid result`() throws {
@@ -188,8 +188,8 @@ struct KernelFileCloneTests {
     // MARK: - Clone Operation Tests
 
     #if !os(Windows)
-        @Suite("Clone Operations")
-        struct CloneOperationTests {
+        @Suite
+        struct Test {
 
             @Test
             func `copyOnly creates independent copy`() throws {
