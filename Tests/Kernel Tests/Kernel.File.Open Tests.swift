@@ -45,8 +45,14 @@ import Testing
 
 // MARK: - Kernel.File.Open.Configuration Tests
 
-@Suite
-struct Test {
+extension Kernel.File.Open.Configuration {
+    @Suite
+    struct Test {
+        @Suite struct Unit {}
+    }
+}
+
+extension Kernel.File.Open.Configuration.Test.Unit {
 
     @Test
     func `default configuration`() {
@@ -84,8 +90,14 @@ struct Test {
 // MARK: - Integration Tests
 
 #if !os(Windows)
-    @Suite
-    struct Test {
+    extension Kernel.File {
+        @Suite
+        struct Test {
+            @Suite struct Integration {}
+        }
+    }
+
+    extension Kernel.File.Test.Integration {
 
         @Test
         func `open and close file with buffered mode`() throws {

@@ -63,7 +63,7 @@ private func cleanupLockFile(_ pathString: Swift.String) {
 
 // MARK: - Token Integration Tests
 
-extension KernelLockIntegration {
+extension `Kernel.Lock Integration` {
     @Test
     func `token acquires and releases lock`() throws {
         let path = try createLockFile(prefix: "kernel-lock-token")
@@ -101,7 +101,7 @@ extension KernelLockIntegration {
 
 #if canImport(Foundation) && !os(Windows)
 
-    extension KernelLockIntegration {
+    extension `Kernel.Lock Integration` {
 
         /// Path to the lock test helper executable
         private static var helperPath: Swift.String {

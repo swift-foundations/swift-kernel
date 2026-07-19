@@ -144,7 +144,7 @@ extension Kernel.Test.Unit {
 
 // MARK: - Edge Cases (Integration)
 
-extension Kernel.Test.EdgeCase {
+extension Kernel.Test.`Edge Case` {
     @Test
     func `close invalid descriptor throws`() {
         #expect(throws: (any Swift.Error).self) {

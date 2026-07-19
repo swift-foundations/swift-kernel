@@ -224,7 +224,7 @@ extension Path.String {
 
     // MARK: - Edge Cases
 
-    extension Path.String.Test.EdgeCase {
+    extension Path.String.Test.`Edge Case` {
 
         @Test
         func `empty string is valid (no interior NUL)`() throws {

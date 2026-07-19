@@ -16,7 +16,7 @@ extension Kernel.Completion.Submission.Flags {
 
 // MARK: - Unit Tests
 
-extension Kernel.Completion.Submission.Flags.ShellTest.Unit {
+extension Kernel.Completion.Submission.Flags.`Shell Test`.Unit {
     @Test
     func `empty flags has zero rawValue`() {
         let flags: Kernel.Completion.Submission.Flags = []
