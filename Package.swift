@@ -229,6 +229,8 @@ let package = Package(
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "POSIX Kernel Socket", package: "swift-posix",
                          condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
+                .product(name: "POSIX Kernel Socket Address", package: "swift-posix",
+                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
                 .product(name: "Windows Kernel Descriptor", package: "swift-windows",
                          condition: .when(platforms: [.windows])),
                 .product(name: "Windows Kernel Socket", package: "swift-windows",
