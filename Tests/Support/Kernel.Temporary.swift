@@ -11,7 +11,8 @@
 
 /// Test support for cross-platform temporary file paths.
 
-public import Kernel_Primitives
+public import Kernel
+import Strings
 
 // Platform imports only for getpid/GetCurrentProcessId (acceptable in test support)
 #if canImport(Darwin)
@@ -35,13 +36,22 @@ extension Kernel.Temporary {
     /// Uses platform-appropriate environment variables:
     /// - Unix: `TMPDIR`, falling back to "/tmp"
     /// - Windows: `TEMP` or `TMP`, falling back to "C:\Temp"
-    public static var directory: String {
+    public static var directory: Swift.String {
         #if os(Windows)
-            Kernel.Environment.get("TEMP")
-                ?? Kernel.Environment.get("TMP")
-                ?? "C:\\Temp"
+            // String.Char is UInt16 on Windows — decode as UTF-16
+            // (String(cString:) has no wide overload).
+            if let temp = Kernel.Environment.get("TEMP") {
+                return unsafe temp.withUnsafePointer { Swift.String(decodingCString: $0, as: UTF16.self) }
+            }
+            if let tmp = Kernel.Environment.get("TMP") {
+                return unsafe tmp.withUnsafePointer { Swift.String(decodingCString: $0, as: UTF16.self) }
+            }
+            return "C:\\Temp"
         #else
-            Kernel.Environment.get("TMPDIR") ?? "/tmp"
+            if let tmpdir = unsafe Kernel.Environment.get("TMPDIR") {
+                return unsafe tmpdir.withUnsafePointer { Swift.String(cString: $0) }
+            }
+            return "/tmp"
         #endif
     }
 
@@ -49,7 +59,7 @@ extension Kernel.Temporary {
     ///
     /// - Parameter prefix: Prefix for the filename (e.g., "kernel-test").
     /// - Returns: A unique path string in the system temp directory.
-    public static func filePath(prefix: String) -> String {
+    public static func filePath(prefix: Swift.String) -> Swift.String {
         #if os(Windows)
             let pid = Int(GetCurrentProcessId())
         #else

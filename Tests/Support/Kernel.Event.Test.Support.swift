@@ -9,7 +9,12 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
+// Windows has no Kernel.Event: the target carries epoll/kqueue vocabulary
+// and is !os(Windows); its test utilities gate with it (POSIX.Kernel.IO
+// below is likewise absent from the Windows graph).
+#if !os(Windows)
+
+public import Kernel
 
 extension Kernel.Event {
     /// Test utilities for eventing operations (kqueue, epoll, io_uring).
@@ -19,22 +24,22 @@ extension Kernel.Event {
             public init() {}
         }
 
-        /// Creates a pipe, returning (read, write) descriptors.
+        /// Creates a pipe, returning ~Copyable `Pipe.Descriptors`.
         ///
-        /// - Returns: Tuple of (read descriptor, write descriptor)
+        /// - Returns: The pipe descriptors (read + write).
         /// - Throws: `PipeError` if pipe creation fails
-        public static func makePipe() throws -> (read: Kernel.Descriptor, write: Kernel.Descriptor) {
+        public static func makePipe() throws -> Kernel.Pipe.Descriptors {
             do {
-                return try Kernel.Pipe.create()
+                return try Kernel.Pipe.pipe()
             } catch {
                 throw PipeError()
             }
         }
 
-        /// Closes a descriptor without throwing (safe for defer blocks).
-        ///
-        /// - Parameter fd: The descriptor to close
-        public static func closeNoThrow(_ fd: Kernel.Descriptor) {
+        /// Closes a descriptor without throwing.
+        /// With deinit on Kernel.Descriptor, this is rarely needed —
+        /// just let the descriptor go out of scope.
+        public static func closeNoThrow(_ fd: consuming Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
         }
 
@@ -43,21 +48,23 @@ extension Kernel.Event {
         /// - Parameters:
         ///   - fd: The descriptor to write to
         ///   - value: The byte value to write (default: 1)
-        public static func writeByte(_ fd: Kernel.Descriptor, value: UInt8 = 1) {
+        public static func writeByte(_ fd: borrowing Kernel.Descriptor, value: UInt8 = 1) {
             var byte = value
-            _ = withUnsafeBytes(of: &byte) { buffer in
-                try? Kernel.IO.Write.write(fd, from: buffer)
+            _ = unsafe withUnsafeBytes(of: &byte) { buffer in
+                try? unsafe POSIX.Kernel.IO.Write.write(fd, from: buffer)
             }
         }
 
         /// Drains one byte from a descriptor.
         ///
         /// - Parameter fd: The descriptor to read from
-        public static func readDrain(_ fd: Kernel.Descriptor) {
+        public static func readDrain(_ fd: borrowing Kernel.Descriptor) {
             var byte: UInt8 = 0
-            _ = withUnsafeMutableBytes(of: &byte) { buffer in
-                try? Kernel.IO.Read.read(fd, into: buffer)
+            _ = unsafe withUnsafeMutableBytes(of: &byte) { buffer in
+                try? unsafe POSIX.Kernel.IO.Read.read(fd, into: buffer)
             }
         }
     }
 }
+
+#endif

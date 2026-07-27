@@ -1,7 +1,7 @@
 # swift-kernel
 
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
-[![CI](https://github.com/coenttb/swift-kernel/workflows/CI/badge.svg)](https://github.com/coenttb/swift-kernel/actions/workflows/ci.yml)
+[![CI](https://github.com/swift-foundations/swift-kernel/workflows/CI/badge.svg)](https://github.com/swift-foundations/swift-kernel/actions/workflows/ci.yml)
 
 Policy-free syscall wrappers for Swift. Provides raw descriptors, typed throws, and unified error types across macOS, Linux, and Windows. Swift 6 strict concurrency with Foundation-free design.
 
@@ -14,7 +14,6 @@ Policy-free syscall wrappers for Swift. Provides raw descriptors, typed throws, 
 - **Platform-native surfaces** – `Kernel.Kqueue` (Darwin), `Kernel.IOUring` (Linux), `Kernel.IOCP` (Windows)
 - **Foundation-free** – No Foundation module dependencies; no URL, Data, or Foundation string types
 - **Swift 6 strict concurrency** – Full `Sendable` compliance
-- **Thread executor integration** – Serial executors backed by dedicated OS threads
 
 ---
 
@@ -24,9 +23,11 @@ Policy-free syscall wrappers for Swift. Provides raw descriptors, typed throws, 
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/coenttb/swift-kernel.git", from: "0.1.0")
+    .package(url: "https://github.com/swift-foundations/swift-kernel.git", branch: "main")
 ]
 ```
+
+> Pre-1.0: no version tags yet. APIs may change; pin a commit for reproducible builds.
 
 ### Target dependency
 
@@ -78,29 +79,6 @@ let bytesWritten = try data.withUnsafeBytes { ptr in
 
 // Close
 try Kernel.Close.close(fd)
-```
-
-### Thread Executor
-
-```swift
-import Kernel
-
-// Create a serial executor backed by a dedicated OS thread
-let executor = Kernel.Thread.Executor()
-defer { executor.shutdown() }
-
-// Pin an actor to this executor
-actor DatabaseWorker {
-    let executor: Kernel.Thread.Executor
-
-    init(executor: Kernel.Thread.Executor) {
-        self.executor = executor
-    }
-
-    nonisolated var unownedExecutor: UnownedSerialExecutor {
-        executor.asUnownedSerialExecutor()
-    }
-}
 ```
 
 ### Thread Spawning with Ownership Transfer
@@ -168,7 +146,7 @@ public enum Failure: Swift.Error, Sendable, Equatable {
 ┌─────────────────────────────────────────────────┐
 │               swift-file-system                  │  ← File, File.Directory API
 ├─────────────────────────────────────────────────┤
-│                   swift-io                       │  ← Executors, async I/O
+│   swift-io   swift-threads   swift-executors    │  ← I/O, thread-layer compositions, executor conformances
 ├─────────────────────────────────────────────────┤
 │                 swift-kernel                     │  ← Syscall wrappers (this package)
 ├─────────────────────────────────────────────────┤
@@ -192,11 +170,8 @@ public enum Failure: Swift.Error, Sendable, Equatable {
 | `Kernel.Kqueue`                  | Darwin event notification                            |
 | `Kernel.IOUring`                 | Linux io_uring interface                             |
 | `Kernel.IOCP`                    | Windows I/O completion ports                         |
-| `Kernel.Thread.Executor`         | Serial executor backed by dedicated OS thread        |
-| `Kernel.Thread.Executors`        | Sharded pool of serial executors                     |
-| `Kernel.Thread.Synchronization`  | Mutex + N condition variables wrapper                |
-| `Kernel.Handoff.Cell`            | Cross-boundary ownership transfer for ~Copyable      |
-| `Kernel.Continuation.Context`    | Exactly-once continuation resumption                 |
+| `Kernel.Thread.Handle`           | pthread_t / HANDLE wrapper (join, detach)            |
+| `Kernel.Thread.spawn`            | Thread creation with ownership transfer              |
 
 ---
 
@@ -258,16 +233,18 @@ Kernel guarantees:
 ### Dependencies
 
 - [swift-kernel-primitives](https://github.com/coenttb/swift-kernel-primitives): Low-level syscall bindings
-- [swift-posix](https://github.com/coenttb/swift-posix): POSIX syscall wrappers
-- [swift-darwin](https://github.com/coenttb/swift-darwin): Darwin-specific syscalls
-- [swift-linux](https://github.com/coenttb/swift-linux): Linux-specific syscalls (epoll, io_uring)
-- [swift-windows](https://github.com/coenttb/swift-windows): Windows-specific syscalls (IOCP)
+- [swift-posix](https://github.com/swift-foundations/swift-posix): POSIX syscall wrappers
+- [swift-darwin](https://github.com/swift-foundations/swift-darwin): Darwin-specific syscalls
+- [swift-linux](https://github.com/swift-foundations/swift-linux): Linux-specific syscalls (epoll, io_uring)
+- [swift-windows](https://github.com/swift-foundations/swift-windows): Windows-specific syscalls (IOCP)
 - [apple/swift-system](https://github.com/apple/swift-system): `FilePath` for path-accepting APIs
 
 ### Used By
 
-- [swift-io](https://github.com/coenttb/swift-io): Async I/O executor with typed throws
-- [swift-file-system](https://github.com/coenttb/swift-file-system): High-level file operations
+- [swift-executors](https://github.com/swift-foundations/swift-executors): Swift Executor protocol conformances backed by dedicated OS threads
+- [swift-threads](https://github.com/coenttb/swift-threads): Thread-layer compositions (Synchronization, Barrier, Gate, Semaphore, Worker, Pool)
+- [swift-io](https://github.com/swift-foundations/swift-io): Async I/O witness with typed throws
+- [swift-file-system](https://github.com/swift-foundations/swift-file-system): High-level file operations
 
 ---
 
