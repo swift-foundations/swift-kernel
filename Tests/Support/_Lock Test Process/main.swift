@@ -282,7 +282,20 @@ func printUsage() {
                     writeStdout("TIMED_OUT\n")
                     return 2
                 }
-            case .deadlock, .unavailable:
+            case .timedOut:
+                // The deadline-based acquisition (Kernel.Lock.Acquire.timeout,
+                // which desugars to .deadline(...)) reports an expired deadline
+                // as .timedOut directly, distinct from the .contention path
+                // above. Same observable outcome for deadline-* commands: exit 2.
+                writeStdout("TIMED_OUT\n")
+                return 2
+            case .deadlock, .unavailable, .interrupted, .invalidRange, .platform:
+                // Genuine failures, not lock-contention/timeout outcomes:
+                // .deadlock/.unavailable were already here; .interrupted
+                // (EINTR on the blocking wait), .invalidRange (end precedes
+                // start), and .platform (unclassified errno) join them in
+                // the generic "Error" bucket per the file's documented exit
+                // codes (0 success / 1 would-block / 2 timed-out / 3 error).
                 writeStderr("Failed to acquire lock: \(error)\n")
                 return 3
             }
@@ -386,7 +399,15 @@ func printUsage() {
                     writeStdout("TIMED_OUT\n")
                     return 2
                 }
-            case .deadlock, .unavailable:
+            case .timedOut:
+                // See the POSIX branch above: the deadline-based acquisition
+                // reports an expired deadline as .timedOut directly. Same
+                // observable outcome for deadline-* commands: exit 2.
+                writeStdout("TIMED_OUT\n")
+                return 2
+            case .deadlock, .unavailable, .interrupted, .invalidRange, .platform:
+                // Genuine failures, not lock-contention/timeout outcomes — see
+                // the POSIX branch above for the per-case rationale.
                 writeStderr("Failed to acquire lock: \(error)\n")
                 return 3
             }
