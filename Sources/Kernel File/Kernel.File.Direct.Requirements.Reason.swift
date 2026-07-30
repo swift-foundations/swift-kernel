@@ -39,10 +39,13 @@ extension Kernel.File.Direct.Requirements.Reason {
         switch self {
         case .platformUnsupported:
             return "Platform does not support strict Direct I/O"
+
         case .sectorSizeUndetermined:
             return "Could not determine sector size"
+
         case .filesystemUnsupported:
             return "Filesystem does not support Direct I/O"
+
         case .invalidHandle:
             return "Invalid file handle"
         }

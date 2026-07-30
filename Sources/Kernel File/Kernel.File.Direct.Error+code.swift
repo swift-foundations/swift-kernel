@@ -37,10 +37,13 @@ extension Kernel.File.Direct.Error {
         switch code {
         case _ where code == .POSIX.EINVAL:
             self = .platform(code: code, operation: operation)
+
         case _ where code == .POSIX.EBADF:
             self = .invalidHandle
+
         case _ where Error_Primitives.Error.Code.POSIX.isENOTSUP(code):
             self = .notSupported
+
         default:
             self = .platform(code: code, operation: operation)
         }

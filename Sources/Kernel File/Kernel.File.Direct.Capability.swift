@@ -89,6 +89,7 @@ extension Kernel.File.Direct.Capability.Bypass {
         switch capability {
         case .directSupported, .uncachedOnly:
             return true
+
         case .bufferedOnly:
             return false
         }

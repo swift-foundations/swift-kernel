@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Path_Primitives
 public import Memory_Primitives
+public import Path_Primitives
 
 /// Namespace for Direct I/O operations (cache bypass).
 ///

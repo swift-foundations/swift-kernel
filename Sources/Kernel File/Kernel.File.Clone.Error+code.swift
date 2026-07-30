@@ -33,17 +33,23 @@ extension Kernel.File.Clone.Error {
         switch code {
         case _ where code == .POSIX.ENOENT:
             self = .sourceNotFound
+
         case _ where code == .POSIX.EEXIST:
             self = .destinationExists
+
         case _ where code == .POSIX.EACCES,
             _ where code == .POSIX.EPERM:
             self = .permissionDenied
+
         case _ where code == .POSIX.EXDEV:
             self = .crossDevice
+
         case _ where code == .POSIX.EISDIR:
             self = .isDirectory
+
         case _ where Error_Primitives.Error.Code.POSIX.isENOTSUP(code):
             self = .notSupported
+
         default:
             self = .platform(code: code, operation: operation)
         }

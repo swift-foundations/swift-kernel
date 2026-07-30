@@ -57,16 +57,22 @@ extension Kernel.File.Direct.Error: CustomStringConvertible {
         switch self {
         case .notSupported:
             return "Direct I/O not supported"
+
         case .misalignedBuffer(let address, let required):
             return "Buffer address \(address) not aligned to \(required)"
+
         case .misalignedOffset(let offset, let required):
             return "File offset \(offset) not aligned to \(required) bytes"
+
         case .invalidLength(let length, let requiredMultiple):
             return "Length \(length) is not a multiple of \(requiredMultiple)"
+
         case .modeChange:
             return "Failed to change cache mode"
+
         case .invalidHandle:
             return "Invalid file handle"
+
         case .platform(let code, let operation):
             return "Platform error \(code) during \(operation)"
         }
