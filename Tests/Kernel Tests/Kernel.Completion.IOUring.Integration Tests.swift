@@ -22,7 +22,7 @@
     ///
     /// These tests prove the full lifecycle: factory creation, submission, flush,
     /// drain, CQE result reconstruction, and resource teardown.
-    @Suite(.serialized)
+    @Suite(.serialized, .enabled(if: Kernel.IO.Uring.isSupported))
     struct `IOUring Integration Tests` {
 
         // MARK: - Factory
