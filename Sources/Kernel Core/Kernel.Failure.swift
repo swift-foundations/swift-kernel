@@ -73,24 +73,33 @@ extension Kernel.Failure: CustomStringConvertible {
         switch self {
         case .path(let error):
             return "path: \(error)"
+
         case .handle(let error):
             return "handle: \(error)"
+
         case .io(let error):
             return "io: \(error)"
+
         case .lock(let error):
             return "lock: \(error)"
+
         case .memory(let error):
             return "memory: \(error)"
+
         case .permission(let error):
             return "permission: \(error)"
+
         case .space(let error):
             return "space: \(error)"
+
         #if !os(Windows)
             case .signal(let error):
                 return "signal: \(error)"
         #endif
+
         case .blocking(let error):
             return "blocking: \(error)"
+
         case .platform(let error):
             return "\(error)"
         }

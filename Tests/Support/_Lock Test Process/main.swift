@@ -112,16 +112,22 @@ func parseArguments() -> Arguments? {
     switch commandStr {
     case "lock-exclusive":
         command = .lockExclusive
+
     case "lock-shared":
         command = .lockShared
+
     case "try-exclusive":
         command = .tryExclusive
+
     case "try-shared":
         command = .tryShared
+
     case "deadline-exclusive":
         command = .deadlineExclusive
+
     case "deadline-shared":
         command = .deadlineShared
+
     default:
         writeStderr("Unknown command: \(commandStr)\n")
         printUsage()
@@ -246,18 +252,23 @@ func printUsage() {
         case .lockExclusive:
             kind = .exclusive
             acquire = .wait
+
         case .lockShared:
             kind = .shared
             acquire = .wait
+
         case .tryExclusive:
             kind = .exclusive
             acquire = .try
+
         case .tryShared:
             kind = .shared
             acquire = .try
+
         case .deadlineExclusive:
             kind = .exclusive
             acquire = .timeout(.milliseconds(args.deadlineMs))
+
         case .deadlineShared:
             kind = .shared
             acquire = .timeout(.milliseconds(args.deadlineMs))
@@ -282,6 +293,7 @@ func printUsage() {
                     writeStdout("TIMED_OUT\n")
                     return 2
                 }
+
             case .timedOut:
                 // The deadline-based acquisition (Kernel.Lock.Acquire.timeout,
                 // which desugars to .deadline(...)) reports an expired deadline
@@ -289,6 +301,7 @@ func printUsage() {
                 // above. Same observable outcome for deadline-* commands: exit 2.
                 writeStdout("TIMED_OUT\n")
                 return 2
+
             case .deadlock, .unavailable, .interrupted, .invalidRange, .platform:
                 // Genuine failures, not lock-contention/timeout outcomes:
                 // .deadlock/.unavailable were already here; .interrupted
@@ -363,18 +376,23 @@ func printUsage() {
         case .lockExclusive:
             kind = .exclusive
             acquire = .wait
+
         case .lockShared:
             kind = .shared
             acquire = .wait
+
         case .tryExclusive:
             kind = .exclusive
             acquire = .try
+
         case .tryShared:
             kind = .shared
             acquire = .try
+
         case .deadlineExclusive:
             kind = .exclusive
             acquire = .timeout(.milliseconds(args.deadlineMs))
+
         case .deadlineShared:
             kind = .shared
             acquire = .timeout(.milliseconds(args.deadlineMs))
@@ -399,12 +417,14 @@ func printUsage() {
                     writeStdout("TIMED_OUT\n")
                     return 2
                 }
+
             case .timedOut:
                 // See the POSIX branch above: the deadline-based acquisition
                 // reports an expired deadline as .timedOut directly. Same
                 // observable outcome for deadline-* commands: exit 2.
                 writeStdout("TIMED_OUT\n")
                 return 2
+
             case .deadlock, .unavailable, .interrupted, .invalidRange, .platform:
                 // Genuine failures, not lock-contention/timeout outcomes — see
                 // the POSIX branch above for the per-case rationale.

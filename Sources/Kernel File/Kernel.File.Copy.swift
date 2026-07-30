@@ -169,12 +169,16 @@ extension Kernel.File.Copy {
             switch error {
             case .sourceNotFound:
                 throw .sourceNotFound
+
             case .destinationExists:
                 throw .destinationExists
+
             case .permissionDenied:
                 throw .permissionDenied
+
             case .isDirectory:
                 throw .isDirectory
+
             default:
                 throw .clone(error)
             }
@@ -202,9 +206,9 @@ extension Kernel.File.Copy {
 
         // Create symlink at destination using scoped path conversion.
         //
-        // F-007: this used to be `try? Path.scope(target) { ... }` with an
-        // inner `do { ... } catch let error as X { } catch {}` — both the
-        // outer `try?` (silently discarding a Path.scope validation
+        // F-007: this used to be an optional-try over `Path.scope(target) { ... }`
+        // with an inner `do { ... } catch let error as X { } catch {}` — both the
+        // outer optional-try (silently discarding a Path.scope validation
         // failure, e.g. a symlink target containing a NUL byte) and the
         // inner empty `catch {}` swallowed real failures, letting copySymlink
         // — and therefore Copy.copy — return success without ever creating

@@ -127,7 +127,7 @@
                     permissions: .ownerReadWrite
                 )
 
-                if let content = content {
+                if let content {
                     var contentBytes = Array(content.utf8)
                     _ = try? unsafe contentBytes.withUnsafeMutableBytes { ptr in
                         try unsafe POSIX.Kernel.IO.Write.write(fd, from: UnsafeRawBufferPointer(ptr))

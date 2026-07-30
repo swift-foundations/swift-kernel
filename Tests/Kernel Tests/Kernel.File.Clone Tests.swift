@@ -179,7 +179,7 @@ extension Kernel.File.Clone.Test.Unit {
                 },
                 { () throws(E) in
                     _ = try Path.scope("/nonexistent/path/that/does/not/exist") {
-                        (path) throws(Kernel.File.Clone.Error.Syscall) in
+                        path throws(Kernel.File.Clone.Error.Syscall) in
                         try Kernel.File.Clone.Capability.probe(at: path)
                     }
                 }
@@ -370,7 +370,8 @@ extension Kernel.File.Clone.Test.Unit {
                 },
                 { () throws(E) in
                     _ = try Path.scope(source, dest) {
-                        (srcPath, dstPath) throws(Kernel.File.Clone.Error) in
+                        srcPath,
+                        dstPath throws(Kernel.File.Clone.Error) in
                         try Kernel.File.Clone.clone(
                             from: srcPath,
                             to: dstPath,
@@ -394,7 +395,8 @@ extension Kernel.File.Clone.Test.Unit {
                 },
                 { () throws(E) in
                     _ = try Path.scope(source, dest) {
-                        (srcPath, dstPath) throws(Kernel.File.Clone.Error) in
+                        srcPath,
+                        dstPath throws(Kernel.File.Clone.Error) in
                         try Kernel.File.Clone.clone(
                             from: srcPath,
                             to: dstPath,

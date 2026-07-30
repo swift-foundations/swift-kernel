@@ -50,8 +50,10 @@ extension Kernel.File.Clone {
         switch behavior {
         case .reflinkOrFail:
             return try cloneReflinkOnly(from: source, to: destination)
+
         case .reflinkOrCopy:
             return try cloneWithFallback(from: source, to: destination)
+
         case .copyOnly:
             try copyOnly(from: source, to: destination)
             return .copied
@@ -91,13 +93,25 @@ extension Kernel.File.Clone {
                     destination: dstDescriptor
                 )
             } catch {
-                try? Kernel.File.Delete.delete(destination)
+                // Best-effort cleanup: the clone attempt failed, so the
+                // destination is unlinked before surfacing the original error.
+                // A failure to unlink here does not change the outcome.
+                do throws(Kernel.File.Delete.Error) {
+                    try Kernel.File.Delete.delete(destination)
+                } catch {
+                }
                 throw Error(from: error)
             }
             if cloned {
                 return .reflinked
             }
-            try? Kernel.File.Delete.delete(destination)
+            // Best-effort cleanup: reflink is unsupported, so the destination
+            // created by `createDestination` is unlinked before surfacing
+            // `.notSupported`. A failure to unlink here does not change the outcome.
+            do throws(Kernel.File.Delete.Error) {
+                try Kernel.File.Delete.delete(destination)
+            } catch {
+            }
             throw Error.notSupported
 
         #elseif os(Windows)
@@ -164,7 +178,13 @@ extension Kernel.File.Clone {
                 )
                 return .copied
             } catch {
-                try? Kernel.File.Delete.delete(destination)
+                // Best-effort cleanup: copy_file_range failed, so the destination
+                // created by `createDestination` is unlinked before surfacing the
+                // original error. A failure to unlink here does not change the outcome.
+                do throws(Kernel.File.Delete.Error) {
+                    try Kernel.File.Delete.delete(destination)
+                } catch {
+                }
                 throw Error(from: error)
             }
 
@@ -206,7 +226,13 @@ extension Kernel.File.Clone {
                     length: size
                 )
             } catch {
-                try? Kernel.File.Delete.delete(destination)
+                // Best-effort cleanup: copy_file_range failed, so the destination
+                // created by `createDestination` is unlinked before surfacing the
+                // original error. A failure to unlink here does not change the outcome.
+                do throws(Kernel.File.Delete.Error) {
+                    try Kernel.File.Delete.delete(destination)
+                } catch {
+                }
                 throw Error(from: error)
             }
 

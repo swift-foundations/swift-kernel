@@ -217,7 +217,14 @@
                         let residual = entry.armedInterest.subtracting(event.interest)
                         entry.armedInterest = residual
                         if !residual.isEmpty {
-                            try? arm(entry.descriptor, event.id, residual)
+                            // Best-effort re-arm: a failure here does not fail the
+                            // poll — the caller already has its delivered events,
+                            // and a stuck residual interest surfaces again on the
+                            // next round through the registry.
+                            do throws(Error) {
+                                try arm(entry.descriptor, event.id, residual)
+                            } catch {
+                            }
                         }
                         shared.registry.insert(key: event.id, value: consume entry)
                     }

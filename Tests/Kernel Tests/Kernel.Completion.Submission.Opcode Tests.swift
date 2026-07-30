@@ -102,8 +102,10 @@ extension Kernel.Completion.Submission.Opcode.Test.Exhaustiveness {
             switch opcode {
             case .noOperation, .close, .accept, .synchronize:
                 seen += 1
+
             case .read, .write, .connect, .send, .receive:
                 seen += 1
+
             case .cancel, .readiness:
                 seen += 1
             }

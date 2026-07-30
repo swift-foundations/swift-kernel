@@ -141,12 +141,18 @@
 
     // MARK: - Error Propagation
 
+    // REASON: `Error Propagation` is the backtick-quoted @Suite struct name
+    // declared at line 18, a human-readable test-namespace label, not a bare
+    // `Swift.Error` reference. The reference here is a typeidentifier (the
+    // rule's match_kinds), so it is not covered by the rule's existing
+    // identifier-kind exemption for backtick-quoted test function names.
+    // swiftlint:disable:next swift_error_qualification
     extension `Completion Lifecycle Tests`.`Error Propagation` {
         @Test
         func `submit propagates submissionQueueFull`() throws {
             let error: Kernel.Completion.Error = .submissionQueueFull
             let driver = Kernel.Completion.Driver(
-                submit: { (_, _) throws(Kernel.Completion.Error) in throw error },
+                submit: { _, _ throws(Kernel.Completion.Error) in throw error },
                 flush: { .zero },
                 drain: { _ in .zero },
                 close: {}
@@ -190,7 +196,7 @@
         func `submit propagates invalidDescriptor`() throws {
             let error: Kernel.Completion.Error = .invalidDescriptor
             let driver = Kernel.Completion.Driver(
-                submit: { (_, _) throws(Kernel.Completion.Error) in throw error },
+                submit: { _, _ throws(Kernel.Completion.Error) in throw error },
                 flush: { .zero },
                 drain: { _ in .zero },
                 close: {}

@@ -104,7 +104,7 @@ extension Kernel.File.Copy {
                     #expect(error.body != nil)
                 },
                 { () throws(E) in
-                    try Path.scope(source, destination) { (sourcePath, destinationPath) throws(Kernel.File.Copy.Error) in
+                    try Path.scope(source, destination) { sourcePath, destinationPath throws(Kernel.File.Copy.Error) in
                         try Kernel.File.Copy.copy(
                             from: sourcePath,
                             to: destinationPath,
