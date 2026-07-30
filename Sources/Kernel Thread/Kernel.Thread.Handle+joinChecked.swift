@@ -25,12 +25,13 @@ extension Kernel.Thread.Handle {
     ///
     /// - Precondition: Must NOT be called from this thread (deadlock).
     /// - Note: Must be called exactly once. The `~Copyable` constraint enforces this.
+    /// - Throws: `Kernel.Thread.Error` if the underlying `pthread_join` reports a failure.
     @inlinable
-    public consuming func joinChecked() {
+    public consuming func joinChecked() throws(Kernel.Thread.Error) {
         precondition(
             isCurrent == false,
             "Kernel.Thread.Handle.joinChecked() called from the thread being joined - this would deadlock"
         )
-        join()
+        try join()
     }
 }

@@ -59,7 +59,7 @@ extension Kernel.Thread.Handle {
     /// threads.append(Reference(handle))
     ///
     /// // Later: join all threads
-    /// for thread in threads { thread.join() }
+    /// for thread in threads { try thread.join() }
     /// ```
     public final class Reference: @unsafe @unchecked Sendable {
         private var inner: Kernel.Thread.Handle?
@@ -83,12 +83,13 @@ extension Kernel.Thread.Handle.Reference {
     /// Joins the thread, consuming the handle.
     ///
     /// - Precondition: Must be called exactly once.
-    public func join() {
+    /// - Throws: `Kernel.Thread.Error` if the underlying `pthread_join` reports a failure.
+    public func join() throws(Kernel.Thread.Error) {
         guard let handle = inner.take() else {
             preconditionFailure(
                 "Kernel.Thread.Handle.Reference.join() called twice"
             )
         }
-        handle.join()
+        try handle.join()
     }
 }

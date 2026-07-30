@@ -32,7 +32,7 @@ extension Kernel.Thread.Spawn.Test.Unit {
         let handle = try Kernel.Thread.spawn {
             executed.store(true, ordering: .releasing)
         }
-        handle.join()
+        try handle.join()
         #expect(executed.load(ordering: .acquiring) == true)
     }
 
@@ -42,7 +42,7 @@ extension Kernel.Thread.Spawn.Test.Unit {
         let handle = try Kernel.Thread.spawn(42) { value in
             receivedValue.store(value, ordering: .releasing)
         }
-        handle.join()
+        try handle.join()
         #expect(receivedValue.load(ordering: .acquiring) == 42)
     }
 
@@ -57,7 +57,7 @@ extension Kernel.Thread.Spawn.Test.Unit {
             completed.store(true, ordering: .releasing)
         }
 
-        handle.join()
+        try handle.join()
         #expect(completed.load(ordering: .acquiring) == true)
     }
 
@@ -70,6 +70,6 @@ extension Kernel.Thread.Spawn.Test.Unit {
         // From main thread, isCurrent should be false
         #expect(handle.isCurrent == false)
 
-        handle.join()
+        try handle.join()
     }
 }

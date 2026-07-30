@@ -35,7 +35,7 @@ extension Kernel.Thread {
     /// ```swift
     /// final class Frame { /* ... */ }
     ///
-    /// let slot = Kernel.Thread.Local<Frame>()
+    /// let slot = try Kernel.Thread.Local<Frame>()
     /// slot.value = Frame()           // retains
     /// // ... synchronous code on the same thread reads slot.value ...
     /// slot.value = nil               // releases
@@ -73,10 +73,13 @@ extension Kernel.Thread {
         @usableFromInline
         let _slot: _PlatformSlot
 
+        /// - Throws: `Kernel.Thread.Error` if the platform TLS slot allocation
+        ///   fails (POSIX: `pthread_key_create` reports `EAGAIN` — `PTHREAD_KEYS_MAX`
+        ///   exhausted — or `ENOMEM`).
         @inlinable
-        public init() {
+        public init() throws(Kernel.Thread.Error) {
             #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
-                _slot = unsafe _PlatformSlot(destructor: _kernelThreadLocalRelease)
+                _slot = try unsafe _PlatformSlot(destructor: _kernelThreadLocalRelease)
             #elseif os(Windows)
                 _slot = _PlatformSlot()
             #endif
