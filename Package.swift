@@ -133,6 +133,7 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 "Kernel System",
+                .product(name: "Error Primitives", package: "swift-error-primitives"),
                 .product(name: "Windows Kernel Thread", package: "swift-windows",
                          condition: .when(platforms: [.windows])),
             ]
@@ -144,6 +145,9 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 .product(name: "String Primitives", package: "swift-string-primitives"),
+                .product(name: "Error Primitives", package: "swift-error-primitives"),
+                .product(name: "Memory Primitives", package: "swift-memory-primitives"),
+                .product(name: "Path Primitives", package: "swift-path-primitives"),
                 .product(name: "Windows Kernel File", package: "swift-windows",
                          condition: .when(platforms: [.windows])),
             ]
@@ -154,6 +158,7 @@ let package = Package(
             name: "Kernel Event",
             dependencies: [
                 "Kernel Core",
+                .product(name: "Tagged Primitives", package: "swift-tagged-primitives"),
                 .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
                 .product(name: "Hash Indexed Primitive", package: "swift-hash-table-primitives"),
                 .product(name: "Hash Tagged Primitives", package: "swift-hash-primitives"),
