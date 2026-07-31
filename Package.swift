@@ -181,6 +181,11 @@ let package = Package(
             name: "Kernel Completion",
             dependencies: [
                 "Kernel Core",
+                // `Submission.Opcode.readiness` carries `Kernel.Event.Interest`,
+                // which the hoist moved into the `Kernel Event` target. The edge
+                // is acyclic (`Kernel Event` depends only on `Kernel Core` plus
+                // primitives) and unconditional, matching the umbrella.
+                "Kernel Event",
                 .product(name: "Linux Kernel IO Uring", package: "swift-linux",
                          condition: .when(platforms: [.linux])),
                 .product(name: "Windows Kernel File", package: "swift-windows",

@@ -9,6 +9,12 @@
 
 public import Memory_Primitives
 
+#if !os(Windows)
+    // `readiness` carries `Kernel.Event.Interest` in a public enum payload, so
+    // the import is public and gated to match the case below.
+    public import Kernel_Event
+#endif
+
 #if os(Windows)
     // Per-file member visibility for `Kernel.File.Offset`: the `File` alias on
     // `Windows.Kernel` is declared in the L3 Windows_Kernel_File module, which

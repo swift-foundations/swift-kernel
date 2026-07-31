@@ -13,10 +13,14 @@
 @_exported public import Kernel_System
 
 #if os(Windows)
-    // Tier 5-Windows-FOS+Affinity-Combined Phase 5 (2026-05-02): re-export the
-    // per-domain `Windows Kernel Thread` L3-policy product so the L3-unifier
-    // `Kernel.Thread.Affinity.apply(_:)` dispatch can resolve
-    // `Windows.Kernel.Thread.Affinity.apply(_:)` (declared at swift-windows
-    // per Phase 3, commit `f40a2e9`).
+    // Re-export the per-domain `Windows Kernel Thread` L3-policy product so
+    // the cross-platform `Kernel.Thread` name — and the per-member typealiases
+    // hanging off it (`Error`, `Handle`, `ID`) — resolve on Windows.
+    //
+    // The former `Windows.Kernel.Thread.Affinity.apply(_:)` dispatch this
+    // re-export existed for is gone: per swift-foundations/swift-windows#2 a
+    // platform layer cannot accept the L3-unifier's affinity type, so kernel
+    // performs the kind-switch itself in `Kernel.Thread.Affinity+Policy.swift`
+    // and calls `Windows.\`32\`.Kernel.Thread.Affinity.setMask(cores:)`.
     @_exported public import Windows_Kernel_Thread
 #endif

@@ -60,10 +60,15 @@
             ) -> [Kernel.Kqueue.Event] {
                 var events: [Kernel.Kqueue.Event] = []
 
+                // The kqueue backend is a distinct nominal ID space
+                // (`Darwin.Kernel.Event.ID`) from the cross-platform
+                // `Kernel.Event.ID`; the bridge retags in both directions —
+                // here on the way in, and in `poll` on the way out. The
+                // destination tag is inferred from the parameter type.
                 if interest.contains(.read) {
                     events.append(
                         Kernel.Kqueue.Event(
-                            id: Kernel.Event.ID(descriptor: fd),
+                            id: Kernel.Event.ID(descriptor: fd).retag(),
                             filter: .read,
                             flags: flags,
                             data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)
@@ -73,7 +78,7 @@
                 if interest.contains(.write) {
                     events.append(
                         Kernel.Kqueue.Event(
-                            id: Kernel.Event.ID(descriptor: fd),
+                            id: Kernel.Event.ID(descriptor: fd).retag(),
                             filter: .write,
                             flags: flags,
                             data: id.map { UInt64($0) }.retag(Kernel.Kqueue.Event.self)

@@ -11,6 +11,18 @@
 
 public import Path_Primitives
 
+// Platform mechanisms are referenced by their qualified L2 homes after the
+// re-anchoring (swift-standards/swift-darwin-standard#3,
+// swift-standards/swift-linux-standard#3): the modules below are already in
+// the transitive closure through `Kernel Core`'s re-exports, so the per-file
+// import follows the realized precedent in `Kernel.Event.Source+Kqueue.swift`
+// and needs no new package dependency.
+#if os(macOS)
+    internal import Darwin_Kernel_Standard
+#elseif os(Linux)
+    internal import Linux_Kernel_File_Standard
+#endif
+
 #if os(Windows)
     // Direct import for per-file member visibility of `Copy.file` and
     // `Clone.Error.init(from:)` (declared in the L2 modules this re-exports).
@@ -71,8 +83,11 @@ extension Kernel.File.Clone {
     ) throws(Kernel.File.Clone.Error) -> Result {
         #if os(macOS)
             let cloned: Bool
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                cloned = try Clonefile.attempt(source: source, destination: destination)
+            do throws(Darwin.Kernel.File.Clone.Error.Syscall) {
+                cloned = try Darwin.Kernel.File.Clone.Clonefile.attempt(
+                    source: source,
+                    destination: destination
+                )
             } catch {
                 throw Error(from: error)
             }
@@ -87,8 +102,8 @@ extension Kernel.File.Clone {
             let dstDescriptor = try createDestination(destination)
 
             let cloned: Bool
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                cloned = try Ficlone.attempt(
+            do throws(Linux.Kernel.File.Clone.Error.Syscall) {
+                cloned = try Linux.Kernel.File.Clone.Ficlone.attempt(
                     source: srcDescriptor,
                     destination: dstDescriptor
                 )
@@ -130,8 +145,11 @@ extension Kernel.File.Clone {
         #if os(macOS)
             // First try pure clonefile
             var cloned = false
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                cloned = try Clonefile.attempt(source: source, destination: destination)
+            do throws(Darwin.Kernel.File.Clone.Error.Syscall) {
+                cloned = try Darwin.Kernel.File.Clone.Clonefile.attempt(
+                    source: source,
+                    destination: destination
+                )
             } catch {
                 cloned = false
             }
@@ -141,8 +159,11 @@ extension Kernel.File.Clone {
             }
 
             // Use copyfile with COPYFILE_CLONE flag
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                try Copyfile.clone(source: source, destination: destination)
+            do throws(Darwin.Kernel.File.Clone.Error.Syscall) {
+                try Darwin.Kernel.File.Clone.Copyfile.clone(
+                    source: source,
+                    destination: destination
+                )
                 return .copied
             } catch {
                 throw Error(from: error)
@@ -156,8 +177,8 @@ extension Kernel.File.Clone {
 
             // Try FICLONE
             var reflinked = false
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                reflinked = try Ficlone.attempt(
+            do throws(Linux.Kernel.File.Clone.Error.Syscall) {
+                reflinked = try Linux.Kernel.File.Clone.Ficlone.attempt(
                     source: srcDescriptor,
                     destination: dstDescriptor
                 )
@@ -170,8 +191,8 @@ extension Kernel.File.Clone {
             }
 
             // Use copy_file_range
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                try CopyRange.copy(
+            do throws(Linux.Kernel.File.Clone.Error.Syscall) {
+                try Linux.Kernel.File.Clone.CopyRange.copy(
                     source: srcDescriptor,
                     destination: dstDescriptor,
                     length: size
@@ -189,7 +210,7 @@ extension Kernel.File.Clone {
             }
 
         #elseif os(Windows)
-            do {
+            do throws(Windows.`32`.Kernel.File.Clone.Error.Syscall) {
                 try Kernel.File.Copy.file(source: source, destination: destination)
                 return .copied
             } catch {
@@ -207,8 +228,11 @@ extension Kernel.File.Clone {
         to destination: borrowing Path.Borrowed
     ) throws(Kernel.File.Clone.Error) {
         #if os(macOS)
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                try Copyfile.data(source: source, destination: destination)
+            do throws(Darwin.Kernel.File.Clone.Error.Syscall) {
+                try Darwin.Kernel.File.Clone.Copyfile.data(
+                    source: source,
+                    destination: destination
+                )
             } catch {
                 throw Error(from: error)
             }
@@ -219,8 +243,8 @@ extension Kernel.File.Clone {
 
             let dstDescriptor = try createDestination(destination)
 
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                try CopyRange.copy(
+            do throws(Linux.Kernel.File.Clone.Error.Syscall) {
+                try Linux.Kernel.File.Clone.CopyRange.copy(
                     source: srcDescriptor,
                     destination: dstDescriptor,
                     length: size
@@ -237,7 +261,7 @@ extension Kernel.File.Clone {
             }
 
         #elseif os(Windows)
-            do {
+            do throws(Windows.`32`.Kernel.File.Clone.Error.Syscall) {
                 try Kernel.File.Copy.file(source: source, destination: destination)
             } catch {
                 throw Error(from: error)
@@ -286,8 +310,8 @@ extension Kernel.File.Clone {
         }
 
         private static func getSize(_ path: borrowing Path.Borrowed) throws(Kernel.File.Clone.Error) -> Int {
-            do throws(Kernel.File.Clone.Error.Syscall) {
-                return try Metadata.size(at: path)
+            do throws(Linux.Kernel.File.Clone.Error.Syscall) {
+                return try Linux.Kernel.File.Clone.Metadata.size(at: path)
             } catch {
                 throw Error.notSupported
             }
