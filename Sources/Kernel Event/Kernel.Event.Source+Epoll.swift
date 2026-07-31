@@ -34,6 +34,16 @@
         // realized precedent in `Kernel.Event.Source+Kqueue.swift`.
         import Linux_Kernel_Event
 
+        /// File-local alias for the epoll event record.
+        ///
+        /// The scratch buffer is built with `[RawEvent](repeating:count:)`. The
+        /// qualified spelling cannot be used inside the array brackets: in
+        /// expression position it loses to the array-literal reading and parses
+        /// as a one-element array of metatypes, and the `Array<…>` spelling that
+        /// avoids that is rejected by `syntactic_sugar` / `UseShorthandTypeNames`.
+        /// A single-identifier element type satisfies compiler and linters alike.
+        private typealias RawEvent = Linux.Kernel.Event.Poll.Event
+
         // MARK: - Error Conversion
 
         extension Kernel.Event.Driver.Error {
@@ -146,7 +156,7 @@
                     // Write-once (init), then nil-once (_close). No concurrent
                     // access — the driver is thread-confined.
                     nonisolated(unsafe) var eventfd: Linux.Kernel.Event.Descriptor?
-                    var rawEvents: [Linux.Kernel.Event.Poll.Event]
+                    var rawEvents: [RawEvent]
 
                     init(
                         epoll: consuming Linux.Kernel.Event.Poll,
@@ -155,14 +165,8 @@
                     ) {
                         self.epoll = epoll
                         self.eventfd = consume eventfd
-                        // Spelled `Array<…>` rather than the `[…](repeating:count:)`
-                        // sugar: in expression position the bracket form loses to
-                        // the array-literal reading of the qualified element type
-                        // and parses as a one-element array of metatypes. The
-                        // generic-argument form keeps the element in type position,
-                        // where the same spelling resolves (see `rawEvents` above).
-                        self.rawEvents = Array<Linux.Kernel.Event.Poll.Event>(
-                            repeating: Linux.Kernel.Event.Poll.Event(events: .init(rawValue: 0)),
+                        self.rawEvents = [RawEvent](
+                            repeating: RawEvent(events: .init(rawValue: 0)),
                             count: maxEvents
                         )
                     }

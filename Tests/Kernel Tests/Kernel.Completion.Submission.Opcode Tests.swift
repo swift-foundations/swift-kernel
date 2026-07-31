@@ -3,6 +3,11 @@
 //  swift-kernel-primitives
 //
 
+// The `.readiness` variant carries `Kernel.Event.Interest`, which the
+// vocabulary hoist moved into the `Kernel Event` target. `Kernel_Completion`
+// does not re-export it, so the declaring module is imported per-file
+// (#MemberImportVisibility).
+import Kernel_Event
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
 

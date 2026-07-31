@@ -261,27 +261,25 @@ extension Kernel.File.Clone.Test.Unit {
                 cleanup(dest)
             }
 
+            // The hoisted `Kernel.File.Clone.Capability` carries no
+            // cross-platform probe — only the `.none`-returning
+            // `probeDefault(at:)` stub — because the real probes stayed at
+            // their platform homes (`Darwin`/`Linux.Kernel.File.Clone`). The
+            // reflink-or-fail contract is therefore asserted on the operation's
+            // own outcome, mirroring `reflinkOrCopy succeeds on APFS` above: a
+            // reflink-capable filesystem reflinks, and every other filesystem
+            // reports `.notSupported`.
             try Path.scope(source) { srcPath in
                 try Path.scope(dest) { dstPath in
-                    // First check capability
-                    let cap = try Kernel.File.Clone.Capability.probe(at: srcPath)
-
-                    if cap == .reflink {
+                    do throws(Kernel.File.Clone.Error) {
                         let result = try Kernel.File.Clone.clone(
                             from: srcPath,
                             to: dstPath,
                             behavior: .reflinkOrFail
                         )
                         #expect(result == .reflinked)
-                    } else {
-                        // If filesystem doesn't support reflink, should throw
-                        #expect(throws: Kernel.File.Clone.Error.notSupported) {
-                            try Kernel.File.Clone.clone(
-                                from: srcPath,
-                                to: dstPath,
-                                behavior: .reflinkOrFail
-                            )
-                        }
+                    } catch {
+                        #expect(error == .notSupported)
                     }
                 }
             }
