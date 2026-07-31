@@ -18,6 +18,10 @@
 #if os(Linux)
 
     import Kernel_Core
+    // `Submission.Opcode.readiness` carries `Kernel.Event.Interest`; the
+    // readiness bridge below names it, so the declaring module is imported
+    // per-file (#MemberImportVisibility).
+    import Kernel_Event
     import Linux_Kernel_IO_Uring
 
     // MARK: - Error Conversion
@@ -82,6 +86,23 @@
         /// per-operation user_data word.
         fileprivate init(_ token: Kernel.Completion.Token) {
             self.init(_unchecked: token.underlying)
+        }
+    }
+
+    extension Linux.Kernel.Event.Interest {
+        /// Bridge from the cross-platform readiness vocabulary to the
+        /// package-local mirror the epoll mask initializer consumes.
+        ///
+        /// `Linux.Kernel.Event.Poll.Events.init(interest:)` deliberately takes
+        /// the Linux-owned `Interest` so the L2 package does not depend on the
+        /// L3 unifier's vocabulary type; the L3 unifier is the only layer that
+        /// can see both, so the projection lives at this adapter boundary.
+        fileprivate init(_ interest: Kernel.Event.Interest) {
+            var projected: Self = []
+            if interest.contains(.read) { projected.insert(.read) }
+            if interest.contains(.write) { projected.insert(.write) }
+            if interest.contains(.priority) { projected.insert(.priority) }
+            self = projected
         }
     }
 
@@ -215,7 +236,9 @@
                 // change, not continuously while the condition holds.
                 uring.next.entry.poll(
                     target: uringTarget,
-                    events: Kernel.Event.Poll.Events(interest: events),
+                    events: Linux.Kernel.Event.Poll.Events(
+                        interest: Linux.Kernel.Event.Interest(events)
+                    ),
                     multishot: false,
                     trigger: .edge,
                     data: data

@@ -26,12 +26,18 @@
 #if !os(Windows)
     #if os(Linux)
 
+        // The epoll mechanism is spelled at its qualified L2 home. The
+        // vocabulary hoist re-anchored it from `ISO_9945.Kernel.Event.Poll`
+        // onto `Linux.Kernel.Event.Poll`, which the L3 unifier's
+        // `Kernel.Event` (a swift-kernel struct) does not nest — so
+        // `Kernel.Event.Poll` no longer resolves. Import follows the
+        // realized precedent in `Kernel.Event.Source+Kqueue.swift`.
         import Linux_Kernel_Event
 
         // MARK: - Error Conversion
 
         extension Kernel.Event.Driver.Error {
-            init(_ epollError: Kernel.Event.Poll.Error) {
+            init(_ epollError: Linux.Kernel.Event.Poll.Error) {
                 switch epollError {
                 case .create(let code): self = .platform(code)
                 case .ctl(let code): self = .platform(code)
@@ -40,7 +46,7 @@
                 }
             }
 
-            init(_ eventfdError: Kernel.Event.Descriptor.Error) {
+            init(_ eventfdError: Linux.Kernel.Event.Descriptor.Error) {
                 switch eventfdError {
                 case .create(let code): self = .platform(code)
                 case .read(let code): self = .platform(code)
@@ -57,16 +63,35 @@
             ///
             /// Returns nil when the data encodes `.zero` — the sentinel for
             /// non-registration events (wakeup eventfd).
-            init?(pollData: Kernel.Event.Poll.Data) {
+            init?(pollData: Linux.Kernel.Event.Poll.Data) {
                 guard pollData != .zero else { return nil }
                 self = pollData.map { UInt(truncatingIfNeeded: $0) }.retag(Kernel.Event.self)
             }
         }
 
-        extension Kernel.Event.Poll.Data {
+        extension Linux.Kernel.Event.Poll.Data {
             /// Encodes a registration ID into poll data for the kernel boundary.
             init(registrationID id: Kernel.Event.ID) {
-                self = id.map { UInt64($0) }.retag(Kernel.Event.Poll.self)
+                self = id.map { UInt64($0) }.retag(Linux.Kernel.Event.Poll.self)
+            }
+        }
+
+        // MARK: - Interest Boundary
+
+        extension Linux.Kernel.Event.Interest {
+            /// Projects the cross-platform readiness vocabulary onto the
+            /// package-local mirror epoll's mask initializer consumes.
+            ///
+            /// `Linux.Kernel.Event.Poll.Events.init(interest:)` deliberately
+            /// takes the Linux-owned `Interest` so the L2 package does not
+            /// depend on the L3 unifier's vocabulary type. The L3 unifier is
+            /// the only layer that can see both, so the projection lives here.
+            fileprivate init(_ interest: Kernel.Event.Interest) {
+                var projected: Self = []
+                if interest.contains(.read) { projected.insert(.read) }
+                if interest.contains(.write) { projected.insert(.write) }
+                if interest.contains(.priority) { projected.insert(.priority) }
+                self = projected
             }
         }
 
@@ -77,15 +102,19 @@
             /// reactor: the shared `Poll.Events.init(interest:)` produces the base
             /// read/write/priority mask, and this helper adds the reactor's policy
             /// bits (`.et | .oneshot`).
-            fileprivate static func events(oneShot interest: Kernel.Event.Interest) -> Kernel.Event.Poll.Events {
-                var events = Kernel.Event.Poll.Events(interest: interest)
+            fileprivate static func events(
+                oneShot interest: Kernel.Event.Interest
+            ) -> Linux.Kernel.Event.Poll.Events {
+                var events = Linux.Kernel.Event.Poll.Events(
+                    interest: Linux.Kernel.Event.Interest(interest)
+                )
                 events.insert(.et)
                 events.insert(.oneshot)
                 return events
             }
 
             fileprivate static func normalize(
-                _ events: Kernel.Event.Poll.Events
+                _ events: Linux.Kernel.Event.Poll.Events
             ) -> (Kernel.Event.Interest, Kernel.Event.Options) {
                 var interest: Kernel.Event.Interest = []
                 var flags: Kernel.Event.Options = []
@@ -113,36 +142,36 @@
                 // -- State class (owns L1 epoll struct + eventfd + scratch buffer) --
 
                 final class State {
-                    let epoll: Kernel.Event.Poll
+                    let epoll: Linux.Kernel.Event.Poll
                     // Write-once (init), then nil-once (_close). No concurrent
                     // access — the driver is thread-confined.
-                    nonisolated(unsafe) var eventfd: Kernel.Event.Descriptor?
-                    var rawEvents: [Kernel.Event.Poll.Event]
+                    nonisolated(unsafe) var eventfd: Linux.Kernel.Event.Descriptor?
+                    var rawEvents: [Linux.Kernel.Event.Poll.Event]
 
                     init(
-                        epoll: consuming Kernel.Event.Poll,
-                        eventfd: consuming Kernel.Event.Descriptor,
+                        epoll: consuming Linux.Kernel.Event.Poll,
+                        eventfd: consuming Linux.Kernel.Event.Descriptor,
                         maxEvents: Int
                     ) {
                         self.epoll = epoll
                         self.eventfd = consume eventfd
-                        self.rawEvents = [Kernel.Event.Poll.Event](
-                            repeating: Kernel.Event.Poll.Event(events: .init(rawValue: 0)),
+                        self.rawEvents = [Linux.Kernel.Event.Poll.Event](
+                            repeating: Linux.Kernel.Event.Poll.Event(events: .init(rawValue: 0)),
                             count: maxEvents
                         )
                     }
                 }
 
-                var epoll: Kernel.Event.Poll
-                do throws(Kernel.Event.Poll.Error) {
-                    epoll = try Kernel.Event.Poll()
+                var epoll: Linux.Kernel.Event.Poll
+                do throws(Linux.Kernel.Event.Poll.Error) {
+                    epoll = try Linux.Kernel.Event.Poll()
                 } catch {
                     throw Kernel.Event.Driver.Error(error)
                 }
 
-                var eventfd: Kernel.Event.Descriptor
-                do throws(Kernel.Event.Descriptor.Error) {
-                    eventfd = try Kernel.Event.Descriptor.create(flags: .cloexec | .nonblock)
+                var eventfd: Linux.Kernel.Event.Descriptor
+                do throws(Linux.Kernel.Event.Descriptor.Error) {
+                    eventfd = try Linux.Kernel.Event.Descriptor.create(flags: .cloexec | .nonblock)
                 } catch {
                     throw Kernel.Event.Driver.Error(error)
                 }
@@ -150,7 +179,7 @@
                 // -- Wakeup (eventfd, registered at L2; Channel constructed at L3 site-of-use) --
 
                 let wakeup: Kernel.Wakeup.Channel
-                do throws(Kernel.Event.Poll.Error) {
+                do throws(Linux.Kernel.Event.Poll.Error) {
                     let signal = try epoll.wakeup(eventfd: eventfd)
                     wakeup = Kernel.Wakeup.Channel(signal: signal)
                 } catch {
@@ -169,11 +198,11 @@
                     add: {
                         (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
-                        let event = Kernel.Event.Poll.Event(
+                        let event = Linux.Kernel.Event.Poll.Event(
                             events: events(oneShot: interest),
                             data: .init(registrationID: id)
                         )
-                        do throws(Kernel.Event.Poll.Error) {
+                        do throws(Linux.Kernel.Event.Poll.Error) {
                             try state.epoll.add(fd: fd, event: event)
                         } catch {
                             throw Kernel.Event.Driver.Error(error)
@@ -182,11 +211,11 @@
                     modify: {
                         (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, _: Kernel.Event.Interest, new: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
-                        let event = Kernel.Event.Poll.Event(
+                        let event = Linux.Kernel.Event.Poll.Event(
                             events: events(oneShot: new),
                             data: .init(registrationID: id)
                         )
-                        do throws(Kernel.Event.Poll.Error) {
+                        do throws(Linux.Kernel.Event.Poll.Error) {
                             try state.epoll.modify(fd: fd, event: event)
                         } catch {
                             throw Kernel.Event.Driver.Error(error)
@@ -195,7 +224,7 @@
                     remove: {
                         (fd: borrowing Kernel.Descriptor, _: Kernel.Event.ID, _: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
-                        do throws(Kernel.Event.Poll.Error) {
+                        do throws(Linux.Kernel.Event.Poll.Error) {
                             try state.epoll.remove(fd: fd)
                         } catch {
                             if case .ctl(let code) = error,
@@ -209,11 +238,11 @@
                     arm: {
                         (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
 
-                        let event = Kernel.Event.Poll.Event(
+                        let event = Linux.Kernel.Event.Poll.Event(
                             events: events(oneShot: interest),
                             data: .init(registrationID: id)
                         )
-                        do throws(Kernel.Event.Poll.Error) {
+                        do throws(Linux.Kernel.Event.Poll.Error) {
                             try state.epoll.modify(fd: fd, event: event)
                         } catch {
                             throw Kernel.Event.Driver.Error(error)
@@ -235,7 +264,7 @@
 
                         // Poll epoll into pre-allocated scratch buffer.
                         let count: Int
-                        do throws(Kernel.Event.Poll.Error) {
+                        do throws(Linux.Kernel.Event.Poll.Error) {
                             if requestCount == state.rawEvents.count {
                                 count = try state.epoll.poll(events: &state.rawEvents, timeout: timeout)
                             } else {
