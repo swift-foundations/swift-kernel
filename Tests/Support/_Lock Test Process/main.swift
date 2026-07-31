@@ -409,7 +409,7 @@ func printUsage() {
         var token: Kernel.Lock.Token
         do throws(Kernel.Lock.Error) {
             token = try Kernel.Lock.Token(
-                descriptor: Kernel.Descriptor(rawValue: handle),
+                descriptor: Kernel.Descriptor(_rawValue: UInt(bitPattern: handle)),
                 range: args.range,
                 kind: kind,
                 acquire: acquire

@@ -38,5 +38,6 @@
     @_exported public import Linux_System
 #elseif os(Windows)
     @_exported public import Windows_Kernel
+    @_exported public import Windows_Kernel_Clock
     @_exported public import Windows_Kernel_Process
 #endif
