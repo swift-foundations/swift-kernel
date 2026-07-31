@@ -153,13 +153,25 @@ extension Kernel.File.Clone.Test.Unit {
 
 // MARK: - Capability Probing Tests
 
+// Capability probing never moved to L3: the hoist carried only the
+// `.none`-returning `Kernel.File.Clone.Capability.probeDefault(at:)` stub, so
+// these suites exercise the probe at its platform home. On this leg that is
+// `Darwin.Kernel.File.Clone.Capability.probe(at:)`, which still throws
+// `Error.Syscall` for an unreachable path, so both contracts survive intact —
+// only the spelling and the nominal `Capability`/`Syscall` types change.
+//
+// The plain `Darwin.` spelling is correct even though this file imports the
+// system `Darwin` module above: the namespace type shadows the module name for
+// member lookup, while the module's top-level `open`/`close`/`getpid` stay
+// reachable unqualified. swift-darwin-standard's own clone source relies on the
+// same shadowing (`extension Darwin.Kernel.File` alongside `import Darwin`).
 #if os(macOS)
     extension Kernel.File.Clone.Test.Unit {
         @Test
         func `probe capability returns valid result`() throws {
             // Probe /tmp which is on the boot volume (typically APFS)
             let cap = try Path.scope("/tmp") { path in
-                try Kernel.File.Clone.Capability.probe(at: path)
+                try Darwin.Kernel.File.Clone.Capability.probe(at: path)
             }
 
             // On modern macOS with APFS, should be .reflink
@@ -171,7 +183,7 @@ extension Kernel.File.Clone.Test.Unit {
     extension Kernel.File.Clone.Test.`Edge Case` {
         @Test
         func `probe nonexistent path throws`() {
-            typealias E = Path.String.Error<Kernel.File.Clone.Error.Syscall>
+            typealias E = Path.String.Error<Darwin.Kernel.File.Clone.Error.Syscall>
 
             expectThrows(
                 { (error: E) in
@@ -179,8 +191,8 @@ extension Kernel.File.Clone.Test.Unit {
                 },
                 { () throws(E) in
                     _ = try Path.scope("/nonexistent/path/that/does/not/exist") {
-                        path throws(Kernel.File.Clone.Error.Syscall) in
-                        try Kernel.File.Clone.Capability.probe(at: path)
+                        path throws(Darwin.Kernel.File.Clone.Error.Syscall) in
+                        try Darwin.Kernel.File.Clone.Capability.probe(at: path)
                     }
                 }
             )
