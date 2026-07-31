@@ -30,7 +30,14 @@
 
 import Binary_Primitives
 import Kernel
-@_spi(Syscall) import POSIX_Kernel_Descriptor
+
+// Package.swift conditions the `POSIX Kernel Descriptor` dependency on
+// Apple + Linux platforms, so the module does not exist on Windows; the
+// import must carry the same gate. The SPI is required on POSIX for the
+// `Kernel.Descriptor(_rawValue:)` construction in the POSIX main below.
+#if !os(Windows)
+    @_spi(Syscall) import POSIX_Kernel_Descriptor
+#endif
 
 #if canImport(Darwin)
     internal import Darwin
