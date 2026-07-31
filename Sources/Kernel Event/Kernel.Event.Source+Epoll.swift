@@ -155,7 +155,13 @@
                     ) {
                         self.epoll = epoll
                         self.eventfd = consume eventfd
-                        self.rawEvents = [Linux.Kernel.Event.Poll.Event](
+                        // Spelled `Array<…>` rather than the `[…](repeating:count:)`
+                        // sugar: in expression position the bracket form loses to
+                        // the array-literal reading of the qualified element type
+                        // and parses as a one-element array of metatypes. The
+                        // generic-argument form keeps the element in type position,
+                        // where the same spelling resolves (see `rawEvents` above).
+                        self.rawEvents = Array<Linux.Kernel.Event.Poll.Event>(
                             repeating: Linux.Kernel.Event.Poll.Event(events: .init(rawValue: 0)),
                             count: maxEvents
                         )
