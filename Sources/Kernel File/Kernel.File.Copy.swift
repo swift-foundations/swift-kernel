@@ -180,8 +180,77 @@ extension Kernel.File.Copy {
                 throw .isDirectory
 
             default:
-                throw .clone(error)
+                throw .clone(legacyCloneError(error))
             }
+        }
+    }
+}
+
+// MARK: - Clone.Error Vocabulary Bridge (kernel-hoisted -> pre-hoist iso-9945, pending swift-iso/swift-iso-9945#65)
+//
+// `Kernel.File.Copy.Error` is a POSIX-side typealias to
+// `ISO_9945.Kernel.File.Copy.Error`, whose `.clone` case has not been
+// repointed at kernel's hoisted `Kernel.File.Clone.Error` (the purge tracked
+// at swift-iso/swift-iso-9945#65 has not landed). The two `Clone.Error`
+// vocabularies mirror each other case-for-case, so this is a 1:1 structural
+// transliteration, not a semantic choice — delete once #65 lands and
+// `.clone` accepts the hoisted type directly.
+
+extension Kernel.File.Copy {
+    private static func legacyCloneError(
+        _ error: Kernel.File.Clone.Error
+    ) -> ISO_9945.Kernel.File.Clone.Error {
+        switch error {
+        case .notSupported:
+            return .notSupported
+
+        case .crossDevice:
+            return .crossDevice
+
+        case .sourceNotFound:
+            return .sourceNotFound
+
+        case .destinationExists:
+            return .destinationExists
+
+        case .permissionDenied:
+            return .permissionDenied
+
+        case .isDirectory:
+            return .isDirectory
+
+        case .platform(let code, let operation):
+            return .platform(code: code, operation: legacyCloneOperation(operation))
+        }
+    }
+
+    private static func legacyCloneOperation(
+        _ operation: Kernel.File.Clone.Error.Operation
+    ) -> ISO_9945.Kernel.File.Clone.Error.Operation {
+        switch operation {
+        case .clonefile:
+            return .clonefile
+
+        case .copyfile:
+            return .copyfile
+
+        case .ficlone:
+            return .ficlone
+
+        case .copyFileRange:
+            return .copyFileRange
+
+        case .duplicateExtents:
+            return .duplicateExtents
+
+        case .statfs:
+            return .statfs
+
+        case .stat:
+            return .stat
+
+        case .copy:
+            return .copy
         }
     }
 }
