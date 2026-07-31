@@ -11,95 +11,95 @@
 
 // MARK: - Direct-flavored opening path (kernel-hoisted vocabulary)
 //
-// `ISO_9945.Kernel.File.Handle.init(descriptor:direct:requirements:)` still
-// takes the pre-hoist `ISO_9945.Kernel.File.Direct` vocabulary: spec-pure
-// iso-9945 cannot reference kernel's hoisted L3 vocabulary, and the purge
+// The platform `Kernel.File.Handle.init(descriptor:direct:requirements:)`
+// still takes its own pre-hoist Direct vocabulary: a spec-pure platform
+// standard cannot reference kernel's hoisted L3 vocabulary, and the purge
 // that would delete the pre-hoist types (swift-iso/swift-iso-9945#65) has
 // not landed. Ruled routing puts the bridge kernel-side, since kernel
-// already depends on posix and a reverse edge would cycle:
+// already depends on the platform layer and a reverse edge would cycle:
 // https://github.com/swift-foundations/swift-posix/issues/6#issuecomment-5139756444
 //
 // This extension gives `Kernel.File.Open` an opening path typed entirely in
-// kernel's hoisted `Kernel.File.Direct` vocabulary, delegating to the
-// existing iso-9945 initializer. The vocabulary bridge below is a 1:1
-// structural transliteration (both sides mirror each other case-for-case,
-// field-for-field) rather than a semantic choice, and is deleted once #65
-// lands and the iso-9945 initializer itself takes the hoisted types.
+// kernel's hoisted `Kernel.File.Direct` vocabulary. The delegated-to
+// initializer supplies the contextual type for every argument below, so each
+// platform value is written as a leading-dot member and no platform
+// vocabulary is named in this file — which is also what lets this same
+// source compile on Windows against `Windows.\`32\`.Kernel.File.Handle`.
+// The case and field sets match kernel's one-for-one, so what follows is a
+// structural transliteration rather than a semantic choice.
 
 extension Kernel.File.Handle {
     /// Creates a handle from a descriptor with Direct I/O state, typed in
     /// kernel's hoisted `Kernel.File.Direct` vocabulary.
     ///
+    /// The argument label is `mode:` rather than `direct:` so this entry
+    /// point does not overload the platform initializer it delegates to:
+    /// with identical labels every leading-dot argument below stays viable
+    /// for both candidates, and the delegation becomes ambiguous with
+    /// itself.
+    ///
     /// - Parameters:
     ///   - descriptor: The file descriptor (ownership transferred).
-    ///   - direct: The resolved Direct I/O mode.
+    ///   - mode: The resolved Direct I/O mode.
     ///   - requirements: The alignment requirements.
     public init(
         descriptor: consuming Kernel.Descriptor,
-        direct: Kernel.File.Direct.Mode.Resolved,
+        mode direct: Kernel.File.Direct.Mode.Resolved,
         requirements: Kernel.File.Direct.Requirements
     ) {
-        self.init(
-            descriptor: descriptor,
-            direct: direct.legacy,
-            requirements: requirements.legacy
-        )
-    }
-}
-
-// MARK: - Vocabulary Bridge (kernel-hoisted -> pre-hoist iso-9945, pending #65)
-
-extension Kernel.File.Direct.Mode.Resolved {
-    fileprivate var legacy: ISO_9945.Kernel.File.Direct.Mode.Resolved {
-        switch self {
-        case .direct:
-            return .direct
-
-        case .uncached:
-            return .uncached
-
-        case .buffered:
-            return .buffered
-        }
-    }
-}
-
-extension Kernel.File.Direct.Requirements {
-    fileprivate var legacy: ISO_9945.Kernel.File.Direct.Requirements {
-        switch self {
+        // Each transliterating closure sits directly in an argument position
+        // so the delegated-to initializer pins its result type. Nesting one
+        // inside another leaves the inner leading-dot members ambiguous
+        // between kernel's vocabulary and the platform's, which is why the
+        // requirements cases are switched here rather than inline.
+        switch requirements {
         case .known(let alignment):
-            return .known(alignment.legacy)
+            self.init(
+                descriptor: descriptor,
+                direct: {
+                    switch direct {
+                    case .direct: .direct
+
+                    case .uncached: .uncached
+
+                    case .buffered: .buffered
+                    }
+                }(),
+                requirements: .known(
+                    .init(
+                        bufferAlignment: alignment.bufferAlignment,
+                        offsetAlignment: alignment.offsetAlignment,
+                        lengthMultiple: alignment.lengthMultiple
+                    )
+                )
+            )
 
         case .unknown(let reason):
-            return .unknown(reason: reason.legacy)
-        }
-    }
-}
+            self.init(
+                descriptor: descriptor,
+                direct: {
+                    switch direct {
+                    case .direct: .direct
 
-extension Kernel.File.Direct.Requirements.Alignment {
-    fileprivate var legacy: ISO_9945.Kernel.File.Direct.Requirements.Alignment {
-        .init(
-            bufferAlignment: bufferAlignment,
-            offsetAlignment: offsetAlignment,
-            lengthMultiple: lengthMultiple
-        )
-    }
-}
+                    case .uncached: .uncached
 
-extension Kernel.File.Direct.Requirements.Reason {
-    fileprivate var legacy: ISO_9945.Kernel.File.Direct.Requirements.Reason {
-        switch self {
-        case .platformUnsupported:
-            return .platformUnsupported
+                    case .buffered: .buffered
+                    }
+                }(),
+                requirements: .unknown(
+                    reason: {
+                        switch reason {
+                        case .platformUnsupported: .platformUnsupported
 
-        case .sectorSizeUndetermined:
-            return .sectorSizeUndetermined
+                        case .sectorSizeUndetermined: .sectorSizeUndetermined
 
-        case .filesystemUnsupported:
-            return .filesystemUnsupported
+                        case .filesystemUnsupported: .filesystemUnsupported
 
-        case .invalidHandle:
-            return .invalidHandle
+                        case .invalidHandle: .invalidHandle
+                        }
+                    }()
+                )
+            )
         }
     }
 }

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Error_Primitives
+internal import Error_Primitives
 public import Path_Primitives
 
 // MARK: - Copy API
@@ -89,9 +89,9 @@ extension Kernel.File.Copy {
                 return try Kernel.File.Stats.lget(path: source)
             }
         } catch let error {
-            // Check if it's a "not found" error (platform code namespaces:
-            // the POSIX constants live in ISO_9945, the Win32 ones in
-            // swift-windows-standard)
+            // Check if it's a "not found" error. The code constants live in
+            // separate platform namespaces — `.POSIX` on the POSIX legs,
+            // `.Windows` on the Win32 one — so the test is gated.
             #if os(Windows)
                 if case .platform(let platformError) = error,
                     platformError.code == .Windows.ERROR_FILE_NOT_FOUND
@@ -180,77 +180,17 @@ extension Kernel.File.Copy {
                 throw .isDirectory
 
             default:
-                throw .clone(legacyCloneError(error))
+                // The `.clone(_:)` payload is the platform copy vocabulary's
+                // own `Clone.Error` — on POSIX still the pre-hoist ISO type,
+                // on Windows the Win32 one — and neither accepts kernel's
+                // hoisted `Kernel.File.Clone.Error`. Rather than transliterate
+                // into a vocabulary this package no longer speaks, the residual
+                // clone failures take the route this file already uses for
+                // stat and symlink failures: `.operation(_:)`, carrying
+                // kernel's own error in the message. The four semantically
+                // meaningful outcomes are passed through above.
+                throw .operation("clone failed: \(error)")
             }
-        }
-    }
-}
-
-// MARK: - Clone.Error Vocabulary Bridge (kernel-hoisted -> pre-hoist iso-9945, pending swift-iso/swift-iso-9945#65)
-//
-// `Kernel.File.Copy.Error` is a POSIX-side typealias to
-// `ISO_9945.Kernel.File.Copy.Error`, whose `.clone` case has not been
-// repointed at kernel's hoisted `Kernel.File.Clone.Error` (the purge tracked
-// at swift-iso/swift-iso-9945#65 has not landed). The two `Clone.Error`
-// vocabularies mirror each other case-for-case, so this is a 1:1 structural
-// transliteration, not a semantic choice — delete once #65 lands and
-// `.clone` accepts the hoisted type directly.
-
-extension Kernel.File.Copy {
-    private static func legacyCloneError(
-        _ error: Kernel.File.Clone.Error
-    ) -> ISO_9945.Kernel.File.Clone.Error {
-        switch error {
-        case .notSupported:
-            return .notSupported
-
-        case .crossDevice:
-            return .crossDevice
-
-        case .sourceNotFound:
-            return .sourceNotFound
-
-        case .destinationExists:
-            return .destinationExists
-
-        case .permissionDenied:
-            return .permissionDenied
-
-        case .isDirectory:
-            return .isDirectory
-
-        case .platform(let code, let operation):
-            return .platform(code: code, operation: legacyCloneOperation(operation))
-        }
-    }
-
-    private static func legacyCloneOperation(
-        _ operation: Kernel.File.Clone.Error.Operation
-    ) -> ISO_9945.Kernel.File.Clone.Error.Operation {
-        switch operation {
-        case .clonefile:
-            return .clonefile
-
-        case .copyfile:
-            return .copyfile
-
-        case .ficlone:
-            return .ficlone
-
-        case .copyFileRange:
-            return .copyFileRange
-
-        case .duplicateExtents:
-            return .duplicateExtents
-
-        case .statfs:
-            return .statfs
-
-        case .stat:
-            return .stat
-
-        case .copy:
-            return .copy
         }
     }
 }

@@ -82,7 +82,7 @@ extension Kernel.File {
 
         return Handle(
             descriptor: descriptor,
-            direct: resolved,
+            mode: resolved,
             requirements: requirements
         )
     }
