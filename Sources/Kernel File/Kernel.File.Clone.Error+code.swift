@@ -25,33 +25,45 @@ extension Kernel.File.Clone.Error {
         }
     }
 
-    /// Maps a POSIX error code to a semantic error.
+    /// Maps a platform error code to a semantic error.
+    ///
+    /// On POSIX legs the errno is classified here. On Windows the code is
+    /// carried through unclassified: Win32 codes are not POSIX codes, and
+    /// `Error.Code.POSIX` is not even reachable on that leg — its owner,
+    /// ISO 9945 Core, is not in the Windows build graph. Windows failures
+    /// reach kernel already classified by their owner and are transliterated
+    /// in `Kernel.File.Clone.Error+Windows.swift`, so classifying again here
+    /// would grow a second, competing Windows mapping.
     ///
     /// - Note: This is SPI for platform-specific packages.
     @_spi(Syscall)
     public init(code: Error_Primitives.Error.Code, operation: Operation) {
-        switch code {
-        case _ where code == .POSIX.ENOENT:
-            self = .sourceNotFound
-
-        case _ where code == .POSIX.EEXIST:
-            self = .destinationExists
-
-        case _ where code == .POSIX.EACCES,
-            _ where code == .POSIX.EPERM:
-            self = .permissionDenied
-
-        case _ where code == .POSIX.EXDEV:
-            self = .crossDevice
-
-        case _ where code == .POSIX.EISDIR:
-            self = .isDirectory
-
-        case _ where Error_Primitives.Error.Code.POSIX.isENOTSUP(code):
-            self = .notSupported
-
-        default:
+        #if os(Windows)
             self = .platform(code: code, operation: operation)
-        }
+        #else
+            switch code {
+            case _ where code == .POSIX.ENOENT:
+                self = .sourceNotFound
+
+            case _ where code == .POSIX.EEXIST:
+                self = .destinationExists
+
+            case _ where code == .POSIX.EACCES,
+                _ where code == .POSIX.EPERM:
+                self = .permissionDenied
+
+            case _ where code == .POSIX.EXDEV:
+                self = .crossDevice
+
+            case _ where code == .POSIX.EISDIR:
+                self = .isDirectory
+
+            case _ where Error_Primitives.Error.Code.POSIX.isENOTSUP(code):
+                self = .notSupported
+
+            default:
+                self = .platform(code: code, operation: operation)
+            }
+        #endif
     }
 }

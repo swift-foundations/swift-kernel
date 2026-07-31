@@ -31,21 +31,33 @@ extension Kernel.File.Direct.Error {
         }
     }
 
-    /// Maps a POSIX error code to a semantic error.
+    /// Maps a platform error code to a semantic error.
+    ///
+    /// On POSIX legs the errno is classified here. On Windows the code is
+    /// carried through unclassified: Win32 codes are not POSIX codes, and
+    /// `Error.Code.POSIX` is not even reachable on that leg — its owner,
+    /// ISO 9945 Core, is not in the Windows build graph. Direct I/O on
+    /// Windows goes through `FILE_FLAG_NO_BUFFERING` and reports its own
+    /// codes, so classification belongs to that owner rather than to a
+    /// second mapping here.
     @usableFromInline
     internal init(code: Error_Primitives.Error.Code, operation: Operation) {
-        switch code {
-        case _ where code == .POSIX.EINVAL:
+        #if os(Windows)
             self = .platform(code: code, operation: operation)
+        #else
+            switch code {
+            case _ where code == .POSIX.EINVAL:
+                self = .platform(code: code, operation: operation)
 
-        case _ where code == .POSIX.EBADF:
-            self = .invalidHandle
+            case _ where code == .POSIX.EBADF:
+                self = .invalidHandle
 
-        case _ where Error_Primitives.Error.Code.POSIX.isENOTSUP(code):
-            self = .notSupported
+            case _ where Error_Primitives.Error.Code.POSIX.isENOTSUP(code):
+                self = .notSupported
 
-        default:
-            self = .platform(code: code, operation: operation)
-        }
+            default:
+                self = .platform(code: code, operation: operation)
+            }
+        #endif
     }
 }
