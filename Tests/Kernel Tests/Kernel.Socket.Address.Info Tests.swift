@@ -12,16 +12,22 @@
 import Kernel
 import Testing
 
-extension Kernel.Socket.Address.Info {
-    @Suite
-    struct Test {
-        @Suite struct Get {}
-    }
-}
-
-// MARK: - List.get(host:) Smoke
-
+// `Kernel.Socket.Address.Info` (getaddrinfo) is not yet implemented on
+// Windows — see Sources/Kernel/Kernel.Socket.Address.Info+CrossPlatform.POSIX.swift:
+// "The Windows leg (GetAddrInfoW via swift-windows-32) lands later per the
+// 2026-07-23 DNS system-resolver adjudication." Genuinely absent API, not a
+// visibility gap — gated whole-file to match the production surface rather
+// than inventing the Windows surface here.
 #if !os(Windows)
+
+    extension Kernel.Socket.Address.Info {
+        @Suite
+        struct Test {
+            @Suite struct Get {}
+        }
+    }
+
+    // MARK: - List.get(host:) Smoke
 
     extension Kernel.Socket.Address.Info.Test.Get {
         @Test
