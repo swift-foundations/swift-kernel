@@ -3,226 +3,235 @@
 //  swift-kernel-primitives
 //
 
-import Kernel_Test_Support
-import Testing
+// Windows has no Kernel.Event.Driver (epoll/kqueue vocabulary is
+// POSIX-only; the Windows analog is the IOCP completion path) — gated
+// whole-file to match Sources/Kernel Event/Kernel.Event.Driver.swift and
+// the convention used elsewhere for this target's POSIX-only surfaces
+// (e.g. Tests/Kernel Tests/Kernel.Event.ID Tests.swift).
+#if !os(Windows)
 
-@testable import Kernel
+    import Kernel_Test_Support
+    import Testing
 
-extension Kernel.Event.Driver {
-    @Suite(
-        .disabled(
-            if: Toolchain.hasTaggedMetadataSIGSEGV,
+    @testable import Kernel
 
+    extension Kernel.Event.Driver {
+        @Suite(
+            .disabled(
+                if: Toolchain.hasTaggedMetadataSIGSEGV,
+
+            )
         )
-    )
-    struct Test {
-        @Suite struct Unit {}
-    }
-}
-
-// MARK: - Interest Merging
-
-extension Kernel.Event.Driver.Test.Unit {
-
-    @Test
-    func `sequential arms for different interests merge into combined mask`() throws {
-        var armInterests: [Kernel.Event.Interest] = []
-
-        let driver = Kernel.Event.Driver(
-            add: { _, _, _ in },
-            modify: { _, _, _, _ in },
-            remove: { _, _, _ in },
-            arm: { _, _, interest in armInterests.append(interest) },
-            poll: { _, _ in 0 },
-            close: {}
-        )
-
-        let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
-
-        try driver._arm(id, .read)
-        #expect(armInterests.count == 1)
-        #expect(armInterests[0] == .read)
-
-        try driver._arm(id, .write)
-        #expect(armInterests.count == 2)
-        #expect(armInterests[1] == [.read, .write])
-
-        driver._close()
+        struct Test {
+            @Suite struct Unit {}
+        }
     }
 
-    @Test
-    func `arming same interest twice is idempotent`() throws {
-        var armInterests: [Kernel.Event.Interest] = []
+    // MARK: - Interest Merging
 
-        let driver = Kernel.Event.Driver(
-            add: { _, _, _ in },
-            modify: { _, _, _, _ in },
-            remove: { _, _, _ in },
-            arm: { _, _, interest in armInterests.append(interest) },
-            poll: { _, _ in 0 },
-            close: {}
-        )
+    extension Kernel.Event.Driver.Test.Unit {
 
-        let id = try driver._register(Kernel.Descriptor.invalid, .read)
+        @Test
+        func `sequential arms for different interests merge into combined mask`() throws {
+            var armInterests: [Kernel.Event.Interest] = []
 
-        try driver._arm(id, .read)
-        try driver._arm(id, .read)
+            let driver = Kernel.Event.Driver(
+                add: { _, _, _ in },
+                modify: { _, _, _, _ in },
+                remove: { _, _, _ in },
+                arm: { _, _, interest in armInterests.append(interest) },
+                poll: { _, _ in 0 },
+                close: {}
+            )
 
-        #expect(armInterests.count == 2)
-        #expect(armInterests[0] == .read)
-        #expect(armInterests[1] == .read)
+            let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
 
-        driver._close()
-    }
-}
+            try driver._arm(id, .read)
+            #expect(armInterests.count == 1)
+            #expect(armInterests[0] == .read)
 
-// MARK: - Poll Re-Arm
+            try driver._arm(id, .write)
+            #expect(armInterests.count == 2)
+            #expect(armInterests[1] == [.read, .write])
 
-extension Kernel.Event.Driver.Test.Unit {
+            driver._close()
+        }
 
-    @Test
-    func `poll re-arms for residual interest after partial delivery`() throws {
-        var armInterests: [Kernel.Event.Interest] = []
-        var registeredID = Kernel.Event.ID.zero
-        var shouldDeliver = false
+        @Test
+        func `arming same interest twice is idempotent`() throws {
+            var armInterests: [Kernel.Event.Interest] = []
 
-        let driver = Kernel.Event.Driver(
-            add: { _, id, _ in registeredID = id },
-            modify: { _, _, _, _ in },
-            remove: { _, _, _ in },
-            arm: { _, _, interest in armInterests.append(interest) },
-            poll: { _, output in
-                guard shouldDeliver else { return 0 }
-                shouldDeliver = false
-                output[0] = Kernel.Event(id: registeredID, interest: .read)
-                return 1
-            },
-            close: {}
-        )
+            let driver = Kernel.Event.Driver(
+                add: { _, _, _ in },
+                modify: { _, _, _, _ in },
+                remove: { _, _, _ in },
+                arm: { _, _, interest in armInterests.append(interest) },
+                poll: { _, _ in 0 },
+                close: {}
+            )
 
-        let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
+            let id = try driver._register(Kernel.Descriptor.invalid, .read)
 
-        try driver._arm(id, .read)
-        try driver._arm(id, .write)
-        armInterests.removeAll()
+            try driver._arm(id, .read)
+            try driver._arm(id, .read)
 
-        shouldDeliver = true
-        var buffer = [Kernel.Event](repeating: .empty, count: 8)
-        let count = try driver._poll(nil, &buffer)
+            #expect(armInterests.count == 2)
+            #expect(armInterests[0] == .read)
+            #expect(armInterests[1] == .read)
 
-        #expect(count == 1)
-        #expect(buffer[0].interest == .read)
-        #expect(armInterests.count == 1)
-        #expect(armInterests[0] == .write)
-
-        driver._close()
+            driver._close()
+        }
     }
 
-    @Test
-    func `poll does not re-arm when all interests are delivered`() throws {
-        var armCallCount = 0
-        var registeredID = Kernel.Event.ID.zero
-        var shouldDeliver = false
+    // MARK: - Poll Re-Arm
 
-        let driver = Kernel.Event.Driver(
-            add: { _, id, _ in registeredID = id },
-            modify: { _, _, _, _ in },
-            remove: { _, _, _ in },
-            arm: { _, _, _ in armCallCount += 1 },
-            poll: { _, output in
-                guard shouldDeliver else { return 0 }
-                shouldDeliver = false
-                output[0] = Kernel.Event(id: registeredID, interest: [.read, .write])
-                return 1
-            },
-            close: {}
-        )
+    extension Kernel.Event.Driver.Test.Unit {
 
-        let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
+        @Test
+        func `poll re-arms for residual interest after partial delivery`() throws {
+            var armInterests: [Kernel.Event.Interest] = []
+            var registeredID = Kernel.Event.ID.zero
+            var shouldDeliver = false
 
-        try driver._arm(id, .read)
-        try driver._arm(id, .write)
-        armCallCount = 0
+            let driver = Kernel.Event.Driver(
+                add: { _, id, _ in registeredID = id },
+                modify: { _, _, _, _ in },
+                remove: { _, _, _ in },
+                arm: { _, _, interest in armInterests.append(interest) },
+                poll: { _, output in
+                    guard shouldDeliver else { return 0 }
+                    shouldDeliver = false
+                    output[0] = Kernel.Event(id: registeredID, interest: .read)
+                    return 1
+                },
+                close: {}
+            )
 
-        shouldDeliver = true
-        var buffer = [Kernel.Event](repeating: .empty, count: 8)
-        _ = try driver._poll(nil, &buffer)
+            let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
 
-        #expect(armCallCount == 0)
+            try driver._arm(id, .read)
+            try driver._arm(id, .write)
+            armInterests.removeAll()
 
-        driver._close()
+            shouldDeliver = true
+            var buffer = [Kernel.Event](repeating: .empty, count: 8)
+            let count = try driver._poll(nil, &buffer)
+
+            #expect(count == 1)
+            #expect(buffer[0].interest == .read)
+            #expect(armInterests.count == 1)
+            #expect(armInterests[0] == .write)
+
+            driver._close()
+        }
+
+        @Test
+        func `poll does not re-arm when all interests are delivered`() throws {
+            var armCallCount = 0
+            var registeredID = Kernel.Event.ID.zero
+            var shouldDeliver = false
+
+            let driver = Kernel.Event.Driver(
+                add: { _, id, _ in registeredID = id },
+                modify: { _, _, _, _ in },
+                remove: { _, _, _ in },
+                arm: { _, _, _ in armCallCount += 1 },
+                poll: { _, output in
+                    guard shouldDeliver else { return 0 }
+                    shouldDeliver = false
+                    output[0] = Kernel.Event(id: registeredID, interest: [.read, .write])
+                    return 1
+                },
+                close: {}
+            )
+
+            let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
+
+            try driver._arm(id, .read)
+            try driver._arm(id, .write)
+            armCallCount = 0
+
+            shouldDeliver = true
+            var buffer = [Kernel.Event](repeating: .empty, count: 8)
+            _ = try driver._poll(nil, &buffer)
+
+            #expect(armCallCount == 0)
+
+            driver._close()
+        }
+
+        @Test
+        func `single interest has no residual after delivery`() throws {
+            var armInterests: [Kernel.Event.Interest] = []
+            var registeredID = Kernel.Event.ID.zero
+            var shouldDeliver = false
+
+            let driver = Kernel.Event.Driver(
+                add: { _, id, _ in registeredID = id },
+                modify: { _, _, _, _ in },
+                remove: { _, _, _ in },
+                arm: { _, _, interest in armInterests.append(interest) },
+                poll: { _, output in
+                    guard shouldDeliver else { return 0 }
+                    shouldDeliver = false
+                    output[0] = Kernel.Event(id: registeredID, interest: .read)
+                    return 1
+                },
+                close: {}
+            )
+
+            let id = try driver._register(Kernel.Descriptor.invalid, .read)
+
+            try driver._arm(id, .read)
+            armInterests.removeAll()
+
+            shouldDeliver = true
+            var buffer = [Kernel.Event](repeating: .empty, count: 8)
+            _ = try driver._poll(nil, &buffer)
+
+            #expect(armInterests.isEmpty)
+
+            driver._close()
+        }
+
+        @Test
+        func `delivery resets armed interest — subsequent arm starts fresh`() throws {
+            var armInterests: [Kernel.Event.Interest] = []
+            var registeredID = Kernel.Event.ID.zero
+            var shouldDeliver = false
+
+            let driver = Kernel.Event.Driver(
+                add: { _, id, _ in registeredID = id },
+                modify: { _, _, _, _ in },
+                remove: { _, _, _ in },
+                arm: { _, _, interest in armInterests.append(interest) },
+                poll: { _, output in
+                    guard shouldDeliver else { return 0 }
+                    shouldDeliver = false
+                    output[0] = Kernel.Event(id: registeredID, interest: [.read, .write])
+                    return 1
+                },
+                close: {}
+            )
+
+            let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
+
+            try driver._arm(id, .read)
+            try driver._arm(id, .write)
+
+            shouldDeliver = true
+            var buffer = [Kernel.Event](repeating: .empty, count: 8)
+            _ = try driver._poll(nil, &buffer)
+
+            armInterests.removeAll()
+
+            try driver._arm(id, .read)
+
+            #expect(armInterests.count == 1)
+            #expect(armInterests[0] == .read)
+
+            driver._close()
+        }
     }
 
-    @Test
-    func `single interest has no residual after delivery`() throws {
-        var armInterests: [Kernel.Event.Interest] = []
-        var registeredID = Kernel.Event.ID.zero
-        var shouldDeliver = false
-
-        let driver = Kernel.Event.Driver(
-            add: { _, id, _ in registeredID = id },
-            modify: { _, _, _, _ in },
-            remove: { _, _, _ in },
-            arm: { _, _, interest in armInterests.append(interest) },
-            poll: { _, output in
-                guard shouldDeliver else { return 0 }
-                shouldDeliver = false
-                output[0] = Kernel.Event(id: registeredID, interest: .read)
-                return 1
-            },
-            close: {}
-        )
-
-        let id = try driver._register(Kernel.Descriptor.invalid, .read)
-
-        try driver._arm(id, .read)
-        armInterests.removeAll()
-
-        shouldDeliver = true
-        var buffer = [Kernel.Event](repeating: .empty, count: 8)
-        _ = try driver._poll(nil, &buffer)
-
-        #expect(armInterests.isEmpty)
-
-        driver._close()
-    }
-
-    @Test
-    func `delivery resets armed interest — subsequent arm starts fresh`() throws {
-        var armInterests: [Kernel.Event.Interest] = []
-        var registeredID = Kernel.Event.ID.zero
-        var shouldDeliver = false
-
-        let driver = Kernel.Event.Driver(
-            add: { _, id, _ in registeredID = id },
-            modify: { _, _, _, _ in },
-            remove: { _, _, _ in },
-            arm: { _, _, interest in armInterests.append(interest) },
-            poll: { _, output in
-                guard shouldDeliver else { return 0 }
-                shouldDeliver = false
-                output[0] = Kernel.Event(id: registeredID, interest: [.read, .write])
-                return 1
-            },
-            close: {}
-        )
-
-        let id = try driver._register(Kernel.Descriptor.invalid, [.read, .write])
-
-        try driver._arm(id, .read)
-        try driver._arm(id, .write)
-
-        shouldDeliver = true
-        var buffer = [Kernel.Event](repeating: .empty, count: 8)
-        _ = try driver._poll(nil, &buffer)
-
-        armInterests.removeAll()
-
-        try driver._arm(id, .read)
-
-        #expect(armInterests.count == 1)
-        #expect(armInterests[0] == .read)
-
-        driver._close()
-    }
-}
+#endif

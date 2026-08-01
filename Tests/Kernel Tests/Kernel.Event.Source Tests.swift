@@ -16,18 +16,26 @@ import Testing
 
 // MARK: - Kernel.Event.Source Tests
 
-extension Kernel.Event.Source {
-    @Suite struct Test {
-        @Suite struct Unit {}
-        @Suite(
-            .disabled(
-                if: Toolchain.hasTaggedMetadataSIGSEGV,
+// Windows has no Kernel.Event.Source (epoll/kqueue vocabulary is
+// POSIX-only; the Windows analog is the IOCP completion path) — gated to
+// match Sources/Kernel Event/Kernel.Event.Source.swift and the convention
+// used elsewhere for this target's POSIX-only surfaces (e.g.
+// Tests/Kernel Tests/Kernel.Event.ID Tests.swift). The platform-specific
+// integration suites below are already gated per-platform.
+#if !os(Windows)
+    extension Kernel.Event.Source {
+        @Suite struct Test {
+            @Suite struct Unit {}
+            @Suite(
+                .disabled(
+                    if: Toolchain.hasTaggedMetadataSIGSEGV,
 
+                )
             )
-        )
-        struct Integration {}
+            struct Integration {}
+        }
     }
-}
+#endif
 
 // MARK: - Integration (creates real kernel resources)
 

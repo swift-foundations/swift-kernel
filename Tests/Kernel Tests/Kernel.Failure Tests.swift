@@ -56,16 +56,21 @@ extension Kernel.Failure.Test.Unit {
         }
     }
 
-    @Test func `platform case exists and wraps kernel error`() {
-        let kernelError = Error_Primitives.Error(code: .POSIX.EPERM)
-        let failure = Kernel.Failure.platform(kernelError)
+    // `Error.Code.POSIX` is declared in the POSIX-only swift-iso-9945 target
+    // (Error_Primitives has no Windows-side `.POSIX` namespace) — absent on
+    // Windows by design, matching the `signal` gate below.
+    #if !os(Windows)
+        @Test func `platform case exists and wraps kernel error`() {
+            let kernelError = Error_Primitives.Error(code: .POSIX.EPERM)
+            let failure = Kernel.Failure.platform(kernelError)
 
-        if case .platform(let wrapped) = failure {
-            #expect(wrapped == kernelError)
-        } else {
-            Issue.record("Expected .platform case")
+            if case .platform(let wrapped) = failure {
+                #expect(wrapped == kernelError)
+            } else {
+                Issue.record("Expected .platform case")
+            }
         }
-    }
+    #endif
 
     #if !os(Windows)
         @Test func `signal case exists on non-Windows`() {
@@ -90,12 +95,17 @@ extension Kernel.Failure.Test.Unit {
     }
 
     @Test func `description produces non-empty string`() {
-        let cases: [Kernel.Failure] = [
+        var cases: [Kernel.Failure] = [
             .io(.broken),
             .handle(.invalid),
             .blocking(.wouldBlock),
-            .platform(Error_Primitives.Error(code: .POSIX.EPERM)),
         ]
+        // `Error.Code.POSIX` is absent on Windows by design (declared in the
+        // POSIX-only swift-iso-9945 target) — see the `platform case exists`
+        // gate above.
+        #if !os(Windows)
+            cases.append(.platform(Error_Primitives.Error(code: .POSIX.EPERM)))
+        #endif
 
         for failure in cases {
             let desc: Swift.String = failure.description

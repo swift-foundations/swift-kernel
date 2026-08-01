@@ -11,6 +11,8 @@ import Kernel_Event
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
 
+@testable import Kernel_Completion
+
 #if os(Windows)
     // `Kernel.File.Offset` is declared in the L3 Windows_Kernel_File module,
     // which `Kernel_Completion`'s exports do not re-export — imported
@@ -18,8 +20,6 @@ import Testing
     // Sources/Kernel Completion/Kernel.Completion.Submission.Opcode.swift.
     public import Windows_Kernel_File
 #endif
-
-@testable import Kernel_Completion
 
 extension Kernel.Completion.Submission {
     @Suite
