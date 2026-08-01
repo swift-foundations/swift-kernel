@@ -11,6 +11,14 @@ import Kernel_Event
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
 
+#if os(Windows)
+    // `Kernel.File.Offset` is declared in the L3 Windows_Kernel_File module,
+    // which `Kernel_Completion`'s exports do not re-export — imported
+    // per-file (#MemberImportVisibility), matching the idiom used in
+    // Sources/Kernel Completion/Kernel.Completion.Submission.Opcode.swift.
+    public import Windows_Kernel_File
+#endif
+
 @testable import Kernel_Completion
 
 extension Kernel.Completion.Submission {
@@ -90,20 +98,25 @@ extension Kernel.Completion.Submission.Test.Unit {
         #expect(offset == nil)
     }
 
-    @Test
-    func `poll opcode carries descriptor interest`() {
-        let interest: Kernel.Event.Interest = [.read]
-        let sub = Kernel.Completion.Submission(
-            opcode: .readiness(events: interest),
-            token: 1
-        )
+    // `.readiness` is absent on Windows by design — see the `#if !os(Windows)`
+    // gate on the case declaration in
+    // Sources/Kernel Completion/Kernel.Completion.Submission.Opcode.swift.
+    #if !os(Windows)
+        @Test
+        func `poll opcode carries descriptor interest`() {
+            let interest: Kernel.Event.Interest = [.read]
+            let sub = Kernel.Completion.Submission(
+                opcode: .readiness(events: interest),
+                token: 1
+            )
 
-        guard case .readiness(let events) = sub.opcode else {
-            Issue.record("expected .readiness opcode")
-            return
+            guard case .readiness(let events) = sub.opcode else {
+                Issue.record("expected .readiness opcode")
+                return
+            }
+            #expect(events == interest)
         }
-        #expect(events == interest)
-    }
+    #endif
 
     @Test
     func `fields are mutable`() {

@@ -85,36 +85,44 @@ extension Kernel.Completion.Submission.Opcode.Test.Unit {
 extension Kernel.Completion.Submission.Opcode.Test.Exhaustiveness {
     /// Switch over every variant — a new case without a case branch here
     /// fails to compile.
-    @Test
-    func `switch covers every variant`() {
-        let address: Memory.Address = 0x10
-        let length: Memory.Address.Count = 1
-        let variants: [Kernel.Completion.Submission.Opcode] = [
-            .noOperation,
-            .read(address: address, length: length, offset: nil),
-            .write(address: address, length: length, offset: nil),
-            .close,
-            .accept,
-            .connect(address: address, length: length),
-            .send(address: address, length: length),
-            .receive(address: address, length: length),
-            .cancel(target: 1),
-            .synchronize,
-            .readiness(events: [.read]),
-        ]
-        var seen = 0
-        for opcode in variants {
-            switch opcode {
-            case .noOperation, .close, .accept, .synchronize:
-                seen += 1
+    ///
+    /// `.readiness` is absent on Windows by design — see the
+    /// `#if !os(Windows)` gate on the case declaration in
+    /// Sources/Kernel Completion/Kernel.Completion.Submission.Opcode.swift —
+    /// so this exhaustiveness check (which lists every variant by name) is
+    /// gated to match.
+    #if !os(Windows)
+        @Test
+        func `switch covers every variant`() {
+            let address: Memory.Address = 0x10
+            let length: Memory.Address.Count = 1
+            let variants: [Kernel.Completion.Submission.Opcode] = [
+                .noOperation,
+                .read(address: address, length: length, offset: nil),
+                .write(address: address, length: length, offset: nil),
+                .close,
+                .accept,
+                .connect(address: address, length: length),
+                .send(address: address, length: length),
+                .receive(address: address, length: length),
+                .cancel(target: 1),
+                .synchronize,
+                .readiness(events: [.read]),
+            ]
+            var seen = 0
+            for opcode in variants {
+                switch opcode {
+                case .noOperation, .close, .accept, .synchronize:
+                    seen += 1
 
-            case .read, .write, .connect, .send, .receive:
-                seen += 1
+                case .read, .write, .connect, .send, .receive:
+                    seen += 1
 
-            case .cancel, .readiness:
-                seen += 1
+                case .cancel, .readiness:
+                    seen += 1
+                }
             }
+            #expect(seen == variants.count)
         }
-        #expect(seen == variants.count)
-    }
+    #endif
 }
