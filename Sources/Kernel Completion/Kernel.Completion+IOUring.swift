@@ -142,6 +142,27 @@
             _ submission: Kernel.Completion.Submission,
             target: borrowing Kernel.Descriptor
         ) throws(Kernel.Completion.Error) {
+            try Self.enqueue(into: &uring, submission, target: target)
+        }
+
+        /// SQE fill hoisted onto an `inout` ring parameter.
+        ///
+        /// WHY: spelling the `uring.next.entry` chain on the class's stored
+        /// property trips a SILGen assertion on the Swift 6.4 release-floor
+        /// toolchain (`SILGenLValue.cpp:3203`,
+        /// `SILGenBorrowedBaseVisitor::getLookupExprBaseLValue`,
+        /// `!e->getType()->is<LValueType>()`) — the borrowed-base visitor
+        /// cannot lower a `mutating _read` (`next`) chained through a
+        /// `~Copyable ~Escapable` slot when the base is a class ivar lvalue.
+        /// Routing the same chain through an `inout` parameter lowers cleanly.
+        /// Call-site spelling and semantics are unchanged (#105 hoist pattern).
+        /// TRACKING: swift-institute/Issues#108 — remove the hoist when the
+        /// pinned toolchain no longer asserts on the class-ivar spelling.
+        private static func enqueue(
+            into uring: inout Kernel.IO.Uring,
+            _ submission: Kernel.Completion.Submission,
+            target: borrowing Kernel.Descriptor
+        ) throws(Kernel.Completion.Error) {
             guard uring.hasCapacity else {
                 throw .submissionQueueFull
             }
