@@ -86,7 +86,7 @@ let package = Package(
         .package(url: "https://github.com/swift-foundations/swift-cpu.git", branch: "main"),
         .package(
             url: "https://github.com/swift-foundations/swift-posix.git",
-            revision: "f949ea8e0c3a9bf73e5eea3cae263adf2903f51e"
+            revision: "006ba5e9a813c04896a40b8e0ed4435807acfd05"
         ),
         .package(url: "https://github.com/swift-foundations/swift-darwin.git", branch: "main"),
         .package(url: "https://github.com/swift-foundations/swift-linux.git", branch: "main"),
