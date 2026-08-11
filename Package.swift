@@ -84,10 +84,19 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-memory-allocation-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-terminal-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-foundations/swift-cpu.git", branch: "main"),
-        .package(url: "https://github.com/swift-foundations/swift-posix.git", branch: "main"),
+        .package(
+            url: "https://github.com/swift-foundations/swift-posix.git",
+            revision: "f949ea8e0c3a9bf73e5eea3cae263adf2903f51e"
+        ),
         .package(url: "https://github.com/swift-foundations/swift-darwin.git", branch: "main"),
         .package(url: "https://github.com/swift-foundations/swift-linux.git", branch: "main"),
         .package(url: "https://github.com/swift-foundations/swift-windows.git", branch: "main"),
+        // Root constraint for the exact Win32 producer composed and re-exported by
+        // swift-windows. No swift-kernel target imports an L2 product directly.
+        .package(
+            url: "https://github.com/swift-microsoft/swift-windows-32.git",
+            revision: "2b2e6e1055961c6922538dbb7eb74531eb72878c"
+        ),
         .package(url: "https://github.com/swift-foundations/swift-strings.git", branch: "main")
     ],
     targets: [
