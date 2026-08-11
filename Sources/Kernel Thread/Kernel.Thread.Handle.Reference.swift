@@ -61,7 +61,7 @@ extension Kernel.Thread.Handle {
     /// // Later: join all threads
     /// for thread in threads { try thread.join() }
     /// ```
-    public final class Reference: @unsafe @unchecked Sendable {
+    public final class Reference: @unchecked Sendable {
         private var inner: Kernel.Thread.Handle?
 
         /// Creates a wrapper owning the given thread handle.

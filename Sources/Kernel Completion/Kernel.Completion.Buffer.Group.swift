@@ -5,7 +5,7 @@
 //  Typed buffer group identifier.
 //
 
-@_spi(Internal) public import Tagged_Primitives
+public import Tagged_Primitives
 
 extension Kernel.Completion.Buffer {
     /// Identifier for a provided buffer group.
