@@ -1,0 +1,10 @@
+// Expected rejection: the nonescaping operation cannot be assigned to escaping storage.
+import Kernel
+
+struct Input: ~Copyable, ~Escapable, Sendable {}
+
+nonisolated(unsafe) var stored: (@Sendable (borrowing Input) -> Int)?
+
+func store(_ operation: @Sendable (borrowing Input) -> Int) {
+    stored = operation
+}
