@@ -1,0 +1,12 @@
+// Expected rejection: an output closure cannot capture and return the borrowed input.
+import Kernel
+
+struct Input: ~Copyable, ~Escapable, Sendable {}
+
+func escape(
+    _ input: borrowing Input
+) throws(Kernel.Thread.Run.Error<Never>) -> sending (@Sendable () -> Void) {
+    try Kernel.Thread.run(input) { input in
+        { _ = input }
+    }
+}
