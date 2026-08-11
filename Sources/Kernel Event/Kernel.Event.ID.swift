@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-@_spi(Internal) public import Tagged_Primitives
+public import Tagged_Primitives
 
 extension Kernel.Event {
     /// Event source identifier.

@@ -6,7 +6,7 @@
 //  to their completions.
 //
 
-@_spi(Internal) public import Tagged_Primitives
+public import Tagged_Primitives
 
 extension Kernel.Completion {
     /// Opaque correlation identifier for matching submissions to completions.

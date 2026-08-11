@@ -35,8 +35,7 @@ extension Kernel.File.Clone.Error {
     /// in `Kernel.File.Clone.Error+Windows.swift`, so classifying again here
     /// would grow a second, competing Windows mapping.
     ///
-    /// - Note: This is SPI for platform-specific packages.
-    @_spi(Syscall)
+    /// - Note: Platform-specific packages use this conversion at their boundary.
     public init(code: Error_Primitives.Error.Code, operation: Operation) {
         #if os(Windows)
             self = .platform(code: code, operation: operation)

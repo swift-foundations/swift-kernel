@@ -16,7 +16,7 @@
 // `Terminal.Mode.Raw` namespace and the L2 typed Termios.Attributes.
 
 #if !os(Windows)
-    @_spi(Syscall) import POSIX_Kernel_Terminal
+    import POSIX_Kernel_Terminal
 #endif
 
 extension Terminal.Mode.Raw {
