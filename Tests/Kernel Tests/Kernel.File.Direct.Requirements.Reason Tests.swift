@@ -114,7 +114,8 @@ extension Kernel.File.Direct.Requirements.Reason.Test.Unit {
 
     @Test
     func `Reason is CustomStringConvertible`() {
-        let reason: any CustomStringConvertible = Kernel.File.Direct.Requirements.Reason.platformUnsupported
+        let reason: any CustomStringConvertible = Kernel.File.Direct.Requirements.Reason
+            .platformUnsupported
         #expect(!reason.description.isEmpty)
     }
 }

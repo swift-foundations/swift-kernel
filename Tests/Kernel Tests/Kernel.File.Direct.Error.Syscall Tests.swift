@@ -71,13 +71,19 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
 extension Kernel.File.Direct.Error.Syscall.Test.Unit {
     @Test
     func `Syscall conforms to Swift.Error`() {
-        let syscall: any Swift.Error = Kernel.File.Direct.Error.Syscall.platform(code: .posix(1), operation: .open)
+        let syscall: any Swift.Error = Kernel.File.Direct.Error.Syscall.platform(
+            code: .posix(1),
+            operation: .open
+        )
         #expect(syscall is Kernel.File.Direct.Error.Syscall)
     }
 
     @Test
     func `Syscall is Sendable`() {
-        let syscall: any Sendable = Kernel.File.Direct.Error.Syscall.platform(code: .posix(1), operation: .open)
+        let syscall: any Sendable = Kernel.File.Direct.Error.Syscall.platform(
+            code: .posix(1),
+            operation: .open
+        )
         #expect(syscall is Kernel.File.Direct.Error.Syscall)
     }
 

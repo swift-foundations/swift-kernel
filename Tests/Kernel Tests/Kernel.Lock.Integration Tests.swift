@@ -50,7 +50,12 @@ private func createLockFile(prefix: Swift.String) throws -> Swift.String {
 /// Opens a file for locking. Returns a consuming descriptor for Lock.Token.
 private func openForLock(_ pathString: Swift.String) throws -> Kernel.Descriptor {
     try Path.scope(pathString) { path in
-        try Kernel.File.Open.open(path: path, mode: .readWrite, options: [], permissions: .ownerReadWrite)
+        try Kernel.File.Open.open(
+            path: path,
+            mode: .readWrite,
+            options: [],
+            permissions: .ownerReadWrite
+        )
     }
 }
 
@@ -103,28 +108,62 @@ extension `Kernel.Lock Integration` {
 
     extension `Kernel.Lock Integration` {
 
-        /// Path to the lock test helper executable
+        /// Name of the lock test helper executable.
+        private static let helperName = "_Lock Test Process"
+
+        /// Path to the lock test helper executable.
+        ///
+        /// The product directory differs per build system — SwiftPM's native
+        /// build writes `.build/<triple>/<config>`, while Swift Build writes
+        /// `.build/out/Products/<Config>` — so every known product directory
+        /// is probed instead of one hard-coded layout.
         private static var helperPath: Swift.String {
-            if let builtProductsDir = ProcessInfo.processInfo.environment["BUILT_PRODUCTS_DIR"] {
-                return "\(builtProductsDir)/_Lock Test Process"
+            let fileManager = FileManager.default
+            for directory in productDirectories {
+                let candidate = directory.appendingPathComponent(helperName)
+                if fileManager.isExecutableFile(atPath: candidate.path) { return candidate.path }
             }
-            #if DEBUG
-                let config = "debug"
-            #else
-                let config = "release"
-            #endif
-            #if os(macOS)
-                let buildDir = ".build/arm64-apple-macosx/\(config)"
-            #elseif os(Linux)
-                let buildDir = ".build/\(config)"
-            #else
-                let buildDir = ".build/\(config)"
-            #endif
-            let packageRoot = URL(fileURLWithPath: #filePath)
+            return packageRoot.appendingPathComponent(helperName).path
+        }
+
+        private static var packageRoot: URL {
+            URL(fileURLWithPath: #filePath)
                 .deletingLastPathComponent()  // Kernel Tests
                 .deletingLastPathComponent()  // Tests
                 .deletingLastPathComponent()  // swift-kernel
-            return packageRoot.appendingPathComponent(buildDir).appendingPathComponent("_Lock Test Process").path
+        }
+
+        /// Every directory a built product may live in, most specific first.
+        private static var productDirectories: [URL] {
+            var directories: [URL] = []
+            if let builtProductsDirectory = ProcessInfo.processInfo.environment[
+                "BUILT_PRODUCTS_DIR"
+            ] {
+                directories.append(URL(fileURLWithPath: builtProductsDirectory))
+            }
+            let buildRoot = packageRoot.appendingPathComponent(".build")
+            for configuration in ["Debug", "Release"] {
+                directories.append(
+                    buildRoot
+                        .appendingPathComponent("out")
+                        .appendingPathComponent("Products")
+                        .appendingPathComponent(configuration)
+                )
+            }
+            for configuration in ["debug", "release"] {
+                directories.append(buildRoot.appendingPathComponent(configuration))
+            }
+            let contents =
+                (try? FileManager.default.contentsOfDirectory(
+                    at: buildRoot,
+                    includingPropertiesForKeys: nil
+                )) ?? []
+            for triple in contents {
+                for configuration in ["debug", "release"] {
+                    directories.append(triple.appendingPathComponent(configuration))
+                }
+            }
+            return directories
         }
 
         @Test
@@ -271,7 +310,9 @@ extension `Kernel.Lock Integration` {
 
             let process = Process()
             process.executableURL = URL(fileURLWithPath: Self.helperPath)
-            process.arguments = ["try-exclusive", path, "--range", "200-300", "--hold", "0", "--signal-ready"]
+            process.arguments = [
+                "try-exclusive", path, "--range", "200-300", "--hold", "0", "--signal-ready",
+            ]
 
             let pipe = Pipe()
             process.standardOutput = pipe

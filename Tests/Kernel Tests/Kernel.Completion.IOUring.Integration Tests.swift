@@ -129,7 +129,11 @@
             var completion = try Kernel.Completion.iouring()
 
             let plain = Kernel.Completion.Submission(opcode: .noOperation, token: .init(10))
-            let drained = Kernel.Completion.Submission(opcode: .noOperation, token: .init(11), flags: .drain)
+            let drained = Kernel.Completion.Submission(
+                opcode: .noOperation,
+                token: .init(11),
+                flags: .drain
+            )
 
             try completion.submit(plain)
             try completion.submit(drained)

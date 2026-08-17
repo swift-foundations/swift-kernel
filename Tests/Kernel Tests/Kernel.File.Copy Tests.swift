@@ -60,7 +60,10 @@ extension Kernel.File.Copy {
     }
 
     extension Kernel.File.Copy.Test.Unit {
-        @Test func `copying a symlink with followSymlinks false recreates the link at the destination`() throws {
+        @Test
+        func `copying a symlink with followSymlinks false recreates the link at the destination`()
+            throws
+        {
             let target = Kernel.Temporary.filePath(prefix: "kernel-copy-symlink-target")
             let source = Kernel.Temporary.filePath(prefix: "kernel-copy-symlink-src")
             let destination = Kernel.Temporary.filePath(prefix: "kernel-copy-symlink-dst")
@@ -86,11 +89,16 @@ extension Kernel.File.Copy {
             #expect(readBackTarget == target)
         }
 
-        @Test func `copying a symlink to a destination whose parent does not exist throws instead of silently succeeding`() throws {
+        @Test
+        func
+            `copying a symlink to a destination whose parent does not exist throws instead of silently succeeding`()
+            throws
+        {
             let target = Kernel.Temporary.filePath(prefix: "kernel-copy-symlink-target")
             let source = Kernel.Temporary.filePath(prefix: "kernel-copy-symlink-src")
             let destination =
-                Kernel.Temporary.directory + "/kernel-copy-symlink-missing-parent-\(Int.random(in: 0..<Int.max))/dst"
+                Kernel.Temporary.directory
+                + "/kernel-copy-symlink-missing-parent-\(Int.random(in: 0..<Int.max))/dst"
 
             try Path.scope(target, source) { targetPath, sourcePath in
                 try Kernel.Link.Symbolic.create(target: targetPath, at: sourcePath)
@@ -104,11 +112,17 @@ extension Kernel.File.Copy {
                     #expect(error.body != nil)
                 },
                 { () throws(E) in
-                    try Path.scope(source, destination) { sourcePath, destinationPath throws(Kernel.File.Copy.Error) in
+                    try Path.scope(source, destination) {
+                        sourcePath,
+                        destinationPath throws(Kernel.File.Copy.Error) in
                         try Kernel.File.Copy.copy(
                             from: sourcePath,
                             to: destinationPath,
-                            options: .init(overwrite: false, copyAttributes: false, followSymlinks: false)
+                            options: .init(
+                                overwrite: false,
+                                copyAttributes: false,
+                                followSymlinks: false
+                            )
                         )
                     }
                 }
@@ -117,7 +131,8 @@ extension Kernel.File.Copy {
             // The destination must not exist — the prior bug's failure mode was
             // "reports success, creates nothing"; this proves the fix doesn't
             // instead regress into "throws, but the link got created anyway".
-            let destinationExists = (try? Path.scope(destination) { try? Kernel.File.Stats.lget(path: $0) }) != nil
+            let destinationExists =
+                (try? Path.scope(destination) { try? Kernel.File.Stats.lget(path: $0) }) != nil
             #expect(!destinationExists)
         }
     }

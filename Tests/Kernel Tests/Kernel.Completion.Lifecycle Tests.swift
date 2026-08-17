@@ -29,7 +29,7 @@
 
     extension `Completion Lifecycle Tests`.`Full Lifecycle` {
         @Test
-        func `create submit flush drain close sequence`() {
+        func `create submit flush drain close sequence`() throws {
             var submitLog: [(Kernel.Completion.Submission.Opcode, Kernel.Completion.Token)] = []
             var flushCount = 0
             var closeCount = 0
@@ -75,8 +75,8 @@
                 token: 2
             )
             let sentinel = Kernel.Descriptor.invalid
-            try! completion.submit(sub1, target: sentinel)
-            try! completion.submit(sub2, target: sentinel)
+            try completion.submit(sub1, target: sentinel)
+            try completion.submit(sub2, target: sentinel)
 
             #expect(submitLog.count == 2)
             if case .read = submitLog[0].0 {
@@ -91,7 +91,7 @@
             #expect(submitLog[1].1 == 2)
 
             // Flush
-            let flushed = try! completion.flush()
+            let flushed = try completion.flush()
             #expect(flushCount == 1)
             #expect(flushed == 2)
 
@@ -219,7 +219,7 @@
 
     extension `Completion Lifecycle Tests`.`Untargeted Submit` {
         @Test
-        func `untargeted submit passes invalid descriptor sentinel`() {
+        func `untargeted submit passes invalid descriptor sentinel`() throws {
             var receivedRawDescriptor: Int32? = nil
             let driver = Kernel.Completion.Driver(
                 submit: { _, descriptor in
@@ -236,7 +236,7 @@
                 capabilities: Kernel.Completion.Capabilities()
             )
             let sub = Kernel.Completion.Submission(opcode: .noOperation, token: .zero)
-            try! completion.submit(sub)
+            try completion.submit(sub)
 
             let invalidRaw = Kernel.Descriptor.invalid._rawValue
             #expect(receivedRawDescriptor == invalidRaw)

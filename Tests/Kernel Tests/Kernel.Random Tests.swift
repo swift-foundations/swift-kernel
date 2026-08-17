@@ -24,7 +24,9 @@ extension Random {
 
 extension Random.Test.Fill {
     @Test
-    func `fill(_:) on a 32-byte buffer produces non-zero bytes on every platform`() throws(Random.Error) {
+    func `fill(_:) on a 32-byte buffer produces non-zero bytes on every platform`() throws(Random
+        .Error)
+    {
         // 32 bytes of contiguous stack memory — a 4-tuple of UInt64.
         var buffer: (UInt64, UInt64, UInt64, UInt64) = (0, 0, 0, 0)
         // Single cross-platform call site — no `#if os(...)`.
