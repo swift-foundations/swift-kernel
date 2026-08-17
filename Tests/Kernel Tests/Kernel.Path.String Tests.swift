@@ -119,7 +119,8 @@ extension Path.String {
                     #expect(error.body == nil)
                 },
                 { () throws(E) in
-                    _ = try Path.scope("\0/tmp/file") { (_: borrowing Path.Borrowed) throws(Dummy) in
+                    _ = try Path.scope("\0/tmp/file") {
+                        (_: borrowing Path.Borrowed) throws(Dummy) in
                         ()  // never reached
                     }
                 }

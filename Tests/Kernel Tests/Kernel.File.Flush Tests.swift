@@ -60,7 +60,9 @@ extension Kernel.File.Flush {
 
 extension Kernel.File.Flush.Test.Directory {
     @Test
-    func `directory(path:) on the system temp directory succeeds (POSIX) / no-ops (Windows)`() throws {
+    func `directory(path:) on the system temp directory succeeds (POSIX) / no-ops (Windows)`()
+        throws
+    {
         let tempDir = Kernel.Temporary.directory
         try Path.scope(tempDir) { dirPath in
             // Cross-platform contract:

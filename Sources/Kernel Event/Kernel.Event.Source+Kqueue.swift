@@ -141,7 +141,11 @@
 
                 let driver = Kernel.Event.Driver(
                     add: {
-                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                        (
+                            fd: borrowing Kernel.Descriptor,
+                            id: Kernel.Event.ID,
+                            interest: Kernel.Event.Interest
+                        ) throws(Kernel.Event.Driver.Error) in
 
                         let events = kevents(fd: fd, id: id, interest: interest, flags: addFlags)
                         guard !events.isEmpty else { return }
@@ -152,12 +156,19 @@
                         }
                     },
                     modify: {
-                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, old: Kernel.Event.Interest, new: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                        (
+                            fd: borrowing Kernel.Descriptor,
+                            id: Kernel.Event.ID,
+                            old: Kernel.Event.Interest,
+                            new: Kernel.Event.Interest
+                        ) throws(Kernel.Event.Driver.Error) in
 
                         let toRemove = old.subtracting(new)
                         let toAdd = new.subtracting(old)
                         var events = kevents(fd: fd, id: id, interest: toRemove, flags: .delete)
-                        events.append(contentsOf: kevents(fd: fd, id: id, interest: toAdd, flags: addFlags))
+                        events.append(
+                            contentsOf: kevents(fd: fd, id: id, interest: toAdd, flags: addFlags)
+                        )
                         guard !events.isEmpty else { return }
                         do throws(Kernel.Kqueue.Error) {
                             try state.kq.register(events: events)
@@ -166,7 +177,11 @@
                         }
                     },
                     remove: {
-                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                        (
+                            fd: borrowing Kernel.Descriptor,
+                            id: Kernel.Event.ID,
+                            interest: Kernel.Event.Interest
+                        ) throws(Kernel.Event.Driver.Error) in
 
                         let events = kevents(fd: fd, id: id, interest: interest, flags: .delete)
                         guard !events.isEmpty else { return }
@@ -182,7 +197,11 @@
                         }
                     },
                     arm: {
-                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                        (
+                            fd: borrowing Kernel.Descriptor,
+                            id: Kernel.Event.ID,
+                            interest: Kernel.Event.Interest
+                        ) throws(Kernel.Event.Driver.Error) in
 
                         let armFlags: Kernel.Kqueue.Flags = .add | .enable | .clear | .dispatch
                         let events = kevents(fd: fd, id: id, interest: interest, flags: armFlags)
@@ -194,7 +213,10 @@
                         }
                     },
                     poll: {
-                        (deadline: Clock.Continuous.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
+                        (
+                            deadline: Clock.Continuous.Deadline?,
+                            output: inout [Kernel.Event]
+                        ) throws(Kernel.Event.Driver.Error) -> Int in
 
                         let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
 
@@ -231,7 +253,9 @@
                             let raw = state.rawEvents[i]
                             if raw.filter == .user { continue }
 
-                            let id = raw.data.map { UInt(truncatingIfNeeded: $0) }.retag(Kernel.Event.self)
+                            let id = raw.data.map { UInt(truncatingIfNeeded: $0) }.retag(
+                                Kernel.Event.self
+                            )
 
                             var interest: Kernel.Event.Interest = []
                             if raw.filter == .read { interest.insert(.read) }
@@ -249,7 +273,11 @@
                             if raw.flags.contains(.error) { flags.insert(.error) }
 
                             guard writeIdx < output.count else { break }
-                            output[writeIdx] = Kernel.Event(id: id, interest: interest, flags: flags)
+                            output[writeIdx] = Kernel.Event(
+                                id: id,
+                                interest: interest,
+                                flags: flags
+                            )
                             writeIdx += 1
                         }
                         return writeIdx

@@ -63,7 +63,9 @@ import Testing
         // event at a time — every registration must eventually be observed
         // exactly once, never silently discarded by an over-sized kernel
         // dequeue request.
-        @Test func `poll with output buffer smaller than ready registrations does not drop events`() throws {
+        @Test func `poll with output buffer smaller than ready registrations does not drop events`()
+            throws
+        {
             let pipeA = try Kernel.Event.Test.makePipe()
             let pipeB = try Kernel.Event.Test.makePipe()
 
@@ -121,7 +123,9 @@ import Testing
         // event at a time — every registration must eventually be observed
         // exactly once, never silently discarded by an over-sized kernel
         // dequeue request.
-        @Test func `poll with output buffer smaller than ready registrations does not drop events`() throws {
+        @Test func `poll with output buffer smaller than ready registrations does not drop events`()
+            throws
+        {
             let pipeA = try Kernel.Event.Test.makePipe()
             let pipeB = try Kernel.Event.Test.makePipe()
 

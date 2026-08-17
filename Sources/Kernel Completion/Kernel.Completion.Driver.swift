@@ -108,7 +108,9 @@ extension Kernel.Completion {
         // MARK: - Init
 
         public init(
-            submit: @escaping (Kernel.Completion.Submission, borrowing Kernel.Descriptor) throws(Kernel.Completion.Error) -> Void,
+            submit:
+                @escaping (Kernel.Completion.Submission, borrowing Kernel.Descriptor) throws(Kernel
+                .Completion.Error) -> Void,
             flush: @escaping () throws(Kernel.Completion.Error) -> Submission.Count,
             drain: @escaping ((Kernel.Completion.Event) -> Void) -> Event.Count,
             close: @escaping () -> Void,

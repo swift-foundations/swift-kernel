@@ -206,7 +206,11 @@
 
                 let driver = Kernel.Event.Driver(
                     add: {
-                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                        (
+                            fd: borrowing Kernel.Descriptor,
+                            id: Kernel.Event.ID,
+                            interest: Kernel.Event.Interest
+                        ) throws(Kernel.Event.Driver.Error) in
 
                         let event = Linux.Kernel.Event.Poll.Event(
                             events: events(oneShot: interest),
@@ -219,7 +223,12 @@
                         }
                     },
                     modify: {
-                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, _: Kernel.Event.Interest, new: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                        (
+                            fd: borrowing Kernel.Descriptor,
+                            id: Kernel.Event.ID,
+                            _: Kernel.Event.Interest,
+                            new: Kernel.Event.Interest
+                        ) throws(Kernel.Event.Driver.Error) in
 
                         let event = Linux.Kernel.Event.Poll.Event(
                             events: events(oneShot: new),
@@ -232,7 +241,11 @@
                         }
                     },
                     remove: {
-                        (fd: borrowing Kernel.Descriptor, _: Kernel.Event.ID, _: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                        (
+                            fd: borrowing Kernel.Descriptor,
+                            _: Kernel.Event.ID,
+                            _: Kernel.Event.Interest
+                        ) throws(Kernel.Event.Driver.Error) in
 
                         do throws(Linux.Kernel.Event.Poll.Error) {
                             try state.epoll.remove(fd: fd)
@@ -246,7 +259,11 @@
                         }
                     },
                     arm: {
-                        (fd: borrowing Kernel.Descriptor, id: Kernel.Event.ID, interest: Kernel.Event.Interest) throws(Kernel.Event.Driver.Error) in
+                        (
+                            fd: borrowing Kernel.Descriptor,
+                            id: Kernel.Event.ID,
+                            interest: Kernel.Event.Interest
+                        ) throws(Kernel.Event.Driver.Error) in
 
                         let event = Linux.Kernel.Event.Poll.Event(
                             events: events(oneShot: interest),
@@ -259,7 +276,10 @@
                         }
                     },
                     poll: {
-                        (deadline: Clock.Continuous.Deadline?, output: inout [Kernel.Event]) throws(Kernel.Event.Driver.Error) -> Int in
+                        (
+                            deadline: Clock.Continuous.Deadline?,
+                            output: inout [Kernel.Event]
+                        ) throws(Kernel.Event.Driver.Error) -> Int in
 
                         let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
 
@@ -276,7 +296,10 @@
                         let count: Int
                         do throws(Linux.Kernel.Event.Poll.Error) {
                             if requestCount == state.rawEvents.count {
-                                count = try state.epoll.poll(events: &state.rawEvents, timeout: timeout)
+                                count = try state.epoll.poll(
+                                    events: &state.rawEvents,
+                                    timeout: timeout
+                                )
                             } else {
                                 var scratch = Array(state.rawEvents[0..<requestCount])
                                 count = try state.epoll.poll(events: &scratch, timeout: timeout)
@@ -296,7 +319,11 @@
                             guard let id = Kernel.Event.ID(pollData: raw.data) else { continue }
                             let (interest, flags) = normalize(raw.events)
                             guard writeIdx < output.count else { break }
-                            output[writeIdx] = Kernel.Event(id: id, interest: interest, flags: flags)
+                            output[writeIdx] = Kernel.Event(
+                                id: id,
+                                interest: interest,
+                                flags: flags
+                            )
                             writeIdx += 1
                         }
                         return writeIdx

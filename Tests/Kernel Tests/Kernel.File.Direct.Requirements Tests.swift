@@ -106,12 +106,14 @@ extension Kernel.File.Direct.Requirements.Test.Unit {
 extension Kernel.File.Direct.Requirements.Test.Unit {
     @Test
     func `Alignment type exists`() {
-        let _: Kernel.File.Direct.Requirements.Alignment.Type = Kernel.File.Direct.Requirements.Alignment.self
+        let _: Kernel.File.Direct.Requirements.Alignment.Type = Kernel.File.Direct.Requirements
+            .Alignment.self
     }
 
     @Test
     func `Reason type exists`() {
-        let _: Kernel.File.Direct.Requirements.Reason.Type = Kernel.File.Direct.Requirements.Reason.self
+        let _: Kernel.File.Direct.Requirements.Reason.Type = Kernel.File.Direct.Requirements.Reason
+            .self
     }
 }
 

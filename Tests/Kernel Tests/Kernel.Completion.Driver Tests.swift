@@ -20,7 +20,7 @@
 
     extension Kernel.Completion.Driver.Test.Unit {
         @Test
-        func `init wires submit closure`() {
+        func `init wires submit closure`() throws {
             var called = false
             let driver = Kernel.Completion.Driver(
                 submit: { _, _ in called = true },
@@ -29,7 +29,7 @@
                 close: {}
             )
             let sentinel = Kernel.Descriptor.invalid
-            try! driver._submit(
+            try driver._submit(
                 Kernel.Completion.Submission(opcode: .noOperation, token: .zero),
                 sentinel
             )
@@ -37,7 +37,7 @@
         }
 
         @Test
-        func `init wires flush closure`() {
+        func `init wires flush closure`() throws {
             var called = false
             let driver = Kernel.Completion.Driver(
                 submit: { _, _ in },
@@ -48,7 +48,7 @@
                 drain: { _ in .zero },
                 close: {}
             )
-            _ = try! driver._flush()
+            _ = try driver._flush()
             #expect(called)
         }
 

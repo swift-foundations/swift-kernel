@@ -45,7 +45,9 @@
             /// Takes consuming ownership of the descriptor. On success, the
             /// registration owns the descriptor (closed on deregister/drain).
             /// On failure, the descriptor is dropped — deinit closes it.
-            package let _register: (consuming Kernel.Descriptor, Kernel.Event.Interest) throws(Error) -> Kernel.Event.ID
+            package let _register:
+                (consuming Kernel.Descriptor, Kernel.Event.Interest) throws(Error) ->
+                    Kernel.Event.ID
 
             /// Updates the registration's configured interest set.
             ///
@@ -70,7 +72,8 @@
             /// `events` and returns the number written. Backend translation may
             /// discard backend-local wakeup artifacts; driver filtering may
             /// discard stale registrations.
-            package let _poll: (Clock.Continuous.Deadline?, inout [Kernel.Event]) throws(Error) -> Int
+            package let _poll:
+                (Clock.Continuous.Deadline?, inout [Kernel.Event]) throws(Error) -> Int
 
             /// Drains the registry and cleans up backend resources.
             package let _close: () -> Void
@@ -101,11 +104,30 @@
             ///     native timeout format (clock access is platform-specific).
             ///   - close: Clean up backend resources. Called after the registry is drained.
             public init(
-                add: @escaping (_ fd: borrowing Kernel.Descriptor, _ id: Kernel.Event.ID, _ interest: Kernel.Event.Interest) throws(Error) -> Void,
-                modify: @escaping (_ fd: borrowing Kernel.Descriptor, _ id: Kernel.Event.ID, _ old: Kernel.Event.Interest, _ new: Kernel.Event.Interest) throws(Error) -> Void,
-                remove: @escaping (_ fd: borrowing Kernel.Descriptor, _ id: Kernel.Event.ID, _ interest: Kernel.Event.Interest) throws(Error) -> Void,
-                arm: @escaping (_ fd: borrowing Kernel.Descriptor, _ id: Kernel.Event.ID, _ interest: Kernel.Event.Interest) throws(Error) -> Void,
-                poll: @escaping (_ deadline: Clock.Continuous.Deadline?, _ output: inout [Kernel.Event]) throws(Error) -> Int,
+                add:
+                    @escaping (
+                        _ fd: borrowing Kernel.Descriptor, _ id: Kernel.Event.ID,
+                        _ interest: Kernel.Event.Interest
+                    ) throws(Error) -> Void,
+                modify:
+                    @escaping (
+                        _ fd: borrowing Kernel.Descriptor, _ id: Kernel.Event.ID,
+                        _ old: Kernel.Event.Interest, _ new: Kernel.Event.Interest
+                    ) throws(Error) -> Void,
+                remove:
+                    @escaping (
+                        _ fd: borrowing Kernel.Descriptor, _ id: Kernel.Event.ID,
+                        _ interest: Kernel.Event.Interest
+                    ) throws(Error) -> Void,
+                arm:
+                    @escaping (
+                        _ fd: borrowing Kernel.Descriptor, _ id: Kernel.Event.ID,
+                        _ interest: Kernel.Event.Interest
+                    ) throws(Error) -> Void,
+                poll:
+                    @escaping (
+                        _ deadline: Clock.Continuous.Deadline?, _ output: inout [Kernel.Event]
+                    ) throws(Error) -> Int,
                 close: @escaping () -> Void
             ) {
                 // Thread-confined mutable state captured by all witness closures.
@@ -114,7 +136,9 @@
                     /// The registration column — the move-only ADT-families Dictionary
                     /// over the default ordered hashed entry column, pinned through the
                     /// canonical `Dictionary<Key, Value>` front door ([DS-028]).
-                    typealias Registry = Dictionary_Primitives.Dictionary<Kernel.Event.ID, Registration>
+                    typealias Registry = Dictionary_Primitives.Dictionary<
+                        Kernel.Event.ID, Registration
+                    >
                     var nextID = Kernel.Event.ID.zero
                     var registry = Registry()
                 }
@@ -122,7 +146,10 @@
                 let shared = Shared()
 
                 self._register = {
-                    (descriptor: consuming Kernel.Descriptor, interest: Kernel.Event.Interest) throws(Error) -> Kernel.Event.ID in
+                    (
+                        descriptor: consuming Kernel.Descriptor,
+                        interest: Kernel.Event.Interest
+                    ) throws(Error) -> Kernel.Event.ID in
 
                     shared.nextID = shared.nextID.map { $0 &+ 1 }
                     let id = shared.nextID
@@ -131,7 +158,10 @@
                     try add(descriptor, id, interest)
 
                     var box: Kernel.Descriptor? = consume descriptor
-                    shared.registry.insert(key: id, value: Registration(descriptor: box.take()!, interest: interest))
+                    shared.registry.insert(
+                        key: id,
+                        value: Registration(descriptor: box.take()!, interest: interest)
+                    )
 
                     return id
                 }
@@ -184,7 +214,10 @@
                 }
 
                 self._poll = {
-                    (deadline: Clock.Continuous.Deadline?, buffer: inout [Kernel.Event]) throws(Error) -> Int in
+                    (
+                        deadline: Clock.Continuous.Deadline?,
+                        buffer: inout [Kernel.Event]
+                    ) throws(Error) -> Int in
 
                     // Backend fills buffer with normalized events.
                     // The backend converts deadline → native timeout (clock access is platform-specific).
@@ -213,7 +246,9 @@
                     // full-duplex load.
                     for i in 0..<write {
                         let event = buffer[i]
-                        guard var entry = shared.registry.removeValue(forKey: event.id) else { continue }
+                        guard var entry = shared.registry.removeValue(forKey: event.id) else {
+                            continue
+                        }
                         let residual = entry.armedInterest.subtracting(event.interest)
                         entry.armedInterest = residual
                         if !residual.isEmpty {

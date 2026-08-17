@@ -403,7 +403,8 @@
             // Each closure is a one-line delegation to State.
 
             let driver = Driver(
-                submit: { (submission: Submission, target: borrowing Kernel.Descriptor) throws(Error) in
+                submit: {
+                    (submission: Submission, target: borrowing Kernel.Descriptor) throws(Error) in
                     try state.enqueue(submission, target: target)
                 },
                 flush: { () throws(Error) -> Submission.Count in

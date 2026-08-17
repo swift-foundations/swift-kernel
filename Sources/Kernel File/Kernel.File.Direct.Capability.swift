@@ -52,10 +52,6 @@ extension Kernel.File.Direct.Capability {
     /// Direct I/O properties accessor.
     public struct Direct: Sendable {
         let capability: Kernel.File.Direct.Capability
-
-        init(capability: Kernel.File.Direct.Capability) {
-            self.capability = capability
-        }
     }
 }
 
@@ -76,10 +72,6 @@ extension Kernel.File.Direct.Capability {
     /// Cache bypass properties accessor.
     public struct Bypass: Sendable {
         let capability: Kernel.File.Direct.Capability
-
-        init(capability: Kernel.File.Direct.Capability) {
-            self.capability = capability
-        }
     }
 }
 
