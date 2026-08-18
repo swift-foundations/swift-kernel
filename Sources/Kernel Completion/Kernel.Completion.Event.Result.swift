@@ -21,9 +21,8 @@ extension Kernel.Completion.Event {
     /// creates ``Kernel/Error/Code`` from the raw value based on
     /// the platform's error reporting convention.
     public struct Result: Sendable, Equatable, Hashable {
-        @_spi(Syscall) public let rawValue: Int32
+        public let rawValue: Int32
 
-        @_spi(Syscall)
         public init(rawValue: Int32) {
             self.rawValue = rawValue
         }

@@ -122,3 +122,26 @@
         public typealias Descriptor = Windows.Kernel.Socket.Descriptor
     }
 #endif
+
+// MARK: - Lock (three-tier per [PLAT-ARCH-005] / [PLAT-ARCH-008e])
+//
+// Byte-range file locking is canonical at the L2 spec packages
+// (`ISO_9945.Kernel.Lock` at swift-iso-9945; `Windows.\`32\`.Kernel.Lock` at
+// swift-windows-32) and wrapped by the L3-policy packages as
+// `POSIX.Kernel.Lock` / `Windows.Kernel.Lock`. Exporting the matching
+// L3-policy target here is what makes `Kernel.Lock` — the converged name
+// portable code consumes — resolve on every supported platform through the
+// `Kernel` typealias above.
+//
+// Before this export the only realised lock policy was swift-posix's, so a
+// portable consumer had to name `POSIX.Kernel.Lock` directly. That is an
+// unconditional edge from portable code to a host substrate: it compiles on
+// POSIX and drags swift-iso-9945 into the Windows build, where it does not
+// compile. Consumers now depend on this converged owner instead, and the
+// platform substrate is reached only behind the conditions below.
+
+#if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+    @_exported public import POSIX_Kernel_Lock
+#elseif os(Windows)
+    @_exported public import Windows_Kernel_Lock
+#endif
