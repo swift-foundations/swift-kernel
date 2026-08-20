@@ -71,7 +71,8 @@ extension Kernel.Thread {
         let incoming = Ownership.Transfer.Value<Swift.Result<Output, Failure>>.Incoming()
         let token = incoming.token
 
-        try withoutActuallyEscaping(operation) { operation throws(Kernel.Thread.Run.Error<Failure>) in
+        try withoutActuallyEscaping(operation) {
+            operation throws(Kernel.Thread.Run.Error<Failure>) in
             try withUnsafePointer(to: input) { input throws(Kernel.Thread.Run.Error<Failure>) in
                 let handle: Kernel.Thread.Handle
 
@@ -105,6 +106,7 @@ extension Kernel.Thread {
         switch consume result {
         case .success(let output):
             return output
+
         case .failure(let error):
             throw .operation(error)
         }

@@ -9,7 +9,7 @@ let package = Package(
         .iOS(.v27),
         .tvOS(.v27),
         .watchOS(.v27),
-        .visionOS(.v27)
+        .visionOS(.v27),
     ],
     products: [
         // MARK: - Core
@@ -58,37 +58,112 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/swift-primitives/swift-clock-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-system-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-binary-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-cardinal-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-tagged-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-time-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-ascii-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-dimension-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-queue-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-reference-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-ownership-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-error-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-random-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-path-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-string-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-memory-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-dictionary-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-hash-table-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-hash-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-buffer-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-buffer-linear-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-storage-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-memory-heap-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-memory-allocation-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-terminal-primitives.git", branch: "main"),
+        .package(
+            url: "https://github.com/swift-primitives/swift-clock-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-system-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-binary-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-cardinal-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-tagged-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-time-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-ascii-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-dimension-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-queue-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-reference-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-ownership-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-error-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-random-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-path-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-string-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-memory-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-dictionary-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-hash-table-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-hash-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-buffer-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-buffer-linear-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-storage-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-memory-heap-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-memory-allocation-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-terminal-primitives.git",
+            branch: "main"
+        ),
         .package(url: "https://github.com/swift-foundations/swift-cpu.git", branch: "main"),
         .package(url: "https://github.com/swift-foundations/swift-posix.git", branch: "main"),
         .package(url: "https://github.com/swift-foundations/swift-darwin.git", branch: "main"),
         .package(url: "https://github.com/swift-foundations/swift-linux.git", branch: "main"),
         .package(url: "https://github.com/swift-foundations/swift-windows.git", branch: "main"),
-        .package(url: "https://github.com/swift-foundations/swift-strings.git", branch: "main")
+        .package(url: "https://github.com/swift-foundations/swift-strings.git", branch: "main"),
     ],
     targets: [
         // MARK: - Core
@@ -111,14 +186,46 @@ let package = Package(
                 .product(name: "Ownership Primitives", package: "swift-ownership-primitives"),
                 .product(name: "Dimension Primitives", package: "swift-dimension-primitives"),
                 .product(name: "Queue Primitives", package: "swift-queue-primitives"),
-                .product(name: "POSIX Kernel", package: "swift-posix", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "Darwin Kernel", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
-                .product(name: "Darwin System", package: "swift-darwin", condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
-                .product(name: "Linux Kernel", package: "swift-linux", condition: .when(platforms: [.linux])),
-                .product(name: "Linux System", package: "swift-linux", condition: .when(platforms: [.linux])),
-                .product(name: "Windows Kernel", package: "swift-windows", condition: .when(platforms: [.windows])),
-                .product(name: "Windows Kernel Clock", package: "swift-windows", condition: .when(platforms: [.windows])),
-                .product(name: "Windows Kernel Process", package: "swift-windows", condition: .when(platforms: [.windows])),
+                .product(
+                    name: "POSIX Kernel",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
+                .product(
+                    name: "Darwin Kernel",
+                    package: "swift-darwin",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])
+                ),
+                .product(
+                    name: "Darwin System",
+                    package: "swift-darwin",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])
+                ),
+                .product(
+                    name: "Linux Kernel",
+                    package: "swift-linux",
+                    condition: .when(platforms: [.linux])
+                ),
+                .product(
+                    name: "Linux System",
+                    package: "swift-linux",
+                    condition: .when(platforms: [.linux])
+                ),
+                .product(
+                    name: "Windows Kernel",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
+                .product(
+                    name: "Windows Kernel Clock",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
+                .product(
+                    name: "Windows Kernel Process",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
             ]
         ),
 
@@ -135,8 +242,11 @@ let package = Package(
                 "Kernel Core",
                 "Kernel System",
                 .product(name: "Error Primitives", package: "swift-error-primitives"),
-                .product(name: "Windows Kernel Thread", package: "swift-windows",
-                         condition: .when(platforms: [.windows])),
+                .product(
+                    name: "Windows Kernel Thread",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
             ]
         ),
 
@@ -149,8 +259,11 @@ let package = Package(
                 .product(name: "Error Primitives", package: "swift-error-primitives"),
                 .product(name: "Memory Primitives", package: "swift-memory-primitives"),
                 .product(name: "Path Primitives", package: "swift-path-primitives"),
-                .product(name: "Windows Kernel File", package: "swift-windows",
-                         condition: .when(platforms: [.windows])),
+                .product(
+                    name: "Windows Kernel File",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
             ]
         ),
 
@@ -164,16 +277,34 @@ let package = Package(
                 .product(name: "Hash Indexed Primitive", package: "swift-hash-table-primitives"),
                 .product(name: "Hash Tagged Primitives", package: "swift-hash-primitives"),
                 .product(name: "Buffer Primitive", package: "swift-buffer-primitives"),
-                .product(name: "Buffer Linear Primitive", package: "swift-buffer-linear-primitives"),
-                .product(name: "Buffer Linear Primitives", package: "swift-buffer-linear-primitives"),
+                .product(
+                    name: "Buffer Linear Primitive",
+                    package: "swift-buffer-linear-primitives"
+                ),
+                .product(
+                    name: "Buffer Linear Primitives",
+                    package: "swift-buffer-linear-primitives"
+                ),
                 .product(name: "Storage Primitive", package: "swift-storage-primitives"),
-                .product(name: "Storage Contiguous Primitives", package: "swift-storage-primitives"),
+                .product(
+                    name: "Storage Contiguous Primitives",
+                    package: "swift-storage-primitives"
+                ),
                 .product(name: "Memory Heap Primitives", package: "swift-memory-heap-primitives"),
-                .product(name: "Memory Allocator Primitive", package: "swift-memory-allocation-primitives"),
-                .product(name: "POSIX Kernel Descriptor", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "Linux Kernel Event", package: "swift-linux",
-                         condition: .when(platforms: [.linux])),
+                .product(
+                    name: "Memory Allocator Primitive",
+                    package: "swift-memory-allocation-primitives"
+                ),
+                .product(
+                    name: "POSIX Kernel Descriptor",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
+                .product(
+                    name: "Linux Kernel Event",
+                    package: "swift-linux",
+                    condition: .when(platforms: [.linux])
+                ),
             ]
         ),
 
@@ -187,10 +318,16 @@ let package = Package(
                 // is acyclic (`Kernel Event` depends only on `Kernel Core` plus
                 // primitives) and unconditional, matching the umbrella.
                 "Kernel Event",
-                .product(name: "Linux Kernel IO Uring", package: "swift-linux",
-                         condition: .when(platforms: [.linux])),
-                .product(name: "Windows Kernel File", package: "swift-windows",
-                         condition: .when(platforms: [.windows])),
+                .product(
+                    name: "Linux Kernel IO Uring",
+                    package: "swift-linux",
+                    condition: .when(platforms: [.linux])
+                ),
+                .product(
+                    name: "Windows Kernel File",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
             ]
         ),
 
@@ -201,10 +338,16 @@ let package = Package(
             name: "Kernel Clock",
             dependencies: [
                 .product(name: "Clock Primitives", package: "swift-clock-primitives"),
-                .product(name: "POSIX Kernel Clock", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "Windows Kernel Clock", package: "swift-windows",
-                         condition: .when(platforms: [.windows])),
+                .product(
+                    name: "POSIX Kernel Clock",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
+                .product(
+                    name: "Windows Kernel Clock",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
             ]
         ),
 
@@ -218,8 +361,11 @@ let package = Package(
             dependencies: [
                 "Kernel Core",
                 .product(name: "Terminal Primitives", package: "swift-terminal-primitives"),
-                .product(name: "POSIX Kernel Terminal", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
+                .product(
+                    name: "POSIX Kernel Terminal",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
             ]
         ),
 
@@ -234,22 +380,46 @@ let package = Package(
                 "Kernel Event",
                 "Kernel Completion",
                 "Kernel Clock",
-                .product(name: "POSIX Kernel Descriptor", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "POSIX Kernel Directory", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "POSIX Kernel Socket", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "POSIX Kernel Socket Address", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "POSIX Kernel Lock", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
-                .product(name: "Windows Kernel Descriptor", package: "swift-windows",
-                         condition: .when(platforms: [.windows])),
-                .product(name: "Windows Kernel Lock", package: "swift-windows",
-                         condition: .when(platforms: [.windows])),
-                .product(name: "Windows Kernel Socket", package: "swift-windows",
-                         condition: .when(platforms: [.windows])),
+                .product(
+                    name: "POSIX Kernel Descriptor",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
+                .product(
+                    name: "POSIX Kernel Directory",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
+                .product(
+                    name: "POSIX Kernel Socket",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
+                .product(
+                    name: "POSIX Kernel Socket Address",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
+                .product(
+                    name: "POSIX Kernel Lock",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
+                .product(
+                    name: "Windows Kernel Descriptor",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
+                .product(
+                    name: "Windows Kernel Lock",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
+                .product(
+                    name: "Windows Kernel Socket",
+                    package: "swift-windows",
+                    condition: .when(platforms: [.windows])
+                ),
             ]
         ),
 
@@ -258,7 +428,7 @@ let package = Package(
             name: "Kernel Test Support",
             dependencies: [
                 "Kernel",
-                .product(name: "Strings", package: "swift-strings")
+                .product(name: "Strings", package: "swift-strings"),
             ],
             path: "Tests/Support",
             exclude: ["_Lock Test Process"]
@@ -269,8 +439,11 @@ let package = Package(
             dependencies: [
                 "Kernel",
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
-                .product(name: "POSIX Kernel Descriptor", package: "swift-posix",
-                         condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])),
+                .product(
+                    name: "POSIX Kernel Descriptor",
+                    package: "swift-posix",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS, .linux])
+                ),
             ],
             path: "Tests/Support/_Lock Test Process"
         ),
@@ -284,7 +457,10 @@ let package = Package(
                 "Kernel Event",
                 "Kernel Completion",
                 "Kernel Test Support",
-                .product(name: "Tagged Primitives Standard Library Integration", package: "swift-tagged-primitives"),
+                .product(
+                    name: "Tagged Primitives Standard Library Integration",
+                    package: "swift-tagged-primitives"
+                ),
             ],
             path: "Tests/Kernel Tests"
         ),
