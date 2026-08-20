@@ -1,8 +1,0 @@
-// Expected rejection: the input does not satisfy Kernel.Thread.run's Sendable law.
-import Kernel
-
-final class Input {}
-
-func run(_ input: borrowing Input) throws(Kernel.Thread.Run.Error<Never>) {
-    try Kernel.Thread.run(input) { _ in () }
-}

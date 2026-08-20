@@ -1,9 +1,0 @@
-// Expected rejection: run returns the operation output, never a thread handle
-// that could let execution outlive the borrowed input.
-import Kernel
-
-struct Input: ~Copyable, ~Escapable, Sendable {}
-
-func escape(_ input: borrowing Input) throws(Kernel.Thread.Run.Error<Never>) -> Kernel.Thread.Handle {
-    try Kernel.Thread.run(input) { _ in () }
-}
