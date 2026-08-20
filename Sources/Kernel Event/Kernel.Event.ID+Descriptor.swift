@@ -18,7 +18,7 @@
 // whole-file to match the IO Events / IO Completions posture — the Windows
 // leg never constructs an event reactor.
 #if !os(Windows)
-    import Tagged_Primitives
+    @_spi(Internal) import Tagged_Primitives
     public import POSIX_Kernel_Descriptor
 
     extension Tagged where Tag == Kernel.Event, Underlying == UInt {
