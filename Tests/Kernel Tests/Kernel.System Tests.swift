@@ -1,20 +1,7 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel_Test_Support
 import Testing
 
 @testable import Kernel
-
-// MARK: - System.Memory Tests
 
 extension System.Memory {
     @Suite struct Test {
@@ -22,10 +9,6 @@ extension System.Memory {
     }
 }
 
-// F-001: `System.Memory.total` exists only on Apple platforms (swift-darwin)
-// and Linux (swift-linux) — see Sources/Kernel System/Kernel.System.Memory.Total.swift.
-// It is deliberately absent (compile-time, not a runtime crash) on
-// Android/OpenBSD/Windows, so these tests are gated to where the API exists.
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS) || os(Linux)
 
     extension System.Memory.Test.Unit {
@@ -52,8 +35,6 @@ extension System.Memory {
 
 #endif
 
-// MARK: - System.Processor Tests
-
 extension System.Processor {
     @Suite struct Test {
         @Suite struct Unit {}
@@ -73,8 +54,6 @@ extension System.Processor.Test.Unit {
         #expect(value <= 4096)
     }
 }
-
-// MARK: - System.Processor.Physical Tests
 
 extension System.Processor.Physical {
     @Suite struct Test {

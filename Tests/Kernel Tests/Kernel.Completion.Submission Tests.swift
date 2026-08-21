@@ -1,12 +1,3 @@
-//
-//  Kernel.Completion.Submission Tests.swift
-//  swift-kernel-primitives
-//
-
-// `Submission.Opcode.readiness` carries `Kernel.Event.Interest`, which the
-// vocabulary hoist moved into the `Kernel Event` target. `Kernel_Completion`
-// does not re-export it, so the declaring module is imported per-file
-// (#MemberImportVisibility).
 import Kernel_Event
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
@@ -14,10 +5,7 @@ import Testing
 @testable import Kernel_Completion
 
 #if os(Windows)
-    // `Kernel.File.Offset` is declared in the L3 Windows_Kernel_File module,
-    // which `Kernel_Completion`'s exports do not re-export — imported
-    // per-file (#MemberImportVisibility), matching the idiom used in
-    // Sources/Kernel Completion/Kernel.Completion.Submission.Opcode.swift.
+
     public import Windows_Kernel_File
 #endif
 
@@ -27,8 +15,6 @@ extension Kernel.Completion.Submission {
         @Suite struct Unit {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.Completion.Submission.Test.Unit {
     @Test
@@ -98,9 +84,6 @@ extension Kernel.Completion.Submission.Test.Unit {
         #expect(offset == nil)
     }
 
-    // `.readiness` is absent on Windows by design — see the `#if !os(Windows)`
-    // gate on the case declaration in
-    // Sources/Kernel Completion/Kernel.Completion.Submission.Opcode.swift.
     #if !os(Windows)
         @Test
         func `poll opcode carries descriptor interest`() {

@@ -1,30 +1,13 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 #if !os(Windows)
 
     public import Kernel
 
-    /// Test utilities for I/O operations.
-    ///
-    /// `Kernel.Descriptor` has a `deinit` that closes the fd automatically.
-    /// Tests just let descriptors go out of scope — no explicit close needed.
     public enum KernelIOTest {
-        /// Error thrown when temp file creation fails.
+
         public struct TempFileError: Swift.Error, Sendable {
             public init() {}
         }
 
-        /// ~Copyable temp file handle returned from `createTempFile`.
-        /// Owns the `Kernel.Descriptor`. Descriptor closes via deinit when dropped.
         public struct TempFile: ~Copyable, Sendable {
             public let path: Swift.String
             public let descriptor: Kernel.Descriptor
@@ -35,10 +18,6 @@
             }
         }
 
-        // MARK: - Direct helpers (open + defer close pattern)
-
-        /// Creates a temporary file and returns a ~Copyable TempFile.
-        /// Caller is responsible for path cleanup via `cleanupTempFile`.
         public static func createTempFile(prefix: Swift.String = "io-test") throws -> TempFile {
             let pathString = Kernel.Temporary.filePath(prefix: prefix)
             let fd = try Path.scope(pathString) { path in
@@ -52,8 +31,6 @@
             return TempFile(path: pathString, descriptor: fd)
         }
 
-        /// Creates a temporary file with content and returns a ~Copyable TempFile.
-        /// Caller is responsible for path cleanup via `cleanupTempFile`.
         public static func createTempFileWithContent(_ content: Swift.String, prefix: Swift.String = "io-test") throws -> TempFile {
             let tempFile = try createTempFile(prefix: prefix)
             var contentBytes = Array(content.utf8)
@@ -63,20 +40,12 @@
             return tempFile
         }
 
-        /// Cleans up a temporary file (deletes path).
-        /// Descriptor closes via deinit when tempFile drops.
         public static func cleanupTempFile(_ tempFile: borrowing TempFile) {
             try? Path.scope(tempFile.path) { p in
                 try Kernel.File.Delete.delete(p)
             }
         }
 
-        // MARK: - Closure-based helpers (preferred)
-
-        /// Creates a temporary file and executes the body with path and descriptor.
-        ///
-        /// The file is automatically cleaned up after the body completes.
-        /// Descriptor closes via deinit at end of scope.
         public static func withTempFile<R>(
             prefix: Swift.String = "io-test",
             _ body: (borrowing Path.Borrowed, borrowing Kernel.Descriptor) throws -> R
@@ -90,14 +59,13 @@
                     permissions: .ownerReadWrite
                 )
                 defer {
-                    // fd closes via deinit at end of scope
+
                     try? Kernel.File.Delete.delete(path)
                 }
                 return try body(path, fd)
             }
         }
 
-        /// Creates a temporary file with initial content and executes the body.
         public static func withTempFile<R>(
             content: Swift.String,
             prefix: Swift.String = "io-test",
@@ -112,7 +80,6 @@
             }
         }
 
-        /// Creates a temporary file for Handle tests and executes the body.
         public static func withTempFileForHandle<R>(
             content: Swift.String? = nil,
             prefix: Swift.String = "handle-test",
@@ -135,7 +102,7 @@
                 }
 
                 defer {
-                    // fd closes via deinit at end of scope
+
                     try? Kernel.File.Delete.delete(path)
                 }
 

@@ -1,17 +1,5 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.File.Direct.Requirements {
@@ -22,15 +10,13 @@ extension Kernel.File.Direct.Requirements {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.File.Direct.Requirements.Test.Unit {
     @Test
     func `known case exists`() {
         let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: .`4096`)
         let requirements = Kernel.File.Direct.Requirements.known(alignment)
         if case .known = requirements {
-            // Expected
+
         } else {
             Issue.record("Expected .known case")
         }
@@ -40,14 +26,12 @@ extension Kernel.File.Direct.Requirements.Test.Unit {
     func `unknown case exists`() {
         let requirements = Kernel.File.Direct.Requirements.unknown(reason: .platformUnsupported)
         if case .unknown = requirements {
-            // Expected
+
         } else {
             Issue.record("Expected .unknown case")
         }
     }
 }
-
-// MARK: - Initializer Tests
 
 extension Kernel.File.Direct.Requirements.Test.Unit {
     @Test
@@ -79,8 +63,6 @@ extension Kernel.File.Direct.Requirements.Test.Unit {
     }
 }
 
-// MARK: - Conformance Tests
-
 extension Kernel.File.Direct.Requirements.Test.Unit {
     @Test
     func `Requirements is Sendable`() {
@@ -101,8 +83,6 @@ extension Kernel.File.Direct.Requirements.Test.Unit {
     }
 }
 
-// MARK: - Nested Types
-
 extension Kernel.File.Direct.Requirements.Test.Unit {
     @Test
     func `Alignment type exists`() {
@@ -116,8 +96,6 @@ extension Kernel.File.Direct.Requirements.Test.Unit {
             .self
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.File.Direct.Requirements.Test.EdgeCase {
     @Test

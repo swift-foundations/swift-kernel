@@ -1,8 +1,3 @@
-//
-//  Kernel.Completion.Driver Tests.swift
-//  swift-kernel-primitives
-//
-
 #if KERNEL_AVAILABLE
 
     import Testing
@@ -15,8 +10,6 @@
             @Suite struct Unit {}
         }
     }
-
-    // MARK: - Unit Tests
 
     extension Kernel.Completion.Driver.Test.Unit {
         @Test

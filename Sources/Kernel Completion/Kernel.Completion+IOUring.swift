@@ -1,30 +1,9 @@
-//
-//  Kernel.Completion+IOUring.swift
-//  swift-kernel
-//
-//  io_uring–backed completion driver for Linux.
-//
-//  Dispatches on `Submission.Opcode` as an enum-with-associated-values
-//  so per-variant data (address/length/offset, cancel target, poll
-//  interest) is extracted by pattern matching. Opcodes without
-//  associated values cannot accidentally receive per-variant data.
-//
-//  INV-1: Zero SPI — all platform details encapsulated in L1 typed methods.
-//  INV-2: State class is file-private, captured by closures.
-//  INV-3: Ring owns descriptor — deinit unmaps regions then closes fd.
-//  INV-4: Boundary conversions use .retag() / .map(), not .rawValue at call sites.
-//
-
 #if os(Linux)
 
     import Kernel_Core
-    // `Submission.Opcode.readiness` carries `Kernel.Event.Interest`; the
-    // readiness bridge below names it, so the declaring module is imported
-    // per-file (#MemberImportVisibility).
+
     import Kernel_Event
     import Linux_Kernel_IO_Uring
-
-    // MARK: - Error Conversion
 
     extension Kernel.Completion.Error {
         fileprivate init(_ uringError: Kernel.IO.Uring.Error) {
@@ -44,18 +23,8 @@
         }
     }
 
-    // MARK: - Adapter Bridges
-    //
-    // Confine boundary conversions between ecosystem L1 types and
-    // io_uring's dimensional types to adapter-local extension inits.
-    // These are the only sites where `.rawValue` crosses the boundary.
-
     extension Kernel.IO.Uring.Length {
-        /// Bridge from cross-platform byte count to io_uring's UInt32 length.
-        ///
-        /// io_uring's length is UInt32; callers submitting a buffer larger
-        /// than UInt32.max must fragment. Backend expectation mirrors the
-        /// kernel ABI — the precondition is the contract.
+
         fileprivate init(_ count: Memory.Address.Count) {
             let raw = count.underlying.rawValue
             precondition(
@@ -67,11 +36,7 @@
     }
 
     extension Kernel.IO.Uring.Offset {
-        /// Bridge from `Kernel.File.Offset?` to io_uring's UInt64 offset.
-        ///
-        /// `nil` signals stream mode — translated to the io_uring sentinel
-        /// `UInt64.max` (which the kernel interprets as "use the current
-        /// file position"). Cross-platform code never sees the sentinel.
+
         fileprivate init(_ offset: Kernel.File.Offset?) {
             if let offset {
                 self.init(UInt64(bitPattern: offset.underlying))
@@ -82,21 +47,14 @@
     }
 
     extension Kernel.IO.Uring.Operation.Data {
-        /// Bridge from the cross-platform correlation token to the io_uring
-        /// per-operation user_data word.
+
         fileprivate init(_ token: Kernel.Completion.Token) {
             self.init(_unchecked: token.underlying)
         }
     }
 
     extension Linux.Kernel.Event.Interest {
-        /// Bridge from the cross-platform readiness vocabulary to the
-        /// package-local mirror the epoll mask initializer consumes.
-        ///
-        /// `Linux.Kernel.Event.Poll.Events.init(interest:)` deliberately takes
-        /// the Linux-owned `Interest` so the L2 package does not depend on the
-        /// L3 unifier's vocabulary type; the L3 unifier is the only layer that
-        /// can see both, so the projection lives at this adapter boundary.
+
         fileprivate init(_ interest: Kernel.Event.Interest) {
             var projected: Self = []
             if interest.contains(.read) { projected.insert(.read) }
@@ -106,16 +64,6 @@
         }
     }
 
-    // MARK: - State (INV-2)
-
-    /// Factory-local state for the io_uring backend.
-    ///
-    /// Thread-confined to the event loop thread. Captured by non-`@Sendable`
-    /// driver closures. NOT `Sendable`.
-    ///
-    /// The ring owns its descriptor (INV-3) — deinit unmaps SQ/CQ regions
-    /// then closes the fd. The eventfd descriptor is consumed into
-    /// ``Kernel/Completion/Notification`` and owned there — not stored here.
     private final class UringState {
         private var uring: Kernel.IO.Uring
         private let cqCapacity: Kernel.IO.Uring.Completion.Count
@@ -131,13 +79,6 @@
 
     extension UringState {
 
-        // MARK: Domain Operations
-
-        /// Place an operation in the submission queue.
-        ///
-        /// Fills the current SQE slot by pattern matching the submission's
-        /// opcode, then advances the tail. Does NOT notify the kernel —
-        /// call ``flush()`` to submit.
         func enqueue(
             _ submission: Kernel.Completion.Submission,
             target: borrowing Kernel.Descriptor
@@ -145,19 +86,6 @@
             try Self.enqueue(into: &uring, submission, target: target)
         }
 
-        /// SQE fill hoisted onto an `inout` ring parameter.
-        ///
-        /// WHY: spelling the `uring.next.entry` chain on the class's stored
-        /// property trips a SILGen assertion on the Swift 6.4 release-floor
-        /// toolchain (`SILGenLValue.cpp:3203`,
-        /// `SILGenBorrowedBaseVisitor::getLookupExprBaseLValue`,
-        /// `!e->getType()->is<LValueType>()`) — the borrowed-base visitor
-        /// cannot lower a `mutating _read` (`next`) chained through a
-        /// `~Copyable ~Escapable` slot when the base is a class ivar lvalue.
-        /// Routing the same chain through an `inout` parameter lowers cleanly.
-        /// Call-site spelling and semantics are unchanged (#105 hoist pattern).
-        /// TRACKING: swift-institute/Issues#108 — remove the hoist when the
-        /// pinned toolchain no longer asserts on the class-ivar spelling.
         private static func enqueue(
             into uring: inout Kernel.IO.Uring,
             _ submission: Kernel.Completion.Submission,
@@ -250,11 +178,7 @@
                 )
 
             case .readiness(let events):
-                // Single-shot POLL_ADD: multishot: false makes the backend
-                // produce exactly one CQE when the requested readiness fires,
-                // then the registration is dropped. Callers re-submit for
-                // subsequent reads. Edge-triggered so the CQE fires on state
-                // change, not continuously while the condition holds.
+
                 uring.next.entry.poll(
                     target: uringTarget,
                     events: Linux.Kernel.Event.Poll.Events(
@@ -266,7 +190,6 @@
                 )
             }
 
-            // SQE-level flags (applied after the opcode-specific fill)
             if submission.flags.contains(.linked) {
                 uring.next.entry.flags.insert(.ioLink)
             }
@@ -278,18 +201,12 @@
             }
             if submission.flags.contains(.bufferSelect) {
                 uring.next.entry.flags.insert(.bufferSelect)
-                // FIXME: Buffer group ID requires _bufferGroup (internal to L2).
-                // Multishot read/recv overloads handle this internally.
-                // For the generic factory path, buffer group selection is deferred
-                // until _bufferGroup is promoted to package/public in L2.
+
             }
 
             uring.advance()
         }
 
-        /// Notify the kernel to process accumulated submissions.
-        ///
-        /// Returns the count of submissions accepted.
         func flush() throws(Kernel.Completion.Error) -> Kernel.Completion.Submission.Count {
             let flushed = uring.flush()
             guard flushed > .zero else { return .zero }
@@ -307,21 +224,11 @@
             return flushed.retag(Kernel.Completion.Submission.self)
         }
 
-        /// Drain completed operations from the completion queue via callback.
-        ///
-        /// Non-blocking shared-memory read. Advances CQ head as entries are
-        /// delivered — this is a protocol action, not ordinary iteration.
-        ///
-        /// Eventfd acknowledgment is the event loop's responsibility
-        /// (it reads the eventfd counter after epoll signals), not ours.
         func drain(
             _ visitor: (Kernel.Completion.Event) -> Void
         ) -> Kernel.Completion.Event.Count {
             let l1Count = uring.drain(limit: cqCapacity) { cqe in
-                // Reconstruct raw result from typed CQE API.
-                // Success: bytes.transferred gives Int(res) — works for
-                // bytes transferred, accept fd, and nop/close (0).
-                // Failure: errorNumber gives -res; negate to recover res.
+
                 let rawResult: Int32 =
                     if cqe.isSuccess {
                         Int32(cqe.bytes.transferred!)
@@ -333,10 +240,7 @@
                     Kernel.Completion.Event(
                         token: cqe.data.retag(Kernel.Completion.self),
                         result: Kernel.Completion.Event.Result(rawValue: rawResult),
-                        // WHY: Bit positions are identical — .more (bit 0) = IORING_CQE_F_MORE (bit 1 in
-                        // kernel headers, bit 0 after our normalization). If L1 ever renumbers flags,
-                        // this pass-through breaks silently. A mapping table would be safer but is
-                        // premature with only one flag.
+
                         flags: Kernel.Completion.Event.Flags(rawValue: cqe.flags.rawValue)
                     )
                 )
@@ -344,43 +248,19 @@
             return l1Count.retag(Kernel.Completion.Event.self)
         }
 
-        /// Tear down state. Class deinit releases uring (unmaps regions, closes fd).
         func teardown() {
-            // Intentionally empty — resource cleanup happens through
-            // ~Copyable deinit cascade when this class deallocates.
-            // The closures that captured `self` are dropped when
-            // Driver is consumed, releasing this class's refcount.
+
         }
     }
 
-    // MARK: - Factory
-
     extension Kernel.Completion {
-        /// Creates an io_uring–backed completion resource.
-        ///
-        /// Allocates the io_uring ring, mmap's SQ/CQ, creates an eventfd
-        /// for epoll integration, and returns a ``Completion`` owning all
-        /// resources.
-        ///
-        /// The eventfd is registered with io_uring so that completions
-        /// signal epoll_wait in the event loop — one thread for both
-        /// readiness and completion events.
-        ///
-        /// - Parameter entries: Ring size (rounded up to power of 2 by kernel).
-        ///   Default 256.
+
         public static func iouring(
             entries: Kernel.IO.Uring.Submission.Count = .init(_unchecked: Cardinal(256))
         ) throws(Error) -> Kernel.Completion {
 
-            // -- Create ring (setup fd + mmap SQ/CQ — ring owns descriptor) --
-            // WHY: Direct return from helper avoids deferred ~Copyable init
-            // inside do throws(E) {}, which triggers compiler bug on Swift 6.3.
-            // TRACKING: noncopyable-throwing-init experiment, v7_fix.swift
-
             var params = Kernel.IO.Uring.Params()
             let ring = try createRing(entries: entries, params: &params)
-
-            // -- Wakeup: eventfd + registration at L2; Channel constructed at L3 site-of-use --
 
             var wakeupResult: Kernel.IO.Uring.Wakeup.Result
             do throws(Kernel.IO.Uring.Wakeup.Error) {
@@ -392,15 +272,10 @@
             let wakeup = Kernel.Wakeup.Channel(signal: wakeupResult.signal)
             let eventfd = wakeupResult.eventfd()
 
-            // -- Create State --
-
             let state = UringState(
                 uring: consume ring,
                 cqCapacity: params.cqEntries
             )
-
-            // -- Build Driver witness --
-            // Each closure is a one-line delegation to State.
 
             let driver = Driver(
                 submit: {
@@ -417,12 +292,8 @@
                     state.teardown()
                 },
                 overflowCount: { .zero }
-                // WHEN TO REVISIT: Wire real L1 CQ overflow counter in Commit B
-                // after adding cqOverflow pointer to Kernel.IO.Uring struct.
-            )
 
-            // -- Assemble Completion --
-            // Notification owns the eventfd descriptor's lifecycle.
+            )
 
             return Kernel.Completion(
                 driver: consume driver,
@@ -435,9 +306,6 @@
             )
         }
 
-        // MARK: - Helpers (avoid deferred ~Copyable init in typed throws)
-
-        /// Create the ring (setup fd + mmap) — no deferred init.
         private static func createRing(
             entries: Kernel.IO.Uring.Submission.Count,
             params: inout Kernel.IO.Uring.Params

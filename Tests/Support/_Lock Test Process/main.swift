@@ -1,40 +1,6 @@
-//
-//  main.swift
-//  _Lock Test Process
-//
-//  A helper executable for multi-process file locking tests.
-//
-//  Usage:
-//    _Lock\ Test\ Process <command> <file> [options]
-//
-//  Commands:
-//    lock-exclusive <file>       Acquire exclusive lock, wait for signal, release
-//    lock-shared <file>          Acquire shared lock, wait for signal, release
-//    try-exclusive <file>        Try to acquire exclusive lock (non-blocking)
-//    try-shared <file>           Try to acquire shared lock (non-blocking)
-//    deadline-exclusive <file>   Acquire exclusive lock with deadline
-//    deadline-shared <file>      Acquire shared lock with deadline
-//
-//  Options:
-//    --range <start>-<end>       Lock byte range (default: whole file)
-//    --hold <seconds>            Hold lock for N seconds instead of waiting for stdin
-//    --deadline-ms <ms>          Deadline in milliseconds (for deadline-* commands)
-//    --signal-ready              Print "READY" when lock is acquired
-//
-//  Exit codes:
-//    0  Success (lock acquired, or released)
-//    1  Lock would block (for try-* commands)
-//    2  Lock timed out (for deadline-* commands)
-//    3  Error (invalid arguments, file not found, etc.)
-//
-
 import Binary_Primitives
 import Kernel
 
-// Package.swift conditions the `POSIX Kernel Descriptor` dependency on
-// Apple + Linux platforms, so the module does not exist on Windows; the
-// import must carry the same gate. The SPI is required on POSIX for the
-// `Kernel.Descriptor(_rawValue:)` construction in the POSIX main below.
 #if !os(Windows)
     @_spi(Syscall) import POSIX_Kernel_Descriptor
 #endif
@@ -46,8 +12,6 @@ import Kernel
 #elseif os(Windows)
     internal import WinSDK
 #endif
-
-// MARK: - IO Helpers
 
 func writeStdout(_ message: Swift.String) {
     let bytes = Array(message.utf8)
@@ -85,8 +49,6 @@ func readStdinByte() {
     }
 }
 
-// MARK: - Argument Parsing
-
 struct Arguments {
     enum Command {
         case lockExclusive
@@ -101,7 +63,7 @@ struct Arguments {
     let filePath: Swift.String
     var range: Kernel.Lock.Range = .file
     var holdSeconds: Int? = nil
-    var deadlineMs: Int = 1000  // Default 1 second
+    var deadlineMs: Int = 1000
     var signalReady: Bool = false
 }
 
@@ -143,7 +105,6 @@ func parseArguments() -> Arguments? {
 
     var result = Arguments(command: command, filePath: filePath)
 
-    // Parse optional arguments
     var i = 3
     while i < args.count {
         let arg = args[i]
@@ -230,8 +191,6 @@ func printUsage() {
     writeStderr(usage)
 }
 
-// MARK: - Main
-
 #if !os(Windows)
 
     func main() throws -> Int32 {
@@ -239,17 +198,12 @@ func printUsage() {
             return 3
         }
 
-        // Open the file
         let rawFd = open(args.filePath, O_RDWR)
         guard rawFd >= 0 else {
             writeStderr("Failed to open file: \(args.filePath)\n")
             return 3
         }
 
-        // Bind to Kernel.Descriptor so it stays alive during Token usage.
-        // Token.init borrows this descriptor — the temporary must not die
-        // before release(). No defer { close(rawFd) } — Token's internal
-        // copy closes the fd, and this descriptor closes it on scope exit.
         let descriptor = Kernel.Descriptor(_rawValue: rawFd)
 
         let kind: Kernel.Lock.Kind
@@ -281,7 +235,6 @@ func printUsage() {
             acquire = .timeout(.milliseconds(args.deadlineMs))
         }
 
-        // Acquire lock
         var token: Kernel.Lock.Token
         do throws(Kernel.Lock.Error) {
             token = try Kernel.Lock.Token(
@@ -302,39 +255,28 @@ func printUsage() {
                 }
 
             case .timedOut:
-                // The deadline-based acquisition (Kernel.Lock.Acquire.timeout,
-                // which desugars to .deadline(...)) reports an expired deadline
-                // as .timedOut directly, distinct from the .contention path
-                // above. Same observable outcome for deadline-* commands: exit 2.
+
                 writeStdout("TIMED_OUT\n")
                 return 2
 
             case .deadlock, .unavailable, .interrupted, .invalidRange, .platform:
-                // Genuine failures, not lock-contention/timeout outcomes:
-                // .deadlock/.unavailable were already here; .interrupted
-                // (EINTR on the blocking wait), .invalidRange (end precedes
-                // start), and .platform (unclassified errno) join them in
-                // the generic "Error" bucket per the file's documented exit
-                // codes (0 success / 1 would-block / 2 timed-out / 3 error).
+
                 writeStderr("Failed to acquire lock: \(error)\n")
                 return 3
             }
         }
 
-        // Signal ready if requested
         if args.signalReady {
             writeStdout("READY\n")
         }
 
-        // Hold lock
         if let seconds = args.holdSeconds {
             sleep(UInt32(seconds))
         } else {
-            // Wait for newline on stdin
+
             readStdinByte()
         }
 
-        // Release lock
         try token.release()
 
         writeStdout("RELEASED\n")
@@ -351,18 +293,16 @@ func printUsage() {
 
 #else
 
-    // Windows implementation
     func main() throws -> Int32 {
         guard let args = parseArguments() else {
             return 3
         }
 
-        // Open the file
         let maybeHandle = args.filePath.withCString(encodedAs: UTF16.self) { widePath in
             CreateFileW(
                 widePath,
                 DWORD(GENERIC_READ) | DWORD(GENERIC_WRITE),
-                0,  // No sharing
+                0,
                 nil,
                 DWORD(OPEN_EXISTING),
                 DWORD(FILE_ATTRIBUTE_NORMAL),
@@ -405,7 +345,6 @@ func printUsage() {
             acquire = .timeout(.milliseconds(args.deadlineMs))
         }
 
-        // Acquire lock
         var token: Kernel.Lock.Token
         do throws(Kernel.Lock.Error) {
             token = try Kernel.Lock.Token(
@@ -426,34 +365,28 @@ func printUsage() {
                 }
 
             case .timedOut:
-                // See the POSIX branch above: the deadline-based acquisition
-                // reports an expired deadline as .timedOut directly. Same
-                // observable outcome for deadline-* commands: exit 2.
+
                 writeStdout("TIMED_OUT\n")
                 return 2
 
             case .deadlock, .unavailable, .interrupted, .invalidRange, .platform:
-                // Genuine failures, not lock-contention/timeout outcomes — see
-                // the POSIX branch above for the per-case rationale.
+
                 writeStderr("Failed to acquire lock: \(error)\n")
                 return 3
             }
         }
 
-        // Signal ready if requested
         if args.signalReady {
             writeStdout("READY\n")
         }
 
-        // Hold lock
         if let seconds = args.holdSeconds {
             Sleep(DWORD(seconds * 1000))
         } else {
-            // Wait for newline on stdin
+
             readStdinByte()
         }
 
-        // Release lock
         try token.release()
 
         writeStdout("RELEASED\n")

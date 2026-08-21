@@ -1,14 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Kernel_Test_Support
 import Testing
@@ -21,10 +10,8 @@ import Testing
     import WinSDK
 #endif
 
-// MARK: - Cross-Platform Test Helpers
-
 #if !os(Windows)
-    /// Creates a temporary file with content and returns its path
+
     private func createTempFile(prefix: Swift.String, content: Swift.String) -> Swift.String {
         let path = "/tmp/\(prefix)-\(getpid())-\(Int.random(in: 0..<Int.max))"
         let fd = open(path, O_CREAT | O_WRONLY, 0o644)
@@ -38,7 +25,6 @@ import Testing
         return path
     }
 
-    /// Reads content from a file
     private func readFileContent(_ path: Swift.String) -> Swift.String? {
         let fd = open(path, O_RDONLY)
         guard fd >= 0 else { return nil }
@@ -51,7 +37,6 @@ import Testing
         return Swift.String(cString: buffer)
     }
 
-    /// Cleans up a temp file
     private func cleanup(_ path: Swift.String) {
         _ = path.withCString { unlink($0) }
     }
@@ -64,8 +49,6 @@ extension Kernel.File.Clone {
         @Suite struct `Edge Case` {}
     }
 }
-
-// MARK: - Type Tests
 
 extension Kernel.File.Clone.Test.Unit {
 
@@ -112,8 +95,6 @@ extension Kernel.File.Clone.Test.Unit {
     }
 }
 
-// MARK: - Error Tests
-
 extension Kernel.File.Clone.Test.Unit {
 
     @Test
@@ -151,31 +132,15 @@ extension Kernel.File.Clone.Test.Unit {
     }
 }
 
-// MARK: - Capability Probing Tests
-
-// Capability probing never moved to L3: the hoist carried only the
-// `.none`-returning `Kernel.File.Clone.Capability.probeDefault(at:)` stub, so
-// these suites exercise the probe at its platform home. On this leg that is
-// `Darwin.Kernel.File.Clone.Capability.probe(at:)`, which still throws
-// `Error.Syscall` for an unreachable path, so both contracts survive intact —
-// only the spelling and the nominal `Capability`/`Syscall` types change.
-//
-// The plain `Darwin.` spelling is correct even though this file imports the
-// system `Darwin` module above: the namespace type shadows the module name for
-// member lookup, while the module's top-level `open`/`close`/`getpid` stay
-// reachable unqualified. swift-darwin-standard's own clone source relies on the
-// same shadowing (`extension Darwin.Kernel.File` alongside `import Darwin`).
 #if os(macOS)
     extension Kernel.File.Clone.Test.Unit {
         @Test
         func `probe capability returns valid result`() throws {
-            // Probe /tmp which is on the boot volume (typically APFS)
+
             let cap = try Path.scope("/tmp") { path in
                 try Darwin.Kernel.File.Clone.Capability.probe(at: path)
             }
 
-            // On modern macOS with APFS, should be .reflink
-            // On older systems or HFS+, would be .none
             #expect(cap == .reflink || cap == .none)
         }
     }
@@ -199,8 +164,6 @@ extension Kernel.File.Clone.Test.Unit {
         }
     }
 #endif
-
-// MARK: - Clone Operation Tests
 
 #if !os(Windows)
     extension Kernel.File.Clone.Test.Unit {
@@ -228,7 +191,6 @@ extension Kernel.File.Clone.Test.Unit {
 
             #expect(result == .copied)
 
-            // Verify content matches
             let readContent = readFileContent(dest)
             #expect(readContent == content)
         }
@@ -254,10 +216,8 @@ extension Kernel.File.Clone.Test.Unit {
                 }
             }
 
-            // Should succeed either way
             #expect(result == .reflinked || result == .copied)
 
-            // Verify content matches
             let readContent = readFileContent(dest)
             #expect(readContent == content)
         }
@@ -273,14 +233,6 @@ extension Kernel.File.Clone.Test.Unit {
                 cleanup(dest)
             }
 
-            // The hoisted `Kernel.File.Clone.Capability` carries no
-            // cross-platform probe — only the `.none`-returning
-            // `probeDefault(at:)` stub — because the real probes stayed at
-            // their platform homes (`Darwin`/`Linux.Kernel.File.Clone`). The
-            // reflink-or-fail contract is therefore asserted on the operation's
-            // own outcome, mirroring `reflinkOrCopy succeeds on APFS` above: a
-            // reflink-capable filesystem reflinks, and every other filesystem
-            // reports `.notSupported`.
             try Path.scope(source) { srcPath in
                 try Path.scope(dest) { dstPath in
                     do throws(Kernel.File.Clone.Error) {
@@ -299,7 +251,7 @@ extension Kernel.File.Clone.Test.Unit {
 
         @Test
         func `clone large file`() throws {
-            // Create a 1MB file
+
             let size = 1024 * 1024
             let content = Swift.String(repeating: "X", count: size)
             let source = createTempFile(prefix: "clone-large-src", content: content)
@@ -322,7 +274,6 @@ extension Kernel.File.Clone.Test.Unit {
 
             #expect(result == .reflinked || result == .copied)
 
-            // Verify size by reading
             var statBuf = stat()
             let statResult = dest.withCString { stat($0, &statBuf) }
             #expect(statResult == 0)
@@ -351,7 +302,6 @@ extension Kernel.File.Clone.Test.Unit {
 
             #expect(result == .copied)
 
-            // Verify destination exists and is empty
             var statBuf = stat()
             let statResult = dest.withCString { stat($0, &statBuf) }
             #expect(statResult == 0)

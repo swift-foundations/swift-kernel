@@ -1,14 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Kernel_Test_Support
 import Testing
@@ -23,8 +12,6 @@ extension Path.String {
 }
 
 #if !os(Windows)
-
-    // MARK: - Error<Body> Property Tests
 
     extension Path.String.Test.Unit {
 
@@ -63,8 +50,6 @@ extension Path.String {
         }
     }
 
-    // MARK: - Single Path (Conversion-Only Overload)
-
     extension Path.String.Test.Unit {
 
         @Test
@@ -72,7 +57,7 @@ extension Path.String {
             let result = try Path.scope("/tmp/test") { path in
                 unsafe path.pointer.pointee
             }
-            #expect(result == UInt8(47))  // ASCII '/'
+            #expect(result == UInt8(47))
         }
 
         @Test
@@ -103,11 +88,8 @@ extension Path.String {
         }
     }
 
-    // MARK: - Single Path (Throwing-Body Overload / Wrapper Tests)
-
     extension Path.String.Test.Unit {
 
-        /// Dummy error type to force throwing-body overload selection.
         private enum Dummy: Swift.Error { case sentinel }
 
         @Test
@@ -121,7 +103,7 @@ extension Path.String {
                 { () throws(E) in
                     _ = try Path.scope("\0/tmp/file") {
                         (_: borrowing Path.Borrowed) throws(Dummy) in
-                        ()  // never reached
+                        ()
                     }
                 }
             )
@@ -144,8 +126,6 @@ extension Path.String {
             )
         }
     }
-
-    // MARK: - Two Paths (Conversion-Only Overload)
 
     extension Path.String.Test.Unit {
 
@@ -179,8 +159,6 @@ extension Path.String {
             )
         }
     }
-
-    // MARK: - Three Paths (Conversion-Only Overload)
 
     extension Path.String.Test.Unit {
 
@@ -223,8 +201,6 @@ extension Path.String {
         }
     }
 
-    // MARK: - Edge Cases
-
     extension Path.String.Test.`Edge Case` {
 
         @Test
@@ -232,7 +208,7 @@ extension Path.String {
             let result = try Path.scope("") { path in
                 unsafe path.pointer.pointee
             }
-            #expect(result == 0)  // null terminator
+            #expect(result == 0)
         }
 
         @Test

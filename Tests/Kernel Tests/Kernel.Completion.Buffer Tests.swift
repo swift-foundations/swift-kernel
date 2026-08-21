@@ -1,8 +1,3 @@
-//
-//  Kernel.Completion.Buffer Tests.swift
-//  swift-kernel-primitives
-//
-
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
 
@@ -15,16 +10,12 @@ extension Kernel.Completion.Buffer {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.Completion.Buffer.Test.Unit {
     @Test
     func `buffer namespace exists`() {
         _ = Kernel.Completion.Buffer.self
     }
 }
-
-// MARK: - Buffer.Group (Tagged — parallel namespace)
 
 @Suite
 struct `Completion Buffer Group Tests` {

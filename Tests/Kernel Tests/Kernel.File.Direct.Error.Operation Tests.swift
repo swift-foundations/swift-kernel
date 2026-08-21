@@ -1,17 +1,5 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.File.Direct.Error.Operation {
@@ -22,14 +10,12 @@ extension Kernel.File.Direct.Error.Operation {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.File.Direct.Error.Operation.Test.Unit {
     @Test
     func `open case exists`() {
         let operation = Kernel.File.Direct.Error.Operation.open
         if case .open = operation {
-            // Expected
+
         } else {
             Issue.record("Expected .open case")
         }
@@ -39,7 +25,7 @@ extension Kernel.File.Direct.Error.Operation.Test.Unit {
     func `cache case exists`() {
         let operation = Kernel.File.Direct.Error.Operation.cache(.set)
         if case .cache = operation {
-            // Expected
+
         } else {
             Issue.record("Expected .cache case")
         }
@@ -49,7 +35,7 @@ extension Kernel.File.Direct.Error.Operation.Test.Unit {
     func `sector case exists`() {
         let operation = Kernel.File.Direct.Error.Operation.sector(.getSize)
         if case .sector = operation {
-            // Expected
+
         } else {
             Issue.record("Expected .sector case")
         }
@@ -59,7 +45,7 @@ extension Kernel.File.Direct.Error.Operation.Test.Unit {
     func `read case exists`() {
         let operation = Kernel.File.Direct.Error.Operation.read
         if case .read = operation {
-            // Expected
+
         } else {
             Issue.record("Expected .read case")
         }
@@ -69,14 +55,12 @@ extension Kernel.File.Direct.Error.Operation.Test.Unit {
     func `write case exists`() {
         let operation = Kernel.File.Direct.Error.Operation.write
         if case .write = operation {
-            // Expected
+
         } else {
             Issue.record("Expected .write case")
         }
     }
 }
-
-// MARK: - Nested Type Tests
 
 extension Kernel.File.Direct.Error.Operation.Test.Unit {
     @Test
@@ -97,8 +81,6 @@ extension Kernel.File.Direct.Error.Operation.Test.Unit {
         #expect(sector.rawValue == "getSize")
     }
 }
-
-// MARK: - Conformance Tests
 
 extension Kernel.File.Direct.Error.Operation.Test.Unit {
     @Test
@@ -137,8 +119,6 @@ extension Kernel.File.Direct.Error.Operation.Test.Unit {
         #expect(sector is Kernel.File.Direct.Error.Operation.Sector)
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.File.Direct.Error.Operation.Test.EdgeCase {
     @Test

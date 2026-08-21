@@ -1,18 +1,6 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Kernel_Test_Support
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.File.Direct.Requirements.Alignment.Length {
@@ -22,8 +10,6 @@ extension Kernel.File.Direct.Requirements.Alignment.Length {
         @Suite struct EdgeCase {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.File.Direct.Requirements.Alignment.Length.Test.Unit {
     @Test
@@ -60,8 +46,6 @@ extension Kernel.File.Direct.Requirements.Alignment.Length.Test.Unit {
     }
 }
 
-// MARK: - Conformance Tests
-
 extension Kernel.File.Direct.Requirements.Alignment.Length.Test.Unit {
     @Test
     func `Length is Sendable`() {
@@ -70,8 +54,6 @@ extension Kernel.File.Direct.Requirements.Alignment.Length.Test.Unit {
         #expect(length is Kernel.File.Direct.Requirements.Alignment.Length)
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.File.Direct.Requirements.Alignment.Length.Test.EdgeCase {
     @Test

@@ -1,14 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Testing
 
@@ -20,10 +9,8 @@ import Testing
     import WinSDK
 #endif
 
-// MARK: - Test Helpers
-
 #if !os(Windows)
-    /// Creates a temporary file with content and returns its path
+
     private func makeTempFile(prefix: Swift.String, content: Swift.String) -> Swift.String {
         let path = "/tmp/\(prefix)-\(getpid())-\(Int.random(in: 0..<Int.max))"
         let fd = open(path, O_CREAT | O_WRONLY, 0o644)
@@ -37,13 +24,10 @@ import Testing
         return path
     }
 
-    /// Cleans up a temp file
     private func removeTempFile(_ path: Swift.String) {
         _ = path.withCString { unlink($0) }
     }
 #endif
-
-// MARK: - Kernel.File.Open.Configuration Tests
 
 extension Kernel.File.Open.Configuration {
     @Suite
@@ -87,8 +71,6 @@ extension Kernel.File.Open.Configuration.Test.Unit {
     }
 }
 
-// MARK: - Integration Tests
-
 #if !os(Windows)
     extension Kernel.File {
         @Suite
@@ -109,20 +91,10 @@ extension Kernel.File.Open.Configuration.Test.Unit {
                 let config = Kernel.File.Open.Configuration(mode: .read)
                 let handle = try Kernel.File.open(path, configuration: config)
 
-                // Verify handle properties
                 #expect(handle.direct == .buffered)
 
-                // Close is consuming, just let it go out of scope
             }
         }
-
-        // TODO: Enable when Handle.read is implemented in platform packages
-        // @Test
-        // func readBuffered() throws { ... }
-
-        // TODO: Enable when Handle.write is implemented in platform packages
-        // @Test
-        // func writeBuffered() throws { ... }
 
         @Test
         func `open with .auto(.fallbackToBuffered) succeeds`() throws {
@@ -136,7 +108,6 @@ extension Kernel.File.Open.Configuration.Test.Unit {
             try Path.scope(pathString) { path in
                 let handle = try Kernel.File.open(path, configuration: config)
 
-                // On macOS: .uncached, on Linux: .buffered (because requirements unknown)
                 #if os(macOS)
                     #expect(handle.direct == .uncached)
                 #else

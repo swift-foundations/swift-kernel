@@ -1,14 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Standard_Library_Extensions
 import Testing
@@ -20,19 +9,14 @@ extension Random {
     }
 }
 
-// MARK: - fill(_:) Smoke
-
 extension Random.Test.Fill {
     @Test
     func `fill(_:) on a 32-byte buffer produces non-zero bytes on every platform`() throws(Random
         .Error)
     {
-        // 32 bytes of contiguous stack memory — a 4-tuple of UInt64.
+
         var buffer: (UInt64, UInt64, UInt64, UInt64) = (0, 0, 0, 0)
-        // Single cross-platform call site — no `#if os(...)`.
-        // Darwin:  arc4random_buf (infallible, annotated throws for parity).
-        // Linux:   getrandom(2) (blocking mode; EINTR handled in L2 wrapper).
-        // Windows: BCryptGenRandom (NTSTATUS → Random.Error).
+
         try withUnsafeMutableBytes(of: &buffer) { raw throws(Random.Error) in
             try unsafe Random.fill(raw)
         }

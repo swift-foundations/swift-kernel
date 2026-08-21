@@ -1,10 +1,3 @@
-//
-//  Kernel.Completion.Lifecycle Tests.swift
-//  swift-kernel-primitives
-//
-//  Adversarial and integration tests verifying L1 promotion correctness.
-//
-
 #if KERNEL_AVAILABLE
 
     import Testing
@@ -24,8 +17,6 @@
         @Suite struct `Token Identity` {}
         @Suite struct `Notification Ownership` {}
     }
-
-    // MARK: - Full Lifecycle
 
     extension `Completion Lifecycle Tests`.`Full Lifecycle` {
         @Test
@@ -64,7 +55,6 @@
                 capabilities: Kernel.Completion.Capabilities()
             )
 
-            // Submit two operations
             let address: Memory.Address = 0x1000
             let sub1 = Kernel.Completion.Submission(
                 opcode: .read(address: address, length: 64, offset: nil),
@@ -90,12 +80,10 @@
             }
             #expect(submitLog[1].1 == 2)
 
-            // Flush
             let flushed = try completion.flush()
             #expect(flushCount == 1)
             #expect(flushed == 2)
 
-            // Drain
             var received: [(Kernel.Completion.Token, Int32)] = []
             let drained = completion.drain { event in
                 let rawValue = event.result.rawValue
@@ -110,11 +98,9 @@
             #expect(received[2].0 == 3)
             #expect(received[2].1 == -1)
 
-            // Overflow count
             let overflow = completion.overflowCount
             #expect(overflow == 7)
 
-            // Close
             completion.close()
             #expect(closeCount == 1)
         }
@@ -139,14 +125,6 @@
         }
     }
 
-    // MARK: - Error Propagation
-
-    // REASON: `Error Propagation` is the backtick-quoted @Suite struct name
-    // declared at line 18, a human-readable test-namespace label, not a bare
-    // `Swift.Error` reference. The reference here is a typeidentifier (the
-    // rule's match_kinds), so it is not covered by the rule's existing
-    // identifier-kind exemption for backtick-quoted test function names.
-    // swiftlint:disable:next swift_error_qualification
     extension `Completion Lifecycle Tests`.`Error Propagation` {
         @Test
         func `submit propagates submissionQueueFull`() throws {
@@ -172,7 +150,7 @@
 
         @Test
         func `flush propagates platform error with exact code`() throws {
-            let code = Error_Primitives.Error.Code.posix(28)  // ENOSPC
+            let code = Error_Primitives.Error.Code.posix(28)
             let error: Kernel.Completion.Error = .platform(code)
             let driver = Kernel.Completion.Driver(
                 submit: { _, _ in },
@@ -215,8 +193,6 @@
         }
     }
 
-    // MARK: - Untargeted Submit
-
     extension `Completion Lifecycle Tests`.`Untargeted Submit` {
         @Test
         func `untargeted submit passes invalid descriptor sentinel`() throws {
@@ -243,8 +219,6 @@
             completion.close()
         }
     }
-
-    // MARK: - Drain Delivery
 
     extension `Completion Lifecycle Tests`.`Drain Delivery` {
         @Test
@@ -273,7 +247,7 @@
         func `drain delivers negative results faithfully`() {
             let event = Kernel.Completion.Event(
                 token: .init(1),
-                result: .init(rawValue: -22),  // EINVAL
+                result: .init(rawValue: -22),
                 flags: []
             )
             let driver = Kernel.Completion.Driver(
@@ -351,8 +325,6 @@
         }
     }
 
-    // MARK: - Submission Independence
-
     extension `Completion Lifecycle Tests`.`Submission Independence` {
         @Test
         func `two submissions have independent opcodes`() {
@@ -405,8 +377,6 @@
             #expect(sub.bufferGroup == .none)
         }
     }
-
-    // MARK: - Flags Composability
 
     extension `Completion Lifecycle Tests`.`Flags Composability` {
         @Test
@@ -468,8 +438,6 @@
         }
     }
 
-    // MARK: - Result Boundary
-
     extension `Completion Lifecycle Tests`.`Result Boundary` {
         @Test
         func `rawValue zero is success with value zero`() {
@@ -522,8 +490,6 @@
         }
     }
 
-    // MARK: - Token Identity
-
     extension `Completion Lifecycle Tests`.`Token Identity` {
         @Test
         func `same value tokens are equal`() {
@@ -553,8 +519,6 @@
         }
     }
 
-    // MARK: - Notification Ownership
-
     extension `Completion Lifecycle Tests`.`Notification Ownership` {
         @Test
         func `notification descriptor is accessible`() {
@@ -582,8 +546,7 @@
                 notification: notification,
                 capabilities: Kernel.Completion.Capabilities()
             )
-            // Notification is ~Copyable, so access through Completion
-            // verifies the Optional<~Copyable> storage works
+
             let hasNotification = completion.notification != nil
             #expect(hasNotification)
             completion.close()
@@ -608,9 +571,6 @@
             completion.close()
         }
 
-        // Notification is ~Copyable — assigning to two variables is a
-        // compile-time error. This is enforced by the type system and
-        // does not require a runtime test.
     }
 
 #endif

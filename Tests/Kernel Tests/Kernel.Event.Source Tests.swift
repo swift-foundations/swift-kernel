@@ -1,27 +1,8 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel_Test_Support
 import Testing
 
 @testable import Kernel
 
-// MARK: - Kernel.Event.Source Tests
-
-// Windows has no Kernel.Event.Source (epoll/kqueue vocabulary is
-// POSIX-only; the Windows analog is the IOCP completion path) — gated to
-// match Sources/Kernel Event/Kernel.Event.Source.swift and the convention
-// used elsewhere for this target's POSIX-only surfaces (e.g.
-// Tests/Kernel Tests/Kernel.Event.ID Tests.swift). The platform-specific
-// integration suites below are already gated per-platform.
 #if !os(Windows)
     extension Kernel.Event.Source {
         @Suite struct Test {
@@ -36,8 +17,6 @@ import Testing
         }
     }
 #endif
-
-// MARK: - Integration (creates real kernel resources)
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 
@@ -57,12 +36,6 @@ import Testing
             _ = source
         }
 
-        // F-004 regression: polling with an `output` buffer smaller than the
-        // number of ready registrations must not drop the events that don't
-        // fit. Two pipes are made simultaneously readable, then polled one
-        // event at a time — every registration must eventually be observed
-        // exactly once, never silently discarded by an over-sized kernel
-        // dequeue request.
         @Test func `poll with output buffer smaller than ready registrations does not drop events`()
             throws
         {
@@ -117,12 +90,6 @@ import Testing
             _ = source
         }
 
-        // F-004 regression: polling with an `output` buffer smaller than the
-        // number of ready registrations must not drop the events that don't
-        // fit. Two pipes are made simultaneously readable, then polled one
-        // event at a time — every registration must eventually be observed
-        // exactly once, never silently discarded by an over-sized kernel
-        // dequeue request.
         @Test func `poll with output buffer smaller than ready registrations does not drop events`()
             throws
         {

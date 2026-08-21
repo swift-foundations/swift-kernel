@@ -1,14 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Error_Primitives
 import Kernel_Test_Support
 import Path_Primitives
@@ -25,8 +14,6 @@ extension Kernel.File.Direct {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.File.Direct.Test.Unit {
     @Test
     func `Direct namespace exists`() {
@@ -38,8 +25,6 @@ extension Kernel.File.Direct.Test.Unit {
         let _: Kernel.File.Direct.Type = Kernel.File.Direct.self
     }
 }
-
-// MARK: - Nested Types
 
 extension Kernel.File.Direct.Test.Unit {
     @Test
@@ -62,8 +47,6 @@ extension Kernel.File.Direct.Test.Unit {
         let _: Kernel.File.Direct.Error.Type = Kernel.File.Direct.Error.self
     }
 }
-
-// MARK: - Resolved Mode Tests
 
 extension Kernel.File.Direct.Test.Unit {
     @Test

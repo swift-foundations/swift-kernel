@@ -1,33 +1,15 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
-// Windows has no Kernel.Event: the target carries epoll/kqueue vocabulary
-// and is !os(Windows); its test utilities gate with it (POSIX.Kernel.IO
-// below is likewise absent from the Windows graph).
 #if !os(Windows)
 
 public import Kernel
 
 extension Kernel.Event {
-    /// Test utilities for eventing operations (kqueue, epoll, io_uring).
+
     public enum Test {
-        /// Error thrown when pipe creation fails.
+
         public struct PipeError: Swift.Error, Sendable {
             public init() {}
         }
 
-        /// Creates a pipe, returning ~Copyable `Pipe.Descriptors`.
-        ///
-        /// - Returns: The pipe descriptors (read + write).
-        /// - Throws: `PipeError` if pipe creation fails
         public static func makePipe() throws -> Kernel.Pipe.Descriptors {
             do {
                 return try Kernel.Pipe.pipe()
@@ -36,18 +18,10 @@ extension Kernel.Event {
             }
         }
 
-        /// Closes a descriptor without throwing.
-        /// With deinit on Kernel.Descriptor, this is rarely needed —
-        /// just let the descriptor go out of scope.
         public static func closeNoThrow(_ fd: consuming Kernel.Descriptor) {
             try? Kernel.Close.close(fd)
         }
 
-        /// Writes one byte to a descriptor.
-        ///
-        /// - Parameters:
-        ///   - fd: The descriptor to write to
-        ///   - value: The byte value to write (default: 1)
         public static func writeByte(_ fd: borrowing Kernel.Descriptor, value: UInt8 = 1) {
             var byte = value
             _ = withUnsafeBytes(of: &byte) { buffer in
@@ -55,9 +29,6 @@ extension Kernel.Event {
             }
         }
 
-        /// Drains one byte from a descriptor.
-        ///
-        /// - Parameter fd: The descriptor to read from
         public static func readDrain(_ fd: borrowing Kernel.Descriptor) {
             var byte: UInt8 = 0
             _ = withUnsafeMutableBytes(of: &byte) { buffer in

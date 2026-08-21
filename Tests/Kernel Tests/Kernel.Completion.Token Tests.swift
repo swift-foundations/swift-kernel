@@ -1,22 +1,12 @@
-//
-//  Kernel.Completion.Token Tests.swift
-//  swift-kernel-primitives
-//
-
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
 
 @testable import Kernel_Completion
 
-// Token is Tagged<Kernel.Completion, UInt64> — generic specialization.
-// Parallel namespace per [SWIFT-TEST-003].
-
 @Suite
 struct `Completion Token Tests` {
     @Suite struct Unit {}
 }
-
-// MARK: - Unit Tests
 
 extension `Completion Token Tests`.Unit {
     @Test

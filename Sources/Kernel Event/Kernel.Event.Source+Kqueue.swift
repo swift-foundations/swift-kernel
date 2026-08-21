@@ -1,38 +1,9 @@
-//
-//  Kernel.Event.Source+Kqueue.swift
-//  swift-kernel
-//
-//  Kqueue-backed event source for Darwin platforms.
-//
-//  Three-boundary polling model:
-//    Backend (this file): raw kqueue event → Kernel.Event translation
-//    Driver.init:         staleness suppression via registry membership
-//    Caller:              consumes valid events
-//
-//  Policy invariants:
-//    INV-1: Registration Identity      — Driver.init (counter)
-//    INV-2: Ownership Lifecycle         — Driver.init (registry owns dup'd fd)
-//    INV-3: Delta Correctness           — modify below (kevent set-difference)
-//    INV-4: One-Shot Re-Arm             — add/arm below (EV_DISPATCH)
-//    INV-5: Normalization               — poll below (filter/flags → Kernel.Event)
-//    INV-6: Staleness Suppression       — Driver.init (registry membership check)
-//    INV-7: Wake Responsiveness         — factory below (EVFILT_USER trigger)
-//
-
-// Windows: the event-driver vocabulary (Kernel.Event.Source: epoll/kqueue)
-// is POSIX-only; the Windows analog is the IOCP completion path. Gated
-// whole-file to match the IO Events / IO Completions posture — the Windows
-// leg never constructs an event reactor.
 #if !os(Windows)
     #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 
         import Darwin_Kernel_Event_Standard
 
-        // Wave 3.5-Final-Atomic (2026-05-02): explicit import for Kernel.Descriptor
-        // member access (Swift 6.x #MemberImportVisibility post-flip).
         public import POSIX_Kernel_Descriptor
-
-        // MARK: - Error Conversion
 
         extension Kernel.Event.Driver.Error {
             init(_ kqueueError: Kernel.Kqueue.Error) {
@@ -44,14 +15,8 @@
             }
         }
 
-        // MARK: - Kevent Construction
-
         extension Kernel.Event.Source {
-            /// Builds kqueue events for each interest bit.
-            ///
-            /// Kqueue uses per-filter events: each interest (read, write) produces
-            /// a separate kevent. The registration ID is encoded in udata for
-            /// round-trip through the kernel.
+
             fileprivate static func kevents(
                 fd: borrowing Kernel.Descriptor,
                 id: Kernel.Event.ID,
@@ -60,11 +25,6 @@
             ) -> [Kernel.Kqueue.Event] {
                 var events: [Kernel.Kqueue.Event] = []
 
-                // The kqueue backend is a distinct nominal ID space
-                // (`Darwin.Kernel.Event.ID`) from the cross-platform
-                // `Kernel.Event.ID`; the bridge retags in both directions —
-                // here on the way in, and in `poll` on the way out. The
-                // destination tag is inferred from the parameter type.
                 if interest.contains(.read) {
                     events.append(
                         Kernel.Kqueue.Event(
@@ -90,18 +50,11 @@
             }
         }
 
-        // MARK: - Factory
-
         extension Kernel.Event.Source {
-            /// Creates a kqueue-backed event source.
-            ///
-            /// - Parameter maxEvents: Maximum events per poll cycle. Controls the
-            ///   pre-allocated scratch buffer size. Default: 256.
+
             public static func kqueue(
                 maxEvents: Int = 256
             ) throws(Kernel.Event.Driver.Error) -> Kernel.Event.Source {
-
-                // -- State class (owns L1 kqueue struct + scratch buffer) --
 
                 final class State {
                     let kq: Kernel.Kqueue
@@ -123,8 +76,6 @@
                     throw Kernel.Event.Driver.Error(error)
                 }
 
-                // -- Wakeup (EVFILT_USER, registered at L2; Channel constructed at L3 site-of-use) --
-
                 let wakeup: Kernel.Wakeup.Channel
                 do throws(Kernel.Kqueue.Error) {
                     let signal = try kq.wakeup()
@@ -134,8 +85,6 @@
                 }
 
                 let state = State(kq: consume kq, maxEvents: maxEvents)
-
-                // -- Build Driver from backend operations --
 
                 let addFlags: Kernel.Kqueue.Flags = .add | .clear | .dispatch
 
@@ -191,7 +140,7 @@
                             if case .kevent(let code) = error,
                                 code == .POSIX.ENOENT || code == .POSIX.EBADF
                             {
-                                return  // Benign: event auto-removed or fd recycled.
+                                return
                             }
                             throw Kernel.Event.Driver.Error(error)
                         }
@@ -220,17 +169,9 @@
 
                         let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
 
-                        // Never ask the kernel for more events than `output` can hold.
-                        // kevent() dequeues whatever it hands back from the kernel's
-                        // readiness list, so over-requesting past `output.count` would
-                        // silently drop already-dequeued one-shot registrations. Clamp
-                        // the request so any events beyond `output`'s capacity stay
-                        // queued in the kernel for a subsequent poll instead of being
-                        // lost.
                         let requestCount = min(state.rawEvents.count, output.count)
                         guard requestCount > 0 else { return 0 }
 
-                        // Poll kqueue into pre-allocated scratch buffer.
                         let count: Int
                         do throws(Kernel.Kqueue.Error) {
                             if requestCount == state.rawEvents.count {
@@ -247,7 +188,6 @@
 
                         guard count > 0 else { return 0 }
 
-                        // Normalize: raw kqueue events → cross-platform Kernel.Event.
                         var writeIdx = 0
                         for i in 0..<count {
                             let raw = state.rawEvents[i]
@@ -283,8 +223,7 @@
                         return writeIdx
                     },
                     close: {
-                        // State deinit closes the kqueue fd when all closures
-                        // are dropped and the State class is deallocated.
+
                     }
                 )
 

@@ -1,24 +1,8 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Path_Primitives
 public import String_Primitives
 
-// MARK: - Swift.String from Path
-
 extension Swift.String {
-    /// Creates a Swift string from a kernel path.
-    ///
-    /// On POSIX, interprets the path bytes as UTF-8.
-    /// On Windows, interprets the path code units as UTF-16.
+
     @inlinable
     public init(_ path: borrowing Path) {
         #if os(Windows)
@@ -29,13 +13,8 @@ extension Swift.String {
     }
 }
 
-// MARK: - Swift.String from Path.Borrowed
-
 extension Swift.String {
-    /// Creates a Swift string from a kernel path view.
-    ///
-    /// On POSIX, interprets the path bytes as UTF-8.
-    /// On Windows, interprets the path code units as UTF-16.
+
     @inlinable
     public init(_ view: borrowing Path.Borrowed) {
         #if os(Windows)
@@ -46,13 +25,8 @@ extension Swift.String {
     }
 }
 
-// MARK: - Swift.String from String
-
 extension Swift.String {
-    /// Creates a Swift string from a kernel string.
-    ///
-    /// On POSIX, interprets the string bytes as UTF-8.
-    /// On Windows, interprets the string code units as UTF-16.
+
     public init(_ string: borrowing String) {
         #if os(Windows)
             self = unsafe Swift.String(decodingCString: string.view.pointer, as: UTF16.self)

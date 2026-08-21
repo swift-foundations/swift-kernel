@@ -1,8 +1,3 @@
-//
-//  Kernel.Completion.Capabilities Tests.swift
-//  swift-kernel-primitives
-//
-
 import Testing
 
 @testable import Kernel_Completion
@@ -13,8 +8,6 @@ extension Kernel.Completion.Capabilities {
         @Suite struct Unit {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.Completion.Capabilities.Test.Unit {
     @Test

@@ -1,14 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel_Test_Support
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
@@ -19,16 +8,9 @@ import Testing
     import Foundation
 #endif
 
-// Integration suite for multi-process lock tests
-// Note: Kernel.Lock.Test is defined in Kernel Primitives Tests via #Tests
-// This integration test target defines its own suite
 @Suite
 struct `Kernel.Lock Integration` {}
 
-// MARK: - Helpers
-
-/// Creates a temporary file with 1KB of test data. Returns the path string.
-/// Caller is responsible for cleanup via `cleanupLockFile`.
 private func createLockFile(prefix: Swift.String) throws -> Swift.String {
     let pathString = Kernel.Temporary.filePath(prefix: prefix)
     try Path.scope(pathString) { path in
@@ -42,12 +24,11 @@ private func createLockFile(prefix: Swift.String) throws -> Swift.String {
         _ = try data.withUnsafeBytes { buffer in
             try Kernel.IO.Write.write(fd, from: buffer)
         }
-        // fd drops → file closed but persists on disk
+
     }
     return pathString
 }
 
-/// Opens a file for locking. Returns a consuming descriptor for Lock.Token.
 private func openForLock(_ pathString: Swift.String) throws -> Kernel.Descriptor {
     try Path.scope(pathString) { path in
         try Kernel.File.Open.open(
@@ -59,14 +40,11 @@ private func openForLock(_ pathString: Swift.String) throws -> Kernel.Descriptor
     }
 }
 
-/// Deletes the file at the given path.
 private func cleanupLockFile(_ pathString: Swift.String) {
     try? Path.scope(pathString) { path in
         try Kernel.File.Delete.delete(path)
     }
 }
-
-// MARK: - Token Integration Tests
 
 extension `Kernel.Lock Integration` {
     @Test
@@ -100,23 +78,12 @@ extension `Kernel.Lock Integration` {
     }
 }
 
-// MARK: - Multi-Process Contention Tests
-// Note: These tests require Foundation.Process and use POSIX-specific helpers.
-// They spawn a separate process to test lock contention across processes.
-
 #if canImport(Foundation) && !os(Windows)
 
     extension `Kernel.Lock Integration` {
 
-        /// Name of the lock test helper executable.
         private static let helperName = "_Lock Test Process"
 
-        /// Path to the lock test helper executable.
-        ///
-        /// The product directory differs per build system — SwiftPM's native
-        /// build writes `.build/<triple>/<config>`, while Swift Build writes
-        /// `.build/out/Products/<Config>` — so every known product directory
-        /// is probed instead of one hard-coded layout.
         private static var helperPath: Swift.String {
             let fileManager = FileManager.default
             for directory in productDirectories {
@@ -128,12 +95,11 @@ extension `Kernel.Lock Integration` {
 
         private static var packageRoot: URL {
             URL(fileURLWithPath: #filePath)
-                .deletingLastPathComponent()  // Kernel Tests
-                .deletingLastPathComponent()  // Tests
-                .deletingLastPathComponent()  // swift-kernel
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
         }
 
-        /// Every directory a built product may live in, most specific first.
         private static var productDirectories: [URL] {
             var directories: [URL] = []
             if let builtProductsDirectory = ProcessInfo.processInfo.environment[

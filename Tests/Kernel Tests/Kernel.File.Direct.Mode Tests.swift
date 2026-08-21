@@ -1,17 +1,5 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.File.Direct.Mode {
@@ -22,14 +10,12 @@ extension Kernel.File.Direct.Mode {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.File.Direct.Mode.Test.Unit {
     @Test
     func `direct case exists`() {
         let mode = Kernel.File.Direct.Mode.direct
         if case .direct = mode {
-            // Expected
+
         } else {
             Issue.record("Expected .direct case")
         }
@@ -39,7 +25,7 @@ extension Kernel.File.Direct.Mode.Test.Unit {
     func `uncached case exists`() {
         let mode = Kernel.File.Direct.Mode.uncached
         if case .uncached = mode {
-            // Expected
+
         } else {
             Issue.record("Expected .uncached case")
         }
@@ -49,7 +35,7 @@ extension Kernel.File.Direct.Mode.Test.Unit {
     func `buffered case exists`() {
         let mode = Kernel.File.Direct.Mode.buffered
         if case .buffered = mode {
-            // Expected
+
         } else {
             Issue.record("Expected .buffered case")
         }
@@ -59,14 +45,12 @@ extension Kernel.File.Direct.Mode.Test.Unit {
     func `auto case exists`() {
         let mode = Kernel.File.Direct.Mode.auto(policy: .fallbackToBuffered)
         if case .auto = mode {
-            // Expected
+
         } else {
             Issue.record("Expected .auto case")
         }
     }
 }
-
-// MARK: - Conformance Tests
 
 extension Kernel.File.Direct.Mode.Test.Unit {
     @Test
@@ -85,8 +69,6 @@ extension Kernel.File.Direct.Mode.Test.Unit {
     }
 }
 
-// MARK: - Nested Types
-
 extension Kernel.File.Direct.Mode.Test.Unit {
     @Test
     func `Mode.Policy type exists`() {
@@ -98,8 +80,6 @@ extension Kernel.File.Direct.Mode.Test.Unit {
         let _: Kernel.File.Direct.Mode.Resolved.Type = Kernel.File.Direct.Mode.Resolved.self
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.File.Direct.Mode.Test.EdgeCase {
     @Test

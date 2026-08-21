@@ -12,12 +12,12 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
-        // MARK: - Core
+
         .library(
             name: "Kernel Core",
             targets: ["Kernel Core"]
         ),
-        // MARK: - Domains
+
         .library(
             name: "Kernel System",
             targets: ["Kernel System"]
@@ -46,12 +46,12 @@ let package = Package(
             name: "Kernel Terminal",
             targets: ["Kernel Terminal"]
         ),
-        // MARK: - Umbrella
+
         .library(
             name: "Kernel",
             targets: ["Kernel"]
         ),
-        // MARK: - Test Support
+
         .library(
             name: "Kernel Test Support",
             targets: ["Kernel Test Support"]
@@ -166,7 +166,7 @@ let package = Package(
         .package(url: "https://github.com/swift-foundations/swift-strings.git", branch: "main"),
     ],
     targets: [
-        // MARK: - Core
+
         .target(
             name: "Kernel Core",
             dependencies: [
@@ -229,13 +229,11 @@ let package = Package(
             ]
         ),
 
-        // MARK: - System
         .target(
             name: "Kernel System",
             dependencies: ["Kernel Core"]
         ),
 
-        // MARK: - Thread
         .target(
             name: "Kernel Thread",
             dependencies: [
@@ -250,7 +248,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - File
         .target(
             name: "Kernel File",
             dependencies: [
@@ -267,7 +264,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Event
         .target(
             name: "Kernel Event",
             dependencies: [
@@ -308,15 +304,11 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Completion
         .target(
             name: "Kernel Completion",
             dependencies: [
                 "Kernel Core",
-                // `Submission.Opcode.readiness` carries `Kernel.Event.Interest`,
-                // which the hoist moved into the `Kernel Event` target. The edge
-                // is acyclic (`Kernel Event` depends only on `Kernel Core` plus
-                // primitives) and unconditional, matching the umbrella.
+
                 "Kernel Event",
                 .product(
                     name: "Linux Kernel IO Uring",
@@ -331,9 +323,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Clock
-        // Narrow cross-platform Clock surface — does NOT go through Kernel Core,
-        // to avoid the POSIX Kernel umbrella's String_Primitives re-export.
         .target(
             name: "Kernel Clock",
             dependencies: [
@@ -351,11 +340,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Terminal
-        // Cross-platform Terminal.Mode.Raw.Token (relocated from L1
-        // swift-terminal-primitives in Cycle 22 because Token.Previous's
-        // .posix case carries Kernel.Termios.Attributes — an L2 type post-
-        // Cycle 22 — so Token must be at L3 to compose L1 namespace + L2 type).
         .target(
             name: "Kernel Terminal",
             dependencies: [
@@ -369,7 +353,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Umbrella
         .target(
             name: "Kernel",
             dependencies: [
@@ -423,7 +406,6 @@ let package = Package(
             ]
         ),
 
-        // MARK: - Test Support
         .target(
             name: "Kernel Test Support",
             dependencies: [
@@ -433,7 +415,7 @@ let package = Package(
             path: "Tests/Support",
             exclude: ["_Lock Test Process"]
         ),
-        // Helper executable for multi-process lock contention tests
+
         .executableTarget(
             name: "_Lock Test Process",
             dependencies: [

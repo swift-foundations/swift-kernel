@@ -1,14 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Kernel_Test_Support
 import Synchronization
@@ -22,8 +11,6 @@ extension Kernel.Thread.Spawn {
         @Suite(.serialized) struct Performance {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.Thread.Spawn.Test.Unit {
     @Test
@@ -50,9 +37,9 @@ extension Kernel.Thread.Spawn.Test.Unit {
     func `Handle.join waits for thread completion`() throws {
         let completed = Atomic<Bool>(false)
         let handle = try Kernel.Thread.spawn {
-            // Small delay to ensure we're actually waiting
+
             for _ in 0..<1000 {
-                _ = 1 + 1  // Busy work
+                _ = 1 + 1
             }
             completed.store(true, ordering: .releasing)
         }
@@ -64,10 +51,9 @@ extension Kernel.Thread.Spawn.Test.Unit {
     @Test
     func `Handle.isCurrent returns false from main thread`() throws {
         let handle = try Kernel.Thread.spawn {
-            // Do nothing
+
         }
 
-        // From main thread, isCurrent should be false
         #expect(handle.isCurrent == false)
 
         try handle.join()

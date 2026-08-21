@@ -1,20 +1,6 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
-/// Test support for cross-platform temporary file paths.
-
 public import Kernel
 import Strings
 
-// Platform imports only for getpid/GetCurrentProcessId (acceptable in test support)
 #if canImport(Darwin)
     import Darwin
 #elseif canImport(Glibc)
@@ -26,20 +12,15 @@ import Strings
 #endif
 
 extension Kernel {
-    /// Namespace for temporary path operations in tests.
+
     public enum Temporary {}
 }
 
 extension Kernel.Temporary {
-    /// Returns the system temp directory path.
-    ///
-    /// Uses platform-appropriate environment variables:
-    /// - Unix: `TMPDIR`, falling back to "/tmp"
-    /// - Windows: `TEMP` or `TMP`, falling back to "C:\Temp"
+
     public static var directory: Swift.String {
         #if os(Windows)
-            // String.Char is UInt16 on Windows — decode as UTF-16
-            // (String(cString:) has no wide overload).
+
             if let temp = Kernel.Environment.get("TEMP") {
                 return unsafe temp.withUnsafePointer { Swift.String(decodingCString: $0, as: UTF16.self) }
             }
@@ -55,10 +36,6 @@ extension Kernel.Temporary {
         #endif
     }
 
-    /// Generates a unique temporary file path.
-    ///
-    /// - Parameter prefix: Prefix for the filename (e.g., "kernel-test").
-    /// - Returns: A unique path string in the system temp directory.
     public static func filePath(prefix: Swift.String) -> Swift.String {
         #if os(Windows)
             let pid = Int(GetCurrentProcessId())

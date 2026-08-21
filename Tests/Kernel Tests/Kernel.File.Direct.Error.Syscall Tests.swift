@@ -1,17 +1,5 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.File.Direct.Error.Syscall {
@@ -22,14 +10,12 @@ extension Kernel.File.Direct.Error.Syscall {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.File.Direct.Error.Syscall.Test.Unit {
     @Test
     func `platform case exists`() {
         let syscall = Kernel.File.Direct.Error.Syscall.platform(code: .posix(1), operation: .open)
         if case .platform = syscall {
-            // Expected
+
         } else {
             Issue.record("Expected .platform case")
         }
@@ -39,7 +25,7 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
     func `invalidDescriptor case exists`() {
         let syscall = Kernel.File.Direct.Error.Syscall.invalidDescriptor(operation: .read)
         if case .invalidDescriptor = syscall {
-            // Expected
+
         } else {
             Issue.record("Expected .invalidDescriptor case")
         }
@@ -49,7 +35,7 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
     func `alignmentViolation case exists`() {
         let syscall = Kernel.File.Direct.Error.Syscall.alignmentViolation(operation: .write)
         if case .alignmentViolation = syscall {
-            // Expected
+
         } else {
             Issue.record("Expected .alignmentViolation case")
         }
@@ -59,14 +45,12 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
     func `notSupported case exists`() {
         let syscall = Kernel.File.Direct.Error.Syscall.notSupported(operation: .open)
         if case .notSupported = syscall {
-            // Expected
+
         } else {
             Issue.record("Expected .notSupported case")
         }
     }
 }
-
-// MARK: - Conformance Tests
 
 extension Kernel.File.Direct.Error.Syscall.Test.Unit {
     @Test
@@ -97,8 +81,6 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
     }
 }
 
-// MARK: - Associated Value Tests
-
 extension Kernel.File.Direct.Error.Syscall.Test.Unit {
     @Test
     func `platform stores error code`() {
@@ -119,7 +101,7 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
         let syscall = Kernel.File.Direct.Error.Syscall.platform(code: .posix(1), operation: .write)
         if case .platform(_, let operation) = syscall {
             if case .write = operation {
-                // Expected
+
             } else {
                 Issue.record("Expected .write operation")
             }
@@ -133,7 +115,7 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
         let syscall = Kernel.File.Direct.Error.Syscall.invalidDescriptor(operation: .read)
         if case .invalidDescriptor(let operation) = syscall {
             if case .read = operation {
-                // Expected
+
             } else {
                 Issue.record("Expected .read operation")
             }
@@ -147,7 +129,7 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
         let syscall = Kernel.File.Direct.Error.Syscall.alignmentViolation(operation: .write)
         if case .alignmentViolation(let operation) = syscall {
             if case .write = operation {
-                // Expected
+
             } else {
                 Issue.record("Expected .write operation")
             }
@@ -161,7 +143,7 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
         let syscall = Kernel.File.Direct.Error.Syscall.notSupported(operation: .open)
         if case .notSupported(let operation) = syscall {
             if case .open = operation {
-                // Expected
+
             } else {
                 Issue.record("Expected .open operation")
             }
@@ -170,8 +152,6 @@ extension Kernel.File.Direct.Error.Syscall.Test.Unit {
         }
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.File.Direct.Error.Syscall.Test.EdgeCase {
     @Test

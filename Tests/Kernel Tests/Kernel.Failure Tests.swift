@@ -1,20 +1,7 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2025 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel_Test_Support
 import Testing
 
 @testable import Kernel
-
-// MARK: - Kernel.Failure Tests
 
 extension Kernel.Failure {
     @Suite struct Test {
@@ -56,9 +43,6 @@ extension Kernel.Failure.Test.Unit {
         }
     }
 
-    // `Error.Code.POSIX` is declared in the POSIX-only swift-iso-9945 target
-    // (Error_Primitives has no Windows-side `.POSIX` namespace) — absent on
-    // Windows by design, matching the `signal` gate below.
     #if !os(Windows)
         @Test func `platform case exists and wraps kernel error`() {
             let kernelError = Error_Primitives.Error(code: .POSIX.EPERM)
@@ -100,9 +84,7 @@ extension Kernel.Failure.Test.Unit {
             .handle(.invalid),
             .blocking(.wouldBlock),
         ]
-        // `Error.Code.POSIX` is absent on Windows by design (declared in the
-        // POSIX-only swift-iso-9945 target) — see the `platform case exists`
-        // gate above.
+
         #if !os(Windows)
             cases.append(.platform(Error_Primitives.Error(code: .POSIX.EPERM)))
         #endif
@@ -128,13 +110,11 @@ extension Kernel.Failure.Test.Unit {
     }
 
     @Test func `failable init returns nil for unrecognized code`() {
-        // Error code 0 is not a real error on any platform
+
         let result = Kernel.Failure(.posix(0))
         #expect(result == nil)
     }
 }
-
-// MARK: - Kernel.Process.ID CustomStringConvertible Tests
 
 extension Kernel.Process.ID {
     @Suite struct Test {

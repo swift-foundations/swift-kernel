@@ -1,17 +1,5 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.File.Direct.Requirements.Alignment {
@@ -21,8 +9,6 @@ extension Kernel.File.Direct.Requirements.Alignment {
         @Suite struct EdgeCase {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.File.Direct.Requirements.Alignment.Test.Unit {
     @Test
@@ -64,8 +50,6 @@ extension Kernel.File.Direct.Requirements.Alignment.Test.Unit {
     }
 }
 
-// MARK: - Accessor Tests
-
 extension Kernel.File.Direct.Requirements.Alignment.Test.Unit {
     @Test
     func `buffer accessor exists`() {
@@ -86,8 +70,6 @@ extension Kernel.File.Direct.Requirements.Alignment.Test.Unit {
     }
 }
 
-// MARK: - Conformance Tests
-
 extension Kernel.File.Direct.Requirements.Alignment.Test.Unit {
     @Test
     func `Alignment is Sendable`() {
@@ -104,8 +86,6 @@ extension Kernel.File.Direct.Requirements.Alignment.Test.Unit {
         #expect(a != c)
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.File.Direct.Requirements.Alignment.Test.EdgeCase {
     @Test

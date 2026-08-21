@@ -1,34 +1,9 @@
-//
-//  Kernel.Event.Source.swift
-//  swift-kernel-primitives
-//
-//  ~Copyable resource for event notification.
-//
-
-// Windows: the event-driver vocabulary (Kernel.Event.Source: epoll/kqueue)
-// is POSIX-only; the Windows analog is the IOCP completion path. Gated
-// whole-file to match the IO Events / IO Completions posture — the Windows
-// leg never constructs an event reactor.
 #if !os(Windows)
     extension Kernel.Event {
-        /// Event notification resource.
-        ///
-        /// `~Copyable`: single ownership, consumed on `close()`.
-        /// Not `Sendable` — transferred to the poll thread via `sending`.
-        /// Extract `wakeup` (Sendable) before transferring.
-        ///
-        /// ## Usage
-        /// ```swift
-        /// var source = try Kernel.Event.Source.platform()
-        /// let wakeup = source.wakeup
-        /// let id = try source.register(descriptor: dup, interest: .read)
-        /// let count = try source.poll(deadline: nil, into: &buffer)
-        /// source.close()
-        /// ```
+
         public struct Source: ~Copyable {
             package let driver: Kernel.Event.Driver
 
-            /// Thread-safe channel for interrupting blocking `poll()`.
             public let wakeup: Kernel.Wakeup.Channel
 
             public init(driver: consuming Kernel.Event.Driver, wakeup: Kernel.Wakeup.Channel) {
@@ -37,8 +12,6 @@
             }
         }
     }
-
-    // MARK: - Public API
 
     extension Kernel.Event.Source {
         public func register(

@@ -1,50 +1,9 @@
-//
-//  Kernel.Event.Source+Epoll.swift
-//  swift-kernel
-//
-//  Epoll-backed event source for Linux platforms.
-//
-//  Three-boundary polling model:
-//    Backend (this file): raw epoll event → Kernel.Event translation
-//    Driver.init:         staleness suppression via registry membership
-//    Caller:              consumes valid events
-//
-//  Policy invariants:
-//    INV-1: Registration Identity      — Driver.init (counter)
-//    INV-2: Ownership Lifecycle         — Driver.init (registry owns dup'd fd)
-//    INV-3: Delta Correctness           — modify below (EPOLL_CTL_MOD replaces full set)
-//    INV-4: One-Shot Re-Arm             — add/arm below (EPOLLONESHOT)
-//    INV-5: Normalization               — poll below (epoll events → Kernel.Event)
-//    INV-6: Staleness Suppression       — Driver.init (registry membership check)
-//    INV-7: Wake Responsiveness         — factory below (eventfd trigger)
-//
-
-// Windows: the event-driver vocabulary (Kernel.Event.Source: epoll/kqueue)
-// is POSIX-only; the Windows analog is the IOCP completion path. Gated
-// whole-file to match the IO Events / IO Completions posture — the Windows
-// leg never constructs an event reactor.
 #if !os(Windows)
     #if os(Linux)
 
-        // The epoll mechanism is spelled at its qualified L2 home. The
-        // vocabulary hoist re-anchored it from `ISO_9945.Kernel.Event.Poll`
-        // onto `Linux.Kernel.Event.Poll`, which the L3 unifier's
-        // `Kernel.Event` (a swift-kernel struct) does not nest — so
-        // `Kernel.Event.Poll` no longer resolves. Import follows the
-        // realized precedent in `Kernel.Event.Source+Kqueue.swift`.
         import Linux_Kernel_Event
 
-        /// File-local alias for the epoll event record.
-        ///
-        /// The scratch buffer is built with `[RawEvent](repeating:count:)`. The
-        /// qualified spelling cannot be used inside the array brackets: in
-        /// expression position it loses to the array-literal reading and parses
-        /// as a one-element array of metatypes, and the `Array<…>` spelling that
-        /// avoids that is rejected by `syntactic_sugar` / `UseShorthandTypeNames`.
-        /// A single-identifier element type satisfies compiler and linters alike.
         private typealias RawEvent = Linux.Kernel.Event.Poll.Event
-
-        // MARK: - Error Conversion
 
         extension Kernel.Event.Driver.Error {
             init(_ epollError: Linux.Kernel.Event.Poll.Error) {
@@ -66,13 +25,8 @@
             }
         }
 
-        // MARK: - ID Boundary
-
         extension Kernel.Event.ID {
-            /// Decodes a registration ID from epoll poll data.
-            ///
-            /// Returns nil when the data encodes `.zero` — the sentinel for
-            /// non-registration events (wakeup eventfd).
+
             init?(pollData: Linux.Kernel.Event.Poll.Data) {
                 guard pollData != .zero else { return nil }
                 self = pollData.map { UInt(truncatingIfNeeded: $0) }.retag(Kernel.Event.self)
@@ -80,22 +34,14 @@
         }
 
         extension Linux.Kernel.Event.Poll.Data {
-            /// Encodes a registration ID into poll data for the kernel boundary.
+
             init(registrationID id: Kernel.Event.ID) {
                 self = id.map { UInt64($0) }.retag(Linux.Kernel.Event.Poll.self)
             }
         }
 
-        // MARK: - Interest Boundary
-
         extension Linux.Kernel.Event.Interest {
-            /// Projects the cross-platform readiness vocabulary onto the
-            /// package-local mirror epoll's mask initializer consumes.
-            ///
-            /// `Linux.Kernel.Event.Poll.Events.init(interest:)` deliberately
-            /// takes the Linux-owned `Interest` so the L2 package does not
-            /// depend on the L3 unifier's vocabulary type. The L3 unifier is
-            /// the only layer that can see both, so the projection lives here.
+
             fileprivate init(_ interest: Kernel.Event.Interest) {
                 var projected: Self = []
                 if interest.contains(.read) { projected.insert(.read) }
@@ -105,13 +51,8 @@
             }
         }
 
-        // MARK: - Helpers
-
         extension Kernel.Event.Source {
-            /// Epoll events mask for a one-shot edge-triggered registration on the
-            /// reactor: the shared `Poll.Events.init(interest:)` produces the base
-            /// read/write/priority mask, and this helper adds the reactor's policy
-            /// bits (`.et | .oneshot`).
+
             fileprivate static func events(
                 oneShot interest: Kernel.Event.Interest
             ) -> Linux.Kernel.Event.Poll.Events {
@@ -138,23 +79,15 @@
             }
         }
 
-        // MARK: - Factory
-
         extension Kernel.Event.Source {
-            /// Creates an epoll-backed event source.
-            ///
-            /// - Parameter maxEvents: Maximum events per poll cycle. Controls the
-            ///   pre-allocated scratch buffer size. Default: 256.
+
             public static func epoll(
                 maxEvents: Int = 256
             ) throws(Kernel.Event.Driver.Error) -> Kernel.Event.Source {
 
-                // -- State class (owns L1 epoll struct + eventfd + scratch buffer) --
-
                 final class State {
                     let epoll: Linux.Kernel.Event.Poll
-                    // Write-once (init), then nil-once (_close). No concurrent
-                    // access — the driver is thread-confined.
+
                     nonisolated(unsafe) var eventfd: Linux.Kernel.Event.Descriptor?
                     var rawEvents: [RawEvent]
 
@@ -186,8 +119,6 @@
                     throw Kernel.Event.Driver.Error(error)
                 }
 
-                // -- Wakeup (eventfd, registered at L2; Channel constructed at L3 site-of-use) --
-
                 let wakeup: Kernel.Wakeup.Channel
                 do throws(Linux.Kernel.Event.Poll.Error) {
                     let signal = try epoll.wakeup(eventfd: eventfd)
@@ -201,8 +132,6 @@
                     eventfd: consume eventfd,
                     maxEvents: maxEvents
                 )
-
-                // -- Build Driver from backend operations --
 
                 let driver = Kernel.Event.Driver(
                     add: {
@@ -253,7 +182,7 @@
                             if case .ctl(let code) = error,
                                 code == .POSIX.ENOENT || code == .POSIX.EBADF
                             {
-                                return  // Benign: event auto-removed or fd recycled.
+                                return
                             }
                             throw Kernel.Event.Driver.Error(error)
                         }
@@ -283,16 +212,9 @@
 
                         let timeout = deadline.map { $0.remaining(at: Clock.Continuous.now) }
 
-                        // Never ask the kernel for more events than `output` can hold.
-                        // epoll_wait dequeues whatever it hands back from the kernel's
-                        // readiness list, so over-requesting past `output.count` would
-                        // silently drop already-dequeued one-shot events. Clamp the
-                        // request so any events beyond `output`'s capacity stay queued
-                        // in the kernel for a subsequent poll instead of being lost.
                         let requestCount = min(state.rawEvents.count, output.count)
                         guard requestCount > 0 else { return 0 }
 
-                        // Poll epoll into pre-allocated scratch buffer.
                         let count: Int
                         do throws(Linux.Kernel.Event.Poll.Error) {
                             if requestCount == state.rawEvents.count {
@@ -312,7 +234,6 @@
 
                         guard count > 0 else { return 0 }
 
-                        // Normalize: raw epoll events → cross-platform Kernel.Event.
                         var writeIdx = 0
                         for i in 0..<count {
                             let raw = state.rawEvents[i]
@@ -330,8 +251,7 @@
                     },
                     close: {
                         state.eventfd = nil
-                        // State deinit closes the epoll fd when all closures
-                        // are dropped and the State class is deallocated.
+
                     }
                 )
 

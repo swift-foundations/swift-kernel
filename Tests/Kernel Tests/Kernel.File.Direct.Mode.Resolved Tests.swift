@@ -1,17 +1,5 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.File.Direct.Mode.Resolved {
@@ -22,14 +10,12 @@ extension Kernel.File.Direct.Mode.Resolved {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.File.Direct.Mode.Resolved.Test.Unit {
     @Test
     func `direct case exists`() {
         let resolved = Kernel.File.Direct.Mode.Resolved.direct
         if case .direct = resolved {
-            // Expected
+
         } else {
             Issue.record("Expected .direct case")
         }
@@ -39,7 +25,7 @@ extension Kernel.File.Direct.Mode.Resolved.Test.Unit {
     func `uncached case exists`() {
         let resolved = Kernel.File.Direct.Mode.Resolved.uncached
         if case .uncached = resolved {
-            // Expected
+
         } else {
             Issue.record("Expected .uncached case")
         }
@@ -49,14 +35,12 @@ extension Kernel.File.Direct.Mode.Resolved.Test.Unit {
     func `buffered case exists`() {
         let resolved = Kernel.File.Direct.Mode.Resolved.buffered
         if case .buffered = resolved {
-            // Expected
+
         } else {
             Issue.record("Expected .buffered case")
         }
     }
 }
-
-// MARK: - Conformance Tests
 
 extension Kernel.File.Direct.Mode.Resolved.Test.Unit {
     @Test
@@ -74,8 +58,6 @@ extension Kernel.File.Direct.Mode.Resolved.Test.Unit {
         #expect(a != c)
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.File.Direct.Mode.Resolved.Test.EdgeCase {
     @Test

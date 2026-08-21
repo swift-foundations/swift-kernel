@@ -1,17 +1,5 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.File.Direct.Capability {
@@ -22,15 +10,13 @@ extension Kernel.File.Direct.Capability {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.File.Direct.Capability.Test.Unit {
     @Test
     func `directSupported case exists`() {
         let alignment = Kernel.File.Direct.Requirements.Alignment(uniform: .`4096`)
         let capability = Kernel.File.Direct.Capability.directSupported(alignment)
         if case .directSupported = capability {
-            // Expected
+
         } else {
             Issue.record("Expected .directSupported case")
         }
@@ -40,7 +26,7 @@ extension Kernel.File.Direct.Capability.Test.Unit {
     func `uncachedOnly case exists`() {
         let capability = Kernel.File.Direct.Capability.uncachedOnly
         if case .uncachedOnly = capability {
-            // Expected
+
         } else {
             Issue.record("Expected .uncachedOnly case")
         }
@@ -50,14 +36,12 @@ extension Kernel.File.Direct.Capability.Test.Unit {
     func `bufferedOnly case exists`() {
         let capability = Kernel.File.Direct.Capability.bufferedOnly
         if case .bufferedOnly = capability {
-            // Expected
+
         } else {
             Issue.record("Expected .bufferedOnly case")
         }
     }
 }
-
-// MARK: - Accessor Tests
 
 extension Kernel.File.Direct.Capability.Test.Unit {
     @Test
@@ -119,8 +103,6 @@ extension Kernel.File.Direct.Capability.Test.Unit {
     }
 }
 
-// MARK: - Conformance Tests
-
 extension Kernel.File.Direct.Capability.Test.Unit {
     @Test
     func `Capability is Sendable`() {
@@ -137,8 +119,6 @@ extension Kernel.File.Direct.Capability.Test.Unit {
         #expect(a != c)
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.File.Direct.Capability.Test.EdgeCase {
     @Test

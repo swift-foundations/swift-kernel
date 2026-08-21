@@ -1,8 +1,3 @@
-//
-//  Kernel.Completion.Event.Result Tests.swift
-//  swift-kernel-primitives
-//
-
 import Testing
 
 @_spi(Syscall) @testable import Kernel_Completion
@@ -14,8 +9,6 @@ extension Kernel.Completion.Event.Result {
         @Suite struct `Edge Case` {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.Completion.Event.Result.Test.Unit {
     @Test
@@ -60,8 +53,6 @@ extension Kernel.Completion.Event.Result.Test.Unit {
         #expect(a != c)
     }
 }
-
-// MARK: - Edge Case Tests
 
 extension Kernel.Completion.Event.Result.Test.`Edge Case` {
     @Test

@@ -1,19 +1,7 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 @_spi(Syscall) import Error_Primitives
 import Kernel_Test_Support
 @_spi(Syscall) import Path_Primitives
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 @testable import Kernel
@@ -26,14 +14,12 @@ extension Kernel.Copy.Error {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.Copy.Error.Test.Unit {
     @Test
     func `invalidDescriptor case exists`() {
         let error = Kernel.Copy.Error.invalidDescriptor
         if case .invalidDescriptor = error {
-            // Expected
+
         } else {
             Issue.record("Expected .invalidDescriptor case")
         }
@@ -43,7 +29,7 @@ extension Kernel.Copy.Error.Test.Unit {
     func `crossDevice case exists`() {
         let error = Kernel.Copy.Error.crossDevice
         if case .crossDevice = error {
-            // Expected
+
         } else {
             Issue.record("Expected .crossDevice case")
         }
@@ -53,7 +39,7 @@ extension Kernel.Copy.Error.Test.Unit {
     func `unsupported case exists`() {
         let error = Kernel.Copy.Error.unsupported
         if case .unsupported = error {
-            // Expected
+
         } else {
             Issue.record("Expected .unsupported case")
         }
@@ -63,7 +49,7 @@ extension Kernel.Copy.Error.Test.Unit {
     func `noSpace case exists`() {
         let error = Kernel.Copy.Error.noSpace
         if case .noSpace = error {
-            // Expected
+
         } else {
             Issue.record("Expected .noSpace case")
         }
@@ -73,7 +59,7 @@ extension Kernel.Copy.Error.Test.Unit {
     func `io case exists`() {
         let error = Kernel.Copy.Error.io
         if case .io = error {
-            // Expected
+
         } else {
             Issue.record("Expected .io case")
         }
@@ -83,14 +69,12 @@ extension Kernel.Copy.Error.Test.Unit {
     func `permissionDenied case exists`() {
         let error = Kernel.Copy.Error.permissionDenied
         if case .permissionDenied = error {
-            // Expected
+
         } else {
             Issue.record("Expected .permissionDenied case")
         }
     }
 }
-
-// MARK: - Description Tests
 
 extension Kernel.Copy.Error.Test.Unit {
     @Test
@@ -124,8 +108,6 @@ extension Kernel.Copy.Error.Test.Unit {
     }
 }
 
-// MARK: - Conformance Tests
-
 extension Kernel.Copy.Error.Test.Unit {
     @Test
     func `Error conforms to Swift.Error`() {
@@ -153,12 +135,10 @@ extension Kernel.Copy.Error.Test.Unit {
         var set = Set<Kernel.Copy.Error>()
         set.insert(.invalidDescriptor)
         set.insert(.crossDevice)
-        set.insert(.invalidDescriptor)  // duplicate
+        set.insert(.invalidDescriptor)
         #expect(set.count == 2)
     }
 }
-
-// MARK: - Edge Cases
 
 extension Kernel.Copy.Error.Test.EdgeCase {
     @Test
@@ -179,11 +159,6 @@ extension Kernel.Copy.Error.Test.EdgeCase {
         }
     }
 }
-
-// MARK: - POSIX Error Mapping Tests
-//
-// Kernel.Copy.Error(posixErrno:) is POSIX-only (Kernel.Copy.Error+posixErrno.swift
-// is gated the same way); this whole section is gated to match.
 
 #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
 
@@ -252,7 +227,7 @@ extension Kernel.Copy.Error.Test.EdgeCase {
 
         @Test
         func `unknown error maps to unsupported`() {
-            // Use an unlikely error code
+
             let error = Kernel.Copy.Error(posixErrno: 999)
             #expect(error == .unsupported)
         }

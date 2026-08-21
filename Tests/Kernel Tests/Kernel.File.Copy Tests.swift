@@ -1,20 +1,7 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel_Test_Support
 import Testing
 
 @testable import Kernel
-
-// MARK: - Kernel.File.Copy Tests
 
 extension Kernel.File.Copy {
     @Suite struct Test {
@@ -25,28 +12,6 @@ extension Kernel.File.Copy {
     }
 }
 
-// F-007: `copySymlink` used to wrap symlink creation in `try? Path.scope(target) { ... }`
-// with an inner `do { ... } catch let error as X { } catch {}`. The outer `try?`
-// silently discarded a `Path.scope` validation failure (the ONLY such failure —
-// `Path.String.Conversion.Error.interiorNUL` — occurs when the target string
-// contains an interior NUL byte), and the inner empty `catch {}` was a second
-// layer of the same anti-pattern. Either failure mode let `copySymlink` — and
-// therefore the public `Kernel.File.Copy.copy(..., followSymlinks: false)` —
-// return success without ever creating the destination symlink.
-//
-// A real on-disk symlink cannot have an interior-NUL target: `symlink(2)` takes
-// a NUL-terminated C string, so the kernel can never store a target containing
-// an embedded NUL, and `readlink(2)` can therefore never hand one back. The
-// exact `Path.scope` trigger is provably unreachable through the public API on
-// any platform — not just this host — so it cannot be exercised as a real
-// pre-fix-RED/post-fix-GREEN integration test. Two things are tested instead:
-// (1) a direct unit test of `Path.scope` proving the precondition the fix
-// relies on — that an interior-NUL string really does throw — and (2) real,
-// reachable integration coverage of `copySymlink` through the public API: the
-// happy path (proves removing `try?`/`catch {}` did not regress the normal
-// case) and a real, reachable failure (destination parent directory does not
-// exist) that must now surface as a thrown `Copy.Error` rather than silently
-// succeeding.
 #if !os(Windows)
 
     extension Kernel.File.Copy.Test.`Edge Case` {
@@ -128,9 +93,6 @@ extension Kernel.File.Copy {
                 }
             )
 
-            // The destination must not exist — the prior bug's failure mode was
-            // "reports success, creates nothing"; this proves the fix doesn't
-            // instead regress into "throws, but the link got created anyway".
             let destinationExists =
                 (try? Path.scope(destination) { try? Kernel.File.Stats.lget(path: $0) }) != nil
             #expect(!destinationExists)

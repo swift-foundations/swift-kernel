@@ -1,12 +1,3 @@
-//
-//  Kernel.Completion.Submission.Opcode Tests.swift
-//  swift-kernel-primitives
-//
-
-// The `.readiness` variant carries `Kernel.Event.Interest`, which the
-// vocabulary hoist moved into the `Kernel Event` target. `Kernel_Completion`
-// does not re-export it, so the declaring module is imported per-file
-// (#MemberImportVisibility).
 import Kernel_Event
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
@@ -20,8 +11,6 @@ extension Kernel.Completion.Submission.Opcode {
         @Suite struct `Exhaustiveness` {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.Completion.Submission.Opcode.Test.Unit {
     @Test
@@ -80,17 +69,8 @@ extension Kernel.Completion.Submission.Opcode.Test.Unit {
     }
 }
 
-// MARK: - Exhaustiveness
-
 extension Kernel.Completion.Submission.Opcode.Test.Exhaustiveness {
-    /// Switch over every variant — a new case without a case branch here
-    /// fails to compile.
-    ///
-    /// `.readiness` is absent on Windows by design — see the
-    /// `#if !os(Windows)` gate on the case declaration in
-    /// Sources/Kernel Completion/Kernel.Completion.Submission.Opcode.swift —
-    /// so this exhaustiveness check (which lists every variant by name) is
-    /// gated to match.
+
     #if !os(Windows)
         @Test
         func `switch covers every variant`() {

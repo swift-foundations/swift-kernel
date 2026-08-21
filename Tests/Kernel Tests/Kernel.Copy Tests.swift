@@ -1,17 +1,5 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-kernel open source project
-//
-// Copyright (c) 2024-2026 Coen ten Thije Boonkkamp and the swift-kernel project authors
-// Licensed under Apache License v2.0
-//
-// See LICENSE for license information
-//
-// ===----------------------------------------------------------------------===//
-
 import Kernel
 import Tagged_Primitives_Standard_Library_Integration
-// Tests use Apple native Testing framework
 import Testing
 
 extension Kernel.Copy {
@@ -22,12 +10,10 @@ extension Kernel.Copy {
     }
 }
 
-// MARK: - Unit Tests
-
 extension Kernel.Copy.Test.Unit {
     @Test
     func `Copy namespace exists`() {
-        // Kernel.Copy is a public enum namespace
+
         _ = Kernel.Copy.self
     }
 
@@ -41,8 +27,6 @@ extension Kernel.Copy.Test.Unit {
         let _: any Sendable.Type = Kernel.Copy.self
     }
 }
-
-// MARK: - Nested Types
 
 extension Kernel.Copy.Test.Unit {
     @Test

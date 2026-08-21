@@ -1,8 +1,3 @@
-//
-//  Kernel.Completion.Event Tests.swift
-//  swift-kernel-primitives
-//
-
 import Tagged_Primitives_Standard_Library_Integration
 import Testing
 
@@ -14,8 +9,6 @@ extension Kernel.Completion.Event {
         @Suite struct Unit {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.Completion.Event.Test.Unit {
     @Test
@@ -52,8 +45,6 @@ extension Kernel.Completion.Event.Test.Unit {
         let _: any Sendable = event
     }
 }
-
-// MARK: - Event.Flags
 
 extension Kernel.Completion.Event.Flags {
     @Suite

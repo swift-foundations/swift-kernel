@@ -1,13 +1,3 @@
-//
-//  Kernel.Event.Driver Tests.swift
-//  swift-kernel-primitives
-//
-
-// Windows has no Kernel.Event.Driver (epoll/kqueue vocabulary is
-// POSIX-only; the Windows analog is the IOCP completion path) — gated
-// whole-file to match Sources/Kernel Event/Kernel.Event.Driver.swift and
-// the convention used elsewhere for this target's POSIX-only surfaces
-// (e.g. Tests/Kernel Tests/Kernel.Event.ID Tests.swift).
 #if !os(Windows)
 
     import Kernel_Test_Support
@@ -26,8 +16,6 @@
             @Suite struct Unit {}
         }
     }
-
-    // MARK: - Interest Merging
 
     extension Kernel.Event.Driver.Test.Unit {
 
@@ -82,8 +70,6 @@
             driver._close()
         }
     }
-
-    // MARK: - Poll Re-Arm
 
     extension Kernel.Event.Driver.Test.Unit {
 

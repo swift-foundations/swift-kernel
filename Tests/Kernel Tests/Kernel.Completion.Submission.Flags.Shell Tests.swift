@@ -1,8 +1,3 @@
-//
-//  Kernel.Completion.Submission.Flags Tests.swift
-//  swift-kernel-primitives
-//
-
 import Testing
 
 @testable import Kernel_Completion
@@ -13,8 +8,6 @@ extension Kernel.Completion.Submission.Flags {
         @Suite struct Unit {}
     }
 }
-
-// MARK: - Unit Tests
 
 extension Kernel.Completion.Submission.Flags.`Shell Test`.Unit {
     @Test
