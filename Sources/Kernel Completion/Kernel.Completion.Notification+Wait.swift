@@ -29,7 +29,7 @@
         public borrowing func wait() {
             var counter: UInt64 = 0
             while true {
-                let result = unsafe withUnsafeMutableBytes(of: &counter) { buf -> Bool in
+                let result = withUnsafeMutableBytes(of: &counter) { buf -> Bool in
                     do throws(Kernel.IO.Read.Error) {
                         _ = try unsafe Kernel.IO.Read.read(descriptor, into: buf)
                         return true  // success — counter consumed
