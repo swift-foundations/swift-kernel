@@ -49,7 +49,7 @@ extension Kernel.Temporary {
             return "C:\\Temp"
         #else
             if let tmpdir = unsafe Kernel.Environment.get("TMPDIR") {
-                return unsafe tmpdir.withUnsafePointer { Swift.String(cString: $0) }
+                return unsafe tmpdir.withUnsafePointer { unsafe Swift.String(cString: $0) }
             }
             return "/tmp"
         #endif
